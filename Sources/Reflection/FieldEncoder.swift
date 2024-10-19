@@ -11,6 +11,11 @@ struct FieldEncoder {
 		let fieldNumber = fieldDescriptor.number
 		let wireType = determineWireType(for: fieldDescriptor.type)
 
+		// If the field type is unsupported, return an empty Data.
+		if wireType == -1 {
+			return Data() // Unsupported field type
+		}
+
 		// Append encoded field number and wire type to data (placeholder logic).
 		data.append(encodeVarint(UInt64(fieldNumber << 3 | wireType)))
 
@@ -26,7 +31,8 @@ struct FieldEncoder {
 			data.append(encodeVarint(boolValue ? 1 : 0))
 		// Add cases for other types as needed
 		default:
-			break
+			// Unsupported type - return empty data
+			return Data()
 		}
 
 		return data
@@ -40,7 +46,7 @@ struct FieldEncoder {
 		case .string, .message:
 			return 2 // Length-delimited wire type
 		default:
-			return 0 // Default wire type
+			return -1 // Unsupported type
 		}
 	}
 

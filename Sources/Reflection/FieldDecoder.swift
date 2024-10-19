@@ -6,10 +6,16 @@ struct FieldDecoder {
 	// Decodes a single field from the wire format using the field descriptor.
 	static func decode(fieldDescriptor: ProtoFieldDescriptor, data: Data) -> ProtoValue? {
 		var dataStream = data
+		
+		// Decode the field key (varint) and skip it
+		let (_, fieldKeyBytes) = decodeVarint(dataStream)
+		dataStream.removeFirst(fieldKeyBytes) // Remove field key
+
+		// Now decode the actual value based on the field type
 		let wireType = determineWireType(for: fieldDescriptor.type)
 		
 		switch wireType {
-		case 0: // Varint
+		case 0: // Varint (for int32, int64, uint32, etc.)
 			let (varint, _) = decodeVarint(dataStream)
 			if let intValue = varint {
 				return .intValue(Int(intValue))

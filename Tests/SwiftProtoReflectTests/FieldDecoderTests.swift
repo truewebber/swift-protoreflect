@@ -3,13 +3,13 @@ import XCTest
 
 class FieldDecoderTests: XCTestCase {
 
-    // Positive Test: Decode int field
-    func testDecodeIntField() {
-        let fieldDescriptor = ProtoFieldDescriptor(name: "field1", number: 1, type: .int32, isRepeated: false, isMap: false)
-        let encodedData = FieldEncoder.encode(fieldDescriptor: fieldDescriptor, value: .intValue(123))
-        let decodedValue = FieldDecoder.decode(fieldDescriptor: fieldDescriptor, data: encodedData)
-        XCTAssertEqual(decodedValue?.getInt(), 123)
-    }
+	// Positive Test: Decode int field
+	func testDecodeIntField() {
+		let fieldDescriptor = ProtoFieldDescriptor(name: "field1", number: 1, type: .int32, isRepeated: false, isMap: false)
+		let encodedData = FieldEncoder.encode(fieldDescriptor: fieldDescriptor, value: .intValue(123))
+		let decodedValue = FieldDecoder.decode(fieldDescriptor: fieldDescriptor, data: encodedData)
+		XCTAssertEqual(decodedValue?.getInt(), 123)
+	}
 
     // Negative Test: Decode corrupted data
     func testDecodeCorruptedData() {
