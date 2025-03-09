@@ -1,8 +1,14 @@
 .DS_Store
+.idea
+.vscode
+
 /.build
 /Packages
 xcuserdata/
 DerivedData/
-.netrc
 .swiftpm/
-*.xcworkspace
+.netrc
+Package.resolved
+
+# Coverage files
+*.lcov
