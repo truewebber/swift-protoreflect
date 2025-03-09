@@ -6,6 +6,7 @@
   },
   "maximumBlankLines": 1,
   "respectsExistingLineBreaks": true,
+  "lineBreakBeforeControlFlowKeywords": true,
   "rules": {
     "AllPublicDeclarationsHaveDocumentation": false,
     "AlwaysUseLowerCamelCase": true,
