@@ -16,7 +16,7 @@ jobs:
     - name: Set up Swift
       uses: swift-actions/setup-swift@v1
       with:
-        swift-version: '6.0'
+        swift-version: '5.9'
     
     - name: Build
       run: swift build -v
@@ -24,10 +24,8 @@ jobs:
     - name: Run tests
       run: swift test -v --enable-code-coverage
     
-    - name: SwiftLint
-      run: |
-        brew install swiftlint
-        swiftlint
+    - name: Lint
+      run: make lint
     
     - name: Convert coverage report
       run: |
