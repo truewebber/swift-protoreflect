@@ -1,217 +1,228 @@
 # SwiftProtoReflect Technical Roadmap
 
+This document outlines the technical roadmap for the SwiftProtoReflect library, a dynamic Protocol Buffer handling library for Swift that builds directly on Apple's SwiftProtobuf library.
+
 ## Overview
 
-This technical roadmap outlines the development approach for SwiftProtoReflect, a dynamic Protocol Buffer handling library for Swift. The roadmap is designed to systematically build the library's capabilities while ensuring all acceptance criteria are met through comprehensive testing.
+SwiftProtoReflect extends Apple's SwiftProtobuf library with dynamic message handling capabilities. Rather than creating parallel implementations of Protocol Buffer concepts, we build directly on SwiftProtobuf's types and wire format implementation.
+
+The roadmap is organized into phases, each building on the previous to deliver a complete, production-ready library.
 
 ## Core Development Principles
 
-1. **Test-Driven Development**: Every feature will be developed using TDD principles, with tests written before implementation.
-2. **Continuous Integration**: All code will be continuously integrated and tested to catch regressions early.
-3. **Incremental Delivery**: Features will be built incrementally, with each increment providing tangible value.
-4. **Performance Benchmarking**: Performance will be measured continuously against established baselines.
-5. **Documentation-as-Code**: Documentation will be treated as a first-class deliverable, developed alongside code.
+1. **Test-Driven Development**: Every feature will be developed using TDD principles, with tests written before implementation to ensure correctness and guide the design.
 
-## Technical Architecture
+2. **Continuous Integration**: All code will be continuously integrated and tested to catch regressions early and maintain high quality throughout development.
 
-### Core Components
+3. **Incremental Delivery**: Features will be built incrementally, with each increment providing tangible value and building toward the complete solution.
 
-1. **Descriptor System**
-   - Message Descriptors
-   - Field Descriptors
-   - Enum Descriptors
-   - Service Descriptors
+4. **Performance Benchmarking**: Performance will be measured continuously against established baselines and direct SwiftProtobuf usage to ensure the library meets performance goals.
 
-2. **Dynamic Message Implementation**
-   - Field Value Storage
-   - Type-Safe Access Layer
-   - Validation Logic
+5. **Documentation-as-Code**: Documentation will be treated as a first-class deliverable, developed alongside code and kept in sync with implementation.
 
-3. **Wire Format Engine**
-   - Encoding Pipeline
-   - Decoding Pipeline
-   - Wire Type Handlers
+6. **SwiftProtobuf Integration**: All components will be designed to integrate seamlessly with SwiftProtobuf's types and APIs, leveraging existing functionality rather than duplicating it.
 
-4. **Reflection System**
-   - Schema Introspection
-   - Dynamic Field Access
-   - Message Traversal
+7. **API Consistency**: The API will follow Swift idioms and conventions, providing a consistent and intuitive interface that feels natural to Swift developers.
 
-5. **Performance Optimization Layer**
-   - Memory Management
-   - Caching Mechanisms
-   - Lazy Loading
+8. **Error Handling**: Comprehensive error handling will be implemented throughout the library, with clear, actionable error messages to aid debugging.
 
-## Development Phases
+9. **Memory Efficiency**: The library will be designed with memory efficiency in mind, particularly for large messages and high-throughput scenarios.
 
-### Phase 1: Foundation (Weeks 1-4)
+10. **Cross-Platform Support**: The library will support all Apple platforms (iOS, macOS, tvOS, watchOS) with a consistent API and behavior.
 
-#### Technical Goals:
-- Implement core descriptor types with validation
-- Build basic dynamic message implementation
-- Create fundamental wire format encoding/decoding for simple types
-- Establish testing framework and CI pipeline
+## Phase 1: Core Infrastructure (Sprint 1)
 
-#### Testing Strategy:
-- Unit tests for all descriptor types
-- Property-based tests for wire format encoding/decoding
-- Performance baseline tests for core operations
+The first phase focuses on establishing the core infrastructure for dynamic Protocol Buffer handling.
 
-#### Technical Deliverables:
-- Core descriptor classes with validation
-- Basic dynamic message implementation
-- Simple wire format encoding/decoding for primitive types
-- CI pipeline with automated tests
+### Key Components
 
-### Phase 2: Core Functionality (Weeks 5-8)
+1. **Descriptor Wrapper Classes**
+   - `MessageDescriptor`: A wrapper for SwiftProtobuf's `Google_Protobuf_DescriptorProto`
+   - `FieldDescriptor`: A wrapper for SwiftProtobuf's `Google_Protobuf_FieldDescriptorProto`
+   - `EnumDescriptor`: A wrapper for SwiftProtobuf's `Google_Protobuf_EnumDescriptorProto`
+   - `OneofDescriptor`: A wrapper for SwiftProtobuf's `Google_Protobuf_OneofDescriptorProto`
 
-#### Technical Goals:
-- Complete wire format implementation for all field types
-- Implement repeated field handling
-- Add support for nested messages
-- Build basic reflection capabilities
+2. **Descriptor Registry**
+   - Registration of file descriptors
+   - Lookup of message and enum descriptors by name
+   - Handling of dependencies between descriptors
 
-#### Testing Strategy:
-- Comprehensive unit tests for all wire format handlers
-- Integration tests for nested message serialization/deserialization
-- Interoperability tests with protoc-generated messages
+3. **Basic DynamicMessage Implementation**
+   - Creation of messages based on descriptors
+   - Getting and setting field values
+   - Validation of field values
 
-#### Technical Deliverables:
-- Complete wire format implementation
-- Support for all basic field types
-- Nested message handling
-- Basic reflection utilities
+### Technical Goals
 
-### Phase 3: Advanced Features (Weeks 9-12)
+- Establish a clean, extensible API design
+- Ensure proper integration with SwiftProtobuf
+- Implement comprehensive test infrastructure
+- Achieve high code coverage
 
-#### Technical Goals:
-- Implement map field support
-- Add enum handling
-- Build advanced reflection capabilities
-- Create interoperability layer with SwiftProtobuf
+## Phase 2: Serialization and Deserialization (Sprint 2)
 
-#### Testing Strategy:
-- Unit and integration tests for map fields and enums
-- Reflection API tests
-- Interoperability tests with SwiftProtobuf
+The second phase focuses on serialization and deserialization capabilities, leveraging SwiftProtobuf's wire format implementation.
 
-#### Technical Deliverables:
-- Map field implementation
-- Enum support
-- Advanced reflection API
-- SwiftProtobuf interoperability utilities
+### Key Components
 
-### Phase 4: Performance Optimization (Weeks 13-16)
+1. **Binary Format Support**
+   - Serialization to binary format
+   - Deserialization from binary format
+   - Handling of unknown fields
 
-#### Technical Goals:
-- Optimize memory usage
-- Improve serialization/deserialization performance
-- Enhance field access efficiency
-- Implement caching mechanisms
+2. **JSON Format Support**
+   - Serialization to JSON format
+   - Deserialization from JSON format
+   - Support for JSON options (e.g., pretty printing)
 
-#### Testing Strategy:
-- Performance benchmarks against compiled protobuf
-- Memory usage profiling
-- Stress tests with large messages
-- Concurrency tests
+3. **Text Format Support**
+   - Serialization to text format
+   - Deserialization from text format
 
-#### Technical Deliverables:
-- Optimized memory management
-- Performance-tuned serialization/deserialization
-- Efficient field access mechanisms
-- Comprehensive performance test suite
+### Technical Goals
 
-### Phase 5: Integration and Compatibility (Weeks 17-20)
+- Seamless integration with SwiftProtobuf's serialization engine
+- Efficient handling of large messages
+- Proper error handling and reporting
+- Comprehensive test coverage for all formats
 
-#### Technical Goals:
-- Implement Swift Concurrency support
-- Add platform-specific optimizations
-- Ensure compatibility across all supported platforms
-- Build integration examples with popular frameworks
+## Phase 3: Advanced Field Types (Sprint 3)
 
-#### Testing Strategy:
-- Cross-platform compatibility tests
-- Concurrency tests
-- Integration tests with Swift frameworks
-- End-to-end tests with sample applications
+The third phase focuses on supporting advanced field types and features.
 
-#### Technical Deliverables:
-- Swift Concurrency API
-- Platform-specific optimizations
-- Framework integration examples
-- Sample applications
+### Key Components
 
-### Phase 6: Documentation and Finalization (Weeks 21-24)
+1. **Repeated Fields**
+   - Efficient handling of repeated fields
+   - Support for packed encoding
+   - Validation of repeated field values
 
-#### Technical Goals:
-- Complete API documentation
-- Create comprehensive examples
-- Develop migration guides
-- Prepare for release
+2. **Map Fields**
+   - Support for map fields
+   - Validation of map key and value types
+   - Efficient access to map entries
 
-#### Testing Strategy:
-- Documentation verification tests
-- Example validation
-- Final regression testing
-- Release candidate testing
+3. **Oneof Fields**
+   - Support for oneof fields
+   - Tracking of which oneof field is set
+   - Proper clearing of oneof fields
 
-#### Technical Deliverables:
-- Complete API documentation
-- Example projects
-- Migration guides
-- Release candidate
+4. **Extensions**
+   - Support for extensions
+   - Registration of extension descriptors
+   - Getting and setting extension values
+
+### Technical Goals
+
+- Complete support for all Protocol Buffer field types
+- Efficient memory usage for complex messages
+- Comprehensive test coverage for all field types
+- Documentation of best practices for each field type
+
+## Phase 4: Reflection and Introspection (Sprint 4)
+
+The fourth phase focuses on reflection and introspection capabilities.
+
+### Key Components
+
+1. **Message Reflection**
+   - Enumeration of fields in a message
+   - Introspection of field types and properties
+   - Dynamic access to nested messages
+
+2. **Type Information**
+   - Access to type information at runtime
+   - Support for type checking and validation
+   - Utilities for working with unknown types
+
+3. **Schema Evolution**
+   - Handling of schema changes
+   - Support for forward and backward compatibility
+   - Utilities for migrating between schema versions
+
+### Technical Goals
+
+- Rich reflection capabilities for dynamic message handling
+- Support for generic message processing
+- Tools for working with evolving schemas
+- Documentation of best practices for reflection
+
+## Phase 5: Performance Optimization and Platform Support (Sprint 5)
+
+The fifth phase focuses on performance optimization and ensuring support for all Apple platforms.
+
+### Key Components
+
+1. **Performance Optimization**
+   - Profiling and benchmarking
+   - Optimization of critical paths
+   - Memory usage optimization
+   - Caching strategies
+
+2. **Platform Support**
+   - iOS support
+   - macOS support
+   - tvOS support
+   - watchOS support
+   - Swift Concurrency support
+   - Thread safety
+
+3. **Documentation and Examples**
+   - Comprehensive API documentation
+   - Usage examples for common scenarios
+   - Best practices guide
+   - Performance guidelines
+
+### Technical Goals
+
+- Production-ready performance
+- Full support for all Apple platforms
+- Comprehensive documentation
+- Ready for public release
+
+## Integration with SwiftProtobuf
+
+Throughout all phases, a key focus is ensuring seamless integration with Apple's SwiftProtobuf library. This includes:
+
+1. **Using SwiftProtobuf Types**
+   - Building on SwiftProtobuf's descriptor types
+   - Leveraging SwiftProtobuf's wire format implementation
+   - Ensuring compatibility with SwiftProtobuf's generated code
+
+2. **Conversion Utilities**
+   - Converting between dynamic messages and generated messages
+   - Preserving all information during conversion
+   - Handling unknown fields correctly
+
+3. **Best Practices**
+   - When to use generated code vs. dynamic messages
+   - How to combine both approaches effectively
+   - Performance considerations
 
 ## Testing Strategy
 
-### Unit Testing
-- Every public API will have comprehensive unit tests
-- Edge cases will be explicitly tested
-- Negative test cases will be included to verify error handling
+A comprehensive testing strategy is essential for ensuring the quality and reliability of the library. This includes:
 
-### Integration Testing
-- End-to-end tests for serialization/deserialization workflows
-- Cross-component integration tests
-- API usage pattern tests
+1. **Unit Testing**
+   - Testing of individual components in isolation
+   - High code coverage (target: 90%+)
+   - Testing of edge cases and error conditions
 
-### Performance Testing
-- Benchmark tests for core operations
-- Memory usage profiling
-- Scalability tests with varying message sizes
-- Comparison benchmarks against compiled protobuf
+2. **Integration Testing**
+   - Testing of components working together
+   - Testing of integration with SwiftProtobuf
+   - Testing of real-world scenarios
 
-### Interoperability Testing
-- Tests with messages generated by protoc
-- Compatibility tests with SwiftProtobuf
-- Cross-platform verification
+3. **Performance Testing**
+   - Benchmarking of key operations
+   - Comparison with generated code
+   - Memory usage monitoring
 
-### Continuous Integration
-- Automated test runs on every commit
-- Performance regression detection
-- Code coverage tracking
-- Static analysis integration
-
-## Technical Debt Management
-
-To prevent accumulation of technical debt, we will:
-
-1. Maintain a minimum of 90% code coverage
-2. Perform regular code reviews
-3. Refactor code as needed during development
-4. Address performance issues as they are identified
-5. Document design decisions and trade-offs
-
-## Risk Management
-
-### Technical Risks and Mitigations
-
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|------------|------------|
-| Performance below target | High | Medium | Early and continuous performance testing, optimization sprints |
-| Compatibility issues with protoc | High | Medium | Comprehensive interoperability testing, wire format compliance checks |
-| Memory leaks in complex scenarios | Medium | Low | Memory profiling, leak detection in CI |
-| API design limitations discovered late | High | Medium | Early prototyping, incremental API reviews |
-| Swift language evolution impacts | Medium | Low | Monitoring Swift evolution, defensive API design |
+4. **Compatibility Testing**
+   - Testing across all supported platforms
+   - Testing with different Swift versions
+   - Testing with different SwiftProtobuf versions
 
 ## Conclusion
 
-This technical roadmap provides a structured approach to developing SwiftProtoReflect, ensuring that all acceptance criteria are met through comprehensive testing. By following this roadmap, we will deliver a high-quality, performant, and developer-friendly library for dynamic Protocol Buffer handling in Swift. 
+This technical roadmap outlines the path to delivering a production-ready dynamic Protocol Buffer handling library for Swift that builds directly on Apple's SwiftProtobuf library. By following this roadmap, we will create a library that provides the flexibility of dynamic message handling while leveraging the performance and compatibility of SwiftProtobuf. 

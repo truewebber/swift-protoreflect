@@ -1,197 +1,230 @@
 # SwiftProtoReflect Testing Strategy
 
-This document outlines the comprehensive testing approach for the SwiftProtoReflect project, ensuring high quality and reliability of the library.
+This document outlines the comprehensive testing strategy for the SwiftProtoReflect library, ensuring that it meets all functional requirements, performance goals, and quality standards.
 
 ## Testing Principles
 
-1. **Test-Driven Development (TDD)**
-   - Write tests before implementing functionality
-   - Use tests to drive design decisions
-   - Refactor code with confidence after tests pass
+1. **Test-Driven Development**: Tests will be written before implementation to guide the development process.
+2. **Comprehensive Coverage**: We aim for at least 90% code coverage across the library.
+3. **Realistic Scenarios**: Tests will include real-world usage patterns and edge cases.
+4. **Performance Awareness**: Performance benchmarks will be included to ensure the library meets performance goals.
+5. **Integration Focus**: Tests will verify seamless integration with Apple's SwiftProtobuf library.
 
-2. **Comprehensive Coverage**
-   - Minimum 90% code coverage for all components
-   - 100% coverage for critical components (wire format, serialization)
-   - Cover both happy paths and error cases
-
-3. **Multi-Level Testing**
-   - Unit tests for individual components
-   - Integration tests for component interactions
-   - Performance tests for critical operations
-   - Interoperability tests with protoc-generated code
-
-4. **Automated Testing**
-   - All tests run on every commit via CI
-   - Performance regression tests run nightly
-   - Automated code coverage reporting
-
-## Test Types and Tools
+## Test Types
 
 ### Unit Testing
 
-**Framework**: XCTest
+Unit tests focus on testing individual components in isolation to ensure they function correctly.
 
-**Key Areas**:
-- Individual class functionality
-- Method behavior verification
-- Edge case handling
-- Error conditions
+#### Descriptor Wrapper Tests
 
-**Example Test Structure**:
-```swift
-func testProtoFieldDescriptorValidation() {
-    // Given
-    let invalidField = ProtoFieldDescriptor(name: "", number: -1, type: .int32, isRepeated: false, isMap: false)
-    
-    // When
-    let isValid = invalidField.isValid()
-    
-    // Then
-    XCTAssertFalse(isValid, "Field with empty name and negative number should be invalid")
-}
-```
+- **MessageDescriptor Tests**
+  - Initialization from SwiftProtobuf descriptors
+  - Access to message properties (name, full name)
+  - Field lookup by name and number
+  - Nested type access
+  - Validation logic
+
+- **FieldDescriptor Tests**
+  - Initialization from SwiftProtobuf descriptors
+  - Access to field properties (name, number, type)
+  - Type identification (repeated, map, required)
+  - Default value handling
+  - Validation logic
+
+- **EnumDescriptor Tests**
+  - Initialization from SwiftProtobuf descriptors
+  - Access to enum properties (name, full name)
+  - Value lookup by name and number
+  - Validation logic
+
+- **OneofDescriptor Tests**
+  - Initialization from SwiftProtobuf descriptors
+  - Access to oneof properties (name)
+  - Field access within oneof
+  - Validation logic
+
+#### Descriptor Registry Tests
+
+- Registration of file descriptors
+- Lookup of message and enum descriptors
+- Handling of dependencies between descriptors
+- Thread safety
+- Error handling
+
+#### DynamicMessage Tests
+
+- Initialization from descriptors
+- Getting and setting field values
+- Validation of field values
+- Handling of different field types
+- Error handling
 
 ### Integration Testing
 
-**Framework**: XCTest
+Integration tests focus on testing how components work together and with SwiftProtobuf.
 
-**Key Areas**:
-- Component interactions
-- End-to-end message handling
-- Cross-component workflows
+#### Serialization Integration Tests
 
-**Example Test Structure**:
-```swift
-func testMessageSerializationDeserialization() {
-    // Given
-    let descriptor = createTestMessageDescriptor()
-    let message = ProtoReflect.createMessage(from: descriptor)
-    message.set(field: descriptor.fields[0], value: .intValue(123))
-    
-    // When
-    let data = ProtoReflect.marshal(message: message)
-    let deserializedMessage = ProtoReflect.unmarshal(data: data!, descriptor: descriptor)
-    
-    // Then
-    XCTAssertEqual(deserializedMessage?.get(field: descriptor.fields[0])?.getInt(), 123)
-}
-```
+- Binary format serialization and deserialization
+- JSON format serialization and deserialization
+- Text format serialization and deserialization
+- Handling of unknown fields
+- Error handling during serialization/deserialization
+
+#### SwiftProtobuf Integration Tests
+
+- Conversion between dynamic messages and generated messages
+- Preservation of all fields during conversion
+- Handling of unknown fields during conversion
+- Compatibility with different SwiftProtobuf versions
+
+#### Advanced Field Type Tests
+
+- Repeated field handling
+- Map field handling
+- Oneof field handling
+- Extension field handling
+- Nested message handling
 
 ### Performance Testing
 
-**Framework**: XCTest with XCTMeasureMetrics
+Performance tests focus on ensuring the library meets performance goals.
 
-**Key Areas**:
-- Serialization/deserialization speed
-- Memory usage
+#### Benchmarking
+
 - Field access performance
+- Serialization/deserialization performance
+- Message creation performance
+- Conversion performance
+- Memory usage
 
-**Example Test Structure**:
-```swift
-func testSerializationPerformance() {
-    let descriptor = createLargeMessageDescriptor()
-    let message = createPopulatedMessage(descriptor: descriptor)
-    
-    measure {
-        _ = ProtoReflect.marshal(message: message)
-    }
-}
-```
+#### Comparison Benchmarks
 
-**Benchmarks**:
-- Serialization: Within 40% of compiled protobuf
-- Deserialization: Within 40% of compiled protobuf
-- Field access: Within 25% of direct property access
-- Memory usage: Not exceeding 1.5x of compiled protobuf
+- Comparison with direct SwiftProtobuf usage
+- Performance impact of dynamic vs. static approach
+- Memory usage comparison
 
-### Interoperability Testing
+### Compatibility Testing
 
-**Approach**: Compare with protoc-generated code
+Compatibility tests focus on ensuring the library works across all supported platforms and environments.
 
-**Key Areas**:
-- Wire format compatibility
-- Message structure equivalence
-- Round-trip conversion
+#### Platform Compatibility
 
-**Example Test Structure**:
-```swift
-func testInteroperabilityWithProtoc() {
-    // Given
-    let swiftProtobufMessage = createSwiftProtobufMessage()
-    let swiftProtobufData = try! swiftProtobufMessage.serializedData()
-    
-    // When
-    let dynamicMessage = ProtoReflect.unmarshal(data: swiftProtobufData, descriptor: testDescriptor)
-    let roundTripData = ProtoReflect.marshal(message: dynamicMessage!)
-    
-    // Then
-    XCTAssertEqual(swiftProtobufData, roundTripData)
-}
-```
+- iOS compatibility
+- macOS compatibility
+- tvOS compatibility
+- watchOS compatibility
 
-## Test Data Strategy
+#### Swift Version Compatibility
 
-1. **Test Fixtures**
-   - Create reusable message descriptors for testing
-   - Generate test messages of various sizes and complexities
-   - Include edge cases and boundary conditions
+- Compatibility with Swift 5.9
+- Compatibility with Swift 6.0
+- Compatibility with future Swift versions
 
-2. **Property-Based Testing**
-   - Use randomized inputs for wire format testing
-   - Verify invariants hold across random message structures
-   - Test with varying field types and combinations
+#### SwiftProtobuf Version Compatibility
 
-3. **Real-World Examples**
-   - Include tests based on common protobuf usage patterns
-   - Test with examples from popular protobuf schemas
-   - Verify compatibility with Google's well-known types
+- Compatibility with current SwiftProtobuf version
+- Compatibility with future SwiftProtobuf versions
 
 ## Test Implementation Plan
 
-### Sprint 1: Core Testing Infrastructure
-- Set up XCTest framework
-- Create test fixtures for descriptors
-- Implement basic test utilities
-- Establish code coverage reporting
+### Sprint 1: Core Infrastructure
 
-### Sprints 2-6: Component Testing
-- Implement unit tests for each component as developed
-- Add integration tests for completed components
-- Begin interoperability testing as wire format is implemented
+- Unit tests for descriptor wrapper classes
+- Unit tests for descriptor registry
+- Unit tests for basic DynamicMessage implementation
+- Performance benchmarks for key operations
+- SwiftProtobuf integration tests for descriptor handling
 
-### Sprints 7-9: Performance Testing
-- Implement performance benchmarks
-- Create memory usage tests
-- Establish performance baselines
-- Add regression detection
+### Sprint 2: Serialization and Deserialization
 
-### Sprints 10-12: Comprehensive Testing
-- Complete test coverage for all components
-- Finalize interoperability test suite
-- Implement cross-platform test verification
-- Create documentation for test suite
+- Unit tests for binary format serialization/deserialization
+- Unit tests for JSON format serialization/deserialization
+- Unit tests for text format serialization/deserialization
+- Integration tests for serialization with SwiftProtobuf
+- Performance benchmarks for serialization/deserialization
+
+### Sprint 3: Advanced Field Types
+
+- Unit tests for repeated field handling
+- Unit tests for map field handling
+- Unit tests for oneof field handling
+- Unit tests for extension field handling
+- Integration tests for advanced field types with SwiftProtobuf
+- Performance benchmarks for advanced field operations
+
+### Sprint 4: Reflection and Introspection
+
+- Unit tests for message reflection
+- Unit tests for type information
+- Unit tests for schema evolution
+- Integration tests for reflection with SwiftProtobuf
+- Performance benchmarks for reflection operations
+
+### Sprint 5: Performance Optimization and Platform Support
+
+- Performance optimization tests
+- Platform compatibility tests
+- Swift version compatibility tests
+- SwiftProtobuf version compatibility tests
+- Final regression tests
+- Documentation verification tests
+
+## Test Data Strategy
+
+### Test Proto Files
+
+We will create a set of test .proto files that cover various Protocol Buffer features:
+
+1. **Basic Types**: A proto file with all basic field types
+2. **Nested Messages**: A proto file with nested message definitions
+3. **Enums**: A proto file with enum definitions
+4. **Repeated Fields**: A proto file with repeated fields
+5. **Map Fields**: A proto file with map fields
+6. **Oneofs**: A proto file with oneof fields
+7. **Extensions**: A proto file with extensions
+8. **Options**: A proto file with various options
+9. **Services**: A proto file with service definitions
+10. **Complex Schema**: A proto file with a complex schema combining multiple features
+
+### Test Data Generation
+
+We will generate test data for each test proto file:
+
+1. **Generated Swift Code**: Using protoc with the SwiftProtobuf plugin
+2. **Binary Test Data**: Sample binary-encoded messages
+3. **JSON Test Data**: Sample JSON-encoded messages
+4. **Text Format Test Data**: Sample text format-encoded messages
+
+### Test Utilities
+
+We will create test utilities to facilitate testing:
+
+1. **Message Comparison**: Utilities for comparing messages for equality
+2. **Test Data Loading**: Utilities for loading test data from files
+3. **Random Message Generation**: Utilities for generating random messages
+4. **Performance Measurement**: Utilities for measuring performance
+
+## Continuous Integration
+
+We will set up a continuous integration pipeline that:
+
+1. Runs all tests on every commit
+2. Measures code coverage
+3. Runs performance benchmarks
+4. Performs static analysis
+5. Verifies documentation
 
 ## Test Documentation
 
-All tests will include:
-- Clear purpose statement
-- Setup and teardown explanation
-- Expected outcomes
-- Edge cases covered
-- Performance expectations (where applicable)
+We will document our tests to ensure they are maintainable and understandable:
 
-## Continuous Improvement
+1. **Test Plan**: A document describing the overall test strategy
+2. **Test Cases**: Documentation for each test case, including purpose and expected results
+3. **Test Data**: Documentation for test data, including how it was generated
+4. **Test Results**: Regular reports on test results and coverage
 
-The testing strategy will be reviewed and updated:
-- After each sprint retrospective
-- When new testing requirements are identified
-- When performance issues are discovered
-- As the library evolves
+## Conclusion
 
-## Test Reporting
-
-Test results will be:
-- Visible in CI pipeline
-- Documented in code coverage reports
-- Tracked for performance regressions
-- Included in release notes for major versions 
+This testing strategy ensures that SwiftProtoReflect will be a high-quality, reliable library that meets all functional requirements, performance goals, and quality standards. By following this strategy, we will deliver a library that integrates seamlessly with Apple's SwiftProtobuf library while providing powerful dynamic message handling capabilities. 

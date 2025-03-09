@@ -2,55 +2,72 @@
 
 ## Product Vision
 
-SwiftProtoReflect aims to be the premier Swift library for dynamic Protocol Buffer handling, enabling developers to work with protobuf messages without pre-compiled schemas. Our vision is to provide a robust, performant, and developer-friendly solution that maintains wire format compatibility while offering the flexibility of runtime message definition and manipulation.
+SwiftProtoReflect aims to be the premier Swift library for dynamic Protocol Buffer handling, enabling developers to work with protobuf messages without pre-compiled schemas. Our vision is to provide a robust, performant, and developer-friendly solution that **builds directly on Apple's SwiftProtobuf library as our foundation**. Rather than creating parallel implementations, we extend SwiftProtobuf with dynamic capabilities while maintaining full compatibility with its static, generated code approach. This ensures developers can seamlessly combine static and dynamic handling in the same application.
 
 ## Market Opportunity
 
-Protocol Buffers are widely used for serialization in distributed systems, microservices, and mobile applications. However, traditional protobuf implementations require a compilation step that can be cumbersome in certain scenarios:
+Protocol Buffers are widely used for serialization in distributed systems, microservices, and mobile applications. While Apple's SwiftProtobuf provides excellent support for static, code-generation based Protocol Buffers, there are several scenarios where a dynamic approach is beneficial:
 
 1. **Dynamic API consumption**: When working with frequently changing APIs
 2. **Exploratory development**: When prototyping or exploring new services
 3. **Testing and debugging**: When needing to mock or manipulate messages
 4. **Legacy system integration**: When documentation is incomplete or schemas are unavailable
+5. **Hybrid approaches**: When needing to combine static and dynamic protobuf handling in the same application
 
-SwiftProtoReflect addresses these pain points by providing a dynamic, reflection-based approach to Protocol Buffers in Swift.
+SwiftProtoReflect addresses these pain points by **extending Apple's SwiftProtobuf with dynamic capabilities**, providing a seamless experience for developers already familiar with the SwiftProtobuf ecosystem.
+
+## Scope Clarification
+
+SwiftProtoReflect is focused specifically on:
+
+1. **Core Dynamic Message Handling**: Creating and modifying Protocol Buffer objects dynamically based on descriptors
+2. **SwiftProtobuf Integration**: Leveraging Apple's SwiftProtobuf for serialization/deserialization where possible
+3. **Reflection Capabilities**: Providing introspection and manipulation of message structures at runtime
+
+The library intentionally does not include:
+- Framework-specific integrations (SwiftUI, Combine, etc.)
+- Application-specific functionality
+- Higher-level abstractions beyond dynamic message handling
+
+These capabilities are better suited for separate libraries that build on top of SwiftProtoReflect.
 
 ## Product Decomposition by Epics
 
 ### Epic 1: Core Message Handling Framework
-**Goal**: Establish a robust foundation for dynamic protobuf message handling
+**Goal**: Establish a robust foundation for dynamic protobuf message handling on top of SwiftProtobuf
 
 #### User Stories:
-1. As a developer, I need to define protobuf message structures at runtime so I can work without pre-compiled schemas
+1. As a developer, I need to define protobuf message structures at runtime using SwiftProtobuf descriptor types so I can work without pre-compiled schemas
 2. As a developer, I need to create and manipulate message instances dynamically so I can adapt to changing requirements
 3. As a developer, I need to access field values in a type-safe manner so I can avoid runtime errors
 4. As a developer, I need to validate message structures so I can ensure compatibility with protobuf specifications
+5. As a developer, I need seamless conversion between SwiftProtobuf's static messages and dynamic messages so I can use both approaches where appropriate
 
 #### Acceptance Criteria:
-- Message descriptors must support all standard protobuf field types (int32, int64, uint32, uint64, string, bool, message, enum)
+- Dynamic message implementation must be built directly on SwiftProtobuf's descriptor types (Google_Protobuf_DescriptorProto, etc.)
+- Must support all standard protobuf field types supported by SwiftProtobuf
 - Field access must be type-safe with appropriate error handling
-- Message validation must verify field numbers, names, and types according to protobuf specifications
-- API must be intuitive and consistent with Swift idioms
+- Message validation must leverage SwiftProtobuf's validation capabilities
+- API must be intuitive and consistent with Swift idioms and SwiftProtobuf conventions
 - 100% unit test coverage for core components
-- Performance benchmarks must show acceptable overhead compared to compiled protobuf (within 30% for typical operations)
+- Performance benchmarks must show acceptable overhead compared to direct SwiftProtobuf usage (within 30% for typical operations)
 
 ### Epic 2: Wire Format Serialization
-**Goal**: Ensure full compatibility with protobuf binary wire format
+**Goal**: Leverage SwiftProtobuf's wire format implementation for serialization and deserialization
 
 #### User Stories:
-1. As a developer, I need to serialize dynamic messages to standard protobuf binary format so I can communicate with existing protobuf systems
-2. As a developer, I need to deserialize protobuf binary data into dynamic messages so I can process incoming protobuf messages
-3. As a developer, I need to handle all protobuf wire types (varint, fixed64, length-delimited, etc.) so I can work with any valid protobuf message
+1. As a developer, I need to serialize dynamic messages to standard protobuf binary format using SwiftProtobuf's serialization engine
+2. As a developer, I need to deserialize protobuf binary data into dynamic messages using SwiftProtobuf's deserialization capabilities
+3. As a developer, I need to handle all protobuf wire types supported by SwiftProtobuf
 
 #### Acceptance Criteria:
-- Must support all protobuf wire types (0-5)
+- Must use SwiftProtobuf's serialization and deserialization capabilities rather than implementing a parallel solution
+- Must support all wire format features supported by SwiftProtobuf
 - Must correctly handle field numbers and wire types in the binary format
-- Must support varint encoding/decoding for appropriate types
-- Must handle length-delimited fields correctly
 - Must pass interoperability tests with messages generated by protoc
 - Must handle messages up to 50MB in size
-- Serialization/deserialization performance must be within 40% of compiled protobuf
-- 100% unit test coverage for wire format components
+- Serialization/deserialization performance must be within 40% of direct SwiftProtobuf usage
+- 100% unit test coverage for serialization components
 
 ### Epic 3: Advanced Field Types Support
 **Goal**: Support complex field types and relationships
@@ -118,21 +135,20 @@ SwiftProtoReflect addresses these pain points by providing a dynamic, reflection
 - Must include troubleshooting section for common issues
 - Documentation must be reviewed for clarity and completeness by at least 3 developers
 
-### Epic 7: Integration and Interoperability
-**Goal**: Ensure seamless integration with existing Swift ecosystems
+### Epic 7: Cross-Platform Compatibility
+**Goal**: Ensure the library works consistently across all Apple platforms
 
 #### User Stories:
 1. As a developer, I need compatibility with Swift Concurrency so I can use the library in modern Swift applications
-2. As a developer, I need interoperability with SwiftProtobuf so I can gradually migrate existing code
-3. As a developer, I need compatibility with common Swift frameworks so I can integrate with my tech stack
+2. As a developer, I need the library to work on all Apple platforms so I can use it in any Swift project
+3. As a developer, I need bidirectional conversion between generated SwiftProtobuf messages and dynamic messages so I can use the most appropriate approach for different parts of my application
 
 #### Acceptance Criteria:
 - Must provide async/await APIs for serialization/deserialization operations
-- Must include interoperability utilities for converting between SwiftProtoReflect and SwiftProtobuf types
 - Must be compatible with iOS 15+, macOS 12+, watchOS 8+, and tvOS 15+
 - Must work with Swift Package Manager and CocoaPods
-- Must include integration examples with popular Swift frameworks (Combine, SwiftUI, etc.)
-- Must pass integration tests with sample applications
+- Must provide clear documentation on platform-specific considerations
+- Must pass all tests on all supported platforms
 
 ## Strict Acceptance Criteria for v1.0 Release
 
@@ -140,8 +156,8 @@ To ensure a stable and production-ready v1.0 release, the following criteria mus
 
 ### Functionality
 1. **Complete Core API**: All planned APIs must be implemented and stable
-2. **Wire Format Compatibility**: 100% compatibility with protobuf binary format (proto2 and proto3)
-3. **Field Type Support**: Support for all standard protobuf field types
+2. **Wire Format Compatibility**: 100% compatibility with SwiftProtobuf's implementation of the protobuf binary format
+3. **Field Type Support**: Support for all standard protobuf field types supported by SwiftProtobuf
 4. **Complex Type Support**: Support for repeated fields, maps, nested messages, and enums
 5. **Reflection API**: Complete implementation of reflection and introspection capabilities
 
@@ -163,8 +179,9 @@ To ensure a stable and production-ready v1.0 release, the following criteria mus
 1. **Platform Support**: Verified compatibility with iOS 15+, macOS 12+, watchOS 8+, and tvOS 15+
 2. **Swift Version**: Compatible with Swift 5.5+ (for concurrency support)
 3. **Package Managers**: Support for Swift Package Manager and CocoaPods
-4. **Interoperability**: Verified interoperability with messages generated by protoc
-5. **Backward Compatibility**: Commitment to backward compatibility for future minor versions
+4. **SwiftProtobuf Compatibility**: Verified compatibility with the latest version of SwiftProtobuf
+5. **Bidirectional Conversion**: Seamless conversion between generated SwiftProtobuf messages and dynamic messages
+6. **Backward Compatibility**: Commitment to backward compatibility for future minor versions
 
 ### Performance
 1. **Serialization Speed**: Within 40% of compiled protobuf for equivalent operations
@@ -211,8 +228,15 @@ To ensure a stable and production-ready v1.0 release, the following criteria mus
 2. **Quality**: Fewer than 5 critical bugs reported in first 3 months
 3. **Community**: At least 10 community contributions within first year
 4. **Usage**: At least 5 production applications using the library within first year
-5. **Feedback**: Average rating of 4.5/5 in developer satisfaction surveys
+5. **Integration**: At least 3 projects successfully using SwiftProtoReflect alongside generated SwiftProtobuf code
+6. **Feedback**: Average rating of 4.5/5 in developer satisfaction surveys
 
 ## Conclusion
 
-SwiftProtoReflect fills a significant gap in the Swift ecosystem by providing dynamic Protocol Buffer handling capabilities. By focusing on developer experience, performance, and compatibility, we aim to deliver a library that becomes the standard for dynamic protobuf handling in Swift applications. The structured approach outlined in this document ensures we deliver a high-quality, production-ready library that meets real developer needs. 
+SwiftProtoReflect fills a significant gap in the Swift ecosystem by providing dynamic Protocol Buffer handling capabilities that build directly on Apple's SwiftProtobuf library. By extending SwiftProtobuf rather than creating a parallel implementation, we ensure seamless integration with the existing ecosystem while adding valuable dynamic capabilities.
+
+Our approach acknowledges SwiftProtobuf as the foundation for Protocol Buffer handling in Swift and focuses on adding value through dynamic message handling, runtime reflection, and simplified APIs for common dynamic operations. This pragmatic approach ensures developers can leverage the best of both worlds: the type safety of generated code when appropriate, and the flexibility of dynamic handling when needed.
+
+The library maintains a focused scope, concentrating on core dynamic message handling functionality without venturing into framework-specific integrations. This ensures that SwiftProtoReflect remains a solid foundation upon which other libraries and applications can build more specialized functionality.
+
+The structured approach outlined in this document ensures we deliver a high-quality, production-ready library that meets real developer needs while maintaining full compatibility with the SwiftProtobuf ecosystem. 
