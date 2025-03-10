@@ -14,15 +14,29 @@ let package = Package(
       targets: ["SwiftProtoReflect"]
     )
   ],
-  dependencies: [],
+  dependencies: [
+    .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.20.0")
+  ],
   targets: [
     .target(
       name: "SwiftProtoReflect",
-      dependencies: []
+      dependencies: [
+        .product(name: "SwiftProtobuf", package: "swift-protobuf")
+      ]
     ),
     .testTarget(
       name: "SwiftProtoReflectTests",
-      dependencies: ["SwiftProtoReflect"]
+      dependencies: [
+        "SwiftProtoReflect",
+        .product(name: "SwiftProtobuf", package: "swift-protobuf"),
+      ]
+    ),
+    .testTarget(
+      name: "SwiftProtoReflectBenchmarks",
+      dependencies: [
+        "SwiftProtoReflect",
+        .product(name: "SwiftProtobuf", package: "swift-protobuf"),
+      ]
     ),
   ]
 )

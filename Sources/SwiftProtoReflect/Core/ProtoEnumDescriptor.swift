@@ -1,10 +1,17 @@
-/// Describes an enum type within a Protocol Buffer message, including its values and names.
+import Foundation
+import SwiftProtobuf
+
+/// Describes a Protocol Buffer enum type, including its name and values.
 ///
 /// This class provides metadata about a Protocol Buffer enum type, including its name and values.
 /// It is used for dynamic enum handling and validation.
 ///
 /// Example:
 /// ```swift
+/// // Creating from a SwiftProtobuf enum descriptor
+/// let enumDescriptor = ProtoEnumDescriptor(enumProto: enumProto)
+///
+/// // Or creating manually
 /// let statusEnum = ProtoEnumDescriptor(
 ///     name: "Status",
 ///     values: [
@@ -15,27 +22,52 @@
 /// )
 /// ```
 public class ProtoEnumDescriptor {
-  /// Name of the enum type.
+  /// The name of the enum type.
   ///
-  /// This is the name of the enum as defined in the Protocol Buffer schema.
+  /// This is the simple name of the enum, without any package or parent message names.
+  /// For example, an enum defined as `enum Status { ... }` would have the name "Status".
   public let name: String
 
-  /// List of enum value descriptors in the enum.
+  /// The values defined in the enum.
   ///
-  /// These describe the values that make up the enum, including their names and numbers.
+  /// These are the individual enum values, each with a name and number.
   public let values: [ProtoEnumValueDescriptor]
 
-  /// Creates a new enum descriptor with the specified properties.
+  /// The original SwiftProtobuf enum descriptor proto, if this descriptor was created from one.
+  private let enumProto: Google_Protobuf_EnumDescriptorProto?
+
+  /// Creates a new enum descriptor with the specified name and values.
   ///
   /// - Parameters:
   ///   - name: The name of the enum type.
-  ///   - values: The value descriptors for the enum's values.
+  ///   - values: The values defined in the enum.
   public init(name: String, values: [ProtoEnumValueDescriptor]) {
     self.name = name
     self.values = values
+    self.enumProto = nil
   }
 
-  /// Retrieves an enum value by name.
+  /// Creates a new enum descriptor from a SwiftProtobuf enum descriptor proto.
+  ///
+  /// - Parameter enumProto: The SwiftProtobuf enum descriptor proto.
+  public init(enumProto: Google_Protobuf_EnumDescriptorProto) {
+    self.name = enumProto.name
+
+    // Create enum value descriptors
+    var valueDescriptors: [ProtoEnumValueDescriptor] = []
+    for valueProto in enumProto.value {
+      let valueDescriptor = ProtoEnumValueDescriptor(
+        name: valueProto.name,
+        number: Int(valueProto.number)
+      )
+      valueDescriptors.append(valueDescriptor)
+    }
+
+    self.values = valueDescriptors
+    self.enumProto = enumProto
+  }
+
+  /// Retrieves an enum value descriptor by name.
   ///
   /// - Parameter name: The name of the enum value to retrieve.
   /// - Returns: The enum value descriptor, or nil if no value with the given name exists.
@@ -43,11 +75,11 @@ public class ProtoEnumDescriptor {
     return values.first { $0.name == name }
   }
 
-  /// Retrieves an enum value by number.
+  /// Retrieves an enum value descriptor by number.
   ///
   /// - Parameter number: The number of the enum value to retrieve.
   /// - Returns: The enum value descriptor, or nil if no value with the given number exists.
-  public func value(by number: Int) -> ProtoEnumValueDescriptor? {
+  public func value(withNumber number: Int) -> ProtoEnumValueDescriptor? {
     return values.first { $0.number == number }
   }
 
@@ -55,12 +87,12 @@ public class ProtoEnumDescriptor {
   ///
   /// A valid enum descriptor must have a non-empty name and at least one value.
   ///
-  /// - Returns: `true` if the descriptor is valid, `false` otherwise.
+  /// - Returns: `true` if the enum descriptor is valid, `false` otherwise.
   public func isValid() -> Bool {
     return !name.isEmpty && !values.isEmpty
   }
 
-  /// Returns a validation error message if the descriptor is invalid, or nil if it's valid.
+  /// Returns a validation error message if the enum descriptor is invalid, or nil if it's valid.
   ///
   /// This method provides detailed information about why an enum descriptor is invalid.
   ///
@@ -92,11 +124,13 @@ public class ProtoEnumDescriptor {
       valueNames.insert(value.name)
     }
 
-    // Check value validity
-    for value in values where !value.isValid() {
-      return "Invalid value in enum \(name): \(value.name)"
-    }
-
     return nil
+  }
+
+  /// Returns the original SwiftProtobuf enum descriptor proto if available.
+  ///
+  /// - Returns: The original enum descriptor proto, or nil if this descriptor was not created from one.
+  public func originalEnumProto() -> Google_Protobuf_EnumDescriptorProto? {
+    return enumProto
   }
 }

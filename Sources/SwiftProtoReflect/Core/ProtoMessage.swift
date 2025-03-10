@@ -31,12 +31,16 @@ public protocol ProtoMessage {
   /// - Parameters:
   ///   - field: The descriptor of the field to set.
   ///   - value: The value to set for the field.
-  func set(field: ProtoFieldDescriptor, value: ProtoValue)
+  /// - Returns: `true` if the value was set successfully, `false` otherwise.
+  @discardableResult
+  func set(field: ProtoFieldDescriptor, value: ProtoValue) -> Bool
 
   /// Clears the value of the specified field, resetting it to its default.
   ///
   /// - Parameter field: The descriptor of the field to clear.
-  func clear(field: ProtoFieldDescriptor)
+  /// - Returns: `true` if the field was cleared successfully, `false` otherwise.
+  @discardableResult
+  func clear(field: ProtoFieldDescriptor) -> Bool
 
   /// Returns whether the message is valid and properly initialized.
   ///

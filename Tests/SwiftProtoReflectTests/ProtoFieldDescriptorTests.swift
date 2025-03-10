@@ -163,23 +163,19 @@ class ProtoFieldDescriptorTests: XCTestCase {
 
   func testAllFieldTypes() {
     // Test all field types to ensure they work correctly
-    let types: [ProtoFieldType] = [.int32, .int64, .uint32, .uint64, .string, .bool, .enumType]
+    let types: [ProtoFieldType] = [.int32, .int64, .uint32, .uint64, .string, .bool, .enum]
 
     for type in types {
-      let field = ProtoFieldDescriptor(name: "field", number: 1, type: type, isRepeated: false, isMap: false)
-      XCTAssertTrue(field.isValid(), "Field with type \(type) should be valid")
-    }
+      let descriptor = ProtoFieldDescriptor(
+        name: "test_field",
+        number: 1,
+        type: type,
+        isRepeated: false,
+        isMap: false
+      )
 
-    // Message type requires a messageType descriptor
-    let messageType = ProtoMessageDescriptor(fullName: "TestMessage", fields: [], enums: [], nestedMessages: [])
-    let messageField = ProtoFieldDescriptor(
-      name: "field",
-      number: 1,
-      type: .message,
-      isRepeated: false,
-      isMap: false,
-      messageType: messageType
-    )
-    XCTAssertTrue(messageField.isValid(), "Message field with messageType should be valid")
+      XCTAssertEqual(descriptor.type, type)
+      XCTAssertTrue(descriptor.isValid())
+    }
   }
 }

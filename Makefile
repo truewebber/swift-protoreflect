@@ -27,6 +27,8 @@ help:
 	@echo "  make lint                     - Lint the Swift code (non-destructive check)."
 	@echo "  make format                   - Format the Swift code in-place."
 	@echo "  make test                     - Run unit tests."
+	@echo "  make coverage                 - Generate a code coverage report."
+	@echo "  make coverage-detailed        - Generate a detailed code coverage report."
 	@echo "  make list-toolchains          - List available Swift toolchains."
 	@echo ""
 	@echo "Environment variables:"
@@ -52,6 +54,12 @@ test:
 	@echo "Running swift test..."
 	$(SWIFT_TEST) -q
 	@echo "Tests complete."
+
+## Generate a code coverage report
+coverage:
+	@echo "Generating code coverage report..."
+	./coverage-report.sh
+	@echo "Coverage report complete. See docs/SwiftProtoReflect_Coverage_Report.md for details."
 
 ## List available Swift toolchains
 list-toolchains:

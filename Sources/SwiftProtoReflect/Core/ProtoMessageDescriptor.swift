@@ -1,3 +1,6 @@
+import Foundation
+import SwiftProtobuf
+
 /// Describes the structure of a Protocol Buffer message, including its fields, enums, and nested messages.
 ///
 /// This class provides metadata about a Protocol Buffer message type, including its fields,
@@ -5,6 +8,10 @@
 ///
 /// Example:
 /// ```swift
+/// // Creating from a SwiftProtobuf descriptor
+/// let messageDescriptor = ProtoMessageDescriptor(descriptorProto: descriptorProto, packageName: "example")
+///
+/// // Or creating manually
 /// let personDescriptor = ProtoMessageDescriptor(
 ///     fullName: "Person",
 ///     fields: [
@@ -37,6 +44,9 @@ public class ProtoMessageDescriptor {
   /// These describe any message types defined within this message.
   public let nestedMessages: [ProtoMessageDescriptor]
 
+  /// The original SwiftProtobuf descriptor proto, if this descriptor was created from one.
+  private let descriptorProto: Google_Protobuf_DescriptorProto?
+
   /// Creates a new message descriptor with the specified properties.
   ///
   /// - Parameters:
@@ -54,6 +64,59 @@ public class ProtoMessageDescriptor {
     self.fields = fields
     self.enums = enums
     self.nestedMessages = nestedMessages
+    self.descriptorProto = nil
+  }
+
+  /// Creates a new message descriptor from a SwiftProtobuf descriptor proto.
+  ///
+  /// - Parameters:
+  ///   - descriptorProto: The SwiftProtobuf descriptor proto.
+  ///   - packageName: The package name for the message.
+  ///   - parentFullName: The full name of the parent message, if this is a nested message.
+  public init(descriptorProto: Google_Protobuf_DescriptorProto, packageName: String, parentFullName: String? = nil) {
+    let messageName = descriptorProto.name
+
+    // Determine the full name of the message
+    if let parentFullName = parentFullName {
+      self.fullName = "\(parentFullName).\(messageName)"
+    }
+    else if packageName.isEmpty {
+      self.fullName = messageName
+    }
+    else {
+      self.fullName = "\(packageName).\(messageName)"
+    }
+
+    // Create field descriptors
+    var fieldDescriptors: [ProtoFieldDescriptor] = []
+    for fieldProto in descriptorProto.field {
+      if let fieldDescriptor = ProtoFieldDescriptor(fieldProto: fieldProto, messageProto: descriptorProto) {
+        fieldDescriptors.append(fieldDescriptor)
+      }
+    }
+    self.fields = fieldDescriptors
+
+    // Create enum descriptors
+    var enumDescriptors: [ProtoEnumDescriptor] = []
+    for enumProto in descriptorProto.enumType {
+      let enumDescriptor = ProtoEnumDescriptor(enumProto: enumProto)
+      enumDescriptors.append(enumDescriptor)
+    }
+    self.enums = enumDescriptors
+
+    // Create nested message descriptors
+    var nestedMessageDescriptors: [ProtoMessageDescriptor] = []
+    for nestedMessageProto in descriptorProto.nestedType {
+      let nestedMessageDescriptor = ProtoMessageDescriptor(
+        descriptorProto: nestedMessageProto,
+        packageName: packageName,
+        parentFullName: self.fullName
+      )
+      nestedMessageDescriptors.append(nestedMessageDescriptor)
+    }
+    self.nestedMessages = nestedMessageDescriptors
+
+    self.descriptorProto = descriptorProto
   }
 
   /// Retrieves a field descriptor by name.
@@ -64,6 +127,14 @@ public class ProtoMessageDescriptor {
     return fields.first { $0.name == name }
   }
 
+  /// Retrieves a field descriptor by number.
+  ///
+  /// - Parameter number: The number of the field to retrieve.
+  /// - Returns: The field descriptor, or nil if no field with the given number exists.
+  public func field(number: Int) -> ProtoFieldDescriptor? {
+    return fields.first { $0.number == number }
+  }
+
   /// Retrieves a field descriptor by index.
   ///
   /// - Parameter index: The index of the field to retrieve.
@@ -71,6 +142,22 @@ public class ProtoMessageDescriptor {
   public func field(at index: Int) -> ProtoFieldDescriptor? {
     guard index < fields.count else { return nil }
     return fields[index]
+  }
+
+  /// Retrieves a nested message descriptor by name.
+  ///
+  /// - Parameter name: The name of the nested message to retrieve.
+  /// - Returns: The nested message descriptor, or nil if no nested message with the given name exists.
+  public func nestedMessage(named name: String) -> ProtoMessageDescriptor? {
+    return nestedMessages.first { $0.fullName.hasSuffix(".\(name)") || $0.fullName == name }
+  }
+
+  /// Retrieves an enum descriptor by name.
+  ///
+  /// - Parameter name: The name of the enum to retrieve.
+  /// - Returns: The enum descriptor, or nil if no enum with the given name exists.
+  public func enumType(named name: String) -> ProtoEnumDescriptor? {
+    return enums.first { $0.name == name }
   }
 
   /// Verifies if the descriptor is valid according to Protocol Buffer rules.
@@ -116,5 +203,12 @@ public class ProtoMessageDescriptor {
     }
 
     return nil
+  }
+
+  /// Returns the original SwiftProtobuf descriptor proto if available.
+  ///
+  /// - Returns: The original descriptor proto, or nil if this descriptor was not created from one.
+  public func originalDescriptorProto() -> Google_Protobuf_DescriptorProto? {
+    return descriptorProto
   }
 }

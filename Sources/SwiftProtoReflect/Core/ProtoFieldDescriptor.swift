@@ -1,3 +1,6 @@
+import Foundation
+import SwiftProtobuf
+
 /// A descriptor for a Protocol Buffer field, containing metadata about the field's name, type, and other properties.
 ///
 /// `ProtoFieldDescriptor` represents a single field within a Protocol Buffer message. It contains
@@ -5,6 +8,10 @@
 ///
 /// Example:
 /// ```swift
+/// // Creating from a SwiftProtobuf field descriptor
+/// let fieldDescriptor = ProtoFieldDescriptor(fieldProto: fieldProto, messageProto: messageProto)
+///
+/// // Or creating manually
 /// let fieldDescriptor = ProtoFieldDescriptor(
 ///     name: "user_id",
 ///     number: 1,
@@ -64,6 +71,15 @@ public class ProtoFieldDescriptor: Hashable {
   /// This is required for proper serialization and deserialization of nested messages.
   public let messageType: ProtoMessageDescriptor?
 
+  /// Descriptor for enum fields (for enum types).
+  ///
+  /// For fields of type `.enum`, this property should contain the descriptor for the enum type.
+  /// This is used for proper validation and conversion of enum values.
+  public let enumType: ProtoEnumDescriptor?
+
+  /// The original SwiftProtobuf field descriptor proto, if this descriptor was created from one.
+  private let fieldProto: Google_Protobuf_FieldDescriptorProto?
+
   /// Creates a new field descriptor with the specified properties.
   ///
   /// - Parameters:
@@ -74,8 +90,10 @@ public class ProtoFieldDescriptor: Hashable {
   ///   - isMap: Whether the field is a map type.
   ///   - defaultValue: The default value for the field, if any.
   ///   - messageType: For message fields, the descriptor of the nested message type.
+  ///   - enumType: For enum fields, the descriptor of the enum type.
   ///
   /// - Note: For fields of type `.message`, the `messageType` parameter is required.
+  /// - Note: For fields of type `.enum`, the `enumType` parameter is recommended.
   public init(
     name: String,
     number: Int,
@@ -83,7 +101,8 @@ public class ProtoFieldDescriptor: Hashable {
     isRepeated: Bool,
     isMap: Bool,
     defaultValue: ProtoValue? = nil,
-    messageType: ProtoMessageDescriptor? = nil
+    messageType: ProtoMessageDescriptor? = nil,
+    enumType: ProtoEnumDescriptor? = nil
   ) {
     self.name = name
     self.number = number
@@ -92,6 +111,181 @@ public class ProtoFieldDescriptor: Hashable {
     self.isMap = isMap
     self.defaultValue = defaultValue
     self.messageType = messageType
+    self.enumType = enumType
+    self.fieldProto = nil
+  }
+
+  /// Creates a new field descriptor from a SwiftProtobuf field descriptor proto.
+  ///
+  /// - Parameters:
+  ///   - fieldProto: The SwiftProtobuf field descriptor proto.
+  ///   - messageProto: The message descriptor proto containing the field, used for map field detection.
+  ///   - messageType: For message fields, the descriptor of the nested message type.
+  ///   - enumType: For enum fields, the descriptor of the enum type.
+  ///
+  /// - Returns: A new field descriptor, or nil if the field proto is invalid.
+  public init?(
+    fieldProto: Google_Protobuf_FieldDescriptorProto,
+    messageProto: Google_Protobuf_DescriptorProto,
+    messageType: ProtoMessageDescriptor? = nil,
+    enumType: ProtoEnumDescriptor? = nil
+  ) {
+    guard !fieldProto.name.isEmpty, fieldProto.number > 0 else {
+      return nil
+    }
+
+    self.name = fieldProto.name
+    self.number = Int(fieldProto.number)
+
+    // Map the field type
+    switch fieldProto.type {
+    case .double:
+      self.type = .double
+    case .float:
+      self.type = .float
+    case .int64:
+      self.type = .int64
+    case .uint64:
+      self.type = .uint64
+    case .int32:
+      self.type = .int32
+    case .fixed64:
+      self.type = .fixed64
+    case .fixed32:
+      self.type = .fixed32
+    case .bool:
+      self.type = .bool
+    case .string:
+      self.type = .string
+    case .message:
+      self.type = .message
+    case .bytes:
+      self.type = .bytes
+    case .uint32:
+      self.type = .uint32
+    case .enum:
+      self.type = .enum
+    case .sfixed32:
+      self.type = .sfixed32
+    case .sfixed64:
+      self.type = .sfixed64
+    case .sint32:
+      self.type = .sint32
+    case .sint64:
+      self.type = .sint64
+    default:
+      self.type = .unknown
+    }
+
+    self.isRepeated = fieldProto.label == .repeated
+
+    // Determine if this is a map field
+    self.isMap = Self.isMapField(fieldProto, messageProto)
+
+    // Extract default value if present
+    if fieldProto.hasDefaultValue, !fieldProto.defaultValue.isEmpty {
+      self.defaultValue = Self.parseDefaultValue(fieldProto.defaultValue, type: self.type)
+    }
+    else {
+      self.defaultValue = nil
+    }
+
+    self.messageType = messageType
+    self.enumType = enumType
+    self.fieldProto = fieldProto
+  }
+
+  /// Parses a default value string from a field descriptor proto.
+  ///
+  /// - Parameters:
+  ///   - defaultValueString: The default value string from the field descriptor proto.
+  ///   - type: The field type.
+  ///
+  /// - Returns: A ProtoValue representing the default value, or nil if parsing fails.
+  private static func parseDefaultValue(_ defaultValueString: String, type: ProtoFieldType) -> ProtoValue? {
+    switch type {
+    case .int32, .sint32, .sfixed32:
+      if let value = Int32(defaultValueString) {
+        return .intValue(Int(value))
+      }
+    case .int64, .sint64, .sfixed64:
+      if let value = Int64(defaultValueString) {
+        return .intValue(Int(value))
+      }
+    case .uint32, .fixed32:
+      if let value = UInt32(defaultValueString) {
+        return .uintValue(UInt(value))
+      }
+    case .uint64, .fixed64:
+      if let value = UInt64(defaultValueString) {
+        return .uintValue(UInt(value))
+      }
+    case .float:
+      if let value = Float(defaultValueString) {
+        return .floatValue(value)
+      }
+    case .double:
+      if let value = Double(defaultValueString) {
+        return .doubleValue(value)
+      }
+    case .bool:
+      if defaultValueString == "true" {
+        return .boolValue(true)
+      }
+      else if defaultValueString == "false" {
+        return .boolValue(false)
+      }
+    case .string:
+      return .stringValue(defaultValueString)
+    case .bytes:
+      // Bytes are typically base64 encoded in default values
+      if let data = Data(base64Encoded: defaultValueString) {
+        return .bytesValue(data)
+      }
+    case .enum:
+      // For enums, we just store the string value
+      return .stringValue(defaultValueString)
+    default:
+      break
+    }
+
+    return nil
+  }
+
+  /// Determines if a field is a map field.
+  ///
+  /// - Parameters:
+  ///   - fieldProto: The field descriptor proto.
+  ///   - messageProto: The message descriptor proto containing the field.
+  ///
+  /// - Returns: `true` if the field is a map field, `false` otherwise.
+  private static func isMapField(
+    _ fieldProto: Google_Protobuf_FieldDescriptorProto,
+    _ messageProto: Google_Protobuf_DescriptorProto
+  ) -> Bool {
+    // Map fields are represented as repeated message fields with a special message type
+    guard fieldProto.label == .repeated, fieldProto.type == .message else {
+      return false
+    }
+
+    // The field type name should reference a nested message
+    if fieldProto.typeName.isEmpty {
+      return false
+    }
+
+    // Extract the message name from the type name
+    let components = fieldProto.typeName.split(separator: ".")
+    guard let messageName = components.last else {
+      return false
+    }
+
+    // Find the nested message type
+    guard let nestedType = messageProto.nestedType.first(where: { $0.name == String(messageName) }) else {
+      return false
+    }
+
+    // Check if the nested message has the map_entry option set to true
+    return nestedType.options.mapEntry
   }
 
   /// Compares two field descriptors for equality.
@@ -155,5 +349,12 @@ public class ProtoFieldDescriptor: Hashable {
     }
 
     return nil
+  }
+
+  /// Returns the original SwiftProtobuf field descriptor proto if available.
+  ///
+  /// - Returns: The original field descriptor proto, or nil if this descriptor was not created from one.
+  public func originalFieldProto() -> Google_Protobuf_FieldDescriptorProto? {
+    return fieldProto
   }
 }

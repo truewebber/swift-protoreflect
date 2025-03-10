@@ -1,612 +1,523 @@
 # SwiftProtoReflect API Documentation
 
-This document provides detailed API documentation for the SwiftProtoReflect library, focusing on the dynamic Protocol Buffer handling capabilities built on top of Apple's SwiftProtobuf library.
+## Overview
 
-## Architecture Overview
+SwiftProtoReflect is a Swift library for dynamic Protocol Buffer handling, enabling developers to work with protobuf messages without pre-compiled schemas. It builds directly on Apple's SwiftProtobuf library, extending it with dynamic capabilities while maintaining full compatibility with its static, generated code approach.
 
-SwiftProtoReflect extends Apple's SwiftProtobuf library with dynamic message handling capabilities. Rather than creating parallel implementations of Protocol Buffer concepts, we build directly on SwiftProtobuf's types and wire format implementation.
+This document provides comprehensive documentation for the SwiftProtoReflect API, focusing on the core components and their usage.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Your Application                         │
-└───────────────┬─────────────────────────┬───────────────────┘
-                │                         │
-                ▼                         ▼
-┌───────────────────────────┐ ┌─────────────────────────────┐
-│    Generated Swift Code    │ │      SwiftProtoReflect      │
-│    (Static Approach)       │ │     (Dynamic Approach)      │
-└───────────────┬───────────┘ └─────────────┬───────────────┘
-                │                           │
-                ▼                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      SwiftProtobuf                           │
-└─────────────────────────────────────────────────────────────┘
-```
+## Table of Contents
+
+1. [Core Components](#core-components)
+2. [Value Representation](#value-representation)
+3. [Dynamic Message Handling](#dynamic-message-handling)
+4. [Field Access](#field-access)
+5. [Facade API](#facade-api)
+6. [Best Practices](#best-practices)
 
 ## Core Components
 
-### DynamicMessage
+SwiftProtoReflect consists of several core components that work together to provide dynamic Protocol Buffer handling:
 
-`DynamicMessage` is the central class for dynamic Protocol Buffer handling. It wraps a message descriptor and provides dynamic access to fields.
+- **ProtoValue**: Represents any valid Protocol Buffer field value, including primitive types, strings, bytes, nested messages, repeated fields, and maps.
+- **ProtoDynamicMessage**: A dynamic implementation of a Protocol Buffer message that can be created and manipulated at runtime.
+- **ProtoFieldDescriptor**: Describes a field in a Protocol Buffer message, including its name, number, type, and other metadata.
+- **ProtoMessageDescriptor**: Describes a Protocol Buffer message type, including its fields, nested types, and other metadata.
+- **ProtoEnumDescriptor**: Describes a Protocol Buffer enum type, including its values and metadata.
+- **ProtoFieldPath**: A utility for accessing fields in dynamic messages using path notation.
+- **DescriptorRegistry**: A registry for Protocol Buffer descriptors, allowing lookup by name or number.
 
-#### Properties
+## Value Representation
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `descriptor` | `MessageDescriptor` | The descriptor defining the message structure. |
-| `storage` | `[Int: Any]` | Internal storage for field values, keyed by field number. |
+### ProtoValue
 
-#### Methods
+`ProtoValue` is an enum that can represent any valid Protocol Buffer field value. It provides type-safe access to values and supports conversion between different types.
 
-| Method | Description |
-|--------|-------------|
-| `init(descriptor: MessageDescriptor)` | Creates a new dynamic message based on the provided descriptor. |
-| `get(fieldName: String) -> Any?` | Gets the value of a field by its name. |
-| `get(fieldNumber: Int) -> Any?` | Gets the value of a field by its number. |
-| `get(field: FieldDescriptor) -> Any?` | Gets the value of a field using its descriptor. |
-| `set(fieldName: String, value: Any) throws` | Sets the value of a field by its name. |
-| `set(fieldNumber: Int, value: Any) throws` | Sets the value of a field by its number. |
-| `set(field: FieldDescriptor, value: Any) throws` | Sets the value of a field using its descriptor. |
-| `has(fieldName: String) -> Bool` | Checks if a field has a value by its name. |
-| `has(fieldNumber: Int) -> Bool` | Checks if a field has a value by its number. |
-| `has(field: FieldDescriptor) -> Bool` | Checks if a field has a value using its descriptor. |
-| `clear()` | Clears all field values. |
-| `clearField(name: String)` | Clears the value of a field by its name. |
-| `clearField(number: Int)` | Clears the value of a field by its number. |
-| `clearField(field: FieldDescriptor)` | Clears the value of a field using its descriptor. |
-| `serializedData() throws -> Data` | Serializes the message to binary format using SwiftProtobuf's serialization. |
-| `jsonUTF8Data() throws -> Data` | Serializes the message to JSON format using SwiftProtobuf's serialization. |
-| `textFormatString() throws -> String` | Serializes the message to text format using SwiftProtobuf's serialization. |
-
-#### Example
+#### Creating Values
 
 ```swift
-import SwiftProtobuf
-import SwiftProtoReflect
+// Create primitive values
+let intValue = ProtoValue.intValue(42)
+let uintValue = ProtoValue.uintValue(42)
+let floatValue = ProtoValue.floatValue(3.14)
+let doubleValue = ProtoValue.doubleValue(3.14)
+let boolValue = ProtoValue.boolValue(true)
+let stringValue = ProtoValue.stringValue("Hello, world!")
+let bytesValue = ProtoValue.bytesValue(Data([0, 1, 2]))
 
-// Get a descriptor from the registry
-let messageDescriptor = try DescriptorRegistry.shared.messageDescriptor(forTypeName: "example.Person")
+// Create enum values
+let enumValue = ProtoValue.enumValue(name: "VALUE", number: 1, enumDescriptor: enumDescriptor)
 
-// Create dynamic message
-let person = DynamicMessage(descriptor: messageDescriptor)
+// Create message values
+let messageValue = ProtoValue.messageValue(dynamicMessage)
 
-// Set field values
-try person.set(fieldName: "name", value: "John Doe")
-try person.set(fieldName: "age", value: 30)
+// Create repeated values
+let repeatedValue = ProtoValue.repeatedValue([intValue, intValue, intValue])
 
-// Get field values
-if let name = person.get(fieldName: "name") as? String {
+// Create map values
+let mapValue = ProtoValue.mapValue(["key1": stringValue, "key2": stringValue])
+```
+
+#### Accessing Values
+
+```swift
+// Access primitive values
+if let value = intValue.getInt() {
+    print("Int value: \(value)")
+}
+
+if let value = stringValue.getString() {
+    print("String value: \(value)")
+}
+
+// Access enum values
+if let (name, number, descriptor) = enumValue.getEnum() {
+    print("Enum value: \(name) (\(number))")
+}
+
+// Access message values
+if let message = messageValue.getMessage() {
+    print("Message type: \(message.descriptor().fullName)")
+}
+
+// Access repeated values
+if let values = repeatedValue.getRepeated() {
+    print("Repeated values: \(values.count)")
+}
+
+// Access map values
+if let entries = mapValue.getMap() {
+    print("Map entries: \(entries.count)")
+}
+```
+
+#### Type Conversion
+
+`ProtoValue` provides methods for converting between different types:
+
+```swift
+// Convert to Int32
+if let value = stringValue.asInt32() {
+    print("Converted to Int32: \(value)")
+}
+
+// Convert to String
+let stringRepresentation = intValue.asString()
+print("String representation: \(stringRepresentation)")
+
+// Convert to a specific type
+if let convertedValue = intValue.convertTo(targetType: .string) {
+    print("Converted to string: \(convertedValue.getString()!)")
+}
+```
+
+#### Validation
+
+`ProtoValue` provides methods for validating values against field descriptors:
+
+```swift
+// Check if a value is valid for a field
+let isValid = intValue.isValid(for: fieldDescriptor)
+
+// Check if a value is valid as a map key
+let isValidKey = stringValue.isValidMapKey(for: keyFieldType)
+```
+
+## Dynamic Message Handling
+
+### ProtoDynamicMessage
+
+`ProtoDynamicMessage` is a dynamic implementation of a Protocol Buffer message that can be created and manipulated at runtime without generated code.
+
+#### Creating Messages
+
+```swift
+// Create a dynamic message from a descriptor
+let message = ProtoDynamicMessage(descriptor: personDescriptor)
+
+// Create a dynamic message with initial values
+let initialValues: [Int: ProtoValue] = [
+    1: .stringValue("John Doe"),
+    2: .intValue(30)
+]
+let message = ProtoDynamicMessage(descriptor: personDescriptor, initialValues: initialValues)
+```
+
+#### Setting Field Values
+
+```swift
+// Set a field by descriptor
+message.set(field: nameField, value: .stringValue("John Doe"))
+
+// Set a field by name
+message.set(fieldName: "name", value: .stringValue("John Doe"))
+
+// Set a field by number
+message.set(fieldNumber: 1, value: .stringValue("John Doe"))
+```
+
+#### Getting Field Values
+
+```swift
+// Get a field by descriptor
+if let name = message.get(field: nameField)?.getString() {
     print("Name: \(name)")
 }
 
-// Serialize to binary format
-let data = try person.serializedData()
-
-// Create a new message and deserialize
-let newPerson = try DynamicMessage(descriptor: messageDescriptor, serializedData: data)
-```
-
-### MessageDescriptor
-
-`MessageDescriptor` is a wrapper for SwiftProtobuf's `Google_Protobuf_DescriptorProto` that provides a more convenient API for working with message descriptors.
-
-#### Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `name` | `String` | The name of the message. |
-| `fullName` | `String` | The fully qualified name of the message, including package. |
-| `fields` | `[FieldDescriptor]` | The fields defined in the message. |
-| `oneofs` | `[OneofDescriptor]` | The oneof fields defined in the message. |
-| `nestedTypes` | `[MessageDescriptor]` | Nested message types defined within this message. |
-| `enumTypes` | `[EnumDescriptor]` | Enum types defined within this message. |
-
-#### Methods
-
-| Method | Description |
-|--------|-------------|
-| `init(descriptor: Google_Protobuf_DescriptorProto, fullName: String)` | Creates a new message descriptor from a SwiftProtobuf descriptor. |
-| `fieldByName(_ name: String) -> FieldDescriptor?` | Gets a field descriptor by its name. |
-| `fieldByNumber(_ number: Int) -> FieldDescriptor?` | Gets a field descriptor by its number. |
-| `isExtensible() -> Bool` | Checks if the message supports extensions. |
-
-#### Example
-
-```swift
-import SwiftProtobuf
-import SwiftProtoReflect
-
-// Get a descriptor from the registry
-let messageDescriptor = try DescriptorRegistry.shared.messageDescriptor(forTypeName: "example.Person")
-
-// Access descriptor properties
-print("Message name: \(messageDescriptor.name)")
-print("Full name: \(messageDescriptor.fullName)")
-
-// Access fields
-for field in messageDescriptor.fields {
-    print("Field \(field.number): \(field.name) (\(field.type))")
+// Get a field by name
+if let name = message.get(fieldName: "name")?.getString() {
+    print("Name: \(name)")
 }
 
-// Look up a specific field
-if let nameField = messageDescriptor.fieldByName("name") {
-    print("Name field number: \(nameField.number)")
+// Get a field by number
+if let name = message.get(fieldNumber: 1)?.getString() {
+    print("Name: \(name)")
 }
 ```
 
-### FieldDescriptor
-
-`FieldDescriptor` is a wrapper for SwiftProtobuf's `Google_Protobuf_FieldDescriptorProto` that provides a more convenient API for working with field descriptors.
-
-#### Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `name` | `String` | The name of the field. |
-| `number` | `Int` | The field number. |
-| `type` | `FieldType` | The type of the field. |
-| `isRepeated` | `Bool` | Whether the field is repeated. |
-| `isMap` | `Bool` | Whether the field is a map. |
-| `isRequired` | `Bool` | Whether the field is required. |
-| `defaultValue` | `Any?` | The default value of the field, if any. |
-| `containingOneof` | `OneofDescriptor?` | The oneof descriptor if this field is part of a oneof. |
-| `messageType` | `MessageDescriptor?` | The message descriptor if this field is a message type. |
-| `enumType` | `EnumDescriptor?` | The enum descriptor if this field is an enum type. |
-
-#### Methods
-
-| Method | Description |
-|--------|-------------|
-| `init(descriptor: Google_Protobuf_FieldDescriptorProto, parent: MessageDescriptor)` | Creates a new field descriptor from a SwiftProtobuf descriptor. |
-| `isValidValue(_ value: Any) -> Bool` | Checks if a value is valid for this field. |
-| `wireFormat() -> WireFormat` | Gets the wire format for this field. |
-
-#### Example
+#### Checking Field Presence
 
 ```swift
-import SwiftProtobuf
-import SwiftProtoReflect
+// Check if a field is set by descriptor
+if message.has(field: nameField) {
+    print("Name is set")
+}
 
-// Get a descriptor from the registry
-let messageDescriptor = try DescriptorRegistry.shared.messageDescriptor(forTypeName: "example.Person")
+// Check if a field is set by name
+if message.has(fieldName: "name") {
+    print("Name is set")
+}
 
-// Get a field descriptor
-if let nameField = messageDescriptor.fieldByName("name") {
-    // Access field properties
-    print("Field name: \(nameField.name)")
-    print("Field number: \(nameField.number)")
-    print("Field type: \(nameField.type)")
-    
-    // Check if a value is valid for this field
-    let isValid = nameField.isValidValue("John Doe")
-    print("Is valid value: \(isValid)")
+// Check if a field is set by number
+if message.has(fieldNumber: 1) {
+    print("Name is set")
 }
 ```
 
-### EnumDescriptor
-
-`EnumDescriptor` is a wrapper for SwiftProtobuf's `Google_Protobuf_EnumDescriptorProto` that provides a more convenient API for working with enum descriptors.
-
-#### Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `name` | `String` | The name of the enum. |
-| `fullName` | `String` | The fully qualified name of the enum, including package. |
-| `values` | `[EnumValueDescriptor]` | The values defined in the enum. |
-
-#### Methods
-
-| Method | Description |
-|--------|-------------|
-| `init(descriptor: Google_Protobuf_EnumDescriptorProto, fullName: String)` | Creates a new enum descriptor from a SwiftProtobuf descriptor. |
-| `valueByName(_ name: String) -> EnumValueDescriptor?` | Gets an enum value descriptor by its name. |
-| `valueByNumber(_ number: Int) -> EnumValueDescriptor?` | Gets an enum value descriptor by its number. |
-
-#### Example
+#### Clearing Fields
 
 ```swift
-import SwiftProtobuf
-import SwiftProtoReflect
+// Clear a field by descriptor
+message.clear(field: nameField)
 
-// Get an enum descriptor from the registry
-let enumDescriptor = try DescriptorRegistry.shared.enumDescriptor(forTypeName: "example.Gender")
+// Clear a field by name
+message.clear(fieldName: "name")
 
-// Access enum properties
-print("Enum name: \(enumDescriptor.name)")
-print("Full name: \(enumDescriptor.fullName)")
+// Clear a field by number
+message.clear(fieldNumber: 1)
 
-// Access enum values
-for value in enumDescriptor.values {
-    print("Value \(value.number): \(value.name)")
-}
+// Clear all fields
+message.clearAll()
+```
 
-// Look up a specific value
-if let maleValue = enumDescriptor.valueByName("MALE") {
-    print("MALE value number: \(maleValue.number)")
+#### Working with Nested Messages
+
+```swift
+// Create a nested message
+let address = message.createNestedMessage(for: addressField)
+address.set(field: streetField, value: .stringValue("123 Main St"))
+address.set(field: cityField, value: .stringValue("Anytown"))
+
+// Set the nested message on the parent
+message.setNestedMessage(field: addressField, message: address)
+
+// Get a nested message
+if let address = message.getNestedMessage(field: addressField) {
+    let street = address.get(field: streetField)?.getString()
+    let city = address.get(field: cityField)?.getString()
+    print("Address: \(street!), \(city!)")
 }
 ```
 
-### DescriptorRegistry
-
-`DescriptorRegistry` provides utilities for managing and accessing descriptors.
-
-#### Methods
-
-| Method | Description |
-|--------|-------------|
-| `add(fileDescriptor: Google_Protobuf_FileDescriptorProto) throws` | Registers a file descriptor for later use. |
-| `messageDescriptor(forTypeName: String) throws -> MessageDescriptor` | Gets a message descriptor by its fully qualified name. |
-| `enumDescriptor(forTypeName: String) throws -> EnumDescriptor` | Gets an enum descriptor by its fully qualified name. |
-
-#### Example
+#### Working with Repeated Fields
 
 ```swift
-import SwiftProtobuf
-import SwiftProtoReflect
+// Set a repeated field
+message.set(field: phonesField, value: .repeatedValue([
+    .stringValue("555-1234"),
+    .stringValue("555-5678")
+]))
 
-// Create a registry
-let registry = DescriptorRegistry()
+// Add to a repeated field
+message.add(toRepeatedField: phonesField, value: .stringValue("555-9012"))
 
+// Get a repeated field
+if let phones = message.get(field: phonesField)?.getRepeated() {
+    for phone in phones {
+        print("Phone: \(phone.getString()!)")
+    }
+}
+
+// Get an element from a repeated field
+if let phone = message.get(fromRepeatedField: phonesField, at: 0)?.getString() {
+    print("First phone: \(phone)")
+}
+
+// Count elements in a repeated field
+let phoneCount = message.count(ofRepeatedField: phonesField)
+```
+
+#### Working with Map Fields
+
+```swift
+// Set a map field
+message.set(field: attributesField, value: .mapValue([
+    "height": .stringValue("6'0\""),
+    "weight": .stringValue("180lbs")
+]))
+
+// Set a map entry
+message.set(inMapField: attributesField, key: "hair_color", value: .stringValue("brown"))
+
+// Get a map field
+if let attributes = message.get(field: attributesField)?.getMap() {
+    for (key, value) in attributes {
+        print("\(key): \(value.getString()!)")
+    }
+}
+
+// Get a map entry
+if let height = message.get(fromMapField: attributesField, key: "height")?.getString() {
+    print("Height: \(height)")
+}
+
+// Remove a map entry
+message.remove(fromMapField: attributesField, key: "weight")
+
+// Count entries in a map field
+let attributeCount = message.count(ofMapField: attributesField)
+```
+
+#### Validation
+
+```swift
+// Check if a message is valid
+if message.isValid() {
+    print("Message is valid")
+} else {
+    print("Message is invalid")
+}
+```
+
+## Field Access
+
+### ProtoFieldPath
+
+`ProtoFieldPath` is a utility for accessing fields in dynamic messages using path notation, including support for nested fields, repeated fields, and map fields.
+
+#### Creating Field Paths
+
+```swift
+// Create a simple field path
+let namePath = ProtoFieldPath(path: "name")
+
+// Create a nested field path
+let streetPath = ProtoFieldPath(path: "address.street")
+
+// Create a repeated field path
+let phonePath = ProtoFieldPath(path: "phones[0]")
+
+// Create a map field path
+let heightPath = ProtoFieldPath(path: "attributes['height']")
+
+// Create a complex path
+let workPhoneNumberPath = ProtoFieldPath(path: "contacts[0].phones['work'].number")
+```
+
+#### Getting Values
+
+```swift
+// Get a value using a path
+if let name = namePath.getValue(from: message)?.getString() {
+    print("Name: \(name)")
+}
+
+// Get a nested value
+if let street = streetPath.getValue(from: message)?.getString() {
+    print("Street: \(street)")
+}
+
+// Get a value from a repeated field
+if let phone = phonePath.getValue(from: message)?.getString() {
+    print("Phone: \(phone)")
+}
+
+// Get a value from a map field
+if let height = heightPath.getValue(from: message)?.getString() {
+    print("Height: \(height)")
+}
+```
+
+#### Setting Values
+
+```swift
+// Set a value using a path
+namePath.setValue(.stringValue("Jane Doe"), in: message)
+
+// Set a nested value
+streetPath.setValue(.stringValue("456 Oak Ave"), in: message)
+
+// Set a value in a repeated field
+phonePath.setValue(.stringValue("555-9012"), in: message)
+
+// Set a value in a map field
+heightPath.setValue(.stringValue("5'10\""), in: message)
+```
+
+#### Clearing Values
+
+```swift
+// Clear a value using a path
+namePath.clearValue(in: message)
+
+// Clear a nested value
+streetPath.clearValue(in: message)
+
+// Clear a value in a repeated field
+phonePath.clearValue(in: message)
+
+// Clear a value in a map field
+heightPath.clearValue(in: message)
+```
+
+#### Checking Value Presence
+
+```swift
+// Check if a value exists
+if namePath.hasValue(in: message) {
+    print("Name is set")
+}
+
+// Check if a nested value exists
+if streetPath.hasValue(in: message) {
+    print("Street is set")
+}
+
+// Check if a value in a repeated field exists
+if phonePath.hasValue(in: message) {
+    print("Phone is set")
+}
+
+// Check if a value in a map field exists
+if heightPath.hasValue(in: message) {
+    print("Height is set")
+}
+```
+
+## Facade API
+
+The `ProtoReflect` class provides a high-level API for working with dynamic Protocol Buffer messages, making it easier to perform common operations.
+
+### Creating Messages
+
+```swift
+// Create a dynamic message
+let message = ProtoReflect.createMessage(withTypeName: "Person")
+
+// Create a message builder
+let builder = ProtoReflect.createMessageBuilder(withTypeName: "Person")
+builder.set("name", value: "John Doe")
+builder.set("age", value: 30)
+let message = builder.build()
+```
+
+### Registering Descriptors
+
+```swift
 // Register a file descriptor
-let fileDescriptor = Google_Protobuf_FileDescriptorProto.with {
-    $0.name = "person.proto"
-    $0.package = "example"
-    // ... set up the descriptor ...
-}
-try registry.add(fileDescriptor: fileDescriptor)
+ProtoReflect.registerFileDescriptor(fileDescriptor)
 
-// Get a message descriptor
-let personDescriptor = try registry.messageDescriptor(forTypeName: "example.Person")
+// Register a message descriptor
+ProtoReflect.registerMessageDescriptor(messageDescriptor)
 
-// Use the descriptor to create a dynamic message
-let person = DynamicMessage(descriptor: personDescriptor)
+// Register an enum descriptor
+ProtoReflect.registerEnumDescriptor(enumDescriptor)
 ```
 
-### MessageConverter
-
-`MessageConverter` provides utilities for converting between generated SwiftProtobuf messages and dynamic messages.
-
-#### Methods
-
-| Method | Description |
-|--------|-------------|
-| `fromMessage<M: Message>(_ message: M) throws -> DynamicMessage` | Converts a generated SwiftProtobuf message to a dynamic message. |
-| `toMessage<M: Message>(dynamicMessage: DynamicMessage) throws -> M` | Converts a dynamic message to a generated SwiftProtobuf message type. |
-
-#### Example
+### Serialization and Deserialization
 
 ```swift
-import SwiftProtobuf
-import SwiftProtoReflect
-import GeneratedProtos
+// Serialize a message to binary format
+let data = try ProtoReflect.serialize(message)
 
-// Using generated code from protoc + SwiftProtobuf
-var person = Person()
-person.name = "Alice"
-person.age = 30
+// Deserialize a message from binary format
+let message = try ProtoReflect.deserialize(data, asType: "Person")
 
-// Convert to dynamic message
-let dynamicPerson = try MessageConverter.fromMessage(person)
+// Serialize a message to JSON format
+let jsonData = try ProtoReflect.serializeJSON(message)
 
-// Modify dynamically
-try dynamicPerson.set(fieldName: "email", value: "alice@example.com")
-
-// Convert back to generated type
-let updatedPerson = try MessageConverter.toMessage(dynamicMessage: dynamicPerson) as Person
-print("Updated person: \(updatedPerson)")
-```
-
-## Working with Generated Code
-
-SwiftProtoReflect is designed to work seamlessly with code generated by protoc and the SwiftProtobuf plugin.
-
-### Accessing Descriptors from Generated Code
-
-```swift
-import SwiftProtobuf
-import SwiftProtoReflect
-import GeneratedProtos
-
-// Get the descriptor set from generated code
-let descriptorSet = Person_protoDescriptor
-
-// Register with the registry
-let registry = DescriptorRegistry()
-try registry.add(descriptorSet: descriptorSet)
-
-// Get the message descriptor
-let personDescriptor = try registry.messageDescriptor(forTypeName: "Person")
-
-// Create a dynamic message
-let dynamicPerson = DynamicMessage(descriptor: personDescriptor)
-```
-
-### Converting Between Static and Dynamic Messages
-
-```swift
-import SwiftProtobuf
-import SwiftProtoReflect
-import GeneratedProtos
-
-// Create a generated message
-var person = Person()
-person.name = "Alice"
-person.age = 30
-
-// Convert to dynamic message
-let dynamicPerson = try MessageConverter.fromMessage(person)
-
-// Modify the dynamic message
-try dynamicPerson.set(fieldName: "email", value: "alice@example.com")
-
-// Convert back to generated type
-let updatedPerson = try MessageConverter.toMessage(dynamicMessage: dynamicPerson) as Person
-print("Name: \(updatedPerson.name), Age: \(updatedPerson.age)")
-```
-
-## Reflection and Introspection
-
-SwiftProtoReflect provides rich reflection capabilities for exploring message structures at runtime.
-
-### Exploring Message Structure
-
-```swift
-import SwiftProtobuf
-import SwiftProtoReflect
-
-// Get a message descriptor
-let messageDescriptor = try registry.messageDescriptor(forTypeName: "example.Person")
-
-// Explore fields
-for field in messageDescriptor.fields {
-    print("Field: \(field.name), Number: \(field.number), Type: \(field.type)")
-    
-    // Check if it's a message type
-    if let messageType = field.messageType {
-        print("  Message type: \(messageType.name)")
-    }
-    
-    // Check if it's repeated
-    if field.isRepeated {
-        print("  Repeated field")
-    }
-    
-    // Check if it's a map
-    if field.isMap {
-        print("  Map field")
-    }
-}
-```
-
-### Dynamic Field Access
-
-```swift
-// Create a dynamic message
-let person = DynamicMessage(descriptor: personDescriptor)
-
-// Set field values dynamically
-try person.set(fieldName: "name", value: "John")
-
-// Get field values dynamically
-for field in person.descriptor.fields {
-    if let value = person.get(field: field) {
-        print("\(field.name): \(value)")
-    }
-}
+// Deserialize a message from JSON format
+let message = try ProtoReflect.deserializeJSON(jsonData, asType: "Person")
 ```
 
 ## Best Practices
 
-1. **Use Generated Code When Possible**: For known message types, use the generated SwiftProtobuf code for better type safety and performance.
+### 1. Use Descriptors Efficiently
 
-2. **Dynamic Approach for Unknown Schemas**: Use SwiftProtoReflect's dynamic capabilities when working with messages whose schema is not known at compile time.
-
-3. **Combine Both Approaches**: Take advantage of the seamless conversion between static and dynamic approaches to use each where it makes the most sense.
-
-4. **Register Descriptors Early**: If working with descriptors from .proto files, register them with DescriptorRegistry early in your application lifecycle.
-
-5. **Validate Input**: When setting field values dynamically, validate that the values match the expected types to avoid runtime errors.
-
-## Performance Considerations
-
-1. **Dynamic vs. Static**: Dynamic message handling is generally slower than using generated code. Use generated code for performance-critical paths.
-
-2. **Caching**: Cache descriptors and dynamic messages when possible to avoid repeated lookups and conversions.
-
-3. **Batch Operations**: When converting between static and dynamic messages, batch operations to minimize overhead.
-
-4. **Memory Usage**: Dynamic messages may use more memory than generated messages. Monitor memory usage in your application.
-
-5. **Lazy Loading**: Use lazy loading for nested messages to improve performance when working with large message structures.
-
-## Working with Descriptors
-
-### Loading Multiple File Descriptors
-
-The `DescriptorRegistry` supports loading multiple file descriptors, which is useful when working with complex Protocol Buffer schemas that span multiple files.
+Descriptors are the foundation of dynamic Protocol Buffer handling. Create them once and reuse them to improve performance.
 
 ```swift
-import SwiftProtobuf
-import SwiftProtoReflect
+// Create descriptors once
+let personDescriptor = ProtoMessageDescriptor(...)
+let addressDescriptor = ProtoMessageDescriptor(...)
 
-// Create a registry
-let registry = DescriptorRegistry()
-
-// Method 1: Load multiple file descriptors individually
-let fileDescriptor1 = Google_Protobuf_FileDescriptorProto.with {
-    $0.name = "person.proto"
-    $0.package = "example"
-    // ... set up the descriptor ...
-}
-
-let fileDescriptor2 = Google_Protobuf_FileDescriptorProto.with {
-    $0.name = "address.proto"
-    $0.package = "example"
-    // ... set up the descriptor ...
-}
-
-// Add each file descriptor to the registry
-try registry.add(fileDescriptor: fileDescriptor1)
-try registry.add(fileDescriptor: fileDescriptor2)
-
-// Method 2: Load from a FileDescriptorSet containing multiple file descriptors
-let url = URL(fileURLWithPath: "path/to/descriptor_set.bin")
-let data = try Data(contentsOf: url)
-let fileDescriptorSet = try Google_Protobuf_FileDescriptorSet(serializedData: data)
-
-// Add all file descriptors from the set
-for fileDescriptor in fileDescriptorSet.file {
-    try registry.add(fileDescriptor: fileDescriptor)
-}
-
-// Method 3: Load from multiple generated Swift code files
-// Each generated Swift file typically has a static descriptor
-try registry.add(descriptorSet: Person_protoDescriptor)
-try registry.add(descriptorSet: Address_protoDescriptor)
+// Reuse descriptors for multiple messages
+let person1 = ProtoDynamicMessage(descriptor: personDescriptor)
+let person2 = ProtoDynamicMessage(descriptor: personDescriptor)
 ```
 
-The registry handles dependencies between file descriptors automatically. If a file descriptor references types defined in another file descriptor, the registry will resolve these references as long as all the necessary file descriptors have been added.
+### 2. Validate Input
 
-### Working with Services and RPC
-
-SwiftProtoReflect provides support for working with Protocol Buffer services and RPC methods through the `ServiceDescriptor` and `MethodDescriptor` classes.
-
-#### ServiceDescriptor
-
-`ServiceDescriptor` is a wrapper for SwiftProtobuf's `Google_Protobuf_ServiceDescriptorProto` that provides a more convenient API for working with service descriptors.
-
-#### Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `name` | `String` | The name of the service. |
-| `fullName` | `String` | The fully qualified name of the service, including package. |
-| `methods` | `[MethodDescriptor]` | The methods defined in the service. |
-
-#### Methods
-
-| Method | Description |
-|--------|-------------|
-| `init(descriptor: Google_Protobuf_ServiceDescriptorProto, fullName: String)` | Creates a new service descriptor from a SwiftProtobuf descriptor. |
-| `methodByName(_ name: String) -> MethodDescriptor?` | Gets a method descriptor by its name. |
-
-#### MethodDescriptor
-
-`MethodDescriptor` is a wrapper for SwiftProtobuf's `Google_Protobuf_MethodDescriptorProto` that provides a more convenient API for working with method descriptors.
-
-#### Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `name` | `String` | The name of the method. |
-| `fullName` | `String` | The fully qualified name of the method, including service name. |
-| `inputType` | `String` | The fully qualified name of the input message type. |
-| `outputType` | `String` | The fully qualified name of the output message type. |
-| `isClientStreaming` | `Bool` | Whether the method is client streaming. |
-| `isServerStreaming` | `Bool` | Whether the method is server streaming. |
-
-#### Methods
-
-| Method | Description |
-|--------|-------------|
-| `init(descriptor: Google_Protobuf_MethodDescriptorProto, serviceFullName: String)` | Creates a new method descriptor from a SwiftProtobuf descriptor. |
-
-#### Example: Accessing Service and Method Descriptors
+When setting field values dynamically, validate that the values match the expected types to avoid runtime errors.
 
 ```swift
-import SwiftProtobuf
-import SwiftProtoReflect
-
-// Get a service descriptor from the registry
-let registry = DescriptorRegistry.shared
-let serviceDescriptor = try registry.serviceDescriptor(forTypeName: "example.GreeterService")
-
-// Access service properties
-print("Service name: \(serviceDescriptor.name)")
-print("Full name: \(serviceDescriptor.fullName)")
-
-// Access methods
-for method in serviceDescriptor.methods {
-    print("Method: \(method.name)")
-    print("  Input type: \(method.inputType)")
-    print("  Output type: \(method.outputType)")
-    print("  Client streaming: \(method.isClientStreaming)")
-    print("  Server streaming: \(method.isServerStreaming)")
-}
-
-// Look up a specific method
-if let sayHelloMethod = serviceDescriptor.methodByName("SayHello") {
-    print("Found method: \(sayHelloMethod.fullName)")
+// Validate values before setting them
+if value.isValid(for: fieldDescriptor) {
+    message.set(field: fieldDescriptor, value: value)
+} else {
+    print("Invalid value for field: \(fieldDescriptor.name)")
 }
 ```
 
-#### Example: Making Dynamic RPC Calls
+### 3. Use Field Paths for Complex Access
 
-To make RPC calls using dynamic messages, you would typically integrate with a gRPC client library like grpc-swift. Here's a conceptual example:
+Field paths provide a convenient way to access nested fields, repeated fields, and map fields.
 
 ```swift
-import SwiftProtobuf
-import SwiftProtoReflect
-import GRPC
+// Use field paths for complex access
+let path = ProtoFieldPath(path: "person.address.street")
+let street = path.getValue(from: message)?.getString()
+```
 
-// Create a dynamic service client
-class DynamicServiceClient {
-    let channel: GRPCChannel
-    let registry: DescriptorRegistry
-    
-    init(channel: GRPCChannel, registry: DescriptorRegistry) {
-        self.channel = channel
-        self.registry = registry
-    }
-    
-    func call(service: String, method: String, request: DynamicMessage) async throws -> DynamicMessage {
-        // Get service descriptor
-        let serviceDescriptor = try registry.serviceDescriptor(forTypeName: service)
-        
-        // Get method descriptor
-        guard let methodDescriptor = serviceDescriptor.methodByName(method) else {
-            throw ServiceError.methodNotFound(method)
-        }
-        
-        // Get output message descriptor
-        let outputDescriptor = try registry.messageDescriptor(forTypeName: methodDescriptor.outputType)
-        
-        // Serialize request
-        let requestData = try request.serializedData()
-        
-        // Make RPC call
-        let responseData = try await channel.makeUnaryCall(
-            path: "/\(serviceDescriptor.fullName)/\(methodDescriptor.name)",
-            requestData: requestData
-        )
-        
-        // Deserialize response
-        return try DynamicMessage(descriptor: outputDescriptor, serializedData: responseData)
-    }
-}
+### 4. Handle Errors Gracefully
 
-// Usage example
-let registry = DescriptorRegistry.shared
-let channel = GRPCChannel(host: "example.com", port: 443)
-let client = DynamicServiceClient(channel: channel, registry: registry)
+Dynamic message handling can lead to runtime errors. Handle errors gracefully to provide a better user experience.
 
-// Create request message
-let requestDescriptor = try registry.messageDescriptor(forTypeName: "example.HelloRequest")
-let request = DynamicMessage(descriptor: requestDescriptor)
-try request.set(fieldName: "name", value: "World")
-
-// Make RPC call
-let response = try await client.call(
-    service: "example.GreeterService", 
-    method: "SayHello", 
-    request: request
-)
-
-// Access response
-if let message = response.get(fieldName: "message") as? String {
-    print("Response: \(message)")
+```swift
+// Handle errors gracefully
+do {
+    let data = try ProtoReflect.serialize(message)
+    // Use serialized data
+} catch {
+    print("Error serializing message: \(error)")
 }
 ```
 
-This example demonstrates how to use SwiftProtoReflect's dynamic message capabilities with gRPC to make RPC calls without generated code. The actual implementation would depend on the specific gRPC client library being used. 
+### 5. Consider Performance
+
+Dynamic message handling is generally slower than using generated code. Consider performance implications for your application.
+
+```swift
+// Use caching for frequently accessed values
+let cachedDescriptor = descriptorRegistry.messageDescriptor(forTypeName: "Person")
+```
+
+### 6. Combine Static and Dynamic Approaches
+
+SwiftProtoReflect is designed to work alongside SwiftProtobuf's static, generated code approach. Use the approach that best fits your needs for each part of your application.
+
+```swift
+// Convert between static and dynamic messages
+let dynamicMessage = ProtoReflect.createDynamicMessage(from: staticMessage)
+let staticMessage = ProtoReflect.createStaticMessage(from: dynamicMessage, as: Person.self)
+``` 
