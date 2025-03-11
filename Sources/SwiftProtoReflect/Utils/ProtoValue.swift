@@ -438,6 +438,16 @@ public enum ProtoValue: Hashable {
   /// - Parameter fieldDescriptor: The field descriptor to validate against.
   /// - Returns: `true` if the value is valid for the field, `false` otherwise.
   public func isValid(for fieldDescriptor: ProtoFieldDescriptor) -> Bool {
+    // Check if the field is a map (do this check first)
+    if fieldDescriptor.isMap {
+      // For map fields, we need a mapValue
+      guard case .mapValue(_) = self else {
+        return false
+      }
+
+      return true
+    }
+
     // Check if the field is repeated
     if fieldDescriptor.isRepeated {
       // For repeated fields, we need a repeatedValue
@@ -467,18 +477,11 @@ public enum ProtoValue: Hashable {
       return true
     }
 
-    // Check if the field is a map
-    if fieldDescriptor.isMap {
-      // For map fields, we need a mapValue
-      guard case .mapValue(_) = self else {
-        return false
-      }
-
-      return true
-    }
-
     // For non-repeated, non-map fields, check the type
     switch fieldDescriptor.type {
+    case .group:
+      // Groups are not directly supported for validation
+      return false
     case .int32, .sint32, .sfixed32:
       // For 32-bit integer types, ensure the value can be represented as an Int32
       if case .intValue(_) = self {
@@ -827,6 +830,9 @@ public enum ProtoValue: Hashable {
   /// - Returns: A new ProtoValue of the target type, or nil if conversion is not possible.
   public func convertTo(targetType: ProtoFieldType) -> ProtoValue? {
     switch targetType {
+    case .group:
+      // Groups are not supported for conversion
+      return nil
     case .int32, .int64, .sint32, .sint64, .sfixed32, .sfixed64:
       if let intValue = self.asInt64() {
         return .intValue(Int(intValue))
@@ -940,6 +946,9 @@ public enum ProtoValue: Hashable {
   /// - Returns: A ProtoValue of the target type, or nil if conversion is not possible.
   public static func from(swiftValue value: Any, targetType: ProtoFieldType) -> ProtoValue? {
     switch targetType {
+    case .group:
+      // Groups are not supported for conversion from Swift values
+      return nil
     case .int32, .int64, .sint32, .sint64, .sfixed32, .sfixed64:
       if let intValue = value as? Int {
         return .intValue(intValue)

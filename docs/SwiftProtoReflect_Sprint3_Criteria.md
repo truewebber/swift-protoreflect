@@ -13,34 +13,34 @@ Implement the core wire format serialization and deserialization capabilities fo
 A robust implementation of Protocol Buffer varint encoding and decoding for use in serialization and deserialization.
 
 **Acceptance Criteria:**
-- [ ] Implements encoding of signed and unsigned integers to varint format
-- [ ] Implements decoding of varint format to signed and unsigned integers
-- [ ] Supports all integer types (int32, int64, uint32, uint64, sint32, sint64)
-- [ ] Handles zigzag encoding for signed integers (sint32, sint64)
-- [ ] Provides proper error handling for invalid input
-- [ ] Achieves performance within 40% of SwiftProtobuf's implementation
-- [ ] Includes comprehensive test coverage for all edge cases
-- [ ] Includes proper documentation with examples
+- [x] Implements encoding of signed and unsigned integers to varint format
+- [x] Implements decoding of varint format to signed and unsigned integers
+- [x] Supports all integer types (int32, int64, uint32, uint64, sint32, sint64)
+- [x] Handles zigzag encoding for signed integers (sint32, sint64)
+- [x] Provides proper error handling for invalid input
+- [x] Achieves performance within 40% of SwiftProtobuf's implementation
+- [x] Includes comprehensive test coverage for all edge cases
+- [x] Includes proper documentation with examples
 
 ### 2. Wire Type Handling
 
 A comprehensive implementation of Protocol Buffer wire type handling for all field types.
 
 **Acceptance Criteria:**
-- [ ] Supports all wire types defined in the Protocol Buffer specification:
+- [x] Supports all wire types defined in the Protocol Buffer specification:
   - VARINT (0)
   - FIXED64 (1)
   - LENGTH_DELIMITED (2)
   - START_GROUP (3) - for backward compatibility
   - END_GROUP (4) - for backward compatibility
   - FIXED32 (5)
-- [ ] Maps Protocol Buffer field types to appropriate wire types
-- [ ] Provides utilities for determining wire type from field type
-- [ ] Handles wire type validation during serialization and deserialization
-- [ ] Includes proper error handling for invalid wire types
-- [ ] Achieves performance within 40% of SwiftProtobuf's implementation
-- [ ] Includes comprehensive test coverage for all wire types
-- [ ] Includes proper documentation with examples
+- [x] Maps Protocol Buffer field types to appropriate wire types
+- [x] Provides utilities for determining wire type from field type
+- [x] Handles wire type validation during serialization and deserialization
+- [x] Includes proper error handling for invalid wire types
+- [x] Achieves performance within 40% of SwiftProtobuf's implementation
+- [x] Includes comprehensive test coverage for all wire types
+- [x] Includes proper documentation with examples
 
 ### 3. Basic Serialization
 
@@ -97,8 +97,8 @@ Seamless integration with SwiftProtobuf's wire format implementation.
 An expanded test suite covering all new wire format functionality.
 
 **Acceptance Criteria:**
-- [ ] Includes unit tests for varint encoding/decoding
-- [ ] Includes unit tests for wire type handling
+- [x] Includes unit tests for varint encoding/decoding
+- [x] Includes unit tests for wire type handling
 - [ ] Includes unit tests for serialization of all field types
 - [ ] Includes unit tests for deserialization of all field types
 - [ ] Includes integration tests with SwiftProtobuf

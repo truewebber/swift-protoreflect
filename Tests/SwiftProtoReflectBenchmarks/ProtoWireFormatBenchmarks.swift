@@ -18,6 +18,8 @@ class ProtoWireFormatBenchmarks: XCTestCase {
         ProtoFieldDescriptor(name: "bool_field", number: 3, type: .bool, isRepeated: false, isMap: false),
         ProtoFieldDescriptor(name: "double_field", number: 4, type: .double, isRepeated: false, isMap: false),
         ProtoFieldDescriptor(name: "bytes_field", number: 5, type: .bytes, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "sint32_field", number: 6, type: .sint32, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "sint64_field", number: 7, type: .sint64, isRepeated: false, isMap: false),
       ],
       enums: [],
       nestedMessages: []
@@ -43,17 +45,30 @@ class ProtoWireFormatBenchmarks: XCTestCase {
     XCTAssertTrue(result.averageDurationMs < 0.01, "Varint decoding should be extremely fast (< 0.01ms)")
   }
 
-  func testFieldEncodingPerformance() {
-    // Test encoding a string field
-    let field = messageDescriptor.fields[1]  // string_field
-    let value = ProtoValue.stringValue("Hello, world!")
+  func testSint32FieldEncodingPerformance() {
+    // Test encoding a sint32 field
+    let field = messageDescriptor.fields[5]  // sint32_field
+    let value = ProtoValue.intValue(-42)
 
-    let result = BenchmarkUtils.benchmark(name: "ProtoWireFormat.encodeField", iterations: 10000) {
+    let result = BenchmarkUtils.benchmark(name: "ProtoWireFormat.encodeField.sint32", iterations: 10000) {
       var data = Data()
       try? ProtoWireFormat.encodeField(field: field, value: value, to: &data)
     }
 
-    XCTAssertTrue(result.averageDurationMs < 0.05, "Field encoding should be fast (< 0.05ms)")
+    XCTAssertTrue(result.averageDurationMs < 0.05, "Sint32 field encoding should be fast (< 0.05ms)")
+  }
+
+  func testSint64FieldEncodingPerformance() {
+    // Test encoding a sint64 field
+    let field = messageDescriptor.fields[6]  // sint64_field
+    let value = ProtoValue.intValue(-42)
+
+    let result = BenchmarkUtils.benchmark(name: "ProtoWireFormat.encodeField.sint64", iterations: 10000) {
+      var data = Data()
+      try? ProtoWireFormat.encodeField(field: field, value: value, to: &data)
+    }
+
+    XCTAssertTrue(result.averageDurationMs < 0.05, "Sint64 field encoding should be fast (< 0.05ms)")
   }
 
   func testWireTypePerformance() {
@@ -63,6 +78,8 @@ class ProtoWireFormatBenchmarks: XCTestCase {
       _ = ProtoWireFormat.determineWireType(for: .message)
       _ = ProtoWireFormat.determineWireType(for: .bytes)
       _ = ProtoWireFormat.determineWireType(for: .float)
+      _ = ProtoWireFormat.determineWireType(for: .sint32)
+      _ = ProtoWireFormat.determineWireType(for: .sint64)
     }
 
     XCTAssertTrue(result.averageDurationMs < 0.01, "Wire type determination should be extremely fast (< 0.01ms)")

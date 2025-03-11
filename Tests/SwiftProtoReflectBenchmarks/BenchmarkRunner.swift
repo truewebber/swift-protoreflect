@@ -41,7 +41,8 @@ class BenchmarkRunner: XCTestCase {
     wireFormatBenchmarks.setUp()
     wireFormatBenchmarks.testVarintEncodingPerformance()
     wireFormatBenchmarks.testVarintDecodingPerformance()
-    wireFormatBenchmarks.testFieldEncodingPerformance()
+    wireFormatBenchmarks.testSint32FieldEncodingPerformance()
+    wireFormatBenchmarks.testSint64FieldEncodingPerformance()
     wireFormatBenchmarks.testWireTypePerformance()
 
     print("\n=== Benchmark Run Complete ===\n")
@@ -137,10 +138,15 @@ class BenchmarkRunner: XCTestCase {
       benchmark.setUp()
       benchmark.testVarintDecodingPerformance()
 
-    case "ProtoWireFormat.encodeField":
+    case "ProtoWireFormat.encodeField.sint32":
       let benchmark = ProtoWireFormatBenchmarks()
       benchmark.setUp()
-      benchmark.testFieldEncodingPerformance()
+      benchmark.testSint32FieldEncodingPerformance()
+
+    case "ProtoWireFormat.encodeField.sint64":
+      let benchmark = ProtoWireFormatBenchmarks()
+      benchmark.setUp()
+      benchmark.testSint64FieldEncodingPerformance()
 
     case "ProtoWireFormat.determineWireType":
       let benchmark = ProtoWireFormatBenchmarks()

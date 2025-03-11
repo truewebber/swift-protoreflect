@@ -62,6 +62,9 @@ public enum ProtoFieldType {
   /// An enumeration.
   case `enum`
 
+  /// A group (deprecated in Protocol Buffers v3, included for backward compatibility).
+  case group
+
   /// An unknown or unsupported type.
   case unknown
 
@@ -159,6 +162,8 @@ public enum ProtoFieldType {
       return "message"
     case .enum:
       return "enum"
+    case .group:
+      return "group"
     case .unknown:
       return "unknown"
     }

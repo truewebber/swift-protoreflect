@@ -4,8 +4,8 @@ This report provides an overview of the test coverage for the SwiftProtoReflect 
 
 ## Overall Coverage
 
-**Line Coverage: 63.1%**
-**Function Coverage: 69.3%**
+**Line Coverage: 64.4%**
+**Function Coverage: 72.7%**
 
 ❌ **Does not meet the 90% coverage requirement**
 
@@ -14,16 +14,16 @@ This report provides an overview of the test coverage for the SwiftProtoReflect 
 | Component | Line Coverage % | Function Coverage % |
 |-----------|-----------------|---------------------|
 | core | 65.2% | 74.1% |
-| utils | 60.1% | 60.4% |
+| utils | 62.8% | 70.0% |
 | reflection | 80.0% | 88.9% |
 
 ## Test Coverage Assessment
 
 Based on the coverage analysis, here's an assessment of the project's test coverage:
 
-1. **Overall Line Coverage**: The project has 63.1% line coverage, which does not meet the 90% requirement.
+1. **Overall Line Coverage**: The project has 64.4% line coverage, which does not meet the 90% requirement.
 
-2. **Function Coverage**: The project has 69.3% function coverage.
+2. **Function Coverage**: The project has 72.7% function coverage.
 
 3. **Key Components Coverage**:
    - Core types (ProtoValue, ProtoFieldDescriptor, ProtoMessageDescriptor)
@@ -68,4 +68,4 @@ A detailed HTML coverage report is available at:
 
 
 
-*Report generated on 2025-03-10 19:10:46*
+*Report generated on 2025-03-11 02:54:18*
