@@ -81,9 +81,27 @@ public struct ProtoWireFormat {
       // For now, we'll use our manual deserialization
     }
 
-    // Manual deserialization
-    var dataStream = data
+    // Create a new message
     let message = ProtoDynamicMessage(descriptor: messageDescriptor)
+    
+    // Unmarshal the data into the message
+    do {
+      try unmarshal(data: data, to: message)
+      return message
+    } catch {
+      return nil
+    }
+  }
+
+  /// Deserializes protobuf wire format data into an existing ProtoMessage.
+  ///
+  /// - Parameters:
+  ///   - data: The serialized data.
+  ///   - message: The message to populate with deserialized data.
+  /// - Throws: An error if deserialization fails.
+  public static func unmarshal(data: Data, to message: ProtoDynamicMessage) throws {
+    var dataStream = data
+    let messageDescriptor = message.descriptor()
 
     // Track repeated fields to collect all values
     var repeatedFields: [Int: [ProtoValue]] = [:]
@@ -95,7 +113,7 @@ public struct ProtoWireFormat {
       // Decode the field key
       let (fieldKey, fieldKeyBytes) = decodeVarint(dataStream)
       guard let fieldKey = fieldKey else {
-        return nil  // Return nil if fieldKey is invalid
+        throw ProtoWireFormatError.invalidFieldKey
       }
 
       if fieldKeyBytes > dataStream.count {
@@ -117,18 +135,17 @@ public struct ProtoWireFormat {
           // Read the next field key
           let (nextFieldKey, nextFieldKeyBytes) = decodeVarint(dataStream)
           guard let nextFieldKey = nextFieldKey else {
-            return nil  // Return nil if field key is invalid
+            throw ProtoWireFormatError.invalidFieldKey
           }
 
           if nextFieldKeyBytes > dataStream.count {
-            return nil  // Return nil if field key is invalid
+            throw ProtoWireFormatError.truncatedMessage
           }
 
           dataStream.removeFirst(nextFieldKeyBytes)
 
           // Extract wire type from field key
           let nextWireType = Int(nextFieldKey & 0x07)
-          let _ = Int(nextFieldKey >> 3)
 
           if nextWireType == wireTypeStartGroup {
             nestedGroups += 1
@@ -144,14 +161,14 @@ public struct ProtoWireFormat {
           else {
             // Skip this field
             if !skipField(wireType: nextWireType, data: &dataStream) {
-              return nil  // Return nil if field skipping fails
+              throw ProtoWireFormatError.truncatedMessage
             }
           }
         }
 
-        // If we couldn't find the matching END_GROUP, return nil
+        // If we couldn't find the matching END_GROUP, throw an error
         if nestedGroups != 0 {
-          return nil
+          throw ProtoWireFormatError.truncatedMessage
         }
 
         // Continue to the next field
@@ -161,14 +178,14 @@ public struct ProtoWireFormat {
       if wireType == wireTypeEndGroup {
         // END_GROUP should only be encountered when processing a START_GROUP
         // If we encounter it here, it's an error
-        return nil
+        throw ProtoWireFormatError.wireTypeMismatch
       }
 
       // Find the field descriptor using the field number
       guard let fieldDescriptor = messageDescriptor.field(number: fieldNumber) else {
         // Skip unknown fields
         if !skipField(wireType: wireType, data: &dataStream) {
-          return nil  // Return nil if field skipping fails
+          throw ProtoWireFormatError.truncatedMessage
         }
         continue
       }
@@ -178,48 +195,40 @@ public struct ProtoWireFormat {
       if wireType != expectedWireType {
         // Wire type mismatch, skip the field
         if !skipField(wireType: wireType, data: &dataStream) {
-          return nil  // Return nil if field skipping fails
+          throw ProtoWireFormatError.truncatedMessage
         }
         continue
       }
 
       // Decode the value based on wire type and field type
-      do {
-        if let value = try decodeField(fieldDescriptor: fieldDescriptor, wireType: wireType, data: &dataStream) {
-          // Handle map fields (which are encoded as repeated message fields)
-          if fieldDescriptor.isMap && fieldDescriptor.type == .message && fieldDescriptor.messageType != nil {
-            if case .messageValue(let mapEntryMessage) = value {
-              let keyField = mapEntryMessage.descriptor().field(number: 1)
-              let valueField = mapEntryMessage.descriptor().field(number: 2)
+      if let value = try decodeField(fieldDescriptor: fieldDescriptor, wireType: wireType, data: &dataStream) {
+        // Handle map fields (which are encoded as repeated message fields)
+        if fieldDescriptor.isMap && fieldDescriptor.type == .message && fieldDescriptor.messageType != nil {
+          if case .messageValue(let mapEntryMessage) = value {
+            let keyField = mapEntryMessage.descriptor().field(number: 1)
+            let valueField = mapEntryMessage.descriptor().field(number: 2)
 
-              let keyValue = keyField.flatMap { mapEntryMessage.get(field: $0) }
-              let valueValue = valueField.flatMap { mapEntryMessage.get(field: $0) }
+            let keyValue = keyField.flatMap { mapEntryMessage.get(field: $0) }
+            let valueValue = valueField.flatMap { mapEntryMessage.get(field: $0) }
 
-              if case .stringValue(let key)? = keyValue {
-                // Add the key-value pair to the map field collection
-                var entries = mapFields[fieldNumber] ?? [:]
-                entries[key] = valueValue
-                mapFields[fieldNumber] = entries
-              }
+            if case .stringValue(let key)? = keyValue {
+              // Add the key-value pair to the map field collection
+              var entries = mapFields[fieldNumber] ?? [:]
+              entries[key] = valueValue
+              mapFields[fieldNumber] = entries
             }
           }
-          // Handle repeated fields
-          else if fieldDescriptor.isRepeated {
-            // Add the value to the repeated field collection
-            var values = repeatedFields[fieldNumber] ?? []
-            values.append(value)
-            repeatedFields[fieldNumber] = values
-          }
-          // Handle regular fields
-          else {
-            message.set(field: fieldDescriptor, value: value)
-          }
         }
-      }
-      catch {
-        // Skip fields that can't be decoded
-        if !skipField(wireType: wireType, data: &dataStream) {
-          return nil  // Return nil if field skipping fails
+        // Handle repeated fields
+        else if fieldDescriptor.isRepeated {
+          // Add the value to the repeated field collection
+          var values = repeatedFields[fieldNumber] ?? []
+          values.append(value)
+          repeatedFields[fieldNumber] = values
+        }
+        // Handle regular fields
+        else {
+          message.set(field: fieldDescriptor, value: value)
         }
       }
     }
@@ -237,8 +246,6 @@ public struct ProtoWireFormat {
         message.set(field: fieldDescriptor, value: .mapValue(entries))
       }
     }
-
-    return message
   }
 
   // MARK: - Field Encoding
@@ -723,8 +730,18 @@ public struct ProtoWireFormat {
   /// - Parameter message: The ProtoMessage to convert.
   /// - Returns: A SwiftProtobuf message, or nil if conversion is not possible.
   private static func convertToSwiftProtoMessage(_ message: ProtoMessage) -> SwiftProtobuf.Message? {
-    // This would be the place to implement conversion from our dynamic message to a SwiftProtobuf message
-    // For now, we'll return nil and use our manual serialization
+    // Check if the message is already a SwiftProtobuf message
+    if let swiftProtoMessage = message as? SwiftProtobuf.Message {
+      return swiftProtoMessage
+    }
+    
+    // Check if the message has a SwiftProtobuf descriptor
+    if message.descriptor().originalDescriptorProto() != nil {
+      // For now, we don't have a way to create a SwiftProtobuf message from a descriptor at runtime
+      // This would require code generation or reflection capabilities that SwiftProtobuf doesn't provide
+      // In a future version, we could implement this using the SwiftProtobuf runtime API if it becomes available
+    }
+    
     return nil
   }
 
@@ -827,132 +844,6 @@ public struct ProtoWireFormat {
       return wireTypeFixed32
     default:
       return wireTypeVarint  // Default to varint
-    }
-  }
-
-  public static func unmarshal(data: Data, to message: ProtoDynamicMessage) throws {
-    var dataStream = data
-
-    // Track repeated fields and map fields
-    var repeatedFields: [Int: [ProtoValue]] = [:]
-    var mapFields: [Int: [String: ProtoValue]] = [:]
-
-    while !dataStream.isEmpty {
-      // Read the field key
-      let (fieldKey, fieldKeyBytes) = decodeVarint(dataStream)
-      guard let fieldKey = fieldKey else {
-        throw ProtoWireFormatError.invalidFieldKey
-      }
-
-      if fieldKeyBytes >= dataStream.count {
-        break  // End of data
-      }
-
-      dataStream.removeFirst(fieldKeyBytes)
-
-      let fieldNumber = Int(fieldKey >> 3)
-      let wireType = Int(fieldKey & 0x7)
-
-      guard let field = message.descriptor().field(number: fieldNumber) else {
-        // Skip unknown fields
-        if !skipField(wireType: wireType, data: &dataStream) {
-          throw ProtoWireFormatError.invalidFieldKey
-        }
-        continue
-      }
-
-      do {
-        if field.isMap, let entryDescriptor = field.messageType, wireType == 2 {
-          // Read the length of the map entry message
-          let (lengthVarint, lengthBytes) = decodeVarint(dataStream)
-
-          if lengthBytes >= dataStream.count {
-            throw ProtoWireFormatError.truncatedMessage
-          }
-          dataStream.removeFirst(lengthBytes)
-
-          guard let length = lengthVarint else {
-            throw ProtoWireFormatError.malformedVarint
-          }
-
-          if UInt64(dataStream.count) < length {
-            throw ProtoWireFormatError.truncatedMessage
-          }
-
-          let valueData = dataStream.prefix(Int(length))
-          dataStream.removeFirst(Int(length))
-
-          // Unmarshal the map entry
-          if let entryMessage = unmarshal(data: Data(valueData), messageDescriptor: entryDescriptor) {
-            // Get the key and value from the entry
-            guard let keyField = entryDescriptor.field(number: 1),
-              let valueField = entryDescriptor.field(number: 2),
-              let keyValue = entryMessage.get(field: keyField),
-              let valueValue = entryMessage.get(field: valueField)
-            else {
-              throw ProtoWireFormatError.invalidMessageType
-            }
-
-            // Convert key to string (map keys are always strings in our implementation)
-            var keyString: String
-            if case .stringValue(let str) = keyValue {
-              keyString = str
-            }
-            else {
-              throw ProtoWireFormatError.invalidMessageType
-            }
-
-            // Add to the map field entries
-            if mapFields[fieldNumber] == nil {
-              mapFields[fieldNumber] = [:]
-            }
-            mapFields[fieldNumber]?[keyString] = valueValue
-          }
-          else {
-            throw ProtoWireFormatError.invalidMessageType
-          }
-
-        }
-        else if field.isRepeated {
-          // Decode the value
-          if let value = try decodeField(fieldDescriptor: field, wireType: wireType, data: &dataStream) {
-            // Add to the repeated field values
-            if repeatedFields[fieldNumber] == nil {
-              repeatedFields[fieldNumber] = []
-            }
-            repeatedFields[fieldNumber]?.append(value)
-          }
-
-        }
-        else {
-          // Decode the value
-          if let value = try decodeField(fieldDescriptor: field, wireType: wireType, data: &dataStream) {
-            // Set the value directly
-            message.set(field: field, value: value)
-          }
-        }
-      }
-      catch {
-        throw error
-      }
-    }
-
-    // Set the repeated field values
-    for (fieldNumber, values) in repeatedFields {
-      guard let field = message.descriptor().field(number: fieldNumber) else {
-        continue
-      }
-
-      message.set(field: field, value: .repeatedValue(values))
-    }
-
-    // Set the map field values
-    for (fieldNumber, entries) in mapFields {
-      guard let field = message.descriptor().field(number: fieldNumber) else {
-        continue
-      }
-
-      message.set(field: field, value: .mapValue(entries))
     }
   }
 }
