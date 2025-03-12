@@ -966,14 +966,14 @@ class ProtoWireFormatTests: XCTestCase {
 
   // Note: The comprehensive primitive field serialization test is temporarily disabled
   // due to issues with misaligned pointers. It will be re-enabled in a future update.
-  
+
   // func testComprehensivePrimitiveFieldSerialization() { ... }
 
   // MARK: - Performance Benchmarks
 
   // Note: Performance benchmarks are temporarily disabled due to issues with misaligned pointers
   // They will be re-enabled in a future update once the issues are resolved
-  
+
   // func testSerializationPerformance() { ... }
   // func testDeserializationPerformance() { ... }
 
@@ -1012,23 +1012,23 @@ class ProtoWireFormatTests: XCTestCase {
         ProtoFieldDescriptor(name: "bool_field", number: 3, type: .bool, isRepeated: false, isMap: false),
         ProtoFieldDescriptor(name: "bytes_field", number: 4, type: .bytes, isRepeated: false, isMap: false),
         ProtoFieldDescriptor(name: "repeated_int32_field", number: 5, type: .int32, isRepeated: true, isMap: false),
-        ProtoFieldDescriptor(name: "repeated_string_field", number: 6, type: .string, isRepeated: true, isMap: false)
+        ProtoFieldDescriptor(name: "repeated_string_field", number: 6, type: .string, isRepeated: true, isMap: false),
       ],
       enums: [],
       nestedMessages: []
     )
-    
+
     // Create a nested message descriptor for map entry
     let mapEntryDescriptor = ProtoMessageDescriptor(
       fullName: "TestAllTypes.MapEntry",
       fields: [
         ProtoFieldDescriptor(name: "key", number: 1, type: .string, isRepeated: false, isMap: false),
-        ProtoFieldDescriptor(name: "value", number: 2, type: .int32, isRepeated: false, isMap: false)
+        ProtoFieldDescriptor(name: "value", number: 2, type: .int32, isRepeated: false, isMap: false),
       ],
       enums: [],
       nestedMessages: []
     )
-    
+
     // Add a map field to the message descriptor
     let mapFieldDescriptor = ProtoFieldDescriptor(
       name: "string_to_int32_map",
@@ -1038,7 +1038,7 @@ class ProtoWireFormatTests: XCTestCase {
       isMap: true,
       messageType: mapEntryDescriptor
     )
-    
+
     let updatedFields = messageDescriptor.fields + [mapFieldDescriptor]
     let updatedMessageDescriptor = ProtoMessageDescriptor(
       fullName: messageDescriptor.fullName,
@@ -1046,67 +1046,90 @@ class ProtoWireFormatTests: XCTestCase {
       enums: messageDescriptor.enums,
       nestedMessages: messageDescriptor.nestedMessages + [mapEntryDescriptor]
     )
-    
+
     // Create a message and set values for all fields
     let message = ProtoDynamicMessage(descriptor: updatedMessageDescriptor)
-    
+
     // Set primitive field values
     message.set(field: updatedMessageDescriptor.field(named: "int32_field")!, value: .intValue(42))
     message.set(field: updatedMessageDescriptor.field(named: "string_field")!, value: .stringValue("hello"))
     message.set(field: updatedMessageDescriptor.field(named: "bool_field")!, value: .boolValue(true))
     message.set(field: updatedMessageDescriptor.field(named: "bytes_field")!, value: .bytesValue(Data([1, 2, 3, 4])))
-    
+
     // Set repeated field values
-    message.set(field: updatedMessageDescriptor.field(named: "repeated_int32_field")!, value: .repeatedValue([
-      .intValue(1),
-      .intValue(2),
-      .intValue(3)
-    ]))
-    
-    message.set(field: updatedMessageDescriptor.field(named: "repeated_string_field")!, value: .repeatedValue([
-      .stringValue("one"),
-      .stringValue("two"),
-      .stringValue("three")
-    ]))
-    
+    message.set(
+      field: updatedMessageDescriptor.field(named: "repeated_int32_field")!,
+      value: .repeatedValue([
+        .intValue(1),
+        .intValue(2),
+        .intValue(3),
+      ])
+    )
+
+    message.set(
+      field: updatedMessageDescriptor.field(named: "repeated_string_field")!,
+      value: .repeatedValue([
+        .stringValue("one"),
+        .stringValue("two"),
+        .stringValue("three"),
+      ])
+    )
+
     // Set map field values
-    message.set(field: updatedMessageDescriptor.field(named: "string_to_int32_map")!, value: .mapValue([
-      "key1": .intValue(1),
-      "key2": .intValue(2),
-      "key3": .intValue(3)
-    ]))
-    
+    message.set(
+      field: updatedMessageDescriptor.field(named: "string_to_int32_map")!,
+      value: .mapValue([
+        "key1": .intValue(1),
+        "key2": .intValue(2),
+        "key3": .intValue(3),
+      ])
+    )
+
     // Marshal the message
     let data = ProtoWireFormat.marshal(message: message)
     XCTAssertNotNil(data, "Marshal should succeed")
-    
+
     // Unmarshal the message
-    guard let unmarshaledMessage = ProtoWireFormat.unmarshal(data: data!, messageDescriptor: updatedMessageDescriptor) as? ProtoDynamicMessage else {
+    guard
+      let unmarshaledMessage = ProtoWireFormat.unmarshal(data: data!, messageDescriptor: updatedMessageDescriptor)
+        as? ProtoDynamicMessage
+    else {
       XCTFail("Unmarshal should succeed")
       return
     }
-    
+
     // Verify primitive field values
     XCTAssertEqual(unmarshaledMessage.get(field: updatedMessageDescriptor.field(named: "int32_field")!)?.getInt(), 42)
-    XCTAssertEqual(unmarshaledMessage.get(field: updatedMessageDescriptor.field(named: "string_field")!)?.getString(), "hello")
+    XCTAssertEqual(
+      unmarshaledMessage.get(field: updatedMessageDescriptor.field(named: "string_field")!)?.getString(),
+      "hello"
+    )
     XCTAssertEqual(unmarshaledMessage.get(field: updatedMessageDescriptor.field(named: "bool_field")!)?.getBool(), true)
-    XCTAssertEqual(unmarshaledMessage.get(field: updatedMessageDescriptor.field(named: "bytes_field")!)?.getBytes(), Data([1, 2, 3, 4]))
-    
+    XCTAssertEqual(
+      unmarshaledMessage.get(field: updatedMessageDescriptor.field(named: "bytes_field")!)?.getBytes(),
+      Data([1, 2, 3, 4])
+    )
+
     // Verify repeated field values
-    let repeatedInt32Values = unmarshaledMessage.get(field: updatedMessageDescriptor.field(named: "repeated_int32_field")!)?.getRepeated()
+    let repeatedInt32Values = unmarshaledMessage.get(
+      field: updatedMessageDescriptor.field(named: "repeated_int32_field")!
+    )?.getRepeated()
     XCTAssertEqual(repeatedInt32Values?.count, 3)
     XCTAssertEqual(repeatedInt32Values?[0].getInt(), 1)
     XCTAssertEqual(repeatedInt32Values?[1].getInt(), 2)
     XCTAssertEqual(repeatedInt32Values?[2].getInt(), 3)
-    
-    let repeatedStringValues = unmarshaledMessage.get(field: updatedMessageDescriptor.field(named: "repeated_string_field")!)?.getRepeated()
+
+    let repeatedStringValues = unmarshaledMessage.get(
+      field: updatedMessageDescriptor.field(named: "repeated_string_field")!
+    )?.getRepeated()
     XCTAssertEqual(repeatedStringValues?.count, 3)
     XCTAssertEqual(repeatedStringValues?[0].getString(), "one")
     XCTAssertEqual(repeatedStringValues?[1].getString(), "two")
     XCTAssertEqual(repeatedStringValues?[2].getString(), "three")
-    
+
     // Verify map field values
-    let mapValues = unmarshaledMessage.get(field: updatedMessageDescriptor.field(named: "string_to_int32_map")!)?.getMap()
+    let mapValues = unmarshaledMessage.get(field: updatedMessageDescriptor.field(named: "string_to_int32_map")!)?
+      .getMap()
     XCTAssertEqual(mapValues?.count, 3)
     XCTAssertEqual(mapValues?["key1"]?.getInt(), 1)
     XCTAssertEqual(mapValues?["key2"]?.getInt(), 2)
@@ -1129,7 +1152,7 @@ class ProtoWireFormatTests: XCTestCase {
     let repeatedValue = ProtoValue.repeatedValue([
       .intValue(1),
       .intValue(2),
-      .intValue(3)
+      .intValue(3),
     ])
 
     // Encode the field
@@ -1167,7 +1190,10 @@ class ProtoWireFormatTests: XCTestCase {
     ])
 
     // Deserialize the message
-    guard let message = ProtoWireFormat.unmarshal(data: serializedData, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage else {
+    guard
+      let message = ProtoWireFormat.unmarshal(data: serializedData, messageDescriptor: messageDescriptor)
+        as? ProtoDynamicMessage
+    else {
       XCTFail("Unmarshal should succeed")
       return
     }
@@ -1187,7 +1213,7 @@ class ProtoWireFormatTests: XCTestCase {
       fullName: "TestMessage.StringToIntMapEntry",
       fields: [
         ProtoFieldDescriptor(name: "key", number: 1, type: .string, isRepeated: false, isMap: false),
-        ProtoFieldDescriptor(name: "value", number: 2, type: .int32, isRepeated: false, isMap: false)
+        ProtoFieldDescriptor(name: "value", number: 2, type: .int32, isRepeated: false, isMap: false),
       ],
       enums: [],
       nestedMessages: []
@@ -1206,7 +1232,7 @@ class ProtoWireFormatTests: XCTestCase {
     // Create a map value
     let mapValue = ProtoValue.mapValue([
       "one": .intValue(1),
-      "two": .intValue(2)
+      "two": .intValue(2),
     ])
 
     // Encode the field
@@ -1216,7 +1242,7 @@ class ProtoWireFormatTests: XCTestCase {
     // Verify the encoded data contains the expected number of bytes
     // We can't predict the exact byte sequence because map entries can be in any order
     XCTAssertTrue(data.count > 0, "Encoded map field should not be empty")
-    
+
     // Decode the field to verify it works
     let messageDescriptor = ProtoMessageDescriptor(
       fullName: "TestMessage",
@@ -1224,12 +1250,15 @@ class ProtoWireFormatTests: XCTestCase {
       enums: [],
       nestedMessages: [mapEntryDescriptor]
     )
-    
-    guard let decodedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage else {
+
+    guard
+      let decodedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+        as? ProtoDynamicMessage
+    else {
       XCTFail("Unmarshal should succeed")
       return
     }
-    
+
     let decodedMap = decodedMessage.get(field: fieldDescriptor)?.getMap()
     XCTAssertEqual(decodedMap?.count, 2, "Decoded map should have 2 entries")
     XCTAssertEqual(decodedMap?["one"]?.getInt(), 1)
@@ -1250,15 +1279,18 @@ class ProtoWireFormatTests: XCTestCase {
     // Create a message with the known field
     let message = ProtoDynamicMessage(descriptor: messageDescriptor)
     message.set(field: messageDescriptor.fields[0], value: .intValue(42))
-    
+
     // Marshal the message
     guard let data = ProtoWireFormat.marshal(message: message) else {
       XCTFail("Marshal should succeed")
       return
     }
-    
+
     // Deserialize the message
-    guard let unmarshaledMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage else {
+    guard
+      let unmarshaledMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+        as? ProtoDynamicMessage
+    else {
       XCTFail("Unmarshal should succeed")
       return
     }
@@ -1282,15 +1314,18 @@ class ProtoWireFormatTests: XCTestCase {
     // Create a message with the known field
     let message = ProtoDynamicMessage(descriptor: messageDescriptor)
     message.set(field: messageDescriptor.fields[0], value: .intValue(42))
-    
+
     // Marshal the message
     guard let data = ProtoWireFormat.marshal(message: message) else {
       XCTFail("Marshal should succeed")
       return
     }
-    
+
     // Deserialize the message
-    guard let unmarshaledMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage else {
+    guard
+      let unmarshaledMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+        as? ProtoDynamicMessage
+    else {
       XCTFail("Unmarshal should succeed")
       return
     }
@@ -1358,7 +1393,10 @@ class ProtoWireFormatTests: XCTestCase {
     let serializedData = Data([10, 2, 8, 42])
 
     // Deserialize the message
-    guard let message = ProtoWireFormat.unmarshal(data: serializedData, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage else {
+    guard
+      let message = ProtoWireFormat.unmarshal(data: serializedData, messageDescriptor: messageDescriptor)
+        as? ProtoDynamicMessage
+    else {
       XCTFail("Unmarshal should succeed")
       return
     }
@@ -1367,7 +1405,7 @@ class ProtoWireFormatTests: XCTestCase {
     let nestedMessageField = messageDescriptor.field(number: 1)!
     let nestedMessage = message.get(field: nestedMessageField)?.getMessage()
     XCTAssertNotNil(nestedMessage, "Nested message should be decoded")
-    
+
     let nestedValueField = nestedMessageDescriptor.field(number: 1)!
     XCTAssertEqual(nestedMessage?.get(field: nestedValueField)?.getInt(), 42, "Nested value should be 42")
   }
@@ -1406,7 +1444,10 @@ class ProtoWireFormatTests: XCTestCase {
     let serializedData = Data([10, 2, 8, 42, 10, 2, 8, 43])
 
     // Deserialize the message
-    guard let message = ProtoWireFormat.unmarshal(data: serializedData, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage else {
+    guard
+      let message = ProtoWireFormat.unmarshal(data: serializedData, messageDescriptor: messageDescriptor)
+        as? ProtoDynamicMessage
+    else {
       XCTFail("Unmarshal should succeed")
       return
     }
@@ -1415,14 +1456,336 @@ class ProtoWireFormatTests: XCTestCase {
     let repeatedNestedMessageField = messageDescriptor.field(number: 1)!
     let repeatedNestedMessages = message.get(field: repeatedNestedMessageField)?.getRepeated()
     XCTAssertEqual(repeatedNestedMessages?.count, 2, "Should have 2 nested messages")
-    
+
     // Check the first nested message
     let nestedMessage1 = repeatedNestedMessages?[0].getMessage()
     let nestedValueField = nestedMessageDescriptor.field(number: 1)!
     XCTAssertEqual(nestedMessage1?.get(field: nestedValueField)?.getInt(), 42, "First nested value should be 42")
-    
+
     // Check the second nested message
     let nestedMessage2 = repeatedNestedMessages?[1].getMessage()
     XCTAssertEqual(nestedMessage2?.get(field: nestedValueField)?.getInt(), 43, "Second nested value should be 43")
+  }
+
+  // MARK: - Tests for Field Validation
+
+  func testFieldValidation() {
+    // Create a message descriptor with various field types
+    let messageDescriptor = ProtoMessageDescriptor(
+      fullName: "ValidationTestMessage",
+      fields: [
+        ProtoFieldDescriptor(name: "int_field", number: 1, type: .int32, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "string_field", number: 2, type: .string, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "float_field", number: 3, type: .float, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "bool_field", number: 4, type: .bool, isRepeated: false, isMap: false),
+      ],
+      enums: [],
+      nestedMessages: []
+    )
+
+    // Create a message
+    let message = ProtoDynamicMessage(descriptor: messageDescriptor)
+
+    // Test valid field values
+    message.set(field: messageDescriptor.fields[0], value: .intValue(42))
+    message.set(field: messageDescriptor.fields[1], value: .stringValue("hello"))
+    message.set(field: messageDescriptor.fields[2], value: .floatValue(3.14))
+    message.set(field: messageDescriptor.fields[3], value: .boolValue(true))
+
+    // Serialization should succeed with valid values
+    let data = ProtoWireFormat.marshal(message: message)
+    XCTAssertNotNil(data, "Serialization should succeed with valid field values")
+
+    // Test invalid field values
+    message.set(field: messageDescriptor.fields[0], value: .stringValue("not an int"))
+
+    // Serialization should fail with invalid values
+    let invalidData = ProtoWireFormat.marshal(message: message)
+    XCTAssertNil(invalidData, "Serialization should fail with invalid field values")
+
+    // Reset to valid value
+    message.set(field: messageDescriptor.fields[0], value: .intValue(42))
+
+    // Test another invalid field value
+    message.set(field: messageDescriptor.fields[2], value: .boolValue(true))
+
+    // Serialization should fail with invalid values
+    let invalidData2 = ProtoWireFormat.marshal(message: message)
+    XCTAssertNil(invalidData2, "Serialization should fail with invalid field values")
+  }
+
+  func testAllPrimitiveFieldTypes() {
+    // Create a message descriptor with all primitive field types
+    let messageDescriptor = ProtoMessageDescriptor(
+      fullName: "AllPrimitiveTypesMessage",
+      fields: [
+        ProtoFieldDescriptor(name: "int32_field", number: 1, type: .int32, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "int64_field", number: 2, type: .int64, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "uint32_field", number: 3, type: .uint32, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "uint64_field", number: 4, type: .uint64, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "sint32_field", number: 5, type: .sint32, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "sint64_field", number: 6, type: .sint64, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "fixed32_field", number: 7, type: .fixed32, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "fixed64_field", number: 8, type: .fixed64, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "sfixed32_field", number: 9, type: .sfixed32, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "sfixed64_field", number: 10, type: .sfixed64, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "float_field", number: 11, type: .float, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "double_field", number: 12, type: .double, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "bool_field", number: 13, type: .bool, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "string_field", number: 14, type: .string, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "bytes_field", number: 15, type: .bytes, isRepeated: false, isMap: false),
+      ],
+      enums: [],
+      nestedMessages: []
+    )
+
+    // Create a message with values for all fields
+    let message = ProtoDynamicMessage(descriptor: messageDescriptor)
+    message.set(field: messageDescriptor.fields[0], value: .intValue(42))
+    message.set(field: messageDescriptor.fields[1], value: .intValue(1_234_567_890))
+    message.set(field: messageDescriptor.fields[2], value: .uintValue(123456))
+    message.set(field: messageDescriptor.fields[3], value: .uintValue(9_876_543_210))
+    message.set(field: messageDescriptor.fields[4], value: .intValue(-42))
+    message.set(field: messageDescriptor.fields[5], value: .intValue(-1_234_567_890))
+    message.set(field: messageDescriptor.fields[6], value: .uintValue(123456))
+    message.set(field: messageDescriptor.fields[7], value: .uintValue(9_876_543_210))
+    message.set(field: messageDescriptor.fields[8], value: .intValue(-42))
+    message.set(field: messageDescriptor.fields[9], value: .intValue(-1_234_567_890))
+    message.set(field: messageDescriptor.fields[10], value: .floatValue(3.14159))
+    message.set(field: messageDescriptor.fields[11], value: .doubleValue(2.71828182845904))
+    message.set(field: messageDescriptor.fields[12], value: .boolValue(true))
+    message.set(field: messageDescriptor.fields[13], value: .stringValue("Hello, world!"))
+    message.set(field: messageDescriptor.fields[14], value: .bytesValue(Data([0x00, 0x01, 0x02, 0x03, 0xFF])))
+
+    // Serialize the message
+    let data = ProtoWireFormat.marshal(message: message)
+    XCTAssertNotNil(data, "Serialization should succeed with all primitive field types")
+
+    // Deserialize the message
+    let deserializedMessage =
+      ProtoWireFormat.unmarshal(data: data!, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage
+    XCTAssertNotNil(deserializedMessage, "Deserialization should succeed")
+
+    // Verify all field values were preserved
+    XCTAssertEqual(deserializedMessage?.get(field: messageDescriptor.fields[0])?.getInt(), 42)
+    XCTAssertEqual(deserializedMessage?.get(field: messageDescriptor.fields[1])?.getInt(), 1_234_567_890)
+    XCTAssertEqual(deserializedMessage?.get(field: messageDescriptor.fields[2])?.getUInt(), 123456)
+    XCTAssertEqual(deserializedMessage?.get(field: messageDescriptor.fields[3])?.getUInt(), 9_876_543_210)
+    XCTAssertEqual(deserializedMessage?.get(field: messageDescriptor.fields[4])?.getInt(), -42)
+    XCTAssertEqual(deserializedMessage?.get(field: messageDescriptor.fields[5])?.getInt(), -1_234_567_890)
+    XCTAssertEqual(deserializedMessage?.get(field: messageDescriptor.fields[6])?.getUInt(), 123456)
+    XCTAssertEqual(deserializedMessage?.get(field: messageDescriptor.fields[7])?.getUInt(), 9_876_543_210)
+    XCTAssertEqual(deserializedMessage?.get(field: messageDescriptor.fields[8])?.getInt(), -42)
+    XCTAssertEqual(deserializedMessage?.get(field: messageDescriptor.fields[9])?.getInt(), -1_234_567_890)
+
+    // Handle Float and Double assertions properly
+    if let floatValue = deserializedMessage?.get(field: messageDescriptor.fields[10])?.getFloat() {
+      XCTAssertEqual(floatValue, 3.14159, accuracy: 0.00001)
+    }
+    else {
+      XCTFail("Float value should not be nil")
+    }
+
+    if let doubleValue = deserializedMessage?.get(field: messageDescriptor.fields[11])?.getDouble() {
+      XCTAssertEqual(doubleValue, 2.71828182845904, accuracy: 0.00000000000001)
+    }
+    else {
+      XCTFail("Double value should not be nil")
+    }
+
+    XCTAssertEqual(deserializedMessage?.get(field: messageDescriptor.fields[12])?.getBool(), true)
+    XCTAssertEqual(deserializedMessage?.get(field: messageDescriptor.fields[13])?.getString(), "Hello, world!")
+    XCTAssertEqual(
+      deserializedMessage?.get(field: messageDescriptor.fields[14])?.getBytes(),
+      Data([0x00, 0x01, 0x02, 0x03, 0xFF])
+    )
+  }
+
+  func testInt32FieldSerialization() {
+    // Create a message descriptor with int32 field
+    let messageDescriptor = ProtoMessageDescriptor(
+      fullName: "Int32Message",
+      fields: [
+        ProtoFieldDescriptor(name: "int32_field", number: 1, type: .int32, isRepeated: false, isMap: false)
+      ],
+      enums: [],
+      nestedMessages: []
+    )
+
+    // Create a message with an int32 value
+    let message = ProtoDynamicMessage(descriptor: messageDescriptor)
+    message.set(field: messageDescriptor.fields[0], value: .intValue(42))
+
+    // Serialize the message
+    let data = ProtoWireFormat.marshal(message: message)
+    XCTAssertNotNil(data, "Serialization should succeed with int32 field")
+
+    // Deserialize the message
+    let deserializedMessage =
+      ProtoWireFormat.unmarshal(data: data!, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage
+    XCTAssertNotNil(deserializedMessage, "Deserialization should succeed")
+
+    // Verify the field value was preserved
+    XCTAssertEqual(deserializedMessage?.get(field: messageDescriptor.fields[0])?.getInt(), 42)
+  }
+
+  func testStringFieldSerialization() {
+    // Create a message descriptor with string field
+    let messageDescriptor = ProtoMessageDescriptor(
+      fullName: "StringMessage",
+      fields: [
+        ProtoFieldDescriptor(name: "string_field", number: 1, type: .string, isRepeated: false, isMap: false)
+      ],
+      enums: [],
+      nestedMessages: []
+    )
+
+    // Create a message with a string value
+    let message = ProtoDynamicMessage(descriptor: messageDescriptor)
+    message.set(field: messageDescriptor.fields[0], value: .stringValue("Hello, world!"))
+
+    // Serialize the message
+    let data = ProtoWireFormat.marshal(message: message)
+    XCTAssertNotNil(data, "Serialization should succeed with string field")
+
+    // Deserialize the message
+    let deserializedMessage =
+      ProtoWireFormat.unmarshal(data: data!, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage
+    XCTAssertNotNil(deserializedMessage, "Deserialization should succeed")
+
+    // Verify the field value was preserved
+    XCTAssertEqual(deserializedMessage?.get(field: messageDescriptor.fields[0])?.getString(), "Hello, world!")
+  }
+
+  func testFloatFieldSerialization() {
+    // Create a message descriptor with float field
+    let messageDescriptor = ProtoMessageDescriptor(
+      fullName: "FloatMessage",
+      fields: [
+        ProtoFieldDescriptor(name: "float_field", number: 1, type: .float, isRepeated: false, isMap: false)
+      ],
+      enums: [],
+      nestedMessages: []
+    )
+
+    // Create a message with a float value
+    let message = ProtoDynamicMessage(descriptor: messageDescriptor)
+    message.set(field: messageDescriptor.fields[0], value: .floatValue(3.14159))
+
+    // Serialize the message
+    let data = ProtoWireFormat.marshal(message: message)
+    XCTAssertNotNil(data, "Serialization should succeed with float field")
+
+    // Deserialize the message
+    let deserializedMessage =
+      ProtoWireFormat.unmarshal(data: data!, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage
+    XCTAssertNotNil(deserializedMessage, "Deserialization should succeed")
+
+    // Verify the field value was preserved
+    if let floatValue = deserializedMessage?.get(field: messageDescriptor.fields[0])?.getFloat() {
+      XCTAssertEqual(floatValue, 3.14159, accuracy: 0.00001)
+    }
+    else {
+      XCTFail("Float value should not be nil")
+    }
+  }
+
+  func testBoolFieldSerialization() {
+    // Create a message descriptor with bool field
+    let messageDescriptor = ProtoMessageDescriptor(
+      fullName: "BoolMessage",
+      fields: [
+        ProtoFieldDescriptor(name: "bool_field", number: 1, type: .bool, isRepeated: false, isMap: false)
+      ],
+      enums: [],
+      nestedMessages: []
+    )
+
+    // Create a message with a bool value
+    let message = ProtoDynamicMessage(descriptor: messageDescriptor)
+    message.set(field: messageDescriptor.fields[0], value: .boolValue(true))
+
+    // Serialize the message
+    let data = ProtoWireFormat.marshal(message: message)
+    XCTAssertNotNil(data, "Serialization should succeed with bool field")
+
+    // Deserialize the message
+    let deserializedMessage =
+      ProtoWireFormat.unmarshal(data: data!, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage
+    XCTAssertNotNil(deserializedMessage, "Deserialization should succeed")
+
+    // Verify the field value was preserved
+    XCTAssertEqual(deserializedMessage?.get(field: messageDescriptor.fields[0])?.getBool(), true)
+  }
+
+  func testBytesFieldSerialization() {
+    // Create a message descriptor with bytes field
+    let messageDescriptor = ProtoMessageDescriptor(
+      fullName: "BytesMessage",
+      fields: [
+        ProtoFieldDescriptor(name: "bytes_field", number: 1, type: .bytes, isRepeated: false, isMap: false)
+      ],
+      enums: [],
+      nestedMessages: []
+    )
+
+    // Create a message with a bytes value
+    let message = ProtoDynamicMessage(descriptor: messageDescriptor)
+    message.set(field: messageDescriptor.fields[0], value: .bytesValue(Data([0x00, 0x01, 0x02, 0x03, 0xFF])))
+
+    // Serialize the message
+    let data = ProtoWireFormat.marshal(message: message)
+    XCTAssertNotNil(data, "Serialization should succeed with bytes field")
+
+    // Deserialize the message
+    let deserializedMessage =
+      ProtoWireFormat.unmarshal(data: data!, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage
+    XCTAssertNotNil(deserializedMessage, "Deserialization should succeed")
+
+    // Verify the field value was preserved
+    XCTAssertEqual(
+      deserializedMessage?.get(field: messageDescriptor.fields[0])?.getBytes(),
+      Data([0x00, 0x01, 0x02, 0x03, 0xFF])
+    )
+  }
+
+  func testBasicFieldTypes() {
+    // Create a message descriptor with just a few basic field types
+    let messageDescriptor = ProtoMessageDescriptor(
+      fullName: "TestMessage",
+      fields: [
+        ProtoFieldDescriptor(name: "int32_field", number: 1, type: .int32, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "string_field", number: 2, type: .string, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "bool_field", number: 3, type: .bool, isRepeated: false, isMap: false),
+      ],
+      enums: [],
+      nestedMessages: []
+    )
+
+    // Create a message with values for each field
+    let message = ProtoDynamicMessage(descriptor: messageDescriptor)
+    message.set(fieldName: "int32_field", value: .intValue(42))
+    message.set(fieldName: "string_field", value: .stringValue("Hello, world!"))
+    message.set(fieldName: "bool_field", value: .boolValue(true))
+
+    // Serialize the message
+    guard let data = ProtoWireFormat.marshal(message: message) else {
+      XCTFail("Failed to marshal message")
+      return
+    }
+
+    // Deserialize the message
+    guard
+      let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+        as? ProtoDynamicMessage
+    else {
+      XCTFail("Failed to unmarshal message")
+      return
+    }
+
+    // Verify the field values were preserved
+    XCTAssertEqual(deserializedMessage.get(fieldName: "int32_field")?.getInt(), 42)
+    XCTAssertEqual(deserializedMessage.get(fieldName: "string_field")?.getString(), "Hello, world!")
+    XCTAssertEqual(deserializedMessage.get(fieldName: "bool_field")?.getBool(), true)
   }
 }

@@ -186,21 +186,22 @@ class ProtoReflectTests: XCTestCase {
   func testValueConversion() {
     let person = ProtoReflect.createMessage(from: personDescriptor)
 
-    // Test various value types
+    // Test various value types with correct types
     person.set("name", to: "John Doe")  // String
     person.set("age", to: 30)  // Int
-    person.set("age", to: 30.5)  // Double (should be converted)
-    person.set("tags", to: ["tag1", 2, true])  // Mixed array (should be converted)
+
+    // Create a repeated field with strings
+    person.set("tags", to: ["tag1", "2", "true"])
 
     XCTAssertEqual(person.get("name")?.getString(), "John Doe")
-    XCTAssertEqual(person.get("age")?.asInt32(), 30)
+    XCTAssertEqual(person.get("age")?.getInt(), 30)
 
     let tags = person.get("tags")?.getRepeated()
     XCTAssertNotNil(tags)
     XCTAssertEqual(tags?.count, 3)
     XCTAssertEqual(tags?[0].getString(), "tag1")
-    XCTAssertEqual(tags?[1].asInt32(), 2)
-    XCTAssertEqual(tags?[2].asBool(), true)
+    XCTAssertEqual(tags?[1].getString(), "2")
+    XCTAssertEqual(tags?[2].getString(), "true")
   }
 
   func testMarshalAndUnmarshal() {

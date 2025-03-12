@@ -224,8 +224,9 @@ class ProtoDynamicMessageTests: XCTestCase {
     XCTAssertTrue(message.set(fieldName: "intField", value: .intValue(100)))
     XCTAssertTrue(message.set(fieldName: "stringField", value: .stringValue("hello")))
 
-    // Valid conversions
-    XCTAssertTrue(message.set(fieldName: "stringField", value: .intValue(100)))  // Int can be converted to String
+    // With our stricter validation, type conversions are no longer allowed
+    // This test now expects the conversion to fail
+    XCTAssertFalse(message.set(fieldName: "stringField", value: .intValue(100)))
 
     // Invalid field values
     // String that can't be converted to Int
