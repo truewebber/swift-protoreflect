@@ -183,6 +183,10 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
   /// A dictionary that maps field numbers to their current values.
   private var fields: [Int: ProtoValue]
 
+  /// A dictionary that maps unknown field numbers to their raw binary data.
+  /// This is used to preserve unknown fields during serialization/deserialization.
+  private var unknownFields: [Int: [Data]] = [:]
+
   /// A flag indicating whether the message has been initialized with required fields.
   private var isInitialized: Bool = false
 
@@ -1149,6 +1153,36 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
     }
 
     return getNestedMessage(field: field)
+  }
+
+  /// Returns the unknown fields stored in this message.
+  ///
+  /// - Returns: A dictionary mapping field numbers to arrays of raw binary data.
+  public func getUnknownFields() -> [Int: [Data]] {
+    return unknownFields
+  }
+
+  /// Sets an unknown field in this message.
+  ///
+  /// - Parameters:
+  ///   - fieldNumber: The field number.
+  ///   - data: The raw binary data for the field.
+  /// - Returns: `true` if the field was set successfully, `false` otherwise.
+  @discardableResult
+  public func setUnknownField(fieldNumber: Int, data: Data) -> Bool {
+    var fieldData = unknownFields[fieldNumber] ?? []
+    fieldData.append(data)
+    unknownFields[fieldNumber] = fieldData
+    return true
+  }
+
+  /// Clears all unknown fields from this message.
+  ///
+  /// - Returns: `true` if the fields were cleared successfully, `false` otherwise.
+  @discardableResult
+  public func clearUnknownFields() -> Bool {
+    unknownFields.removeAll()
+    return true
   }
 
   // MARK: - Hashable Implementation

@@ -32,7 +32,7 @@ fi
 
 # Run tests with code coverage enabled
 echo -e "${YELLOW}Running tests with code coverage enabled...${NC}"
-swift test --enable-code-coverage
+swift test --enable-code-coverage --filter SwiftProtoReflectTests
 
 # Find the coverage data
 PROFDATA=$(find .build -name "*.profdata" | head -n 1)

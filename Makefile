@@ -52,7 +52,12 @@ format:
 ## Run tests
 test:
 	@echo "Running swift test..."
-	$(SWIFT_TEST) -q
+	$(SWIFT_TEST) -q --filter SwiftProtoReflectTests
+	@echo "Tests complete."
+
+bench:
+	@echo "Running swift test..."
+	$(SWIFT_TEST) -q --filter SwiftProtoReflectBenchmarks
 	@echo "Tests complete."
 
 ## Generate a code coverage report
