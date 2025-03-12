@@ -184,6 +184,7 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
   private var fields: [Int: ProtoValue]
 
   /// A dictionary that maps unknown field numbers to their raw binary data.
+  ///
   /// This is used to preserve unknown fields during serialization/deserialization.
   private var unknownFields: [Int: [Data]] = [:]
 
