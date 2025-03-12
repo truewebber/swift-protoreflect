@@ -52,7 +52,7 @@ format:
 ## Run tests
 test:
 	@echo "Running swift test..."
-	$(SWIFT_TEST) -q --filter SwiftProtoReflectTests
+	$(SWIFT_TEST) -q --parallel --filter SwiftProtoReflectTests
 	@echo "Tests complete."
 
 bench:
