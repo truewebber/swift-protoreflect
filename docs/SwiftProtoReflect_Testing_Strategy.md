@@ -9,6 +9,13 @@ This document outlines the comprehensive testing strategy for the SwiftProtoRefl
 3. **Realistic Scenarios**: Tests will include real-world usage patterns and edge cases.
 4. **Performance Awareness**: Performance benchmarks will be included to ensure the library meets performance goals.
 5. **Integration Focus**: Tests will verify seamless integration with Apple's SwiftProtobuf library.
+6. **Protocol Buffer Specification Compliance**: All tests must verify that the library's behavior exactly matches the official Protocol Buffer specification and the behavior of the `protoc` compiler, including:
+   - Wire format implementation details
+   - Field type validation and conversion rules
+   - Message structure validation
+   - Serialization/deserialization behavior
+   - Error handling and reporting
+   - Edge cases and special cases as specified in the Protocol Buffer documentation
 
 ## Test Types
 
