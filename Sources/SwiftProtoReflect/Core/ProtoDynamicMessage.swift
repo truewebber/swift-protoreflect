@@ -961,53 +961,41 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
       }
 
       // For message fields, recursively validate nested messages
-      if fieldDescriptor.type == .message, let nestedMessage = value.getMessage() as? ProtoDynamicMessage {
+      if case .message = fieldDescriptor.type, let nestedMessage = value.getMessage() as? ProtoDynamicMessage {
         if !nestedMessage.validateFields() {
           // Add nested validation errors with a prefix to identify the field
-          for nestedError in nestedMessage.errors {
-            let prefixedError = ProtoError.validationError(
-              message: "In field '\(fieldDescriptor.name)': \(nestedError.description)"
-            )
-            validationErrors.append(prefixedError)
+          for error in nestedMessage.validationErrors {
+            validationErrors.append(ProtoError.validationError(message: "\(fieldDescriptor.name).\(error.description)"))
           }
-          isInitialized = false
-          continue
+          return false
         }
       }
 
-      // For repeated fields with message elements, validate each message
+      // For repeated fields, validate each element
       if fieldDescriptor.isRepeated, case .repeatedValue(let elements) = value {
         for (index, element) in elements.enumerated() {
-          if fieldDescriptor.type == .message, let nestedMessage = element.getMessage() as? ProtoDynamicMessage {
+          if case .message = fieldDescriptor.type, let nestedMessage = element.getMessage() as? ProtoDynamicMessage {
             if !nestedMessage.validateFields() {
               // Add nested validation errors with a prefix to identify the field and index
-              for nestedError in nestedMessage.errors {
-                let prefixedError = ProtoError.validationError(
-                  message: "In field '\(fieldDescriptor.name)[\(index)]': \(nestedError.description)"
-                )
-                validationErrors.append(prefixedError)
+              for error in nestedMessage.validationErrors {
+                validationErrors.append(ProtoError.validationError(message: "\(fieldDescriptor.name)[\(index)].\(error.description)"))
               }
-              isInitialized = false
-              continue
+              return false
             }
           }
         }
       }
 
-      // For map fields with message values, validate each message
+      // For map fields, validate each value
       if fieldDescriptor.isMap, case .mapValue(let map) = value {
         for (key, mapValue) in map {
-          if fieldDescriptor.type == .message, let nestedMessage = mapValue.getMessage() as? ProtoDynamicMessage {
+          if case .message = fieldDescriptor.type, let nestedMessage = mapValue.getMessage() as? ProtoDynamicMessage {
             if !nestedMessage.validateFields() {
               // Add nested validation errors with a prefix to identify the field and key
-              for nestedError in nestedMessage.errors {
-                let prefixedError = ProtoError.validationError(
-                  message: "In field '\(fieldDescriptor.name)[\"\(key)\"]': \(nestedError.description)"
-                )
-                validationErrors.append(prefixedError)
+              for error in nestedMessage.validationErrors {
+                validationErrors.append(ProtoError.validationError(message: "\(fieldDescriptor.name)[\"\(key)\"].\(error.description)"))
               }
-              isInitialized = false
-              continue
+              return false
             }
           }
         }
@@ -1025,16 +1013,12 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
   /// - Parameter field: The descriptor of the message field.
   /// - Returns: A new dynamic message, or nil if the field is not a message field or the message type is not found.
   public func createNestedMessage(for field: ProtoFieldDescriptor) -> ProtoDynamicMessage? {
-    guard let fieldDescriptor = validateFieldDescriptor(field), fieldDescriptor.type == .message else {
+    guard let fieldDescriptor = validateFieldDescriptor(field),
+          case .message = fieldDescriptor.type,
+          let messageType = fieldDescriptor.messageType else {
       return nil
     }
 
-    // Get the message type from the field descriptor
-    guard let messageType = fieldDescriptor.messageType else {
-      return nil
-    }
-
-    // Create a new dynamic message with the message type
     return ProtoDynamicMessage(descriptor: messageType)
   }
 
@@ -1070,24 +1054,14 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
   /// - Returns: `true` if the message was set successfully, `false` otherwise.
   @discardableResult
   public func setNestedMessage(field: ProtoFieldDescriptor, message: ProtoMessage) -> Bool {
-    guard let fieldDescriptor = validateFieldDescriptor(field), fieldDescriptor.type == .message else {
+    guard let fieldDescriptor = validateFieldDescriptor(field),
+          case .message = fieldDescriptor.type,
+          let messageType = fieldDescriptor.messageType,
+          messageType.fullName == message.descriptor().fullName else {
       return false
     }
 
-    // Validate that the message type matches the field's message type
-    if let expectedType = fieldDescriptor.messageType {
-      guard message.descriptor().fullName == expectedType.fullName else {
-        return false
-      }
-    }
-
-    // Set the message value
-    fields[fieldDescriptor.number] = .messageValue(message)
-
-    // Update initialization status
-    validateFields()
-
-    return true
+    return setValue(ProtoValue.messageValue(message), for: fieldDescriptor)
   }
 
   /// Sets a nested message on a message field by its name.
@@ -1125,11 +1099,12 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
   /// - Parameter field: The descriptor of the message field.
   /// - Returns: The nested message, or nil if the field is not set or not a message field.
   public func getNestedMessage(field: ProtoFieldDescriptor) -> ProtoMessage? {
-    guard let fieldDescriptor = validateFieldDescriptor(field), fieldDescriptor.type == .message else {
+    guard let fieldDescriptor = validateFieldDescriptor(field),
+          case .message = fieldDescriptor.type else {
       return nil
     }
 
-    return fields[fieldDescriptor.number]?.getMessage()
+    return getValue(for: fieldDescriptor)?.getMessage()
   }
 
   /// Gets a nested message from a message field by its name.
@@ -1184,6 +1159,27 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
   public func clearUnknownFields() -> Bool {
     unknownFields.removeAll()
     return true
+  }
+
+  /// Sets a value for a field.
+  ///
+  /// - Parameters:
+  ///   - value: The value to set.
+  ///   - field: The field descriptor.
+  /// - Returns: `true` if the value was set successfully, `false` otherwise.
+  @discardableResult
+  private func setValue(_ value: ProtoValue, for field: ProtoFieldDescriptor) -> Bool {
+    fields[field.number] = value
+    validateFields()
+    return true
+  }
+
+  /// Gets a value for a field.
+  ///
+  /// - Parameter field: The field descriptor.
+  /// - Returns: The value, or nil if the field is not set.
+  private func getValue(for field: ProtoFieldDescriptor) -> ProtoValue? {
+    return fields[field.number]
   }
 
   // MARK: - Hashable Implementation

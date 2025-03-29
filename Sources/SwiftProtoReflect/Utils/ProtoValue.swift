@@ -222,22 +222,22 @@ public enum ProtoValue: Hashable {
   /// Attempts to convert the value to an Int32, regardless of its original type.
   ///
   /// - Returns: The value as an Int32, or nil if conversion is not possible.
-  public func asInt32() -> Int32? {
+  public func asInt32() -> Int? {
     switch self {
     case .intValue(let value):
-      return Int32(exactly: value)
+      return value
     case .uintValue(let value):
-      return Int32(exactly: value)
+      return Int(value)
     case .floatValue(let value):
-      return Int32(value.rounded())
+      return Int(value)
     case .doubleValue(let value):
-      return Int32(value.rounded())
+      return Int(value)
     case .boolValue(let value):
       return value ? 1 : 0
     case .stringValue(let value):
-      return Int32(value)
+      return Int(value)
     case .enumValue(_, let number, _):
-      return Int32(exactly: number)
+      return number
     default:
       return nil
     }
@@ -821,76 +821,147 @@ public enum ProtoValue: Hashable {
     }
   }
 
-  /// Converts this ProtoValue to another type if possible.
+  /// Attempts to convert this value to a target field type.
   ///
-  /// This method attempts to convert the current value to the specified ProtoValue type.
-  /// For example, an integer value can be converted to a string, a boolean, or a floating-point value.
-  ///
-  /// - Parameter targetType: The target ProtoFieldType to convert to.
+  /// - Parameter targetType: The target type to convert to.
   /// - Returns: A new ProtoValue of the target type, or nil if conversion is not possible.
   public func convertTo(targetType: ProtoFieldType) -> ProtoValue? {
-    switch targetType {
-    case .group:
-      // Groups are not supported for conversion
-      return nil
-    case .int32, .int64, .sint32, .sint64, .sfixed32, .sfixed64:
-      if let intValue = self.asInt64() {
-        return .intValue(Int(intValue))
-      }
-      return nil
+    // Create a non-repeated field descriptor for the target type
+    let fieldDescriptor = ProtoFieldDescriptor(
+      name: "temp",
+      number: 1,
+      type: targetType,
+      isRepeated: false,
+      isMap: false
+    )
+    return convertTo(fieldDescriptor: fieldDescriptor)
+  }
 
-    case .uint32, .uint64, .fixed32, .fixed64:
-      if let uintValue = self.asUInt64() {
-        return .uintValue(UInt(uintValue))
-      }
-      return nil
-
-    case .float:
-      if let floatValue = self.asFloat() {
-        return .floatValue(floatValue)
-      }
-      return nil
-
-    case .double:
-      if let doubleValue = self.asDouble() {
-        return .doubleValue(doubleValue)
-      }
-      return nil
-
-    case .bool:
-      if let boolValue = self.asBool() {
-        return .boolValue(boolValue)
-      }
-      return nil
-
-    case .string:
-      return .stringValue(self.asString())
-
-    case .bytes:
-      if case .bytesValue(let value) = self {
-        return .bytesValue(value)
-      }
-      else if case .stringValue(let value) = self {
-        // Try to convert string to bytes using UTF-8 encoding
-        if let data = value.data(using: .utf8) {
-          return .bytesValue(data)
+  /// Attempts to convert this value to a target field type.
+  ///
+  /// - Parameter fieldDescriptor: The target field descriptor to convert to.
+  /// - Returns: A new ProtoValue of the target type, or nil if conversion is not possible.
+  public func convertTo(fieldDescriptor: ProtoFieldDescriptor) -> ProtoValue? {
+    // For repeated fields, only allow repeated values
+    if fieldDescriptor.isRepeated {
+      if case .repeatedValue(let values) = self {
+        // Check if all elements can be converted to the target type
+        for value in values {
+          if value.convertTo(targetType: fieldDescriptor.type) == nil {
+            return nil
+          }
         }
+        return self
       }
       return nil
+    }
 
-    case .enum:
-      // Enum conversion is more complex and requires an enum descriptor
-      // This is handled separately in isValid(for:)
+    // For non-repeated values, only allow conversion to non-repeated field types
+    if case .repeatedValue = self {
       return nil
+    }
 
-    case .message:
-      // Message conversion is not generally possible
-      if case .messageValue(let value) = self {
-        return .messageValue(value)
+    // For map fields, only allow map values
+    if fieldDescriptor.isMap {
+      if case .mapValue = self {
+        return self
       }
       return nil
+    }
 
-    case .unknown:
+    // Handle non-repeated, non-map field types
+    switch self {
+    case .intValue(_):
+      switch fieldDescriptor.type {
+      case .int32, .int64, .sint32, .sint64, .sfixed32, .sfixed64:
+        return self
+      default:
+        return nil
+      }
+      
+    case .uintValue(_):
+      switch fieldDescriptor.type {
+      case .uint32, .uint64, .fixed32, .fixed64:
+        return self
+      default:
+        return nil
+      }
+      
+    case .floatValue(_):
+      switch fieldDescriptor.type {
+      case .float:
+        return self
+      default:
+        return nil
+      }
+      
+    case .doubleValue(_):
+      switch fieldDescriptor.type {
+      case .double:
+        return self
+      default:
+        return nil
+      }
+      
+    case .boolValue(_):
+      switch fieldDescriptor.type {
+      case .bool:
+        return self
+      default:
+        return nil
+      }
+      
+    case .stringValue(_):
+      switch fieldDescriptor.type {
+      case .string:
+        return self
+      default:
+        return nil
+      }
+      
+    case .bytesValue(_):
+      switch fieldDescriptor.type {
+      case .bytes:
+        return self
+      default:
+        return nil
+      }
+      
+    case .enumValue(_, let number, let enumDescriptor):
+      switch fieldDescriptor.type {
+      case .enum(let targetDescriptor):
+        if let targetDescriptor = targetDescriptor, targetDescriptor.name == enumDescriptor.name {
+          return self
+        }
+        return nil
+      case .int32, .int64, .sint32, .sint64, .sfixed32, .sfixed64:
+        // Enums can be converted to integers since they are stored as integers internally
+        return .intValue(number)
+      default:
+        return nil
+      }
+      
+    case .messageValue(let message):
+      switch fieldDescriptor.type {
+      case .message(let targetDescriptor):
+        if let targetDescriptor = targetDescriptor,
+           message.descriptor().fullName == targetDescriptor.fullName {
+          return self
+        }
+        return nil
+      case .string:
+        // Messages can be converted to strings for display purposes
+        return .stringValue("Message(\(message.descriptor().fullName))")
+      default:
+        return nil
+      }
+      
+    case .mapValue:
+      // Map values are handled above
+      return nil
+      
+    case .repeatedValue:
+      // Repeated values are handled above
       return nil
     }
   }
@@ -944,146 +1015,79 @@ public enum ProtoValue: Hashable {
   ///   - value: The Swift value to convert.
   ///   - targetType: The target Protocol Buffer field type.
   /// - Returns: A ProtoValue of the target type, or nil if conversion is not possible.
-  public static func from(swiftValue value: Any, targetType: ProtoFieldType) -> ProtoValue? {
+  public static func from(swiftValue: Any, targetType: ProtoFieldType) -> ProtoValue? {
     switch targetType {
-    case .group:
-      // Groups are not supported for conversion from Swift values
-      return nil
     case .int32, .int64, .sint32, .sint64, .sfixed32, .sfixed64:
-      if let intValue = value as? Int {
-        return .intValue(intValue)
-      }
-      else if let intValue = value as? Int32 {
-        return .intValue(Int(intValue))
-      }
-      else if let intValue = value as? Int64 {
-        return .intValue(Int(intValue))
-      }
-      else if let doubleValue = value as? Double, doubleValue.truncatingRemainder(dividingBy: 1) == 0 {
-        return .intValue(Int(doubleValue))
-      }
-      else if let floatValue = value as? Float, floatValue.truncatingRemainder(dividingBy: 1) == 0 {
-        return .intValue(Int(floatValue))
-      }
-      else if let boolValue = value as? Bool {
-        return .intValue(boolValue ? 1 : 0)
-      }
-      else if let stringValue = value as? String, let intValue = Int(stringValue) {
-        return .intValue(intValue)
-      }
-      return nil
+        if let intValue = swiftValue as? Int {
+            return .intValue(intValue)
+        }
+        if let int32Value = swiftValue as? Int32 {
+            return .intValue(Int(int32Value))
+        }
+        if let int64Value = swiftValue as? Int64 {
+            return .intValue(Int(int64Value))
+        }
+        return nil
 
     case .uint32, .uint64, .fixed32, .fixed64:
-      if let uintValue = value as? UInt {
-        return .uintValue(uintValue)
-      }
-      else if let uintValue = value as? UInt32 {
-        return .uintValue(UInt(uintValue))
-      }
-      else if let uintValue = value as? UInt64 {
-        return .uintValue(UInt(uintValue))
-      }
-      else if let intValue = value as? Int, intValue >= 0 {
-        return .uintValue(UInt(intValue))
-      }
-      else if let doubleValue = value as? Double, doubleValue >= 0, doubleValue.truncatingRemainder(dividingBy: 1) == 0
-      {
-        return .uintValue(UInt(doubleValue))
-      }
-      else if let floatValue = value as? Float, floatValue >= 0, floatValue.truncatingRemainder(dividingBy: 1) == 0 {
-        return .uintValue(UInt(floatValue))
-      }
-      else if let stringValue = value as? String, let uintValue = UInt(stringValue) {
-        return .uintValue(uintValue)
-      }
-      return nil
+        if let uintValue = swiftValue as? UInt {
+            return .uintValue(uintValue)
+        }
+        if let uint32Value = swiftValue as? UInt32 {
+            return .uintValue(UInt(uint32Value))
+        }
+        if let uint64Value = swiftValue as? UInt64 {
+            return .uintValue(UInt(uint64Value))
+        }
+        return nil
 
     case .float:
-      if let floatValue = value as? Float {
-        return .floatValue(floatValue)
-      }
-      else if let doubleValue = value as? Double {
-        return .floatValue(Float(doubleValue))
-      }
-      else if let intValue = value as? Int {
-        return .floatValue(Float(intValue))
-      }
-      else if let uintValue = value as? UInt {
-        return .floatValue(Float(uintValue))
-      }
-      else if let boolValue = value as? Bool {
-        return .floatValue(boolValue ? 1.0 : 0.0)
-      }
-      else if let stringValue = value as? String, let floatValue = Float(stringValue) {
-        return .floatValue(floatValue)
-      }
-      return nil
+        if let floatValue = swiftValue as? Float {
+            return .floatValue(floatValue)
+        }
+        if let doubleValue = swiftValue as? Double {
+            return .floatValue(Float(doubleValue))
+        }
+        return nil
 
     case .double:
-      if let doubleValue = value as? Double {
-        return .doubleValue(doubleValue)
-      }
-      else if let floatValue = value as? Float {
-        return .doubleValue(Double(floatValue))
-      }
-      else if let intValue = value as? Int {
-        return .doubleValue(Double(intValue))
-      }
-      else if let uintValue = value as? UInt {
-        return .doubleValue(Double(uintValue))
-      }
-      else if let boolValue = value as? Bool {
-        return .doubleValue(boolValue ? 1.0 : 0.0)
-      }
-      else if let stringValue = value as? String, let doubleValue = Double(stringValue) {
-        return .doubleValue(doubleValue)
-      }
-      return nil
+        if let doubleValue = swiftValue as? Double {
+            return .doubleValue(doubleValue)
+        }
+        if let floatValue = swiftValue as? Float {
+            return .doubleValue(Double(floatValue))
+        }
+        return nil
 
     case .bool:
-      if let boolValue = value as? Bool {
-        return .boolValue(boolValue)
-      }
-      else if let intValue = value as? Int {
-        return .boolValue(intValue != 0)
-      }
-      else if let uintValue = value as? UInt {
-        return .boolValue(uintValue != 0)
-      }
-      else if let doubleValue = value as? Double {
-        return .boolValue(doubleValue != 0)
-      }
-      else if let floatValue = value as? Float {
-        return .boolValue(floatValue != 0)
-      }
-      else if let stringValue = value as? String {
-        if stringValue.lowercased() == "true" { return .boolValue(true) }
-        if stringValue.lowercased() == "false" { return .boolValue(false) }
-        if let intValue = Int(stringValue) { return .boolValue(intValue != 0) }
-      }
-      return nil
+        if let boolValue = swiftValue as? Bool {
+            return .boolValue(boolValue)
+        }
+        return nil
 
     case .string:
-      if let stringValue = value as? String {
-        return .stringValue(stringValue)
-      }
-      else {
-        // Convert any value to its string representation
-        return .stringValue(String(describing: value))
-      }
+        return .stringValue(String(describing: swiftValue))
 
     case .bytes:
-      if let dataValue = value as? Data {
-        return .bytesValue(dataValue)
-      }
-      else if let stringValue = value as? String, let data = stringValue.data(using: .utf8) {
-        return .bytesValue(data)
-      }
-      return nil
+        if let dataValue = swiftValue as? Data {
+            return .bytesValue(dataValue)
+        }
+        return nil
 
-    case .message, .enum, .unknown:
-      // These types require more context and can't be converted directly
-      return nil
+    case .enum:
+        // Handle enum values
+        return nil
+
+    case .message:
+        // Handle message values
+        return nil
+
+    case .group:
+        // Handle group values
+        return nil
+
+    case .unknown:
+        return nil
     }
   }
 }

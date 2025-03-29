@@ -188,7 +188,7 @@ class ProtoDynamicMessageTests: XCTestCase {
         ProtoFieldDescriptor(
           name: "address",
           number: 2,
-          type: .message,
+          type: .message(addressDescriptor),
           isRepeated: false,
           isMap: false,
           messageType: addressDescriptor
@@ -361,7 +361,7 @@ class ProtoDynamicMessageTests: XCTestCase {
       ProtoFieldDescriptor(
         name: "address",
         number: 3,
-        type: .message,
+        type: .message(addressDescriptor),
         isRepeated: false,
         isMap: false,
         messageType: addressDescriptor
@@ -369,7 +369,7 @@ class ProtoDynamicMessageTests: XCTestCase {
       ProtoFieldDescriptor(
         name: "phones",
         number: 4,
-        type: .message,
+        type: .message(phoneDescriptor),
         isRepeated: true,
         isMap: false,
         messageType: phoneDescriptor
@@ -377,7 +377,7 @@ class ProtoDynamicMessageTests: XCTestCase {
       ProtoFieldDescriptor(
         name: "attributes",
         number: 5,
-        type: .message,
+        type: .message(attributeEntryDescriptor),
         isRepeated: false,
         isMap: true,
         messageType: attributeEntryDescriptor

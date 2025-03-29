@@ -24,6 +24,8 @@ final class ProtoValueValidationTests: XCTestCase {
   // Test enum and message descriptors
   var enumDescriptor: ProtoEnumDescriptor!
   var messageDescriptor: ProtoMessageDescriptor!
+  var stringToStringMapEntryDescriptor: ProtoMessageDescriptor!
+  var int32ToMessageMapEntryDescriptor: ProtoMessageDescriptor!
 
   override func setUp() {
     super.setUp()
@@ -46,6 +48,27 @@ final class ProtoValueValidationTests: XCTestCase {
       nestedMessages: []
     )
 
+    // Create map entry descriptors
+    stringToStringMapEntryDescriptor = ProtoMessageDescriptor(
+      fullName: "test.TestMessage.StringToStringMapEntry",
+      fields: [
+        ProtoFieldDescriptor(name: "key", number: 1, type: .string, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "value", number: 2, type: .string, isRepeated: false, isMap: false)
+      ],
+      enums: [],
+      nestedMessages: []
+    )
+
+    int32ToMessageMapEntryDescriptor = ProtoMessageDescriptor(
+      fullName: "test.TestMessage.Int32ToMessageMapEntry",
+      fields: [
+        ProtoFieldDescriptor(name: "key", number: 1, type: .int32, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "value", number: 2, type: .message(messageDescriptor), isRepeated: false, isMap: false, messageType: messageDescriptor)
+      ],
+      enums: [],
+      nestedMessages: []
+    )
+
     // Create field descriptors
     intField = ProtoFieldDescriptor(name: "int_field", number: 1, type: .int32, isRepeated: false, isMap: false)
     uintField = ProtoFieldDescriptor(name: "uint_field", number: 2, type: .uint32, isRepeated: false, isMap: false)
@@ -57,20 +80,18 @@ final class ProtoValueValidationTests: XCTestCase {
     enumField = ProtoFieldDescriptor(
       name: "enum_field",
       number: 8,
-      type: .enum,
+      type: .enum(enumDescriptor),
       isRepeated: false,
       isMap: false,
-      messageType: nil,
       enumType: enumDescriptor
     )
     messageField = ProtoFieldDescriptor(
       name: "message_field",
       number: 9,
-      type: .message,
+      type: .message(messageDescriptor),
       isRepeated: false,
       isMap: false,
-      messageType: messageDescriptor,
-      enumType: nil
+      messageType: messageDescriptor
     )
 
     // Repeated fields
@@ -91,29 +112,29 @@ final class ProtoValueValidationTests: XCTestCase {
     repeatedMessageField = ProtoFieldDescriptor(
       name: "repeated_message_field",
       number: 12,
-      type: .message,
+      type: .message(messageDescriptor),
       isRepeated: true,
       isMap: false,
-      messageType: messageDescriptor,
-      enumType: nil
+      messageType: messageDescriptor
     )
 
     // Map fields
     mapStringToStringField = ProtoFieldDescriptor(
       name: "map_string_to_string",
       number: 13,
-      type: .message,
+      type: .message(stringToStringMapEntryDescriptor),
       isRepeated: false,
-      isMap: true
+      isMap: true,
+      messageType: stringToStringMapEntryDescriptor
     )
 
     mapInt32ToMessageField = ProtoFieldDescriptor(
       name: "map_int32_to_message",
       number: 14,
-      type: .message,
+      type: .message(int32ToMessageMapEntryDescriptor),
       isRepeated: false,
       isMap: true,
-      messageType: messageDescriptor
+      messageType: int32ToMessageMapEntryDescriptor
     )
   }
 

@@ -296,13 +296,13 @@ class ProtoWireFormatTests: XCTestCase {
       (.sint32, ProtoWireFormat.wireTypeVarint),
       (.sint64, ProtoWireFormat.wireTypeVarint),
       (.bool, ProtoWireFormat.wireTypeVarint),
-      (.enum, ProtoWireFormat.wireTypeVarint),
+      (.enum(nil), ProtoWireFormat.wireTypeVarint),
       (.fixed64, ProtoWireFormat.wireTypeFixed64),
       (.sfixed64, ProtoWireFormat.wireTypeFixed64),
       (.double, ProtoWireFormat.wireTypeFixed64),
       (.string, ProtoWireFormat.wireTypeLengthDelimited),
       (.bytes, ProtoWireFormat.wireTypeLengthDelimited),
-      (.message, ProtoWireFormat.wireTypeLengthDelimited),
+      (.message(nil), ProtoWireFormat.wireTypeLengthDelimited),
       (.group, ProtoWireFormat.wireTypeStartGroup),
       (.fixed32, ProtoWireFormat.wireTypeFixed32),
       (.sfixed32, ProtoWireFormat.wireTypeFixed32),
@@ -785,7 +785,7 @@ class ProtoWireFormatTests: XCTestCase {
     let fieldDescriptor = ProtoFieldDescriptor(
       name: "test_enum",
       number: 14,
-      type: .enum,
+      type: .enum(enumDescriptor),
       isRepeated: false,
       isMap: false,
       enumType: enumDescriptor
@@ -827,7 +827,7 @@ class ProtoWireFormatTests: XCTestCase {
     let fieldDescriptor = ProtoFieldDescriptor(
       name: "test_message",
       number: 15,
-      type: .message,
+      type: .message(nestedMessageDescriptor),
       isRepeated: false,
       isMap: false,
       messageType: nestedMessageDescriptor
@@ -1033,7 +1033,7 @@ class ProtoWireFormatTests: XCTestCase {
     let mapFieldDescriptor = ProtoFieldDescriptor(
       name: "string_to_int32_map",
       number: 7,
-      type: .message,
+      type: .message(mapEntryDescriptor),
       isRepeated: false,
       isMap: true,
       messageType: mapEntryDescriptor
@@ -1223,7 +1223,7 @@ class ProtoWireFormatTests: XCTestCase {
     let fieldDescriptor = ProtoFieldDescriptor(
       name: "string_to_int_map",
       number: 21,
-      type: .message,
+      type: .message(mapEntryDescriptor),
       isRepeated: false,
       isMap: true,
       messageType: mapEntryDescriptor
@@ -1378,7 +1378,7 @@ class ProtoWireFormatTests: XCTestCase {
         ProtoFieldDescriptor(
           name: "nested_message",
           number: 1,
-          type: .message,
+          type: .message(nestedMessageDescriptor),
           isRepeated: false,
           isMap: false,
           messageType: nestedMessageDescriptor
@@ -1428,7 +1428,7 @@ class ProtoWireFormatTests: XCTestCase {
         ProtoFieldDescriptor(
           name: "repeated_nested_message",
           number: 1,
-          type: .message,
+          type: .message(nestedMessageDescriptor),
           isRepeated: true,
           isMap: false,
           messageType: nestedMessageDescriptor

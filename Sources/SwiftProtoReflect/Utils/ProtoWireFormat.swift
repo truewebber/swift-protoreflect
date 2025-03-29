@@ -292,7 +292,9 @@ public struct ProtoWireFormat {
       // Decode the value based on wire type and field type
       if let value = try decodeField(fieldDescriptor: fieldDescriptor, wireType: wireType, data: &dataStream) {
         // Handle map fields (which are encoded as repeated message fields)
-        if fieldDescriptor.isMap && fieldDescriptor.type == .message && fieldDescriptor.messageType != nil {
+        if fieldDescriptor.isMap,
+           case .message = fieldDescriptor.type,
+           fieldDescriptor.messageType != nil {
           if case .messageValue(let mapEntryMessage) = value {
             let keyField = mapEntryMessage.descriptor().field(number: 1)
             let valueField = mapEntryMessage.descriptor().field(number: 2)

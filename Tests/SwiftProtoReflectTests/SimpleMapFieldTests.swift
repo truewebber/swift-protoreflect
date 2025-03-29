@@ -34,7 +34,7 @@ class SimpleMapFieldTests: XCTestCase {
     let mapFieldDescriptor = ProtoFieldDescriptor(
       name: "string_map",
       number: 1,
-      type: .message,
+      type: .message(entryDescriptor),
       isRepeated: true,
       isMap: true,
       messageType: entryDescriptor
@@ -153,7 +153,7 @@ class SimpleMapFieldTests: XCTestCase {
     let repeatedMessageFieldDescriptor = ProtoFieldDescriptor(
       name: "entries",
       number: 1,
-      type: .message,
+      type: .message(entryDescriptor),
       isRepeated: true,
       isMap: false,  // Not marked as map
       messageType: entryDescriptor
@@ -182,9 +182,9 @@ class SimpleMapFieldTests: XCTestCase {
     // Set as repeated message field
     message.set(
       field: repeatedMessageFieldDescriptor,
-      value: .repeatedValue([
-        .messageValue(entry1),
-        .messageValue(entry2),
+      value: ProtoValue.repeatedValue([
+        ProtoValue.messageValue(entry1),
+        ProtoValue.messageValue(entry2),
       ])
     )
 
@@ -260,7 +260,7 @@ class SimpleMapFieldTests: XCTestCase {
     let mapFieldDescriptor = ProtoFieldDescriptor(
       name: "string_map",
       number: 1,
-      type: .message,
+      type: .message(entryDescriptor),
       isRepeated: true,
       isMap: true,
       messageType: entryDescriptor

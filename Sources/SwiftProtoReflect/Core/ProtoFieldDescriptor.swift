@@ -158,13 +158,13 @@ public class ProtoFieldDescriptor: Hashable {
     case .string:
       self.type = .string
     case .message:
-      self.type = .message
+      self.type = .message(messageType)
     case .bytes:
       self.type = .bytes
     case .uint32:
       self.type = .uint32
     case .enum:
-      self.type = .enum
+      self.type = .enum(enumType)
     case .sfixed32:
       self.type = .sfixed32
     case .sfixed64:
@@ -315,6 +315,11 @@ public class ProtoFieldDescriptor: Hashable {
   /// - A non-empty name
   /// - A positive field number
   /// - For message fields, a non-nil messageType
+  /// - For enum fields, a non-nil enumType
+  /// - For map fields, type must be message
+  /// - For repeated fields, type cannot be map
+  /// - Unknown types are not valid
+  /// - Group types are deprecated but still valid
   ///
   /// - Returns: `true` if the field descriptor is valid, `false` otherwise.
   public func isValid() -> Bool {
@@ -322,9 +327,37 @@ public class ProtoFieldDescriptor: Hashable {
       return false
     }
 
-    // For message fields, messageType must be provided
-    if type == .message && messageType == nil {
+    // Unknown types are not valid
+    if case .unknown = type {
       return false
+    }
+
+    // For message fields, messageType must be provided
+    if case .message = type, messageType == nil {
+      return false
+    }
+
+    // For enum fields, enumType must be provided
+    if case .enum = type, enumType == nil {
+      return false
+    }
+
+    // For map fields, type must be message
+    if isMap {
+      if case .message = type {
+        return true
+      }
+      return false
+    }
+
+    // For repeated fields, type cannot be map
+    if isRepeated && isMap {
+      return false
+    }
+
+    // Group types are deprecated but still valid
+    if case .group = type {
+      return true
     }
 
     return true
@@ -344,8 +377,12 @@ public class ProtoFieldDescriptor: Hashable {
       return "Field number must be positive (got \(number))"
     }
 
-    if type == .message && messageType == nil {
+    if case .message = type, messageType == nil {
       return "Message type field '\(name)' requires a messageType descriptor"
+    }
+
+    if case .enum = type, enumType == nil {
+      return "Enum type field '\(name)' requires an enumType descriptor"
     }
 
     return nil

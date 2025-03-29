@@ -31,7 +31,7 @@ class ProtoReflectTests: XCTestCase {
         ProtoFieldDescriptor(
           name: "address",
           number: 3,
-          type: .message,
+          type: .message(addressDescriptor),
           isRepeated: false,
           isMap: false,
           messageType: addressDescriptor

@@ -75,7 +75,7 @@ class ProtoWireFormatBenchmarks: XCTestCase {
     let result = BenchmarkUtils.benchmark(name: "ProtoWireFormat.determineWireType", iterations: 100000) {
       _ = ProtoWireFormat.determineWireType(for: .int32)
       _ = ProtoWireFormat.determineWireType(for: .string)
-      _ = ProtoWireFormat.determineWireType(for: .message)
+      _ = ProtoWireFormat.determineWireType(for: .message(nil))
       _ = ProtoWireFormat.determineWireType(for: .bytes)
       _ = ProtoWireFormat.determineWireType(for: .float)
       _ = ProtoWireFormat.determineWireType(for: .sint32)

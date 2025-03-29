@@ -539,7 +539,7 @@ public class ProtoFieldPath {
       guard let fieldValue = message.get(field: field) else {
         // If the field doesn't exist and it should be a message, create it
         if let dynamicMessage = message as? ProtoDynamicMessage,
-          field.type == .message,
+          case .message = field.type,
           field.messageType != nil,
           let nestedMessage = dynamicMessage.createNestedMessage(for: field)
         {

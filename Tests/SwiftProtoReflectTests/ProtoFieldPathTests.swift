@@ -43,7 +43,7 @@ class ProtoFieldPathTests: XCTestCase {
         ProtoFieldDescriptor(
           name: "address",
           number: 3,
-          type: .message,
+          type: .message(addressDescriptor),
           isRepeated: false,
           isMap: false,
           messageType: addressDescriptor
@@ -51,7 +51,7 @@ class ProtoFieldPathTests: XCTestCase {
         ProtoFieldDescriptor(
           name: "phones",
           number: 4,
-          type: .message,
+          type: .message(phoneDescriptor),
           isRepeated: true,
           isMap: false,
           messageType: phoneDescriptor

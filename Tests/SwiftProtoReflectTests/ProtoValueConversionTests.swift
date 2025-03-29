@@ -7,105 +7,233 @@ class ProtoValueConversionTests: XCTestCase {
   // MARK: - ConvertTo Tests
 
   func testConvertToInt() {
-    // Test converting various types to int
-    XCTAssertEqual(ProtoValue.intValue(42).convertTo(targetType: .int32)?.getInt(), 42)
-    XCTAssertEqual(ProtoValue.uintValue(42).convertTo(targetType: .int32)?.getInt(), 42)
-    XCTAssertEqual(ProtoValue.floatValue(42.0).convertTo(targetType: .int32)?.getInt(), 42)
-    XCTAssertEqual(ProtoValue.doubleValue(42.0).convertTo(targetType: .int32)?.getInt(), 42)
-    XCTAssertEqual(ProtoValue.boolValue(true).convertTo(targetType: .int32)?.getInt(), 1)
-    XCTAssertEqual(ProtoValue.stringValue("42").convertTo(targetType: .int32)?.getInt(), 42)
-
-    // Test invalid conversions
-    XCTAssertNil(ProtoValue.stringValue("not a number").convertTo(targetType: .int32))
-    XCTAssertNil(ProtoValue.bytesValue(Data([0x01])).convertTo(targetType: .int32))
+    let int32Descriptor = ProtoFieldDescriptor(
+      name: "int32_field",
+      number: 1,
+      type: .int32,
+      isRepeated: false,
+      isMap: false
+    )
+    
+    // Valid conversions - protoc allows same type
+    XCTAssertEqual(ProtoValue.intValue(42).convertTo(fieldDescriptor: int32Descriptor)?.getInt(), 42)
+    
+    // Invalid conversions - protoc doesn't allow implicit conversions
+    XCTAssertNil(ProtoValue.uintValue(42).convertTo(fieldDescriptor: int32Descriptor))
+    XCTAssertNil(ProtoValue.boolValue(true).convertTo(fieldDescriptor: int32Descriptor))
+    XCTAssertNil(ProtoValue.stringValue("42").convertTo(fieldDescriptor: int32Descriptor))
+    XCTAssertNil(ProtoValue.floatValue(42.5).convertTo(fieldDescriptor: int32Descriptor))
+    XCTAssertNil(ProtoValue.doubleValue(42.5).convertTo(fieldDescriptor: int32Descriptor))
+    XCTAssertNil(ProtoValue.bytesValue(Data([0x01])).convertTo(fieldDescriptor: int32Descriptor))
   }
 
   func testConvertToUInt() {
-    // Test converting various types to uint
-    XCTAssertEqual(ProtoValue.intValue(42).convertTo(targetType: .uint32)?.getUInt(), 42)
-    XCTAssertEqual(ProtoValue.uintValue(42).convertTo(targetType: .uint32)?.getUInt(), 42)
-    XCTAssertEqual(ProtoValue.floatValue(42.0).convertTo(targetType: .uint32)?.getUInt(), 42)
-    XCTAssertEqual(ProtoValue.doubleValue(42.0).convertTo(targetType: .uint32)?.getUInt(), 42)
-    XCTAssertEqual(ProtoValue.boolValue(true).convertTo(targetType: .uint32)?.getUInt(), 1)
-    XCTAssertEqual(ProtoValue.stringValue("42").convertTo(targetType: .uint32)?.getUInt(), 42)
-
-    // Test invalid conversions
-    // Negative numbers can't be converted to unsigned
-    XCTAssertNil(ProtoValue.intValue(-1).convertTo(targetType: .uint32))
-    XCTAssertNil(ProtoValue.stringValue("not a number").convertTo(targetType: .uint32))
+    let uint32Descriptor = ProtoFieldDescriptor(
+      name: "uint32_field",
+      number: 1,
+      type: .uint32,
+      isRepeated: false,
+      isMap: false
+    )
+    
+    // Valid conversions - protoc allows same type
+    XCTAssertEqual(ProtoValue.uintValue(42).convertTo(fieldDescriptor: uint32Descriptor)?.getUInt(), 42)
+    
+    // Invalid conversions - protoc doesn't allow implicit conversions
+    XCTAssertNil(ProtoValue.intValue(42).convertTo(fieldDescriptor: uint32Descriptor))
+    XCTAssertNil(ProtoValue.boolValue(true).convertTo(fieldDescriptor: uint32Descriptor))
+    XCTAssertNil(ProtoValue.stringValue("42").convertTo(fieldDescriptor: uint32Descriptor))
+    XCTAssertNil(ProtoValue.floatValue(42.5).convertTo(fieldDescriptor: uint32Descriptor))
+    XCTAssertNil(ProtoValue.doubleValue(42.5).convertTo(fieldDescriptor: uint32Descriptor))
+    XCTAssertNil(ProtoValue.bytesValue(Data([0x01])).convertTo(fieldDescriptor: uint32Descriptor))
   }
 
   func testConvertToFloat() {
-    // Test converting various types to float
-    XCTAssertEqual(ProtoValue.intValue(42).convertTo(targetType: .float)?.getFloat(), 42.0)
-    XCTAssertEqual(ProtoValue.uintValue(42).convertTo(targetType: .float)?.getFloat(), 42.0)
-    XCTAssertEqual(ProtoValue.floatValue(42.5).convertTo(targetType: .float)?.getFloat(), 42.5)
-    XCTAssertEqual(ProtoValue.doubleValue(42.5).convertTo(targetType: .float)?.getFloat(), 42.5)
-    XCTAssertEqual(ProtoValue.boolValue(true).convertTo(targetType: .float)?.getFloat(), 1.0)
-    XCTAssertEqual(ProtoValue.stringValue("42.5").convertTo(targetType: .float)?.getFloat(), 42.5)
-
-    // Test invalid conversions
-    XCTAssertNil(ProtoValue.stringValue("not a number").convertTo(targetType: .float))
+    let floatDescriptor = ProtoFieldDescriptor(
+      name: "float_field",
+      number: 1,
+      type: .float,
+      isRepeated: false,
+      isMap: false
+    )
+    
+    // Valid conversions - protoc allows same type
+    XCTAssertEqual(ProtoValue.floatValue(42.5).convertTo(fieldDescriptor: floatDescriptor)?.getFloat(), 42.5)
+    
+    // Invalid conversions - protoc doesn't allow implicit conversions
+    XCTAssertNil(ProtoValue.doubleValue(42.5).convertTo(fieldDescriptor: floatDescriptor))
+    XCTAssertNil(ProtoValue.intValue(42).convertTo(fieldDescriptor: floatDescriptor))
+    XCTAssertNil(ProtoValue.uintValue(42).convertTo(fieldDescriptor: floatDescriptor))
+    XCTAssertNil(ProtoValue.boolValue(true).convertTo(fieldDescriptor: floatDescriptor))
+    XCTAssertNil(ProtoValue.stringValue("42.5").convertTo(fieldDescriptor: floatDescriptor))
+    XCTAssertNil(ProtoValue.bytesValue(Data([0x01])).convertTo(fieldDescriptor: floatDescriptor))
   }
 
   func testConvertToDouble() {
-    // Test converting various types to double
-    XCTAssertEqual(ProtoValue.intValue(42).convertTo(targetType: .double)?.getDouble(), 42.0)
-    XCTAssertEqual(ProtoValue.uintValue(42).convertTo(targetType: .double)?.getDouble(), 42.0)
-    XCTAssertEqual(ProtoValue.floatValue(42.5).convertTo(targetType: .double)?.getDouble(), 42.5)
-    XCTAssertEqual(ProtoValue.doubleValue(42.5).convertTo(targetType: .double)?.getDouble(), 42.5)
-    XCTAssertEqual(ProtoValue.boolValue(true).convertTo(targetType: .double)?.getDouble(), 1.0)
-    XCTAssertEqual(ProtoValue.stringValue("42.5").convertTo(targetType: .double)?.getDouble(), 42.5)
-
-    // Test invalid conversions
-    XCTAssertNil(ProtoValue.stringValue("not a number").convertTo(targetType: .double))
+    let doubleDescriptor = ProtoFieldDescriptor(
+      name: "double_field",
+      number: 1,
+      type: .double,
+      isRepeated: false,
+      isMap: false
+    )
+    
+    // Valid conversions - protoc allows same type
+    XCTAssertEqual(ProtoValue.doubleValue(42.5).convertTo(fieldDescriptor: doubleDescriptor)?.getDouble(), 42.5)
+    
+    // Invalid conversions - protoc doesn't allow implicit conversions
+    XCTAssertNil(ProtoValue.floatValue(42.5).convertTo(fieldDescriptor: doubleDescriptor))
+    XCTAssertNil(ProtoValue.intValue(42).convertTo(fieldDescriptor: doubleDescriptor))
+    XCTAssertNil(ProtoValue.uintValue(42).convertTo(fieldDescriptor: doubleDescriptor))
+    XCTAssertNil(ProtoValue.boolValue(true).convertTo(fieldDescriptor: doubleDescriptor))
+    XCTAssertNil(ProtoValue.stringValue("42.5").convertTo(fieldDescriptor: doubleDescriptor))
+    XCTAssertNil(ProtoValue.bytesValue(Data([0x01])).convertTo(fieldDescriptor: doubleDescriptor))
   }
 
   func testConvertToBool() {
-    // Test converting various types to bool
-    XCTAssertEqual(ProtoValue.intValue(1).convertTo(targetType: .bool)?.getBool(), true)
-    XCTAssertEqual(ProtoValue.intValue(0).convertTo(targetType: .bool)?.getBool(), false)
-    XCTAssertEqual(ProtoValue.uintValue(1).convertTo(targetType: .bool)?.getBool(), true)
-    XCTAssertEqual(ProtoValue.uintValue(0).convertTo(targetType: .bool)?.getBool(), false)
-    XCTAssertEqual(ProtoValue.floatValue(1.0).convertTo(targetType: .bool)?.getBool(), true)
-    XCTAssertEqual(ProtoValue.floatValue(0.0).convertTo(targetType: .bool)?.getBool(), false)
-    XCTAssertEqual(ProtoValue.doubleValue(1.0).convertTo(targetType: .bool)?.getBool(), true)
-    XCTAssertEqual(ProtoValue.doubleValue(0.0).convertTo(targetType: .bool)?.getBool(), false)
-    XCTAssertEqual(ProtoValue.boolValue(true).convertTo(targetType: .bool)?.getBool(), true)
-    XCTAssertEqual(ProtoValue.stringValue("true").convertTo(targetType: .bool)?.getBool(), true)
-    XCTAssertEqual(ProtoValue.stringValue("false").convertTo(targetType: .bool)?.getBool(), false)
-    XCTAssertEqual(ProtoValue.stringValue("1").convertTo(targetType: .bool)?.getBool(), true)
-    XCTAssertEqual(ProtoValue.stringValue("0").convertTo(targetType: .bool)?.getBool(), false)
-
-    // Test invalid conversions
-    XCTAssertNil(ProtoValue.stringValue("not a boolean").convertTo(targetType: .bool))
+    let boolDescriptor = ProtoFieldDescriptor(
+      name: "bool_field",
+      number: 1,
+      type: .bool,
+      isRepeated: false,
+      isMap: false
+    )
+    
+    // Valid conversions - protoc allows same type
+    XCTAssertEqual(ProtoValue.boolValue(true).convertTo(fieldDescriptor: boolDescriptor)?.getBool(), true)
+    XCTAssertEqual(ProtoValue.boolValue(false).convertTo(fieldDescriptor: boolDescriptor)?.getBool(), false)
+    
+    // Invalid conversions - protoc doesn't allow implicit conversions
+    XCTAssertNil(ProtoValue.intValue(1).convertTo(fieldDescriptor: boolDescriptor))
+    XCTAssertNil(ProtoValue.uintValue(1).convertTo(fieldDescriptor: boolDescriptor))
+    XCTAssertNil(ProtoValue.floatValue(1.0).convertTo(fieldDescriptor: boolDescriptor))
+    XCTAssertNil(ProtoValue.doubleValue(1.0).convertTo(fieldDescriptor: boolDescriptor))
+    XCTAssertNil(ProtoValue.stringValue("true").convertTo(fieldDescriptor: boolDescriptor))
   }
 
   func testConvertToString() {
-    // Test converting various types to string
-    XCTAssertEqual(ProtoValue.intValue(42).convertTo(targetType: .string)?.getString(), "42")
-    XCTAssertEqual(ProtoValue.uintValue(42).convertTo(targetType: .string)?.getString(), "42")
-    XCTAssertEqual(ProtoValue.floatValue(42.5).convertTo(targetType: .string)?.getString(), "42.5")
-    XCTAssertEqual(ProtoValue.doubleValue(42.5).convertTo(targetType: .string)?.getString(), "42.5")
-    XCTAssertEqual(ProtoValue.boolValue(true).convertTo(targetType: .string)?.getString(), "true")
-    XCTAssertEqual(ProtoValue.stringValue("hello").convertTo(targetType: .string)?.getString(), "hello")
-
-    // Test bytes to string conversion (should work if valid UTF-8)
-    let helloData = "hello".data(using: .utf8)!
-    XCTAssertEqual(ProtoValue.bytesValue(helloData).convertTo(targetType: .string)?.getString(), "aGVsbG8=")
+    let stringDescriptor = ProtoFieldDescriptor(
+      name: "string_field",
+      number: 1,
+      type: .string,
+      isRepeated: false,
+      isMap: false
+    )
+    
+    // Valid conversions - protoc allows same type
+    XCTAssertEqual(ProtoValue.stringValue("Hello").convertTo(fieldDescriptor: stringDescriptor)?.getString(), "Hello")
+    
+    // Invalid conversions - protoc doesn't allow implicit conversions
+    XCTAssertNil(ProtoValue.intValue(42).convertTo(fieldDescriptor: stringDescriptor))
+    XCTAssertNil(ProtoValue.uintValue(100).convertTo(fieldDescriptor: stringDescriptor))
+    XCTAssertNil(ProtoValue.floatValue(3.14).convertTo(fieldDescriptor: stringDescriptor))
+    XCTAssertNil(ProtoValue.doubleValue(2.71828).convertTo(fieldDescriptor: stringDescriptor))
+    XCTAssertNil(ProtoValue.boolValue(true).convertTo(fieldDescriptor: stringDescriptor))
+    XCTAssertNil(ProtoValue.bytesValue(Data([0x01, 0x02, 0x03])).convertTo(fieldDescriptor: stringDescriptor))
   }
 
   func testConvertToBytes() {
-    // Test string to bytes conversion
-    let helloString = "hello"
-    let helloData = helloString.data(using: .utf8)!
-    XCTAssertEqual(ProtoValue.stringValue(helloString).convertTo(targetType: .bytes)?.getBytes(), helloData)
+    let bytesDescriptor = ProtoFieldDescriptor(
+      name: "bytes_field",
+      number: 1,
+      type: .bytes,
+      isRepeated: false,
+      isMap: false
+    )
+    
+    // Valid conversions - protoc allows same type
+    XCTAssertEqual(ProtoValue.bytesValue(Data([0x01, 0x02, 0x03])).convertTo(fieldDescriptor: bytesDescriptor)?.getBytes(), Data([0x01, 0x02, 0x03]))
+    
+    // Invalid conversions - protoc doesn't allow implicit conversions
+    XCTAssertNil(ProtoValue.stringValue("Hello").convertTo(fieldDescriptor: bytesDescriptor))
+    XCTAssertNil(ProtoValue.intValue(42).convertTo(fieldDescriptor: bytesDescriptor))
+    XCTAssertNil(ProtoValue.uintValue(42).convertTo(fieldDescriptor: bytesDescriptor))
+    XCTAssertNil(ProtoValue.floatValue(42.5).convertTo(fieldDescriptor: bytesDescriptor))
+    XCTAssertNil(ProtoValue.doubleValue(42.5).convertTo(fieldDescriptor: bytesDescriptor))
+    XCTAssertNil(ProtoValue.boolValue(true).convertTo(fieldDescriptor: bytesDescriptor))
+  }
 
-    // Test bytes to bytes conversion
-    XCTAssertEqual(ProtoValue.bytesValue(helloData).convertTo(targetType: .bytes)?.getBytes(), helloData)
+  func testConvertToEnum() {
+    let enumDescriptor = ProtoEnumDescriptor(
+      name: "TestEnum",
+      values: [
+        ProtoEnumValueDescriptor(name: "TEST_VALUE", number: 1)
+      ]
+    )
+    let enumFieldDescriptor = ProtoFieldDescriptor(
+      name: "enum_field",
+      number: 1,
+      type: .enum(enumDescriptor),
+      isRepeated: false,
+      isMap: false
+    )
+    
+    // Valid conversions - protoc allows same type
+    XCTAssertNotNil(ProtoValue.enumValue(name: "TEST_VALUE", number: 1, enumDescriptor: enumDescriptor)
+      .convertTo(fieldDescriptor: enumFieldDescriptor))
+    
+    // Invalid conversions - protoc doesn't allow implicit conversions
+    XCTAssertNil(ProtoValue.intValue(1).convertTo(fieldDescriptor: enumFieldDescriptor))
+    XCTAssertNil(ProtoValue.stringValue("TEST_VALUE").convertTo(fieldDescriptor: enumFieldDescriptor))
+  }
 
-    // Test invalid conversions
-    XCTAssertNil(ProtoValue.intValue(42).convertTo(targetType: .bytes))
+  func testConvertToMap() {
+    let mapFieldDescriptor = ProtoFieldDescriptor(
+      name: "map_field",
+      number: 1,
+      type: .message(nil),
+      isRepeated: false,
+      isMap: true
+    )
+    
+    // Valid conversions - protoc allows same type
+    let mapValue = ProtoValue.mapValue(["key1": .intValue(1), "key2": .intValue(2)])
+    XCTAssertNotNil(mapValue.convertTo(fieldDescriptor: mapFieldDescriptor))
+    
+    // Invalid conversions - protoc doesn't allow implicit conversions
+    XCTAssertNil(ProtoValue.intValue(42).convertTo(fieldDescriptor: mapFieldDescriptor))
+    XCTAssertNil(ProtoValue.stringValue("{}").convertTo(fieldDescriptor: mapFieldDescriptor))
+  }
+
+  func testConvertToMessage() {
+    let messageDescriptor = ProtoMessageDescriptor(
+      fullName: "TestMessage",
+      fields: [],
+      enums: [],
+      nestedMessages: []
+    )
+    let messageFieldDescriptor = ProtoFieldDescriptor(
+      name: "message_field",
+      number: 1,
+      type: .message(messageDescriptor),
+      isRepeated: false,
+      isMap: false
+    )
+    
+    // Valid conversions - protoc allows same type
+    let message = ProtoDynamicMessage(descriptor: messageDescriptor)
+    XCTAssertNotNil(ProtoValue.messageValue(message).convertTo(fieldDescriptor: messageFieldDescriptor))
+    
+    // Invalid conversions - protoc doesn't allow implicit conversions
+    XCTAssertNil(ProtoValue.stringValue("{}").convertTo(fieldDescriptor: messageFieldDescriptor))
+    XCTAssertNil(ProtoValue.intValue(42).convertTo(fieldDescriptor: messageFieldDescriptor))
+  }
+
+  func testConvertToRepeated() {
+    // Only same type conversion is allowed
+    let values = [ProtoValue.intValue(1), ProtoValue.intValue(2), ProtoValue.intValue(3)]
+    let repeatedFieldDescriptor = ProtoFieldDescriptor(
+      name: "repeated_int32",
+      number: 1,
+      type: .int32,
+      isRepeated: true,
+      isMap: false
+    )
+    XCTAssertNotNil(ProtoValue.repeatedValue(values).convertTo(fieldDescriptor: repeatedFieldDescriptor))
+    
+    // Invalid conversions - protoc doesn't allow implicit conversions
+    XCTAssertNil(ProtoValue.intValue(42).convertTo(fieldDescriptor: repeatedFieldDescriptor))
+    XCTAssertNil(ProtoValue.stringValue("[1, 2, 3]").convertTo(fieldDescriptor: repeatedFieldDescriptor))
   }
 
   // MARK: - ToSwiftValue Tests
@@ -144,115 +272,81 @@ class ProtoValueConversionTests: XCTestCase {
   // MARK: - From SwiftValue Tests
 
   func testFromSwiftValueInt() {
-    // Test converting various Swift types to int ProtoValue
-    XCTAssertEqual(ProtoValue.from(swiftValue: 42, targetType: .int32)?.getInt(), 42)
+    // Valid conversions - protoc allows Int, Int32, Int64
+    XCTAssertEqual(ProtoValue.from(swiftValue: Int(42), targetType: .int32)?.getInt(), 42)
     XCTAssertEqual(ProtoValue.from(swiftValue: Int32(42), targetType: .int32)?.getInt(), 42)
     XCTAssertEqual(ProtoValue.from(swiftValue: Int64(42), targetType: .int32)?.getInt(), 42)
-    XCTAssertEqual(ProtoValue.from(swiftValue: 42.0, targetType: .int32)?.getInt(), 42)
-    XCTAssertEqual(ProtoValue.from(swiftValue: Float(42.0), targetType: .int32)?.getInt(), 42)
-    XCTAssertEqual(ProtoValue.from(swiftValue: true, targetType: .int32)?.getInt(), 1)
-    XCTAssertEqual(ProtoValue.from(swiftValue: "42", targetType: .int32)?.getInt(), 42)
-
-    // Test invalid conversions
-    XCTAssertNil(ProtoValue.from(swiftValue: "not a number", targetType: .int32))
+    
+    // Invalid conversions - protoc doesn't allow other types
+    XCTAssertNil(ProtoValue.from(swiftValue: Float(42.0), targetType: .int32))
+    XCTAssertNil(ProtoValue.from(swiftValue: Double(42.0), targetType: .int32))
+    XCTAssertNil(ProtoValue.from(swiftValue: Bool(true), targetType: .int32))
+    XCTAssertNil(ProtoValue.from(swiftValue: String("42"), targetType: .int32))
     XCTAssertNil(ProtoValue.from(swiftValue: Data([0x01]), targetType: .int32))
   }
 
   func testFromSwiftValueUInt() {
-    // Test converting various Swift types to uint ProtoValue
+    // Valid conversions - protoc allows UInt, UInt32, UInt64
     XCTAssertEqual(ProtoValue.from(swiftValue: UInt(42), targetType: .uint32)?.getUInt(), 42)
     XCTAssertEqual(ProtoValue.from(swiftValue: UInt32(42), targetType: .uint32)?.getUInt(), 42)
     XCTAssertEqual(ProtoValue.from(swiftValue: UInt64(42), targetType: .uint32)?.getUInt(), 42)
-    XCTAssertEqual(ProtoValue.from(swiftValue: 42, targetType: .uint32)?.getUInt(), 42)
-    XCTAssertEqual(ProtoValue.from(swiftValue: 42.0, targetType: .uint32)?.getUInt(), 42)
-    XCTAssertEqual(ProtoValue.from(swiftValue: Float(42.0), targetType: .uint32)?.getUInt(), 42)
-    XCTAssertNil(ProtoValue.from(swiftValue: true, targetType: .uint32))
-    XCTAssertEqual(ProtoValue.from(swiftValue: "42", targetType: .uint32)?.getUInt(), 42)
-
-    // Test invalid conversions
-    // Negative numbers can't be converted to unsigned
-    XCTAssertNil(ProtoValue.from(swiftValue: -1, targetType: .uint32))
-    XCTAssertNil(ProtoValue.from(swiftValue: "not a number", targetType: .uint32))
+    
+    // Invalid conversions - protoc doesn't allow other types
+    XCTAssertNil(ProtoValue.from(swiftValue: Int(-42), targetType: .uint32))
+    XCTAssertNil(ProtoValue.from(swiftValue: Float(42.0), targetType: .uint32))
+    XCTAssertNil(ProtoValue.from(swiftValue: Double(42.0), targetType: .uint32))
+    XCTAssertNil(ProtoValue.from(swiftValue: Bool(true), targetType: .uint32))
+    XCTAssertNil(ProtoValue.from(swiftValue: String("42"), targetType: .uint32))
+    XCTAssertNil(ProtoValue.from(swiftValue: Data([0x01]), targetType: .uint32))
   }
 
   func testFromSwiftValueFloat() {
-    // Test converting various Swift types to float ProtoValue
-    XCTAssertEqual(ProtoValue.from(swiftValue: Float(42.5), targetType: .float)?.getFloat(), 42.5)
-    XCTAssertEqual(ProtoValue.from(swiftValue: 42.5, targetType: .float)?.getFloat(), 42.5)
-    XCTAssertEqual(ProtoValue.from(swiftValue: 42, targetType: .float)?.getFloat(), 42.0)
-    XCTAssertEqual(ProtoValue.from(swiftValue: UInt(42), targetType: .float)?.getFloat(), 42.0)
-    XCTAssertEqual(ProtoValue.from(swiftValue: true, targetType: .float)?.getFloat(), 1.0)
-    XCTAssertEqual(ProtoValue.from(swiftValue: "42.5", targetType: .float)?.getFloat(), 42.5)
-
-    // Test invalid conversions
-    XCTAssertNil(ProtoValue.from(swiftValue: "not a number", targetType: .float))
+    // Valid conversions - protoc allows Float, Double
+    XCTAssertEqual(ProtoValue.from(swiftValue: Float(3.14), targetType: .float)?.getFloat(), 3.14)
+    XCTAssertEqual(ProtoValue.from(swiftValue: Double(3.14), targetType: .float)?.getFloat(), 3.14)
+    
+    // Invalid conversions - protoc doesn't allow other types
+    XCTAssertNil(ProtoValue.from(swiftValue: Int(42), targetType: .float))
+    XCTAssertNil(ProtoValue.from(swiftValue: UInt(42), targetType: .float))
+    XCTAssertNil(ProtoValue.from(swiftValue: Bool(true), targetType: .float))
+    XCTAssertNil(ProtoValue.from(swiftValue: String("3.14"), targetType: .float))
+    XCTAssertNil(ProtoValue.from(swiftValue: Data([0x01]), targetType: .float))
   }
 
   func testFromSwiftValueBool() {
-    // Test converting various Swift types to bool ProtoValue
-    XCTAssertEqual(ProtoValue.from(swiftValue: true, targetType: .bool)?.getBool(), true)
-    XCTAssertEqual(ProtoValue.from(swiftValue: false, targetType: .bool)?.getBool(), false)
-    XCTAssertEqual(ProtoValue.from(swiftValue: 1, targetType: .bool)?.getBool(), true)
-    XCTAssertEqual(ProtoValue.from(swiftValue: 0, targetType: .bool)?.getBool(), false)
-    XCTAssertEqual(ProtoValue.from(swiftValue: 1.0, targetType: .bool)?.getBool(), true)
-    XCTAssertEqual(ProtoValue.from(swiftValue: 0.0, targetType: .bool)?.getBool(), false)
-    XCTAssertEqual(ProtoValue.from(swiftValue: "true", targetType: .bool)?.getBool(), true)
-    XCTAssertEqual(ProtoValue.from(swiftValue: "false", targetType: .bool)?.getBool(), false)
-    XCTAssertEqual(ProtoValue.from(swiftValue: "1", targetType: .bool)?.getBool(), true)
-    XCTAssertEqual(ProtoValue.from(swiftValue: "0", targetType: .bool)?.getBool(), false)
-
-    // Test invalid conversions
-    XCTAssertNil(ProtoValue.from(swiftValue: "not a boolean", targetType: .bool))
-  }
-
-  func testFromSwiftValueString() {
-    // Test converting various Swift types to string ProtoValue
-    XCTAssertEqual(ProtoValue.from(swiftValue: "hello", targetType: .string)?.getString(), "hello")
-    XCTAssertEqual(ProtoValue.from(swiftValue: 42, targetType: .string)?.getString(), "42")
-    XCTAssertEqual(ProtoValue.from(swiftValue: 42.5, targetType: .string)?.getString(), "42.5")
-    XCTAssertEqual(ProtoValue.from(swiftValue: true, targetType: .string)?.getString(), "true")
-
-    // Test custom object conversion (should use description)
-    let customObject = CustomStringObject()
-    XCTAssertEqual(ProtoValue.from(swiftValue: customObject, targetType: .string)?.getString(), "CustomStringObject")
-  }
-
-  func testFromSwiftValueBytes() {
-    // Test converting Data to bytes ProtoValue
-    let data = Data([0x01, 0x02, 0x03])
-    XCTAssertEqual(ProtoValue.from(swiftValue: data, targetType: .bytes)?.getBytes(), data)
-
-    // Test string to bytes conversion
-    let helloString = "hello"
-    let helloData = helloString.data(using: .utf8)!
-    XCTAssertEqual(ProtoValue.from(swiftValue: helloString, targetType: .bytes)?.getBytes(), helloData)
-
-    // Test invalid conversions
-    XCTAssertNil(ProtoValue.from(swiftValue: 42, targetType: .bytes))
+    // Valid conversions - protoc only allows Bool
+    XCTAssertEqual(ProtoValue.from(swiftValue: Bool(true), targetType: .bool)?.getBool(), true)
+    XCTAssertEqual(ProtoValue.from(swiftValue: Bool(false), targetType: .bool)?.getBool(), false)
+    
+    // Invalid conversions - protoc doesn't allow other types
+    XCTAssertNil(ProtoValue.from(swiftValue: Int(1), targetType: .bool))
+    XCTAssertNil(ProtoValue.from(swiftValue: UInt(1), targetType: .bool))
+    XCTAssertNil(ProtoValue.from(swiftValue: Float(1.0), targetType: .bool))
+    XCTAssertNil(ProtoValue.from(swiftValue: Double(1.0), targetType: .bool))
+    XCTAssertNil(ProtoValue.from(swiftValue: String("true"), targetType: .bool))
+    XCTAssertNil(ProtoValue.from(swiftValue: Data([0x01]), targetType: .bool))
   }
 
   // MARK: - Mixed Type Conversion Tests
 
   func testMixedTypeConversion() {
-    // Test converting mixed types in an array
-    let mixedArray: [Any] = [1, "two", 3.0, true, 5]
-
-    // Convert to int
-    let intValues = mixedArray.compactMap { ProtoValue.from(swiftValue: $0, targetType: .int32) }
-    XCTAssertEqual(intValues.count, 4)  // "two" can't be converted to int
-    XCTAssertEqual(intValues[0].getInt(), 1)
-    XCTAssertEqual(intValues[1].getInt(), 3)
-    XCTAssertEqual(intValues[2].getInt(), 1)  // true -> 1
-    XCTAssertEqual(intValues[3].getInt(), 5)
-
-    // Convert to string
-    let stringValues = mixedArray.compactMap { ProtoValue.from(swiftValue: $0, targetType: .string) }
-    XCTAssertEqual(stringValues.count, 5)  // All can be converted to string
-    XCTAssertEqual(stringValues[0].getString(), "1")
-    XCTAssertEqual(stringValues[1].getString(), "two")
-    XCTAssertEqual(stringValues[2].getString(), "3.0")
-    XCTAssertEqual(stringValues[3].getString(), "true")
-    XCTAssertEqual(stringValues[4].getString(), "5")
+    let values: [Any] = [
+      Int(42),
+      UInt(100),
+      Float(3.14),
+      Double(2.71828),
+      Bool(true),
+      String("Hello"),
+      Data([0x01, 0x02, 0x03])
+    ]
+    
+    // Convert to int32 - protoc only allows Int, Int32, Int64
+    let int32Values = values.compactMap { ProtoValue.from(swiftValue: $0, targetType: .int32) }
+    XCTAssertEqual(int32Values.count, 1) // Only Int(42) should convert
+    
+    // Convert to string - protoc allows any type to string
+    let stringValues = values.compactMap { ProtoValue.from(swiftValue: $0, targetType: .string) }
+    XCTAssertEqual(stringValues.count, 7) // All values should convert to string
   }
 
   // MARK: - Helper Classes
@@ -261,5 +355,65 @@ class ProtoValueConversionTests: XCTestCase {
     var description: String {
       return "CustomStringObject"
     }
+  }
+
+  func testEdgeCases() {
+    let maxInt = Int.max
+    let minInt = Int.min
+    let maxUInt = UInt.max
+    let minUInt = UInt.min
+    
+    let int32Descriptor = ProtoFieldDescriptor(
+      name: "int32_field",
+      number: 1,
+      type: .int32,
+      isRepeated: false,
+      isMap: false
+    )
+    let uint32Descriptor = ProtoFieldDescriptor(
+      name: "uint32_field",
+      number: 2,
+      type: .uint32,
+      isRepeated: false,
+      isMap: false
+    )
+    let floatDescriptor = ProtoFieldDescriptor(
+      name: "float_field",
+      number: 3,
+      type: .float,
+      isRepeated: false,
+      isMap: false
+    )
+    let stringDescriptor = ProtoFieldDescriptor(
+      name: "string_field",
+      number: 4,
+      type: .string,
+      isRepeated: false,
+      isMap: false
+    )
+    let bytesDescriptor = ProtoFieldDescriptor(
+      name: "bytes_field",
+      number: 5,
+      type: .bytes,
+      isRepeated: false,
+      isMap: false
+    )
+    
+    // Test numeric overflow/underflow
+    XCTAssertEqual(ProtoValue.intValue(maxInt).convertTo(fieldDescriptor: int32Descriptor)?.getInt(), maxInt)
+    XCTAssertEqual(ProtoValue.intValue(minInt).convertTo(fieldDescriptor: int32Descriptor)?.getInt(), minInt)
+    XCTAssertEqual(ProtoValue.uintValue(maxUInt).convertTo(fieldDescriptor: uint32Descriptor)?.getUInt(), maxUInt)
+    XCTAssertEqual(ProtoValue.uintValue(minUInt).convertTo(fieldDescriptor: uint32Descriptor)?.getUInt(), minUInt)
+    
+    // Test string number formats - no implicit conversions allowed
+    XCTAssertNil(ProtoValue.stringValue("42").convertTo(fieldDescriptor: int32Descriptor))
+    XCTAssertNil(ProtoValue.stringValue("invalid").convertTo(fieldDescriptor: int32Descriptor))
+    XCTAssertNil(ProtoValue.stringValue("42.5").convertTo(fieldDescriptor: floatDescriptor))
+    XCTAssertNil(ProtoValue.stringValue("4.25e1").convertTo(fieldDescriptor: floatDescriptor))
+    XCTAssertNil(ProtoValue.stringValue("0x2A").convertTo(fieldDescriptor: int32Descriptor))
+    
+    // Test base64 encoding/decoding - no implicit conversions allowed
+    XCTAssertNil(ProtoValue.bytesValue(Data([0x01, 0x02, 0x03])).convertTo(fieldDescriptor: stringDescriptor))
+    XCTAssertNil(ProtoValue.stringValue("not base64").convertTo(fieldDescriptor: bytesDescriptor))
   }
 }

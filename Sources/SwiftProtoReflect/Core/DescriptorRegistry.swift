@@ -145,7 +145,7 @@ public class DescriptorRegistry {
 
       // Find the message type for message fields
       var messageType: ProtoMessageDescriptor? = nil
-      if fieldType == .message && !fieldProto.typeName.isEmpty {
+      if case .message = fieldType, !fieldProto.typeName.isEmpty {
         let typeName =
           fieldProto.typeName.hasPrefix(".") ? String(fieldProto.typeName.dropFirst()) : fieldProto.typeName
         messageType =
@@ -155,7 +155,7 @@ public class DescriptorRegistry {
 
       // Find the enum type for enum fields
       var enumType: ProtoEnumDescriptor? = nil
-      if fieldType == .enum && !fieldProto.typeName.isEmpty {
+      if case .enum = fieldType, !fieldProto.typeName.isEmpty {
         let typeName =
           fieldProto.typeName.hasPrefix(".") ? String(fieldProto.typeName.dropFirst()) : fieldProto.typeName
         enumType = enumDescriptors[typeName] ?? enums.first { $0.name == typeName.components(separatedBy: ".").last }
@@ -208,6 +208,10 @@ public class DescriptorRegistry {
   /// - Parameter fieldType: The Protocol Buffer field type.
   /// - Returns: The corresponding ProtoFieldType.
   private func mapFieldType(_ fieldType: Google_Protobuf_FieldDescriptorProto.TypeEnum) -> ProtoFieldType {
+    // Find the message type for message fields
+    let messageType: ProtoMessageDescriptor? = nil
+    let enumType: ProtoEnumDescriptor? = nil
+
     switch fieldType {
     case .double:
       return .double
@@ -228,13 +232,13 @@ public class DescriptorRegistry {
     case .string:
       return .string
     case .message:
-      return .message
+      return .message(messageType)
     case .bytes:
       return .bytes
     case .uint32:
       return .uint32
     case .enum:
-      return .enum
+      return .enum(enumType)
     case .sfixed32:
       return .sfixed32
     case .sfixed64:
@@ -243,8 +247,8 @@ public class DescriptorRegistry {
       return .sint32
     case .sint64:
       return .sint64
-    default:
-      return .unknown
+    case .group:
+      return .group
     }
   }
 

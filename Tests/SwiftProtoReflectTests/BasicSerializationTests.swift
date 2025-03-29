@@ -317,7 +317,7 @@ class BasicSerializationTests: XCTestCase {
     let mapFieldDescriptor = ProtoFieldDescriptor(
       name: "test_map",
       number: 1,
-      type: .message,
+      type: .message(entryDescriptor),
       isRepeated: true,
       isMap: true,
       messageType: entryDescriptor
@@ -339,14 +339,14 @@ class BasicSerializationTests: XCTestCase {
     mapEntries["one"] = .intValue(1)
 
     // Set the map field
-    let setResult = message.set(field: mapFieldDescriptor, value: .mapValue(mapEntries))
+    let setResult = message.set(field: mapFieldDescriptor, value: ProtoValue.mapValue(mapEntries))
     XCTAssertTrue(setResult, "Setting map field should succeed")
 
     // Verify the map field was set correctly
     let mapFieldValue = message.get(field: mapFieldDescriptor)
     XCTAssertNotNil(mapFieldValue, "Map field value should not be nil")
 
-    if case .mapValue(let entries)? = mapFieldValue {
+    if case let ProtoValue.mapValue(entries)? = mapFieldValue {
       XCTAssertEqual(entries.count, 1, "Map should have 1 entry")
       XCTAssertEqual(entries["one"]?.getInt(), 1, "Value for key 'one' should be 1")
     }
@@ -385,7 +385,7 @@ class BasicSerializationTests: XCTestCase {
     let mapFieldDescriptor = ProtoFieldDescriptor(
       name: "test_map",
       number: 1,
-      type: .message,
+      type: .message(entryDescriptor),
       isRepeated: true,
       isMap: true,
       messageType: entryDescriptor
@@ -408,7 +408,7 @@ class BasicSerializationTests: XCTestCase {
     mapEntries["two"] = .intValue(2)
 
     // Set the map field
-    let setResult = message.set(field: mapFieldDescriptor, value: .mapValue(mapEntries))
+    let setResult = message.set(field: mapFieldDescriptor, value: ProtoValue.mapValue(mapEntries))
     XCTAssertTrue(setResult, "Setting map field should succeed")
 
     // Serialize the message
@@ -432,7 +432,7 @@ class BasicSerializationTests: XCTestCase {
       return
     }
 
-    if case .mapValue(let entries) = mapValue {
+    if case let ProtoValue.mapValue(entries) = mapValue {
       XCTAssertEqual(entries.count, 2, "Map should have 2 entries")
       XCTAssertEqual(entries["one"]?.getInt(), 1, "Value for key 'one' should be 1")
       XCTAssertEqual(entries["two"]?.getInt(), 2, "Value for key 'two' should be 2")
@@ -474,7 +474,7 @@ class BasicSerializationTests: XCTestCase {
     let mapFieldDescriptor = ProtoFieldDescriptor(
       name: "string_map",
       number: 1,
-      type: .message,
+      type: .message(entryDescriptor),
       isRepeated: true,
       isMap: true,
       messageType: entryDescriptor
@@ -496,14 +496,14 @@ class BasicSerializationTests: XCTestCase {
     mapEntries["key1"] = .stringValue("value1")
 
     // Set the map field
-    let setResult = message.set(field: mapFieldDescriptor, value: .mapValue(mapEntries))
+    let setResult = message.set(field: mapFieldDescriptor, value: ProtoValue.mapValue(mapEntries))
     XCTAssertTrue(setResult, "Setting map field should succeed")
 
     // Verify the map field was set correctly
     let mapFieldValue = message.get(field: mapFieldDescriptor)
     XCTAssertNotNil(mapFieldValue, "Map field value should not be nil")
 
-    if case .mapValue(let entries)? = mapFieldValue {
+    if case let ProtoValue.mapValue(entries)? = mapFieldValue {
       XCTAssertEqual(entries.count, 1, "Map should have 1 entry")
       XCTAssertEqual(entries["key1"]?.getString(), "value1", "Value for key 'key1' should be 'value1'")
     }
@@ -532,7 +532,7 @@ class BasicSerializationTests: XCTestCase {
       return
     }
 
-    if case .mapValue(let entries) = mapValue {
+    if case let ProtoValue.mapValue(entries) = mapValue {
       XCTAssertEqual(entries.count, 1, "Map should have 1 entry")
       XCTAssertEqual(entries["key1"]?.getString(), "value1", "Value for key 'key1' should be 'value1'")
     }
@@ -562,7 +562,7 @@ class BasicSerializationTests: XCTestCase {
         ProtoFieldDescriptor(
           name: "address",
           number: 2,
-          type: .message,
+          type: .message(addressDescriptor),
           isRepeated: false,
           isMap: false,
           messageType: addressDescriptor
@@ -699,7 +699,7 @@ class BasicSerializationTests: XCTestCase {
         ProtoFieldDescriptor(
           name: "color",
           number: 1,
-          type: .enum,
+          type: .enum(colorEnumDescriptor),
           isRepeated: false,
           isMap: false,
           enumType: colorEnumDescriptor

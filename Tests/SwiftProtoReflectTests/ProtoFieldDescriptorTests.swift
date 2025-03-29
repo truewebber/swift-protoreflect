@@ -53,7 +53,7 @@ class ProtoFieldDescriptorTests: XCTestCase {
     let field = ProtoFieldDescriptor(
       name: "message_field",
       number: 1,
-      type: .message,
+      type: .message(messageType),
       isRepeated: false,
       isMap: false,
       messageType: messageType
@@ -138,7 +138,7 @@ class ProtoFieldDescriptorTests: XCTestCase {
     let invalidField = ProtoFieldDescriptor(
       name: "message_field",
       number: 1,
-      type: .message,
+      type: .message(nil),
       isRepeated: false,
       isMap: false
     )
@@ -162,20 +162,55 @@ class ProtoFieldDescriptorTests: XCTestCase {
   }
 
   func testAllFieldTypes() {
-    // Test all field types to ensure they work correctly
-    let types: [ProtoFieldType] = [.int32, .int64, .uint32, .uint64, .string, .bool, .enum]
+    // Given
+    let testMessageType = ProtoMessageDescriptor(fullName: "TestMessage", fields: [], enums: [], nestedMessages: [])
+    let testEnumType = ProtoEnumDescriptor(name: "TestEnum", values: [ProtoEnumValueDescriptor(name: "TEST_VALUE", number: 0)])
 
-    for type in types {
+    let validTypes: [(type: ProtoFieldType, messageType: ProtoMessageDescriptor?, enumType: ProtoEnumDescriptor?)] = [
+      (.int32, nil, nil),
+      (.int64, nil, nil),
+      (.uint32, nil, nil),
+      (.uint64, nil, nil),
+      (.sint32, nil, nil),
+      (.sint64, nil, nil),
+      (.sfixed32, nil, nil),
+      (.sfixed64, nil, nil),
+      (.fixed32, nil, nil),
+      (.fixed64, nil, nil),
+      (.float, nil, nil),
+      (.double, nil, nil),
+      (.bool, nil, nil),
+      (.string, nil, nil),
+      (.bytes, nil, nil),
+      (.message(testMessageType), testMessageType, nil),
+      (.enum(testEnumType), nil, testEnumType),
+      (.group, nil, nil)  // Group type is deprecated but still valid
+    ]
+
+    for typeInfo in validTypes {
       let descriptor = ProtoFieldDescriptor(
         name: "test_field",
         number: 1,
-        type: type,
+        type: typeInfo.type,
         isRepeated: false,
-        isMap: false
+        isMap: false,
+        messageType: typeInfo.messageType,
+        enumType: typeInfo.enumType
       )
 
-      XCTAssertEqual(descriptor.type, type)
+      XCTAssertEqual(descriptor.type, typeInfo.type)
       XCTAssertTrue(descriptor.isValid())
     }
+
+    // Unknown type should be invalid
+    let unknownDescriptor = ProtoFieldDescriptor(
+      name: "test_field",
+      number: 1,
+      type: .unknown,
+      isRepeated: false,
+      isMap: false
+    )
+    XCTAssertEqual(unknownDescriptor.type, .unknown)
+    XCTAssertFalse(unknownDescriptor.isValid())
   }
 }
