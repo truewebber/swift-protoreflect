@@ -117,7 +117,7 @@ class SwiftProtobufIntegrationTests: XCTestCase {
     let originalMessage = ProtoDynamicMessage(descriptor: originalDescriptor)
     originalMessage.set(fieldName: "known_field", value: .stringValue("Known value"))
 
-    guard let originalData = ProtoWireFormat.marshal(message: originalMessage) else {
+    guard ProtoWireFormat.marshal(message: originalMessage) != nil else {
       XCTFail("Failed to marshal original message")
       return
     }
