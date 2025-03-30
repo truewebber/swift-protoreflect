@@ -374,6 +374,14 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
       throw ProtoError.fieldNotFound(fieldName: fieldName, messageType: messageDescriptor.fullName)
     }
 
+    // Handle oneof fields: clear other fields in the same oneof
+    if let oneofDescriptor = field.oneofDescriptor {
+      for oneofField in oneofDescriptor.fields where oneofField.name != field.name {
+        // Clear other fields in this oneof
+        fields.removeValue(forKey: oneofField.number)
+      }
+    }
+    
     return try trySet(field: field, value: value)
   }
 

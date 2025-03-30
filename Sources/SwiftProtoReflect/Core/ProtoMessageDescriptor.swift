@@ -44,6 +44,11 @@ public class ProtoMessageDescriptor {
   /// These describe any message types defined within this message.
   public let nestedMessages: [ProtoMessageDescriptor]
 
+  /// Oneof descriptors for oneofs defined in this message.
+  ///
+  /// These describe any oneof fields defined within this message.
+  public let oneofs: [ProtoOneofDescriptor]
+
   /// The original SwiftProtobuf descriptor proto, if this descriptor was created from one.
   private let descriptorProto: Google_Protobuf_DescriptorProto?
 
@@ -54,16 +59,19 @@ public class ProtoMessageDescriptor {
   ///   - fields: The field descriptors for the message's fields.
   ///   - enums: The enum descriptors for any enum types defined in the message.
   ///   - nestedMessages: The message descriptors for any message types defined in the message.
+  ///   - oneofs: The oneof descriptors for any oneof fields defined in the message.
   public init(
     fullName: String,
     fields: [ProtoFieldDescriptor],
     enums: [ProtoEnumDescriptor],
-    nestedMessages: [ProtoMessageDescriptor]
+    nestedMessages: [ProtoMessageDescriptor],
+    oneofs: [ProtoOneofDescriptor] = []
   ) {
     self.fullName = fullName
     self.fields = fields
     self.enums = enums
     self.nestedMessages = nestedMessages
+    self.oneofs = oneofs
     self.descriptorProto = nil
   }
 
@@ -86,15 +94,67 @@ public class ProtoMessageDescriptor {
     else {
       self.fullName = "\(packageName).\(messageName)"
     }
+    
+    // Create oneof descriptors first (without fields)
+    var oneofDescriptors: [ProtoOneofDescriptor] = []
+    var oneofMap: [Int: ProtoOneofDescriptor] = [:]
+    for (index, oneofProto) in descriptorProto.oneofDecl.enumerated() {
+      let oneofDescriptor = ProtoOneofDescriptor(oneofProto: oneofProto, fields: [])
+      oneofDescriptors.append(oneofDescriptor)
+      oneofMap[index] = oneofDescriptor
+    }
 
     // Create field descriptors
     var fieldDescriptors: [ProtoFieldDescriptor] = []
+    var oneofFields: [Int: [ProtoFieldDescriptor]] = [:]
+    
     for fieldProto in descriptorProto.field {
-      if let fieldDescriptor = ProtoFieldDescriptor(fieldProto: fieldProto, messageProto: descriptorProto) {
+      // Determine if this field is part of a oneof
+      var oneofDescriptor: ProtoOneofDescriptor? = nil
+      if fieldProto.hasOneofIndex {
+        let oneofIndex = Int(fieldProto.oneofIndex)
+        oneofDescriptor = oneofMap[oneofIndex]
+      }
+      
+      if let fieldDescriptor = ProtoFieldDescriptor(
+        fieldProto: fieldProto,
+        messageProto: descriptorProto,
+        oneofDescriptor: oneofDescriptor
+      ) {
         fieldDescriptors.append(fieldDescriptor)
+        
+        // If this is a oneof field, add it to the appropriate collection
+        if let _ = oneofDescriptor, fieldProto.hasOneofIndex {
+          let oneofIndex = Int(fieldProto.oneofIndex)
+          if oneofFields[oneofIndex] == nil {
+            oneofFields[oneofIndex] = []
+          }
+          oneofFields[oneofIndex]?.append(fieldDescriptor)
+        }
       }
     }
+    
+    // Update oneof descriptors with their fields
+    for (index, fields) in oneofFields {
+      if let oneofDescriptor = oneofMap[index] {
+        // Create a new descriptor with the same name but with fields
+        let updatedDescriptor = ProtoOneofDescriptor(
+          oneofProto: oneofDescriptor.originalOneofProto()!,
+          fields: fields
+        )
+        
+        // Replace the old descriptor with the updated one
+        if let descriptorIndex = oneofDescriptors.firstIndex(where: { $0.name == updatedDescriptor.name }) {
+          oneofDescriptors[descriptorIndex] = updatedDescriptor
+          
+          // Update the reference in the map
+          oneofMap[index] = updatedDescriptor
+        }
+      }
+    }
+    
     self.fields = fieldDescriptors
+    self.oneofs = oneofDescriptors
 
     // Create enum descriptors
     var enumDescriptors: [ProtoEnumDescriptor] = []
@@ -158,6 +218,27 @@ public class ProtoMessageDescriptor {
   /// - Returns: The enum descriptor, or nil if no enum with the given name exists.
   public func enumType(named name: String) -> ProtoEnumDescriptor? {
     return enums.first { $0.name == name }
+  }
+
+  /// Retrieves a oneof descriptor by name.
+  ///
+  /// - Parameter name: The name of the oneof to retrieve.
+  /// - Returns: The oneof descriptor, or nil if no oneof with the given name exists.
+  public func oneof(named name: String) -> ProtoOneofDescriptor? {
+    return oneofs.first { $0.name == name }
+  }
+
+  /// Retrieves all oneof fields for easier processing.
+  ///
+  /// - Returns: A dictionary mapping oneof names to arrays of their field descriptors.
+  public func oneofFields() -> [String: [ProtoFieldDescriptor]] {
+    var result: [String: [ProtoFieldDescriptor]] = [:]
+    
+    for oneof in oneofs {
+      result[oneof.name] = oneof.fields
+    }
+    
+    return result
   }
 
   /// Verifies if the descriptor is valid according to Protocol Buffer rules.

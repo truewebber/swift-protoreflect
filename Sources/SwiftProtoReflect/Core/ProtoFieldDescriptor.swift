@@ -77,6 +77,15 @@ public class ProtoFieldDescriptor: Hashable {
   /// This is used for proper validation and conversion of enum values.
   public let enumType: ProtoEnumDescriptor?
 
+  /// If this field is part of a oneof, this property contains the oneof descriptor.
+  /// Otherwise, it's nil.
+  public let oneofDescriptor: ProtoOneofDescriptor?
+
+  /// Indicates whether this field is part of a oneof declaration.
+  public var isOneofField: Bool {
+    return oneofDescriptor != nil
+  }
+
   /// The original SwiftProtobuf field descriptor proto, if this descriptor was created from one.
   private let fieldProto: Google_Protobuf_FieldDescriptorProto?
 
@@ -91,6 +100,7 @@ public class ProtoFieldDescriptor: Hashable {
   ///   - defaultValue: The default value for the field, if any.
   ///   - messageType: For message fields, the descriptor of the nested message type.
   ///   - enumType: For enum fields, the descriptor of the enum type.
+  ///   - oneofDescriptor: If this field is part of a oneof, the descriptor for the oneof.
   ///
   /// - Note: For fields of type `.message`, the `messageType` parameter is required.
   /// - Note: For fields of type `.enum`, the `enumType` parameter is recommended.
@@ -102,7 +112,8 @@ public class ProtoFieldDescriptor: Hashable {
     isMap: Bool,
     defaultValue: ProtoValue? = nil,
     messageType: ProtoMessageDescriptor? = nil,
-    enumType: ProtoEnumDescriptor? = nil
+    enumType: ProtoEnumDescriptor? = nil,
+    oneofDescriptor: ProtoOneofDescriptor? = nil
   ) {
     self.name = name
     self.number = number
@@ -112,6 +123,7 @@ public class ProtoFieldDescriptor: Hashable {
     self.defaultValue = defaultValue
     self.messageType = messageType
     self.enumType = enumType
+    self.oneofDescriptor = oneofDescriptor
     self.fieldProto = nil
   }
 
@@ -122,13 +134,15 @@ public class ProtoFieldDescriptor: Hashable {
   ///   - messageProto: The message descriptor proto containing the field, used for map field detection.
   ///   - messageType: For message fields, the descriptor of the nested message type.
   ///   - enumType: For enum fields, the descriptor of the enum type.
+  ///   - oneofDescriptor: If this field is part of a oneof, the descriptor for the oneof.
   ///
   /// - Returns: A new field descriptor, or nil if the field proto is invalid.
   public init?(
     fieldProto: Google_Protobuf_FieldDescriptorProto,
     messageProto: Google_Protobuf_DescriptorProto,
     messageType: ProtoMessageDescriptor? = nil,
-    enumType: ProtoEnumDescriptor? = nil
+    enumType: ProtoEnumDescriptor? = nil,
+    oneofDescriptor: ProtoOneofDescriptor? = nil
   ) {
     guard !fieldProto.name.isEmpty, fieldProto.number > 0 else {
       return nil
@@ -192,6 +206,7 @@ public class ProtoFieldDescriptor: Hashable {
 
     self.messageType = messageType
     self.enumType = enumType
+    self.oneofDescriptor = oneofDescriptor
     self.fieldProto = fieldProto
   }
 
