@@ -33,7 +33,7 @@ public class ProtoOneofDescriptor: Hashable {
   /// The fields that are part of this oneof declaration.
   ///
   /// These are the fields that were declared within the oneof block in the Protocol Buffer schema.
-  public let fields: [ProtoFieldDescriptor]
+  public private(set) var fields: [ProtoFieldDescriptor]
   
   /// The original SwiftProtobuf oneof descriptor proto, if this descriptor was created from one.
   private let oneofProto: Google_Protobuf_OneofDescriptorProto?
@@ -81,6 +81,38 @@ public class ProtoOneofDescriptor: Hashable {
   /// - Returns: The original oneof descriptor proto, or nil if this descriptor was not created from one.
   public func originalOneofProto() -> Google_Protobuf_OneofDescriptorProto? {
     return oneofProto
+  }
+  
+  /// Adds a field to this oneof and sets the field's oneof reference
+  /// - Parameter field: The field to add to this oneof
+  /// - Returns: This oneof descriptor for method chaining
+  @discardableResult
+  public func addField(_ field: ProtoFieldDescriptor) -> ProtoOneofDescriptor {
+    fields.append(field)
+    field.setOneof(self)
+    return self
+  }
+  
+  /// Adds multiple fields to this oneof and sets each field's oneof reference
+  /// - Parameter fields: The fields to add to this oneof
+  /// - Returns: This oneof descriptor for method chaining
+  @discardableResult
+  public func addFields(_ fields: [ProtoFieldDescriptor]) -> ProtoOneofDescriptor {
+    for field in fields {
+      addField(field)
+    }
+    return self
+  }
+  
+  /// Creates a new oneof descriptor with fields and automatically sets up the bidirectional relationships
+  /// - Parameters:
+  ///   - name: The name of the oneof
+  ///   - fields: The fields to include in the oneof
+  /// - Returns: A new oneof descriptor with proper field relationships
+  public static func create(name: String, fields: [ProtoFieldDescriptor]) -> ProtoOneofDescriptor {
+    let oneof = ProtoOneofDescriptor(name: name, fields: [])
+    oneof.addFields(fields)
+    return oneof
   }
   
   // MARK: - Hashable Conformance

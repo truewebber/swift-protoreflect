@@ -1163,17 +1163,19 @@ class BasicSerializationTests: XCTestCase {
   }
 
   func testOneofFields() {
-    // Create a message descriptor with a oneof field
-    let messageDescriptor = ProtoMessageDescriptor(
+    // Create field descriptors first
+    let nameField = ProtoFieldDescriptor(name: "name", number: 1, type: .string, isRepeated: false, isMap: false)
+    let ageField = ProtoFieldDescriptor(name: "age", number: 2, type: .int32, isRepeated: false, isMap: false)
+    let stringField = ProtoFieldDescriptor(name: "string_field", number: 3, type: .string, isRepeated: false, isMap: false)
+    let intField = ProtoFieldDescriptor(name: "int_field", number: 4, type: .int32, isRepeated: false, isMap: false)
+    
+    // Use the new factory method to create a message descriptor with oneof fields
+    let messageDescriptor = ProtoMessageDescriptor.createWithOneofs(
       fullName: "TestMessage",
-      fields: [
-        ProtoFieldDescriptor(name: "name", number: 1, type: .string, isRepeated: false, isMap: false),
-        ProtoFieldDescriptor(name: "age", number: 2, type: .int32, isRepeated: false, isMap: false),
-        ProtoFieldDescriptor(name: "string_field", number: 3, type: .string, isRepeated: false, isMap: false),
-        ProtoFieldDescriptor(name: "int_field", number: 4, type: .int32, isRepeated: false, isMap: false),
-      ],
-      enums: [],
-      nestedMessages: []
+      regularFields: [nameField, ageField],
+      oneofs: [
+        (name: "test_oneof", fields: [stringField, intField])
+      ]
     )
 
     // Test 1: Basic oneof field behavior

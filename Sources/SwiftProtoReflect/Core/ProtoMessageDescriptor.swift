@@ -293,3 +293,40 @@ public class ProtoMessageDescriptor {
     return descriptorProto
   }
 }
+
+/// Extension with factory methods for creating message descriptors
+extension ProtoMessageDescriptor {
+  /// Creates a new message descriptor with oneof fields
+  /// - Parameters:
+  ///   - fullName: The full name of the message including package and parent message names
+  ///   - regularFields: Regular fields not part of any oneof
+  ///   - oneofs: Array of tuples with oneof name and its fields
+  ///   - enums: Enum descriptors for any enum types defined in the message
+  ///   - nestedMessages: Message descriptors for any message types defined in the message
+  /// - Returns: A new message descriptor with properly configured oneofs
+  public static func createWithOneofs(
+    fullName: String,
+    regularFields: [ProtoFieldDescriptor],
+    oneofs: [(name: String, fields: [ProtoFieldDescriptor])],
+    enums: [ProtoEnumDescriptor] = [],
+    nestedMessages: [ProtoMessageDescriptor] = []
+  ) -> ProtoMessageDescriptor {
+    // Create oneof descriptors and establish relationships
+    var oneofDescriptors: [ProtoOneofDescriptor] = []
+    var allFields = regularFields
+    
+    for (name, fields) in oneofs {
+      let oneof = ProtoOneofDescriptor.create(name: name, fields: fields)
+      oneofDescriptors.append(oneof)
+      allFields.append(contentsOf: fields)
+    }
+    
+    return ProtoMessageDescriptor(
+      fullName: fullName,
+      fields: allFields,
+      enums: enums,
+      nestedMessages: nestedMessages,
+      oneofs: oneofDescriptors
+    )
+  }
+}

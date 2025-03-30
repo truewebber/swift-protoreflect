@@ -77,9 +77,10 @@ public class ProtoFieldDescriptor: Hashable {
   /// This is used for proper validation and conversion of enum values.
   public let enumType: ProtoEnumDescriptor?
 
-  /// If this field is part of a oneof, this property contains the oneof descriptor.
-  /// Otherwise, it's nil.
-  public let oneofDescriptor: ProtoOneofDescriptor?
+  /// If this field is part of a oneof, the descriptor for the oneof.
+  /// This property provides a reference to the oneof descriptor that contains this field.
+  /// For fields that are not part of a oneof, this will be nil.
+  public private(set) var oneofDescriptor: ProtoOneofDescriptor?
 
   /// Indicates whether this field is part of a oneof declaration.
   public var isOneofField: Bool {
@@ -408,5 +409,14 @@ public class ProtoFieldDescriptor: Hashable {
   /// - Returns: The original field descriptor proto, or nil if this descriptor was not created from one.
   public func originalFieldProto() -> Google_Protobuf_FieldDescriptorProto? {
     return fieldProto
+  }
+
+  /// Links this field with a oneof descriptor
+  /// - Parameter oneof: The oneof descriptor to which this field will belong
+  /// - Returns: This field descriptor for method chaining
+  @discardableResult
+  public func setOneof(_ oneof: ProtoOneofDescriptor) -> ProtoFieldDescriptor {
+    self.oneofDescriptor = oneof
+    return self
   }
 }
