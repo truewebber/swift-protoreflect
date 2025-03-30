@@ -53,7 +53,7 @@ final class ProtoValueValidationTests: XCTestCase {
       fullName: "test.TestMessage.StringToStringMapEntry",
       fields: [
         ProtoFieldDescriptor(name: "key", number: 1, type: .string, isRepeated: false, isMap: false),
-        ProtoFieldDescriptor(name: "value", number: 2, type: .string, isRepeated: false, isMap: false)
+        ProtoFieldDescriptor(name: "value", number: 2, type: .string, isRepeated: false, isMap: false),
       ],
       enums: [],
       nestedMessages: []
@@ -63,7 +63,14 @@ final class ProtoValueValidationTests: XCTestCase {
       fullName: "test.TestMessage.Int32ToMessageMapEntry",
       fields: [
         ProtoFieldDescriptor(name: "key", number: 1, type: .int32, isRepeated: false, isMap: false),
-        ProtoFieldDescriptor(name: "value", number: 2, type: .message(messageDescriptor), isRepeated: false, isMap: false, messageType: messageDescriptor)
+        ProtoFieldDescriptor(
+          name: "value",
+          number: 2,
+          type: .message(messageDescriptor),
+          isRepeated: false,
+          isMap: false,
+          messageType: messageDescriptor
+        ),
       ],
       enums: [],
       nestedMessages: []

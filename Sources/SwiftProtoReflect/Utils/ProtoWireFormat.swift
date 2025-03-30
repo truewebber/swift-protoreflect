@@ -37,54 +37,26 @@ public struct ProtoWireFormat {
   /// - Parameter message: The message to serialize.
   /// - Returns: The serialized data, or nil if serialization fails.
   public static func marshal(message: ProtoMessage) -> Data? {
-    var data = Data()
+    do {
+      try validateMessage(message)
+      var data = Data()
 
-    // If the message has a SwiftProtobuf descriptor, try to use SwiftProtobuf's serialization
-    if let swiftProtoMessage = convertToSwiftProtoMessage(message) {
-      do {
-        return try swiftProtoMessage.serializedData()
+      // Marshal all fields
+      for field in message.descriptor().fields {
+        if let value = message.get(field: field) {
+          do {
+            try encodeField(field: field, value: value, to: &data)
+          }
+          catch {
+            return nil
+          }
+        }
       }
-      catch {
-        // Fall back to manual serialization if SwiftProtobuf serialization fails
-      }
+
+      return data
+    } catch {
+      return nil
     }
-
-    // Manual serialization
-    let descriptor = message.descriptor()
-
-    // First, check all fields for invalid values
-    for field in descriptor.fields {
-      if let value = message.get(field: field) {
-        // Use our strict validation
-        do {
-          try validateFieldValue(field: field, value: value)
-        }
-        catch {
-          // If any field has an invalid value, fail the entire serialization
-          return nil
-        }
-      }
-    }
-
-    // We don't need to call validateMessage again since we've already validated all fields
-    // This was causing a redundant validation
-
-    for field in descriptor.fields {
-      if let value = message.get(field: field) {
-        do {
-          try encodeField(field: field, value: value, to: &data)
-        }
-        catch {
-          // If any field can't be encoded, fail the entire serialization
-          return nil
-        }
-      }
-    }
-
-    // We're not preserving unknown fields in this implementation
-    // This matches the expected behavior in the tests
-
-    return data
   }
 
   /// Deserializes protobuf wire format data into a ProtoMessage.
@@ -293,8 +265,9 @@ public struct ProtoWireFormat {
       if let value = try decodeField(fieldDescriptor: fieldDescriptor, wireType: wireType, data: &dataStream) {
         // Handle map fields (which are encoded as repeated message fields)
         if fieldDescriptor.isMap,
-           case .message = fieldDescriptor.type,
-           fieldDescriptor.messageType != nil {
+          case .message = fieldDescriptor.type,
+          fieldDescriptor.messageType != nil
+        {
           if case .messageValue(let mapEntryMessage) = value {
             let keyField = mapEntryMessage.descriptor().field(number: 1)
             let valueField = mapEntryMessage.descriptor().field(number: 2)
@@ -1278,6 +1251,11 @@ public struct ProtoWireFormat {
   public static func validateFieldValue(field: ProtoFieldDescriptor, value: ProtoValue, isRepeatedElement: Bool = false)
     throws
   {
+    // Check for repeated value on non-repeated field first
+    if !field.isRepeated, case .repeatedValue = value {
+      throw ProtoWireFormatError.typeMismatch
+    }
+
     // Skip validation for map fields (check this first)
     if field.isMap && !isRepeatedElement {
       if case .mapValue = value {
@@ -1288,10 +1266,13 @@ public struct ProtoWireFormat {
       }
     }
 
-    // Skip validation for repeated fields unless we're validating an individual element
-    if field.isRepeated && !isRepeatedElement {
-      if case .repeatedValue = value {
-        return  // Validation of individual elements will happen during iteration
+    // For repeated fields, validate each element
+    if field.isRepeated {
+      if case .repeatedValue(let elements) = value {
+        for element in elements {
+          try validateFieldValue(field: field, value: element, isRepeatedElement: true)
+        }
+        return
       }
       else {
         throw ProtoWireFormatError.typeMismatch
@@ -1375,7 +1356,6 @@ public struct ProtoWireFormat {
       throw ProtoWireFormatError.typeMismatch
 
     case .group:
-      // Groups are not supported in proto3
       throw ProtoWireFormatError.unsupportedType
 
     default:

@@ -179,18 +179,18 @@ public enum ProtoFieldType {
   /// - Returns: `true` if the field number is valid, `false` otherwise
   public static func validateFieldNumber(_ fieldNumber: Int) -> Bool {
     // Check basic range
-    guard fieldNumber > 0 && fieldNumber <= 536870911 else {
+    guard fieldNumber > 0 && fieldNumber <= 536_870_911 else {
       return false
     }
-    
+
     // Check reserved range
     guard fieldNumber < 19000 || fieldNumber > 19999 else {
       return false
     }
-    
+
     return true
   }
-  
+
   /// Determines if two field types are compatible for conversion.
   ///
   /// Type compatibility rules:
@@ -210,7 +210,7 @@ public enum ProtoFieldType {
     if type1 == type2 {
       return true
     }
-    
+
     // Unknown type is only compatible with itself
     switch (type1, type2) {
     case (.unknown, _), (_, .unknown):
@@ -230,7 +230,7 @@ public enum ProtoFieldType {
     default:
       break
     }
-    
+
     // Check numeric type compatibility
     if type1.isNumericType() && type2.isNumericType() {
       // Only allow conversions between compatible numeric types
@@ -249,10 +249,10 @@ public enum ProtoFieldType {
       }
       return false
     }
-    
+
     return false
   }
-  
+
   /// Determines if a field type is compatible with a wire type.
   ///
   /// Wire type compatibility rules:
@@ -267,38 +267,38 @@ public enum ProtoFieldType {
   /// - Returns: `true` if the field type is compatible with the wire type, `false` otherwise
   public static func isWireTypeCompatible(_ type: ProtoFieldType, _ wireType: Int) -> Bool {
     switch wireType {
-    case 0: // Varint
+    case 0:  // Varint
       switch type {
       case .int32, .int64, .uint32, .uint64, .sint32, .sint64, .bool, .enum:
         return true
       default:
         return false
       }
-      
-    case 1: // Fixed64
+
+    case 1:  // Fixed64
       switch type {
       case .fixed64, .sfixed64, .double:
         return true
       default:
         return false
       }
-      
-    case 2: // Length-delimited
+
+    case 2:  // Length-delimited
       switch type {
       case .string, .bytes, .message:
         return true
       default:
         return false
       }
-      
-    case 5: // Fixed32
+
+    case 5:  // Fixed32
       switch type {
       case .fixed32, .sfixed32, .float:
         return true
       default:
         return false
       }
-      
+
     default:
       return false
     }
@@ -309,22 +309,22 @@ extension ProtoFieldType: Equatable {
   public static func == (lhs: ProtoFieldType, rhs: ProtoFieldType) -> Bool {
     switch (lhs, rhs) {
     case (.int32, .int32),
-         (.int64, .int64),
-         (.uint32, .uint32),
-         (.uint64, .uint64),
-         (.sint32, .sint32),
-         (.sint64, .sint64),
-         (.sfixed32, .sfixed32),
-         (.sfixed64, .sfixed64),
-         (.fixed32, .fixed32),
-         (.fixed64, .fixed64),
-         (.bool, .bool),
-         (.string, .string),
-         (.bytes, .bytes),
-         (.float, .float),
-         (.double, .double),
-         (.group, .group),
-         (.unknown, .unknown):
+      (.int64, .int64),
+      (.uint32, .uint32),
+      (.uint64, .uint64),
+      (.sint32, .sint32),
+      (.sint64, .sint64),
+      (.sfixed32, .sfixed32),
+      (.sfixed64, .sfixed64),
+      (.fixed32, .fixed32),
+      (.fixed64, .fixed64),
+      (.bool, .bool),
+      (.string, .string),
+      (.bytes, .bytes),
+      (.float, .float),
+      (.double, .double),
+      (.group, .group),
+      (.unknown, .unknown):
       return true
     case (.message(let lhsDescriptor), .message(let rhsDescriptor)):
       return lhsDescriptor?.fullName == rhsDescriptor?.fullName

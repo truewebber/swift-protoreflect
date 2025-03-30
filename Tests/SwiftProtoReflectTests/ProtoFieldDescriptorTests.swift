@@ -164,7 +164,10 @@ class ProtoFieldDescriptorTests: XCTestCase {
   func testAllFieldTypes() {
     // Given
     let testMessageType = ProtoMessageDescriptor(fullName: "TestMessage", fields: [], enums: [], nestedMessages: [])
-    let testEnumType = ProtoEnumDescriptor(name: "TestEnum", values: [ProtoEnumValueDescriptor(name: "TEST_VALUE", number: 0)])
+    let testEnumType = ProtoEnumDescriptor(
+      name: "TestEnum",
+      values: [ProtoEnumValueDescriptor(name: "TEST_VALUE", number: 0)]
+    )
 
     let validTypes: [(type: ProtoFieldType, messageType: ProtoMessageDescriptor?, enumType: ProtoEnumDescriptor?)] = [
       (.int32, nil, nil),
@@ -184,7 +187,7 @@ class ProtoFieldDescriptorTests: XCTestCase {
       (.bytes, nil, nil),
       (.message(testMessageType), testMessageType, nil),
       (.enum(testEnumType), nil, testEnumType),
-      (.group, nil, nil)  // Group type is deprecated but still valid
+      (.group, nil, nil),  // Group type is deprecated but still valid
     ]
 
     for typeInfo in validTypes {

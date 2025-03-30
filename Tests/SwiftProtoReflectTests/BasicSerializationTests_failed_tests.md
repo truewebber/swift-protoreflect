@@ -342,44 +342,76 @@ func testOneofFields() {
 ```
 
 ### testExtensions
-- Описание: Должен проверять корректную работу с extension полями
+- Описание: Должен проверять, что extensions не поддерживаются в proto3
 - Ссылка на спецификацию: https://developers.google.com/protocol-buffers/docs/proto3#extensions
 - Пример кода:
 ```swift
 func testExtensions() {
-    // Create a message descriptor with extension fields
+    // Create extension field descriptors with proto2 extension numbers (>= 19000)
+    let extensionFieldDescriptor = ProtoFieldDescriptor(
+      name: "extension_field",
+      number: 19000,  // proto2 extension number
+      type: .string,
+      isRepeated: false,
+      isMap: false
+    )
+
+    let extensionField2Descriptor = ProtoFieldDescriptor(
+      name: "extension_field2",
+      number: 19001,  // proto2 extension number
+      type: .int32,
+      isRepeated: false,
+      isMap: false
+    )
+
+    // Create a message descriptor with extension field
     let messageDescriptor = ProtoMessageDescriptor(
       fullName: "TestMessage",
       fields: [
         ProtoFieldDescriptor(name: "base_field", number: 1, type: .int32, isRepeated: false, isMap: false),
+        extensionFieldDescriptor
       ],
       enums: [],
-      nestedMessages: [],
-      extensions: [
-        ProtoFieldDescriptor(name: "extension_field", number: 100, type: .string, isRepeated: false, isMap: false),
-      ]
+      nestedMessages: []
     )
 
-    // Create a message with extension field
+    // Test 1: Verify that extensions are not supported in proto3
     let message = ProtoDynamicMessage(descriptor: messageDescriptor)
-    message.set(fieldName: "base_field", value: .intValue(42))
-    message.set(fieldName: "extension_field", value: .stringValue("extension value"))
+    message.set(fieldName: "base_field", value: ProtoValue.intValue(42))
+    
+    // Attempting to set an extension field should fail in proto3
+    XCTAssertThrowsError(try message.set(fieldName: "extension_field", value: ProtoValue.stringValue("extension value"))) { error in
+      XCTAssertEqual(error as? ProtoError, .extensionsNotSupportedInProto3)
+    }
 
-    // Verify extension field
-    XCTAssertEqual(message.get(fieldName: "extension_field")?.getString(), "extension value")
-
-    // Serialize and deserialize
+    // Test 2: Verify that extension fields are not preserved during serialization
     guard let data = ProtoWireFormat.marshal(message: message) else {
-      XCTFail("Failed to marshal message with extension")
+      XCTFail("Failed to marshal message")
       return
     }
 
     guard let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage else {
-      XCTFail("Failed to unmarshal message with extension")
+      XCTFail("Failed to unmarshal message")
       return
     }
 
-    // Verify extension field is preserved
-    XCTAssertEqual(deserializedMessage.get(fieldName: "extension_field")?.getString(), "extension value")
+    // Extension field should not be present in deserialized message
+    XCTAssertNil(deserializedMessage.get(fieldName: "extension_field"))
+
+    // Test 3: Verify that extension fields in wire format are treated as unknown fields
+    let wireData = Data([
+      8, 42,  // base_field = 42
+      160, 185, 1, 10,  // extension_field = "test" (field number 19000)
+    ])
+
+    guard let messageWithExtension = ProtoWireFormat.unmarshal(data: wireData, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage else {
+      XCTFail("Failed to unmarshal message with extension in wire format")
+      return
+    }
+
+    // Extension field should be treated as unknown field
+    XCTAssertEqual(messageWithExtension.get(fieldName: "base_field")?.getInt(), 42)
+    let unknownFields = messageWithExtension.getUnknownFields()
+    XCTAssertTrue(unknownFields[19000]?.first == Data([160, 185, 1, 10]))
 }
 ``` 

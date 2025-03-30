@@ -846,10 +846,8 @@ public enum ProtoValue: Hashable {
     if fieldDescriptor.isRepeated {
       if case .repeatedValue(let values) = self {
         // Check if all elements can be converted to the target type
-        for value in values {
-          if value.convertTo(targetType: fieldDescriptor.type) == nil {
-            return nil
-          }
+        for value in values where value.convertTo(targetType: fieldDescriptor.type) == nil {
+          return nil
         }
         return self
       }
@@ -878,7 +876,7 @@ public enum ProtoValue: Hashable {
       default:
         return nil
       }
-      
+
     case .uintValue(_):
       switch fieldDescriptor.type {
       case .uint32, .uint64, .fixed32, .fixed64:
@@ -886,7 +884,7 @@ public enum ProtoValue: Hashable {
       default:
         return nil
       }
-      
+
     case .floatValue(_):
       switch fieldDescriptor.type {
       case .float:
@@ -894,7 +892,7 @@ public enum ProtoValue: Hashable {
       default:
         return nil
       }
-      
+
     case .doubleValue(_):
       switch fieldDescriptor.type {
       case .double:
@@ -902,7 +900,7 @@ public enum ProtoValue: Hashable {
       default:
         return nil
       }
-      
+
     case .boolValue(_):
       switch fieldDescriptor.type {
       case .bool:
@@ -910,7 +908,7 @@ public enum ProtoValue: Hashable {
       default:
         return nil
       }
-      
+
     case .stringValue(_):
       switch fieldDescriptor.type {
       case .string:
@@ -918,7 +916,7 @@ public enum ProtoValue: Hashable {
       default:
         return nil
       }
-      
+
     case .bytesValue(_):
       switch fieldDescriptor.type {
       case .bytes:
@@ -926,7 +924,7 @@ public enum ProtoValue: Hashable {
       default:
         return nil
       }
-      
+
     case .enumValue(_, let number, let enumDescriptor):
       switch fieldDescriptor.type {
       case .enum(let targetDescriptor):
@@ -940,12 +938,13 @@ public enum ProtoValue: Hashable {
       default:
         return nil
       }
-      
+
     case .messageValue(let message):
       switch fieldDescriptor.type {
       case .message(let targetDescriptor):
         if let targetDescriptor = targetDescriptor,
-           message.descriptor().fullName == targetDescriptor.fullName {
+          message.descriptor().fullName == targetDescriptor.fullName
+        {
           return self
         }
         return nil
@@ -955,11 +954,11 @@ public enum ProtoValue: Hashable {
       default:
         return nil
       }
-      
+
     case .mapValue:
       // Map values are handled above
       return nil
-      
+
     case .repeatedValue:
       // Repeated values are handled above
       return nil
@@ -1018,76 +1017,76 @@ public enum ProtoValue: Hashable {
   public static func from(swiftValue: Any, targetType: ProtoFieldType) -> ProtoValue? {
     switch targetType {
     case .int32, .int64, .sint32, .sint64, .sfixed32, .sfixed64:
-        if let intValue = swiftValue as? Int {
-            return .intValue(intValue)
-        }
-        if let int32Value = swiftValue as? Int32 {
-            return .intValue(Int(int32Value))
-        }
-        if let int64Value = swiftValue as? Int64 {
-            return .intValue(Int(int64Value))
-        }
-        return nil
+      if let intValue = swiftValue as? Int {
+        return .intValue(intValue)
+      }
+      if let int32Value = swiftValue as? Int32 {
+        return .intValue(Int(int32Value))
+      }
+      if let int64Value = swiftValue as? Int64 {
+        return .intValue(Int(int64Value))
+      }
+      return nil
 
     case .uint32, .uint64, .fixed32, .fixed64:
-        if let uintValue = swiftValue as? UInt {
-            return .uintValue(uintValue)
-        }
-        if let uint32Value = swiftValue as? UInt32 {
-            return .uintValue(UInt(uint32Value))
-        }
-        if let uint64Value = swiftValue as? UInt64 {
-            return .uintValue(UInt(uint64Value))
-        }
-        return nil
+      if let uintValue = swiftValue as? UInt {
+        return .uintValue(uintValue)
+      }
+      if let uint32Value = swiftValue as? UInt32 {
+        return .uintValue(UInt(uint32Value))
+      }
+      if let uint64Value = swiftValue as? UInt64 {
+        return .uintValue(UInt(uint64Value))
+      }
+      return nil
 
     case .float:
-        if let floatValue = swiftValue as? Float {
-            return .floatValue(floatValue)
-        }
-        if let doubleValue = swiftValue as? Double {
-            return .floatValue(Float(doubleValue))
-        }
-        return nil
+      if let floatValue = swiftValue as? Float {
+        return .floatValue(floatValue)
+      }
+      if let doubleValue = swiftValue as? Double {
+        return .floatValue(Float(doubleValue))
+      }
+      return nil
 
     case .double:
-        if let doubleValue = swiftValue as? Double {
-            return .doubleValue(doubleValue)
-        }
-        if let floatValue = swiftValue as? Float {
-            return .doubleValue(Double(floatValue))
-        }
-        return nil
+      if let doubleValue = swiftValue as? Double {
+        return .doubleValue(doubleValue)
+      }
+      if let floatValue = swiftValue as? Float {
+        return .doubleValue(Double(floatValue))
+      }
+      return nil
 
     case .bool:
-        if let boolValue = swiftValue as? Bool {
-            return .boolValue(boolValue)
-        }
-        return nil
+      if let boolValue = swiftValue as? Bool {
+        return .boolValue(boolValue)
+      }
+      return nil
 
     case .string:
-        return .stringValue(String(describing: swiftValue))
+      return .stringValue(String(describing: swiftValue))
 
     case .bytes:
-        if let dataValue = swiftValue as? Data {
-            return .bytesValue(dataValue)
-        }
-        return nil
+      if let dataValue = swiftValue as? Data {
+        return .bytesValue(dataValue)
+      }
+      return nil
 
     case .enum:
-        // Handle enum values
-        return nil
+      // Handle enum values
+      return nil
 
     case .message:
-        // Handle message values
-        return nil
+      // Handle message values
+      return nil
 
     case .group:
-        // Handle group values
-        return nil
+      // Handle group values
+      return nil
 
     case .unknown:
-        return nil
+      return nil
     }
   }
 }
