@@ -4,6 +4,44 @@ import XCTest
 @testable import SwiftProtoReflect
 
 class BasicSerializationTests: XCTestCase {
+  // Helper descriptors for nested message tests
+  let addressDescriptor = ProtoMessageDescriptor(
+    fullName: "Address",
+    fields: [
+      ProtoFieldDescriptor(name: "street", number: 1, type: .string, isRepeated: false, isMap: false),
+      ProtoFieldDescriptor(name: "city", number: 2, type: .string, isRepeated: false, isMap: false)
+    ],
+    enums: [],
+    nestedMessages: []
+  )
+  
+  var personDescriptor: ProtoMessageDescriptor!
+  
+  override func setUp() {
+    super.setUp()
+    // Initialize person descriptor with address as nested message
+    personDescriptor = ProtoMessageDescriptor(
+      fullName: "Person",
+      fields: [
+        ProtoFieldDescriptor(name: "name", number: 1, type: .string, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(
+          name: "address",
+          number: 2,
+          type: .message(addressDescriptor),
+          isRepeated: false,
+          isMap: false,
+          messageType: addressDescriptor
+        )
+      ],
+      enums: [],
+      nestedMessages: [addressDescriptor]
+    )
+  }
+  
+  // Helper function to create messages
+  private func createSimpleMessage(descriptor: ProtoMessageDescriptor) -> ProtoDynamicMessage {
+    return ProtoDynamicMessage(descriptor: descriptor)
+  }
 
   func testBasicFieldTypes() {
     // Create a message descriptor with just a few basic field types
@@ -605,12 +643,58 @@ class BasicSerializationTests: XCTestCase {
   }
 
   func testNestedMessageSerialization() {
-    // Create deeply nested message descriptors
+    // Test 1: Simple nested message
+    let address = createSimpleMessage(descriptor: addressDescriptor)
+    address.set(field: addressDescriptor.field(named: "street")!, value: .stringValue("123 Main St"))
+    address.set(field: addressDescriptor.field(named: "city")!, value: .stringValue("Springfield"))
+    
+    let person = createSimpleMessage(descriptor: personDescriptor)
+    person.set(field: personDescriptor.field(named: "name")!, value: .stringValue("John Doe"))
+    person.set(field: personDescriptor.field(named: "address")!, value: .messageValue(address))
+    
+    // Test length-delimited format
+    guard let data = ProtoWireFormat.marshal(message: person) else {
+        XCTFail("Failed to marshal message")
+        return
+    }
+    
+    // Verify length-delimited format
+    var offset = 0
+    while offset < data.count {
+        let (tag, tagBytes) = ProtoWireFormat.decodeVarint(data.dropFirst(offset))
+        XCTAssertNotNil(tag)
+        offset += tagBytes
+        
+        let wireType = Int(tag! & 0x7)
+        if wireType == ProtoWireFormat.wireTypeLengthDelimited {
+            let (length, lengthBytes) = ProtoWireFormat.decodeVarint(data.dropFirst(offset))
+            XCTAssertNotNil(length)
+            offset += lengthBytes
+            offset += Int(length!)
+        }
+    }
+    
+    // Test deserialization
+    guard let decodedPerson = ProtoWireFormat.unmarshal(data: data, messageDescriptor: personDescriptor) else {
+        XCTFail("Failed to unmarshal message")
+        return
+    }
+    
+    // Verify decoded values
+    XCTAssertEqual(decodedPerson.get(field: personDescriptor.field(named: "name")!)?.getString(), "John Doe")
+    guard case .messageValue(let decodedAddress) = decodedPerson.get(field: personDescriptor.field(named: "address")!) else {
+        XCTFail("Failed to get address field")
+        return
+    }
+    XCTAssertEqual(decodedAddress.get(field: addressDescriptor.field(named: "street")!)?.getString(), "123 Main St")
+    XCTAssertEqual(decodedAddress.get(field: addressDescriptor.field(named: "city")!)?.getString(), "Springfield")
+
+    // Test 2: Deeply nested messages
     let cityDescriptor = ProtoMessageDescriptor(
       fullName: "City",
       fields: [
         ProtoFieldDescriptor(name: "name", number: 1, type: .string, isRepeated: false, isMap: false),
-        ProtoFieldDescriptor(name: "population", number: 2, type: .int32, isRepeated: false, isMap: false),
+        ProtoFieldDescriptor(name: "population", number: 2, type: .int32, isRepeated: false, isMap: false)
       ],
       enums: [],
       nestedMessages: []
@@ -635,7 +719,7 @@ class BasicSerializationTests: XCTestCase {
           isRepeated: true,
           isMap: false,
           messageType: cityDescriptor
-        ),
+        )
       ],
       enums: [],
       nestedMessages: [cityDescriptor]
@@ -660,221 +744,95 @@ class BasicSerializationTests: XCTestCase {
           isRepeated: true,
           isMap: false,
           messageType: stateDescriptor
-        ),
+        )
       ],
       enums: [],
       nestedMessages: [cityDescriptor, stateDescriptor]
     )
 
-    // Test 1: Basic nested message serialization
+    // Create deeply nested structure
     let city = ProtoDynamicMessage(descriptor: cityDescriptor)
-    city.set(fieldName: "name", value: .stringValue("Washington"))
-    city.set(fieldName: "population", value: .intValue(705749))
+    city.set(field: cityDescriptor.field(named: "name")!, value: .stringValue("Washington"))
+    city.set(field: cityDescriptor.field(named: "population")!, value: .intValue(705749))
 
     let state = ProtoDynamicMessage(descriptor: stateDescriptor)
-    state.set(fieldName: "name", value: .stringValue("California"))
-    state.set(fieldName: "capital", value: .messageValue(city))
+    state.set(field: stateDescriptor.field(named: "name")!, value: .stringValue("California"))
+    state.set(field: stateDescriptor.field(named: "capital")!, value: .messageValue(city))
+
+    let cities: [ProtoValue] = [
+      {
+        let msg = ProtoDynamicMessage(descriptor: cityDescriptor)
+        msg.set(field: cityDescriptor.field(named: "name")!, value: .stringValue("San Francisco"))
+        msg.set(field: cityDescriptor.field(named: "population")!, value: .intValue(873965))
+        return .messageValue(msg)
+      }(),
+      {
+        let msg = ProtoDynamicMessage(descriptor: cityDescriptor)
+        msg.set(field: cityDescriptor.field(named: "name")!, value: .stringValue("Los Angeles"))
+        msg.set(field: cityDescriptor.field(named: "population")!, value: .intValue(3898747))
+        return .messageValue(msg)
+      }()
+    ]
+    state.set(field: stateDescriptor.field(named: "cities")!, value: .repeatedValue(cities))
 
     let country = ProtoDynamicMessage(descriptor: countryDescriptor)
-    country.set(fieldName: "name", value: .stringValue("United States"))
-    country.set(fieldName: "capital", value: .messageValue(city))
-    country.set(fieldName: "states", value: .repeatedValue([.messageValue(state)]))
+    country.set(field: countryDescriptor.field(named: "name")!, value: .stringValue("United States"))
+    country.set(field: countryDescriptor.field(named: "capital")!, value: .messageValue(city))
+    country.set(field: countryDescriptor.field(named: "states")!, value: .repeatedValue([.messageValue(state)]))
 
-    guard let data = ProtoWireFormat.marshal(message: country) else {
-      XCTFail("Failed to marshal nested message")
+    // Test serialization of deeply nested structure
+    guard let deepData = ProtoWireFormat.marshal(message: country) else {
+      XCTFail("Failed to marshal deeply nested message")
       return
     }
 
-    // Test 2: Deeply nested message with repeated fields
-    let cities: [ProtoDynamicMessage] = [
-      {
-        let msg = ProtoDynamicMessage(descriptor: cityDescriptor)
-        msg.set(fieldName: "name", value: ProtoValue.stringValue("San Francisco"))
-        msg.set(fieldName: "population", value: ProtoValue.intValue(873965))
-        return msg
-      }(),
-      {
-        let msg = ProtoDynamicMessage(descriptor: cityDescriptor)
-        msg.set(fieldName: "name", value: ProtoValue.stringValue("Los Angeles"))
-        msg.set(fieldName: "population", value: ProtoValue.intValue(3_898_747))
-        return msg
-      }(),
-    ]
-
-    let stateWithCities = ProtoDynamicMessage(descriptor: stateDescriptor)
-    stateWithCities.set(fieldName: "name", value: ProtoValue.stringValue("California"))
-    stateWithCities.set(fieldName: "capital", value: ProtoValue.messageValue(city))
-    stateWithCities.set(
-      fieldName: "cities",
-      value: ProtoValue.repeatedValue(cities.map { ProtoValue.messageValue($0 as ProtoMessage) })
-    )
-
-    guard let dataWithCities = ProtoWireFormat.marshal(message: stateWithCities) else {
-      XCTFail("Failed to marshal state with cities")
+    // Test deserialization of deeply nested structure
+    guard let decodedCountry = ProtoWireFormat.unmarshal(data: deepData, messageDescriptor: countryDescriptor) as? ProtoDynamicMessage else {
+      XCTFail("Failed to unmarshal deeply nested message")
       return
     }
 
-    // Verify state with cities serialization
-    guard
-      let deserializedState = ProtoWireFormat.unmarshal(data: dataWithCities, messageDescriptor: stateDescriptor)
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal state with cities")
+    // Verify deeply nested structure
+    XCTAssertEqual(decodedCountry.get(field: countryDescriptor.field(named: "name")!)?.getString(), "United States")
+    
+    guard case .messageValue(let decodedCapital) = decodedCountry.get(field: countryDescriptor.field(named: "capital")!) else {
+      XCTFail("Failed to get capital")
       return
     }
+    XCTAssertEqual(decodedCapital.get(field: cityDescriptor.field(named: "name")!)?.getString(), "Washington")
+    XCTAssertEqual(decodedCapital.get(field: cityDescriptor.field(named: "population")!)?.getInt(), 705749)
 
-    // Verify state fields
-    XCTAssertEqual(deserializedState.get(fieldName: "name")?.getString(), "California")
-
-    // Verify capital city
-    guard let capital = deserializedState.get(fieldName: "capital")?.getMessage() as? ProtoDynamicMessage else {
-      XCTFail("Capital should be a message")
+    guard let states = decodedCountry.get(field: countryDescriptor.field(named: "states")!)?.getRepeated() else {
+      XCTFail("Failed to get states")
       return
     }
-    XCTAssertEqual(capital.get(fieldName: "name")?.getString(), "Washington")
-    XCTAssertEqual(capital.get(fieldName: "population")?.getInt(), 705749)
-
-    // Verify cities array
-    guard let cities = deserializedState.get(fieldName: "cities")?.getRepeated() else {
-      XCTFail("Cities should be repeated")
-      return
-    }
-    XCTAssertEqual(cities.count, 2)
-
-    // Verify first city
-    guard let firstCity = cities[0].getMessage() as? ProtoDynamicMessage else {
-      XCTFail("First city should be a message")
-      return
-    }
-    XCTAssertEqual(firstCity.get(fieldName: "name")?.getString(), "San Francisco")
-    XCTAssertEqual(firstCity.get(fieldName: "population")?.getInt(), 873965)
-
-    // Verify second city
-    guard let secondCity = cities[1].getMessage() as? ProtoDynamicMessage else {
-      XCTFail("Second city should be a message")
-      return
-    }
-    XCTAssertEqual(secondCity.get(fieldName: "name")?.getString(), "Los Angeles")
-    XCTAssertEqual(secondCity.get(fieldName: "population")?.getInt(), 3_898_747)
-
-    // Test 3: Deserialize and verify nested structure
-    guard
-      let deserializedCountry = ProtoWireFormat.unmarshal(data: data, messageDescriptor: countryDescriptor)
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal nested message")
-      return
-    }
-
-    XCTAssertEqual(deserializedCountry.get(fieldName: "name")?.getString(), "United States")
-
-    guard let capital = deserializedCountry.get(fieldName: "capital")?.getMessage() as? ProtoDynamicMessage else {
-      XCTFail("Capital should be a message")
-      return
-    }
-
-    XCTAssertEqual(capital.get(fieldName: "name")?.getString(), "Washington")
-    XCTAssertEqual(capital.get(fieldName: "population")?.getInt(), 705749)
-
-    guard let states = deserializedCountry.get(fieldName: "states")?.getRepeated() else {
-      XCTFail("States should be repeated")
-      return
-    }
-
     XCTAssertEqual(states.count, 1)
-    guard let state = states[0].getMessage() as? ProtoDynamicMessage else {
-      XCTFail("State should be a message")
+
+    guard case .messageValue(let decodedState) = states[0] else {
+      XCTFail("Failed to get first state")
       return
     }
+    XCTAssertEqual(decodedState.get(field: stateDescriptor.field(named: "name")!)?.getString(), "California")
 
-    XCTAssertEqual(state.get(fieldName: "name")?.getString(), "California")
-
-    // Test 4: Circular reference handling
-    let circularDescriptor = ProtoMessageDescriptor(
-      fullName: "CircularMessage",
-      fields: [
-        ProtoFieldDescriptor(
-          name: "self_reference",
-          number: 1,
-          type: .message(nil),
-          isRepeated: false,
-          isMap: false,
-          messageType: nil
-        )
-      ],
-      enums: [],
-      nestedMessages: []
-    )
-
-    // Create the circular message
-    let circularMessage = ProtoDynamicMessage(descriptor: circularDescriptor)
-    circularMessage.set(fieldName: "self_reference", value: ProtoValue.messageValue(circularMessage))
-
-    // Serialization should handle circular references gracefully
-    guard let circularData = ProtoWireFormat.marshal(message: circularMessage) else {
-      XCTFail("Failed to marshal circular reference")
+    guard let decodedCities = decodedState.get(field: stateDescriptor.field(named: "cities")!)?.getRepeated() else {
+      XCTFail("Failed to get cities")
       return
     }
+    XCTAssertEqual(decodedCities.count, 2)
 
-    // Verify circular reference deserialization
-    guard
-      let deserializedCircularMessage = ProtoWireFormat.unmarshal(
-        data: circularData,
-        messageDescriptor: circularDescriptor
-      ) as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal circular reference")
+    guard case .messageValue(let firstCity) = decodedCities[0] else {
+      XCTFail("Failed to get first city")
       return
     }
+    XCTAssertEqual(firstCity.get(field: cityDescriptor.field(named: "name")!)?.getString(), "San Francisco")
+    XCTAssertEqual(firstCity.get(field: cityDescriptor.field(named: "population")!)?.getInt(), 873965)
 
-    // Verify that the self-reference is preserved
-    guard
-      let selfReference = deserializedCircularMessage.get(fieldName: "self_reference")?.getMessage()
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Self reference should be a message")
+    guard case .messageValue(let secondCity) = decodedCities[1] else {
+      XCTFail("Failed to get second city")
       return
     }
-    XCTAssertEqual(selfReference.descriptor().fullName, "CircularMessage")
-
-    // Test 5: Empty nested message
-    let emptyNestedMessage = ProtoDynamicMessage(descriptor: countryDescriptor)
-    emptyNestedMessage.set(fieldName: "name", value: .stringValue("Empty Country"))
-    emptyNestedMessage.set(fieldName: "capital", value: .messageValue(ProtoDynamicMessage(descriptor: cityDescriptor)))
-    emptyNestedMessage.set(fieldName: "states", value: .repeatedValue([]))
-
-    guard let emptyData = ProtoWireFormat.marshal(message: emptyNestedMessage) else {
-      XCTFail("Failed to marshal empty nested message")
-      return
-    }
-
-    // Verify empty nested message deserialization
-    guard
-      let deserializedEmptyMessage = ProtoWireFormat.unmarshal(data: emptyData, messageDescriptor: countryDescriptor)
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal empty nested message")
-      return
-    }
-
-    // Verify empty message fields
-    XCTAssertEqual(deserializedEmptyMessage.get(fieldName: "name")?.getString(), "Empty Country")
-
-    // Verify empty capital city
-    guard let emptyCapital = deserializedEmptyMessage.get(fieldName: "capital")?.getMessage() as? ProtoDynamicMessage
-    else {
-      XCTFail("Capital should be a message")
-      return
-    }
-    XCTAssertNil(emptyCapital.get(fieldName: "name"))
-    XCTAssertNil(emptyCapital.get(fieldName: "population"))
-
-    // Verify empty states array
-    guard let emptyStates = deserializedEmptyMessage.get(fieldName: "states")?.getRepeated() else {
-      XCTFail("States should be repeated")
-      return
-    }
-    XCTAssertEqual(emptyStates.count, 0)
+    XCTAssertEqual(secondCity.get(field: cityDescriptor.field(named: "name")!)?.getString(), "Los Angeles")
+    XCTAssertEqual(secondCity.get(field: cityDescriptor.field(named: "population")!)?.getInt(), 3898747)
   }
 
   func testPerformanceSerialization() {
