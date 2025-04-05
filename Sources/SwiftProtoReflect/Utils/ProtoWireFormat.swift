@@ -32,21 +32,18 @@ public struct ProtoWireFormat {
   public static let wireTypeEndGroup: Int = 4
   public static let wireTypeFixed32: Int = 5
 
-  /// Serializes a ProtoMessage into protobuf wire format.
+  /// Marshals a Protocol Buffers message to its binary representation.
   ///
   /// - Parameters:
-  ///   - message: The message to serialize.
-  ///   - options: Options for controlling the serialization process.
+  ///   - message: The message to marshal.
+  ///   - options: Options for serialization.
   /// - Returns: The serialized data.
-  /// - Throws: `ProtoWireFormatError` if validation fails or serialization encounters an error.
-  public static func marshal(message: ProtoMessage, options: SerializationOptions = SerializationOptions()) throws
-    -> Data
-  {
-    // Validate the message if required
-    if options.validateFields {
-      try validateMessage(message)
-    }
+  /// - Throws: An error if marshaling fails.
+  public static func marshal(message: ProtoMessage, options: SerializationOptions = SerializationOptions()) throws -> Data {
+    // Validate the message first
+    try validateMessage(message)
 
+    // Estimate the size of the serialized message
     let estimatedSize = estimateMessageSize(message)
     var data: Data
 
@@ -67,7 +64,7 @@ public struct ProtoWireFormat {
       // Allocate memory directly
       data = Data(capacity: estimatedSize)
     }
-
+    
     // Marshal all fields
     for field in message.descriptor().fields {
       if let value = message.get(field: field) {
@@ -83,9 +80,11 @@ public struct ProtoWireFormat {
     // Include unknown fields if not skipping them
     if !options.skipUnknownFields, let dynamicMessage = message as? ProtoDynamicMessage {
       let unknownFields = dynamicMessage.getUnknownFields()
-      encodeUnknownFields(unknownFields, to: &data)
+      if !unknownFields.isEmpty {
+        encodeUnknownFields(unknownFields, to: &data)
+      }
     }
-
+    
     return data
   }
 
@@ -305,14 +304,14 @@ public struct ProtoWireFormat {
     }
   }
 
-  /// Deserializes protobuf wire format data into a ProtoMessage.
+  /// Unmarshals binary data into a Protocol Buffers message.
   ///
   /// - Parameters:
-  ///   - data: The serialized data.
+  ///   - data: The binary data to unmarshal.
   ///   - messageDescriptor: The descriptor for the message type.
-  ///   - options: Options for controlling the deserialization process.
-  /// - Returns: The deserialized message.
-  /// - Throws: ProtoWireFormatError if deserialization fails.
+  ///   - options: Options for controlling the unmarshaling process.
+  /// - Returns: The unmarshaled message.
+  /// - Throws: An error if unmarshaling fails.
   public static func unmarshal(
     data: Data,
     messageDescriptor: ProtoMessageDescriptor,
@@ -332,7 +331,7 @@ public struct ProtoWireFormat {
     // Track recursion depth for nested messages
     var recursionDepth = 0
     let maxDepth = options.maxDepth
-
+    
     // Used to track repeated and map fields
     var repeatedFields: [Int: [ProtoValue]] = [:]
     var mapFields: [Int: [String: ProtoValue]] = [:]
@@ -355,7 +354,7 @@ public struct ProtoWireFormat {
       // Extract field number and wire type
       let fieldNumber = Int(key >> 3)
       let wireType = Int(key & 0x7)
-
+      
       // Find the field descriptor
       guard let fieldDescriptor = messageDescriptor.field(number: fieldNumber) else {
         // Unknown field, preserve it if not configured to skip
@@ -393,56 +392,71 @@ public struct ProtoWireFormat {
       }
 
       // Decode the field value
-      let value = try decodeFieldValue(
-        wireType: wireType,
-        fieldDescriptor: fieldDescriptor,
-        data: &remainingData,
-        recursionDepth: &recursionDepth,
-        maxDepth: maxDepth,
-        options: options
-      )
+      do {
+        let value = try decodeFieldValue(
+          wireType: wireType,
+          fieldDescriptor: fieldDescriptor,
+          data: &remainingData,
+          recursionDepth: &recursionDepth,
+          maxDepth: maxDepth,
+          options: options
+        )
+        
+        // Handle different field types
+        if fieldDescriptor.isMap {
+          // For map fields, extract the entries and add to map
+          if case .messageValue(let mapEntryMessage) = value {
+            let keyField = mapEntryMessage.descriptor().field(number: 1)
+            let valueField = mapEntryMessage.descriptor().field(number: 2)
 
-      // Handle different field types
-      if fieldDescriptor.isRepeated {
-        // Add to repeated field collection
-        var values = repeatedFields[fieldDescriptor.number] ?? []
-        values.append(value)
-        repeatedFields[fieldDescriptor.number] = values
-      }
-      else if fieldDescriptor.isMap {
-        // Handle map entry (which is encoded as a nested message)
-        if case .messageValue(let mapEntryMessage) = value {
-          let keyField = mapEntryMessage.descriptor().field(number: 1)
-          let valueField = mapEntryMessage.descriptor().field(number: 2)
+            let keyValue = keyField.flatMap { mapEntryMessage.get(field: $0) }
+            let valueValue = valueField.flatMap { mapEntryMessage.get(field: $0) }
 
-          let keyValue = keyField.flatMap { mapEntryMessage.get(field: $0) }
-          let valueValue = valueField.flatMap { mapEntryMessage.get(field: $0) }
-
-          if case .stringValue(let key)? = keyValue {
-            // Add the key-value pair to the map field collection
-            var entries = mapFields[fieldDescriptor.number] ?? [:]
-            entries[key] = valueValue
-            mapFields[fieldDescriptor.number] = entries
+            if case .stringValue(let key)? = keyValue {
+              // Add the key-value pair to the map field collection
+              var entries = mapFields[fieldDescriptor.number] ?? [:]
+              entries[key] = valueValue
+              mapFields[fieldDescriptor.number] = entries
+            } else {
+              throw ProtoWireFormatError.typeMismatch
+            }
+          } else {
+            throw ProtoWireFormatError.typeMismatch
           }
         }
-      }
-      else {
-        // Regular field
-        message.set(field: fieldDescriptor, value: value)
+        else if fieldDescriptor.isRepeated {
+          // Add to repeated field collection
+          var values = repeatedFields[fieldDescriptor.number] ?? []
+          values.append(value)
+          repeatedFields[fieldDescriptor.number] = values
+        }
+        else {
+          // Regular field
+          message.set(field: fieldDescriptor, value: value)
+        }
+      } catch {
+        throw error
       }
     }
 
-    // Set all repeated fields
-    for (fieldNumber, values) in repeatedFields {
-      if let fieldDescriptor = messageDescriptor.field(number: fieldNumber) {
-        message.set(field: fieldDescriptor, value: .repeatedValue(values))
+    // Process all fields to set repeated and map values
+    for field in messageDescriptor.fields {
+      // Handle map fields (this takes precedence)
+      if field.isMap {
+        let entries = mapFields[field.number] ?? [:]
+        if !entries.isEmpty {
+          message.set(field: field, value: .mapValue(entries))
+        } else {
+          // For empty map fields, still set an empty map
+          message.set(field: field, value: .mapValue([:]))
+        }
       }
-    }
-
-    // Set all map fields
-    for (fieldNumber, entries) in mapFields {
-      if let fieldDescriptor = messageDescriptor.field(number: fieldNumber) {
-        message.set(field: fieldDescriptor, value: .mapValue(entries))
+      // Handle regular repeated fields 
+      else if field.isRepeated {
+        let values = repeatedFields[field.number] ?? []
+        if !values.isEmpty {
+          message.set(field: field, value: .repeatedValue(values))
+        }
       }
     }
 
@@ -813,9 +827,7 @@ public struct ProtoWireFormat {
 
     // Set all repeated fields
     for (fieldNumber, values) in repeatedFields {
-      if let fieldDescriptor = messageDescriptor.field(number: fieldNumber),
-        !values.isEmpty
-      {
+      if let fieldDescriptor = messageDescriptor.field(number: fieldNumber), !values.isEmpty {
         message.set(field: fieldDescriptor, value: .repeatedValue(values))
       }
     }
@@ -842,13 +854,15 @@ public struct ProtoWireFormat {
   ///   - data: The data buffer to append to.
   /// - Throws: An error if encoding fails.
   public static func encodeField(field: ProtoFieldDescriptor, value: ProtoValue, to data: inout Data) throws {
-    if field.isRepeated {
-      try encodeRepeatedField(field: field, value: value, to: &data)
-      return
-    }
-
+    // Handle map fields first, since they are also marked as repeated
     if field.isMap {
       try encodeMapField(field: field, value: value, to: &data)
+      return
+    }
+    
+    // Then handle repeated fields
+    if field.isRepeated {
+      try encodeRepeatedField(field: field, value: value, to: &data)
       return
     }
 
@@ -897,7 +911,7 @@ public struct ProtoWireFormat {
         data.append(encodeVarint(UInt64(uintValue)))
       }
       else if case .boolValue(let boolValue) = value {
-        data.append(encodeVarint(UInt64(boolValue ? 1 : 0)))
+        data.append(encodeVarint(boolValue ? 1 : 0))
       }
       else {
         throw ProtoWireFormatError.typeMismatch
@@ -1019,57 +1033,99 @@ public struct ProtoWireFormat {
   }
 
   private static func encodeRepeatedField(field: ProtoFieldDescriptor, value: ProtoValue, to data: inout Data) throws {
-    guard case .repeatedValue(let array) = value else {
+    guard case .repeatedValue(let elements) = value else {
       throw ProtoWireFormatError.typeMismatch
     }
 
-    for element in array {
-      try encodeField(
-        field: ProtoFieldDescriptor(
+    // For empty repeated fields, don't encode anything
+    if elements.isEmpty {
+      return
+    }
+
+    // For packed fields, use the packed encoding
+    let shouldUsePacked = isPrimitiveType(field.type) && !isTransportTypeLengthDelimited(field.type) && elements.count > 1
+
+    if shouldUsePacked {
+      // Write field tag with wire type length-delimited
+      let tag = (UInt64(field.number) << 3) | UInt64(wireTypeLengthDelimited)
+      data.append(encodeVarint(tag))
+
+      // Create a temporary buffer for packed elements
+      var tempData = Data()
+      for element in elements {
+        try encodePackedElement(field: field, value: element, to: &tempData)
+      }
+
+      // Write length and data
+      data.append(encodeVarint(UInt64(tempData.count)))
+      data.append(tempData)
+    }
+    else {
+      // Encode each element individually
+      for element in elements {
+        // Create a non-repeated field descriptor for encoding the individual element
+        let elementField = ProtoFieldDescriptor(
           name: field.name,
           number: field.number,
           type: field.type,
           isRepeated: false,
           isMap: false,
-          messageType: field.messageType
-        ),
-        value: element,
-        to: &data
-      )
+          defaultValue: field.defaultValue,
+          messageType: field.messageType,
+          enumType: field.enumType
+        )
+        try encodeField(field: elementField, value: element, to: &data)
+      }
     }
   }
 
   private static func encodeMapField(field: ProtoFieldDescriptor, value: ProtoValue, to data: inout Data) throws {
-    guard case .mapValue(let map) = value else {
+    // Handle the map value or a repeated value for map fields
+    var mapEntries: [String: ProtoValue] = [:]
+    
+    if case .mapValue(let map) = value {
+      mapEntries = map
+    } else if case .repeatedValue(let repeatedEntries) = value {
+      // Handle case where map is encoded as repeated entries
+      // Convert repeated message entries into a map
+      for entry in repeatedEntries {
+        if case .messageValue(let entryMessage) = entry,
+           let keyField = entryMessage.descriptor().field(number: 1),
+           let valueField = entryMessage.descriptor().field(number: 2),
+           let keyValue = entryMessage.get(field: keyField),
+           let valueValue = entryMessage.get(field: valueField),
+           case .stringValue(let key) = keyValue {
+          mapEntries[key] = valueValue
+        }
+      }
+    } else {
       throw ProtoWireFormatError.typeMismatch
     }
 
-    for (key, value) in map {
+    // Ensure we have a message type for the map entry
+    guard let entryDescriptor = field.messageType else {
+      throw ProtoWireFormatError.invalidMessageType
+    }
+
+    // Get the key and value field descriptors from the entry descriptor
+    guard let keyField = entryDescriptor.field(number: 1),
+          let valueField = entryDescriptor.field(number: 2) else {
+      throw ProtoWireFormatError.invalidMessageType
+    }
+
+    for (key, value) in mapEntries {
       var entryData = Data()
 
-      // Encode key (field number 1)
+      // Encode key (field number 1) using the correct descriptor from the entry
       try encodeField(
-        field: ProtoFieldDescriptor(
-          name: "key",
-          number: 1,
-          type: .string,
-          isRepeated: false,
-          isMap: false
-        ),
+        field: keyField,
         value: .stringValue(key),
         to: &entryData
       )
 
-      // Encode value (field number 2)
+      // Encode value (field number 2) using the correct descriptor from the entry
       try encodeField(
-        field: ProtoFieldDescriptor(
-          name: "value",
-          number: 2,
-          type: field.type,
-          isRepeated: false,
-          isMap: false,
-          messageType: field.messageType
-        ),
+        field: valueField,
         value: value,
         to: &entryData
       )
@@ -1344,7 +1400,6 @@ public struct ProtoWireFormat {
     // Validate only fields that are set
     for field in descriptor.fields {
       if let value = message.get(field: field) {
-        // Use our strict validation
         do {
           try validateFieldValue(field: field, value: value)
         }
@@ -1368,19 +1423,62 @@ public struct ProtoWireFormat {
   public static func validateFieldValue(field: ProtoFieldDescriptor, value: ProtoValue, isRepeatedElement: Bool = false)
     throws
   {
-    // Check for repeated value on non-repeated field first
-    if !field.isRepeated, case .repeatedValue = value {
+    // Handle map fields (check this first)
+    if field.isMap {
+      if isRepeatedElement {
+        // When validating a single element of a map field, it should be a message for map entry
+        if case .messageValue = value {
+          return  // Allow message values in map field entries
+        }
+      } else {
+        if case .mapValue(let entries) = value {
+          // Verify that the map entries match the expected types
+          if let entryDescriptor = field.messageType,
+             let _: ProtoFieldDescriptor = entryDescriptor.field(number: 1),
+             let valueField = entryDescriptor.field(number: 2) {
+            
+            // Validate each map entry's value against the value field's type
+            for (_, entryValue) in entries {
+              // Create a non-repeated field descriptor for the value
+              let singleValueField = ProtoFieldDescriptor(
+                name: valueField.name,
+                number: valueField.number,
+                type: valueField.type,
+                isRepeated: false,
+                isMap: false,
+                defaultValue: valueField.defaultValue,
+                messageType: valueField.messageType,
+                enumType: valueField.enumType
+              )
+              
+              do {
+                try validateFieldValue(field: singleValueField, value: entryValue)
+              } catch {
+                // If validation fails, throw a more specific error
+                throw ProtoWireFormatError.validationError(
+                  fieldName: field.name,
+                  reason: "Map entry value has incorrect type: \(error.localizedDescription)"
+                )
+              }
+            }
+          }
+          return  // Map entries are valid
+        }
+        
+        // For backward compatibility, also allow repeated values for map fields 
+        // since Protocol Buffers implements maps as repeated message fields
+        if case .repeatedValue = value {
+          return
+        }
+      }
+      
+      // Any other type is not allowed for map fields
       throw ProtoWireFormatError.typeMismatch
     }
-
-    // Skip validation for map fields (check this first)
-    if field.isMap && !isRepeatedElement {
-      if case .mapValue = value {
-        return  // Map fields are handled separately
-      }
-      else {
-        throw ProtoWireFormatError.typeMismatch
-      }
+    
+    // Check for repeated value on non-repeated field
+    if !field.isRepeated, case .repeatedValue = value {
+      throw ProtoWireFormatError.typeMismatch
     }
 
     // For repeated fields, validate each element
@@ -1498,6 +1596,102 @@ public struct ProtoWireFormat {
   private static func bytesToValue<T>(_ bytes: [UInt8]) -> T {
     return bytes.withUnsafeBytes { ptr in
       ptr.load(fromByteOffset: 0, as: T.self)
+    }
+  }
+
+  private static func isPrimitiveType(_ type: ProtoFieldType) -> Bool {
+    switch type {
+    case .int32, .int64, .uint32, .uint64, .sint32, .sint64, .fixed32, .fixed64, 
+         .sfixed32, .sfixed64, .float, .double, .bool, .enum:
+      return true
+    default:
+      return false
+    }
+  }
+  
+  private static func isTransportTypeLengthDelimited(_ type: ProtoFieldType) -> Bool {
+    switch type {
+    case .string, .bytes, .message:
+      return true
+    default:
+      return false
+    }
+  }
+  
+  private static func encodePackedElement(field: ProtoFieldDescriptor, value: ProtoValue, to data: inout Data) throws {
+    switch field.type {
+    case .int32, .int64:
+      if case .intValue(let intValue) = value {
+        data.append(encodeVarint(UInt64(bitPattern: Int64(intValue))))
+      } else {
+        throw ProtoWireFormatError.typeMismatch
+      }
+      
+    case .uint32, .uint64:
+      if case .uintValue(let uintValue) = value {
+        data.append(encodeVarint(UInt64(uintValue)))
+      } else {
+        throw ProtoWireFormatError.typeMismatch
+      }
+      
+    case .sint32:
+      if case .intValue(let intValue) = value {
+        data.append(encodeVarint(UInt64(encodeZigZag32(Int32(intValue)))))
+      } else {
+        throw ProtoWireFormatError.typeMismatch
+      }
+      
+    case .sint64:
+      if case .intValue(let intValue) = value {
+        data.append(encodeVarint(UInt64(encodeZigZag64(Int64(intValue)))))
+      } else {
+        throw ProtoWireFormatError.typeMismatch
+      }
+      
+    case .fixed32, .sfixed32, .float:
+      var fixedData = Data(repeating: 0, count: 4)
+      if case .intValue(let intValue) = value {
+        withUnsafeBytes(of: UInt32(intValue)) { fixedData.replaceSubrange(0..<4, with: $0) }
+      } else if case .uintValue(let uintValue) = value {
+        withUnsafeBytes(of: UInt32(uintValue)) { fixedData.replaceSubrange(0..<4, with: $0) }
+      } else if case .floatValue(let floatValue) = value {
+        withUnsafeBytes(of: floatValue) { fixedData.replaceSubrange(0..<4, with: $0) }
+      } else {
+        throw ProtoWireFormatError.typeMismatch
+      }
+      data.append(fixedData)
+      
+    case .fixed64, .sfixed64, .double:
+      var fixedData = Data(repeating: 0, count: 8)
+      if case .intValue(let intValue) = value {
+        withUnsafeBytes(of: UInt64(intValue)) { fixedData.replaceSubrange(0..<8, with: $0) }
+      } else if case .uintValue(let uintValue) = value {
+        withUnsafeBytes(of: UInt64(uintValue)) { fixedData.replaceSubrange(0..<8, with: $0) }
+      } else if case .doubleValue(let doubleValue) = value {
+        withUnsafeBytes(of: doubleValue) { fixedData.replaceSubrange(0..<8, with: $0) }
+      } else {
+        throw ProtoWireFormatError.typeMismatch
+      }
+      data.append(fixedData)
+      
+    case .bool:
+      if case .boolValue(let boolValue) = value {
+        data.append(boolValue ? 1 : 0)
+      } else {
+        throw ProtoWireFormatError.typeMismatch
+      }
+      
+    case .enum:
+      if case .enumValue(_, let number, _) = value {
+        data.append(encodeVarint(UInt64(number)))
+      } else if case .intValue(let intValue) = value {
+        data.append(encodeVarint(UInt64(intValue)))
+      } else {
+        throw ProtoWireFormatError.typeMismatch
+      }
+      
+    default:
+      throw ProtoWireFormatError.unsupportedType
     }
   }
 }
