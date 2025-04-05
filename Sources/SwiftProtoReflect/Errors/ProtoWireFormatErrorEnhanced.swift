@@ -66,6 +66,9 @@ public enum ProtoWireFormatErrorEnhanced: Error, Equatable {
   /// An error indicating an invalid field key.
   case invalidFieldKey
 
+  /// An error indicating an invalid map entry.
+  case invalidMapEntry
+
   // MARK: - Equatable Implementation
 
   /// Compares two error instances for equality.
@@ -120,7 +123,8 @@ public enum ProtoWireFormatErrorEnhanced: Error, Equatable {
       (.invalidMessageType, .invalidMessageType),
       (.unsupportedType, .unsupportedType),
       (.unsupportedWireType, .unsupportedWireType),
-      (.invalidFieldKey, .invalidFieldKey):
+      (.invalidFieldKey, .invalidFieldKey),
+      (.invalidMapEntry, .invalidMapEntry):
       return true
 
     case (
@@ -189,6 +193,9 @@ public enum ProtoWireFormatErrorEnhanced: Error, Equatable {
 
     case .invalidFieldKey:
       return "Invalid field key"
+
+    case .invalidMapEntry:
+      return "Invalid map entry"
     }
   }
 
@@ -217,6 +224,8 @@ public enum ProtoWireFormatErrorEnhanced: Error, Equatable {
       return .unsupportedWireType
     case .invalidFieldKey:
       return .invalidFieldKey
+    case .invalidMapEntry:
+      return .invalidMessageType
     }
   }
 }

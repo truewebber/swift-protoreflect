@@ -386,11 +386,17 @@ public struct ProtoWireFormat {
       // Check if the wire type matches the expected wire type for the field type
       let expectedWireType = determineWireType(for: fieldDescriptor.type)
       if wireType != expectedWireType {
-        // Wire type mismatch, skip the field
-        if !skipField(wireType: wireType, data: &remainingData) {
-          throw ProtoWireFormatError.wireTypeMismatch  // Failed to skip field
+        // Особый случай: для повторяющихся примитивных типов, wireType может быть LENGTH_DELIMITED (упакованная форма)
+        if fieldDescriptor.isRepeated && isPrimitiveType(fieldDescriptor.type) && wireType == wireTypeLengthDelimited {
+          // Это может быть упакованное повторяющееся поле, продолжаем обработку
         }
-        continue
+        else {
+          // Обычная обработка для несовпадающего wire type
+          if !skipField(wireType: wireType, data: &remainingData) {
+            throw ProtoWireFormatError.truncatedMessage
+          }
+          continue
+        }
       }
 
       // Decode the field value
@@ -429,10 +435,18 @@ public struct ProtoWireFormat {
           }
         }
         else if fieldDescriptor.isRepeated {
-          // Add to repeated field collection
-          var values = repeatedFields[fieldDescriptor.number] ?? []
-          values.append(value)
-          repeatedFields[fieldDescriptor.number] = values
+          // Отдельная обработка для случая, когда мы уже получили готовый repeatedValue
+          // (например, из упакованного поля)
+          if case .repeatedValue(let packedElements) = value {
+            // Если это уже repeatedValue, то просто сохраняем его как есть
+            repeatedFields[fieldDescriptor.number] = packedElements
+          }
+          else {
+            // Обычная обработка для одиночных элементов
+            var values = repeatedFields[fieldDescriptor.number] ?? []
+            values.append(value)
+            repeatedFields[fieldDescriptor.number] = values
+          }
         }
         else {
           // Regular field
@@ -596,11 +610,17 @@ public struct ProtoWireFormat {
       data.removeFirst(8)
 
       switch fieldDescriptor.type {
-      case .fixed64, .sfixed64:
+      case .fixed64:
         let value = bytes.withUnsafeBytes { ptr in
           ptr.baseAddress!.assumingMemoryBound(to: UInt64.self).pointee
         }
         return .uintValue(UInt(value))
+      case .sfixed64:
+        // Для sfixed64 преобразуем в intValue
+        let value = bytes.withUnsafeBytes { ptr in
+          ptr.baseAddress!.assumingMemoryBound(to: UInt64.self).pointee
+        }
+        return .intValue(Int(Int64(bitPattern: value)))
       case .double:
         let value = bytes.withUnsafeBytes { ptr in
           ptr.baseAddress!.assumingMemoryBound(to: Double.self).pointee
@@ -625,11 +645,17 @@ public struct ProtoWireFormat {
       data.removeFirst(4)
 
       switch fieldDescriptor.type {
-      case .fixed32, .sfixed32:
+      case .fixed32:
         let value = bytes.withUnsafeBytes { ptr in
           ptr.baseAddress!.assumingMemoryBound(to: UInt32.self).pointee
         }
         return .uintValue(UInt(value))
+      case .sfixed32:
+        // Для sfixed32 преобразуем в intValue
+        let value = bytes.withUnsafeBytes { ptr in
+          ptr.baseAddress!.assumingMemoryBound(to: UInt32.self).pointee
+        }
+        return .intValue(Int(Int32(bitPattern: value)))
       case .float:
         let value = bytes.withUnsafeBytes { ptr in
           ptr.baseAddress!.assumingMemoryBound(to: Float.self).pointee
@@ -696,6 +722,147 @@ public struct ProtoWireFormat {
         recursionDepth -= 1
 
         return .messageValue(nestedMessage)
+
+      // Обработка упакованных полей для примитивных типов
+      case .fixed32, .fixed64, .sfixed32, .sfixed64, .float, .double, .int32, .int64, .uint32, .uint64, .sint32,
+        .sint64, .bool, .enum:
+        // Проверка, является ли поле повторяющимся
+        if fieldDescriptor.isRepeated {
+          // Это потенциально упакованное поле
+          var packedData = Data(valueData)
+          var packedValues: [ProtoValue] = []
+
+          while !packedData.isEmpty {
+            switch fieldDescriptor.type {
+            case .fixed32:
+              guard packedData.count >= 4 else { throw ProtoWireFormatError.truncatedMessage }
+              let value = packedData.prefix(4).withUnsafeBytes { ptr in
+                ptr.baseAddress!.assumingMemoryBound(to: UInt32.self).pointee
+              }
+              packedData.removeFirst(4)
+              packedValues.append(.uintValue(UInt(value)))
+
+            case .sfixed32:
+              guard packedData.count >= 4 else { throw ProtoWireFormatError.truncatedMessage }
+              let value = packedData.prefix(4).withUnsafeBytes { ptr in
+                ptr.baseAddress!.assumingMemoryBound(to: Int32.self).pointee
+              }
+              packedData.removeFirst(4)
+              // Для sfixed32 сразу преобразуем в intValue
+              packedValues.append(.intValue(Int(value)))
+
+            case .fixed64:
+              guard packedData.count >= 8 else { throw ProtoWireFormatError.truncatedMessage }
+              let value = packedData.prefix(8).withUnsafeBytes { ptr in
+                ptr.baseAddress!.assumingMemoryBound(to: UInt64.self).pointee
+              }
+              packedData.removeFirst(8)
+              packedValues.append(.uintValue(UInt(value)))
+
+            case .sfixed64:
+              guard packedData.count >= 8 else { throw ProtoWireFormatError.truncatedMessage }
+              let value = packedData.prefix(8).withUnsafeBytes { ptr in
+                ptr.baseAddress!.assumingMemoryBound(to: Int64.self).pointee
+              }
+              packedData.removeFirst(8)
+              // Для sfixed64 сразу преобразуем в intValue
+              packedValues.append(.intValue(Int(value)))
+
+            case .float:
+              guard packedData.count >= 4 else { throw ProtoWireFormatError.truncatedMessage }
+              let value = packedData.prefix(4).withUnsafeBytes { ptr in
+                ptr.baseAddress!.assumingMemoryBound(to: Float.self).pointee
+              }
+              packedData.removeFirst(4)
+              packedValues.append(.floatValue(value))
+
+            case .double:
+              guard packedData.count >= 8 else { throw ProtoWireFormatError.truncatedMessage }
+              let value = packedData.prefix(8).withUnsafeBytes { ptr in
+                ptr.baseAddress!.assumingMemoryBound(to: Double.self).pointee
+              }
+              packedData.removeFirst(8)
+              packedValues.append(.doubleValue(value))
+
+            case .int32, .sint32:
+              let (varIntValue, bytesRead) = decodeVarint(packedData)
+              guard let value = varIntValue else { throw ProtoWireFormatError.malformedVarint }
+              packedData.removeFirst(bytesRead)
+
+              if fieldDescriptor.type == .sint32 {
+                // Для sint32 используем правило зигзагов для декодирования
+                let decodedValue = decodeZigZag32(UInt32(truncatingIfNeeded: value))
+                packedValues.append(.intValue(Int(decodedValue)))
+              }
+              else {
+                // Для int32 делаем обычное знаковое расширение
+                let int32Value = Int32(truncatingIfNeeded: value)
+                packedValues.append(.intValue(Int(int32Value)))
+              }
+
+            case .int64, .sint64:
+              let (varIntValue, bytesRead) = decodeVarint(packedData)
+              guard let value = varIntValue else { throw ProtoWireFormatError.malformedVarint }
+              packedData.removeFirst(bytesRead)
+
+              if fieldDescriptor.type == .sint64 {
+                // Для sint64 используем правило зигзагов для декодирования
+                let decodedValue = decodeZigZag64(value)
+                packedValues.append(.intValue(Int(decodedValue)))
+              }
+              else {
+                // Для int64 делаем обычное знаковое расширение
+                let int64Value = Int64(truncatingIfNeeded: value)
+                packedValues.append(.intValue(Int(int64Value)))
+              }
+
+            case .uint32:
+              let (varIntValue, bytesRead) = decodeVarint(packedData)
+              guard let value = varIntValue else { throw ProtoWireFormatError.malformedVarint }
+              packedData.removeFirst(bytesRead)
+
+              packedValues.append(.uintValue(UInt(UInt32(truncatingIfNeeded: value))))
+
+            case .uint64:
+              let (varIntValue, bytesRead) = decodeVarint(packedData)
+              guard let value = varIntValue else { throw ProtoWireFormatError.malformedVarint }
+              packedData.removeFirst(bytesRead)
+
+              packedValues.append(.uintValue(UInt(value)))
+
+            case .bool:
+              let (varIntValue, bytesRead) = decodeVarint(packedData)
+              guard let value = varIntValue else { throw ProtoWireFormatError.malformedVarint }
+              packedData.removeFirst(bytesRead)
+
+              packedValues.append(.boolValue(value != 0))
+
+            case .enum:
+              let (varIntValue, bytesRead) = decodeVarint(packedData)
+              guard let value = varIntValue else { throw ProtoWireFormatError.malformedVarint }
+              packedData.removeFirst(bytesRead)
+
+              // Получаем дескриптор перечисления, если он есть
+              if let enumType = fieldDescriptor.enumType, let enumValue = enumType.value(withNumber: Int(value)) {
+                packedValues.append(
+                  .enumValue(name: enumValue.name, number: enumValue.number, enumDescriptor: enumType)
+                )
+              }
+              else {
+                // Если дескриптор не найден или значение не найдено, используем целочисленное представление
+                packedValues.append(.intValue(Int(value)))
+              }
+
+            default:
+              throw ProtoWireFormatError.unsupportedType
+            }
+          }
+
+          return .repeatedValue(packedValues)
+        }
+
+        // Если поле не повторяющееся, это ошибка wire type
+        throw ProtoWireFormatError.wireTypeMismatch
 
       default:
         throw ProtoWireFormatError.wireTypeMismatch
@@ -784,11 +951,17 @@ public struct ProtoWireFormat {
       // Check if the wire type matches the expected wire type for the field type
       let expectedWireType = determineWireType(for: fieldDescriptor.type)
       if wireType != expectedWireType {
-        // Wire type mismatch, skip the field
-        if !skipField(wireType: wireType, data: &remainingData) {
-          throw ProtoWireFormatError.truncatedMessage
+        // Особый случай: для повторяющихся примитивных типов, wireType может быть LENGTH_DELIMITED (упакованная форма)
+        if fieldDescriptor.isRepeated && isPrimitiveType(fieldDescriptor.type) && wireType == wireTypeLengthDelimited {
+          // Это может быть упакованное повторяющееся поле, продолжаем обработку
         }
-        continue
+        else {
+          // Обычная обработка для несовпадающего wire type
+          if !skipField(wireType: wireType, data: &remainingData) {
+            throw ProtoWireFormatError.truncatedMessage
+          }
+          continue
+        }
       }
 
       // Decode the field value
@@ -802,27 +975,55 @@ public struct ProtoWireFormat {
       )
 
       // Handle different field types
-      if fieldDescriptor.isRepeated {
-        // Add to repeated field collection
-        var values = repeatedFields[fieldDescriptor.number] ?? []
-        values.append(value)
-        repeatedFields[fieldDescriptor.number] = values
+      if fieldDescriptor.isRepeated && !fieldDescriptor.isMap {
+        // Отдельная обработка для случая, когда мы уже получили готовый repeatedValue
+        // (например, из упакованного поля)
+        if case .repeatedValue(let packedElements) = value {
+          // Если это уже repeatedValue, то просто добавляем все элементы в существующий массив
+          if var existingValues = repeatedFields[fieldDescriptor.number] {
+            existingValues.append(contentsOf: packedElements)
+            repeatedFields[fieldDescriptor.number] = existingValues
+          }
+          else {
+            // Или создаем новый массив если его еще нет
+            repeatedFields[fieldDescriptor.number] = packedElements
+          }
+        }
+        else {
+          // Обычная обработка для одиночных элементов
+          var values = repeatedFields[fieldDescriptor.number] ?? []
+          values.append(value)
+          repeatedFields[fieldDescriptor.number] = values
+        }
       }
       else if fieldDescriptor.isMap {
-        // Handle map entry (which is encoded as a nested message)
-        if case .messageValue(let mapEntryMessage) = value {
-          let keyField = mapEntryMessage.descriptor().field(number: 1)
-          let valueField = mapEntryMessage.descriptor().field(number: 2)
+        // Handle map fields
+        guard case .messageValue(let entryMessage) = value else {
+          throw ProtoWireFormatError.invalidMapEntry
+        }
 
-          let keyValue = keyField.flatMap { mapEntryMessage.get(field: $0) }
-          let valueValue = valueField.flatMap { mapEntryMessage.get(field: $0) }
+        // Получаем поля ключа и значения из сообщения-записи карты
+        let keyField = entryMessage.descriptor().field(number: 1)
+        let valueField = entryMessage.descriptor().field(number: 2)
 
-          if case .stringValue(let key)? = keyValue {
-            // Add the key-value pair to the map field collection
-            var entries = mapFields[fieldDescriptor.number] ?? [:]
-            entries[key] = valueValue
+        guard let keyField = keyField, let valueField = valueField else {
+          throw ProtoWireFormatError.invalidMapEntry
+        }
+
+        let keyValue = entryMessage.get(field: keyField)
+        let valueValue = entryMessage.get(field: valueField)
+
+        // Получаем строковое представление ключа
+        if let keyString = keyValue?.asString() {
+          // Добавляем пару ключ-значение в коллекцию поля-карты
+          var entries = mapFields[fieldDescriptor.number] ?? [:]
+          if let value = valueValue {
+            entries[keyString] = value
             mapFields[fieldDescriptor.number] = entries
           }
+        }
+        else {
+          throw ProtoWireFormatError.invalidMapEntry
         }
       }
       else {
@@ -937,6 +1138,17 @@ public struct ProtoWireFormat {
         }
         data.append(contentsOf: bytes)
       }
+      else if case .intValue(let intValue) = value, field.type == .sfixed32 {
+        // Добавляем поддержку intValue для sfixed32
+        var v = UInt32(bitPattern: Int32(intValue))
+        var bytes = [UInt8](repeating: 0, count: 4)
+        withUnsafeBytes(of: &v) { valueBytes in
+          bytes.withUnsafeMutableBytes { target in
+            target.copyMemory(from: valueBytes)
+          }
+        }
+        data.append(contentsOf: bytes)
+      }
       else {
         throw ProtoWireFormatError.typeMismatch
       }
@@ -947,6 +1159,17 @@ public struct ProtoWireFormat {
 
       if case .uintValue(let uintValue) = value {
         var v = UInt64(uintValue)
+        var bytes = [UInt8](repeating: 0, count: 8)
+        withUnsafeBytes(of: &v) { valueBytes in
+          bytes.withUnsafeMutableBytes { target in
+            target.copyMemory(from: valueBytes)
+          }
+        }
+        data.append(contentsOf: bytes)
+      }
+      else if case .intValue(let intValue) = value, field.type == .sfixed64 {
+        // Добавляем поддержку intValue для sfixed64
+        var v = UInt64(bitPattern: Int64(intValue))
         var bytes = [UInt8](repeating: 0, count: 8)
         withUnsafeBytes(of: &v) { valueBytes in
           bytes.withUnsafeMutableBytes { target in
@@ -1669,7 +1892,14 @@ public struct ProtoWireFormat {
     case .fixed32, .sfixed32, .float:
       var fixedData = Data(repeating: 0, count: 4)
       if case .intValue(let intValue) = value {
-        withUnsafeBytes(of: UInt32(intValue)) { fixedData.replaceSubrange(0..<4, with: $0) }
+        if field.type == .sfixed32 {
+          // Для sfixed32 используем битовое преобразование
+          let v = UInt32(bitPattern: Int32(intValue))
+          withUnsafeBytes(of: v) { fixedData.replaceSubrange(0..<4, with: $0) }
+        }
+        else {
+          withUnsafeBytes(of: UInt32(intValue)) { fixedData.replaceSubrange(0..<4, with: $0) }
+        }
       }
       else if case .uintValue(let uintValue) = value {
         withUnsafeBytes(of: UInt32(uintValue)) { fixedData.replaceSubrange(0..<4, with: $0) }
@@ -1685,7 +1915,14 @@ public struct ProtoWireFormat {
     case .fixed64, .sfixed64, .double:
       var fixedData = Data(repeating: 0, count: 8)
       if case .intValue(let intValue) = value {
-        withUnsafeBytes(of: UInt64(intValue)) { fixedData.replaceSubrange(0..<8, with: $0) }
+        if field.type == .sfixed64 {
+          // Для sfixed64 используем битовое преобразование
+          let v = UInt64(bitPattern: Int64(intValue))
+          withUnsafeBytes(of: v) { fixedData.replaceSubrange(0..<8, with: $0) }
+        }
+        else {
+          withUnsafeBytes(of: UInt64(intValue)) { fixedData.replaceSubrange(0..<8, with: $0) }
+        }
       }
       else if case .uintValue(let uintValue) = value {
         withUnsafeBytes(of: UInt64(uintValue)) { fixedData.replaceSubrange(0..<8, with: $0) }
@@ -1735,6 +1972,7 @@ public enum ProtoWireFormatError: Error, Equatable {
   case validationError(fieldName: String, reason: String)
   case unsupportedWireType
   case invalidFieldKey
+  case invalidMapEntry
 
   public static func == (lhs: ProtoWireFormatError, rhs: ProtoWireFormatError) -> Bool {
     switch (lhs, rhs) {
@@ -1746,7 +1984,8 @@ public enum ProtoWireFormatError: Error, Equatable {
       (.invalidUtf8String, .invalidUtf8String),
       (.invalidMessageType, .invalidMessageType),
       (.invalidFieldKey, .invalidFieldKey),
-      (.unsupportedWireType, .unsupportedWireType):
+      (.unsupportedWireType, .unsupportedWireType),
+      (.invalidMapEntry, .invalidMapEntry):
       return true
     case (.validationError(let lhsField, let lhsReason), .validationError(let rhsField, let rhsReason)):
       return lhsField == rhsField && lhsReason == rhsReason
