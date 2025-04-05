@@ -23,12 +23,14 @@ public class AnyProtoMessageExample {
         dynamicPerson.setValue(30, forField: 2)
         dynamicPerson.setRepeatedValues(["john@example.com", "doe@example.com"], forField: 3)
         
+        /* COMMENTED - Need to implement Person message
         // Create a SwiftProtobuf message (assuming we have Person.proto generated)
         var swiftPerson = Person.with {
             $0.name = "Jane Doe"
             $0.age = 25
             $0.emails = ["jane@example.com"]
         }
+        */
         
         // Function that works with any proto message
         func processMessage(_ message: AnyProtoMessage) throws {
@@ -40,11 +42,16 @@ public class AnyProtoMessageExample {
             let json = try message.jsonString()
             print("JSON representation: \(json)")
             
-            // Create a new message and merge data
+            // Create a new message with the merged data
             if let dynamicMessage = message as? DynamicMessage {
                 let newMessage = DynamicMessage(descriptor: dynamicMessage.descriptor())
-                try newMessage.merge(serializedData: data)
-                print("Successfully merged into new dynamic message")
+                // Use merging for consistency
+                _ = try newMessage.merging(serializedData: data)
+                print("Successfully created new message with merged data")
+            } else {
+                // For SwiftProtobuf messages (which are structs), use merging
+                _ = try message.merging(serializedData: data)
+                print("Successfully created new message with merged data")
             }
         }
         
@@ -52,12 +59,15 @@ public class AnyProtoMessageExample {
         print("Processing dynamic message:")
         try processMessage(dynamicPerson)
         
+        /* COMMENTED - Need to implement Person message
         print("\nProcessing SwiftProtobuf message:")
         try processMessage(swiftPerson)
+        */
     }
     
     /// Example of message conversion and modification
     public static func demonstrateMessageConversion() throws {
+        /* COMMENTED - Need to implement Person message
         // Create a SwiftProtobuf message
         var original = Person.with {
             $0.name = "Alice"
@@ -83,7 +93,7 @@ public class AnyProtoMessageExample {
         let dynamic = DynamicMessage(descriptor: personDescriptor)
         
         // Merge the SwiftProtobuf data into dynamic message
-        try dynamic.merge(serializedData: data)
+        dynamic = try dynamic.merging(serializedData: data)
         
         // Modify the dynamic message
         dynamic.setValue("Alice Smith", forField: 1) // Change name
@@ -93,13 +103,17 @@ public class AnyProtoMessageExample {
         let modifiedData = try dynamic.serializedData()
         
         // Create a new SwiftProtobuf message from modified data
-        var modified = Person()
-        try modified.merge(serializedData: modifiedData)
+        // Use merging instead of merge for structs
+        let modified = try Person().merging(serializedData: modifiedData)
         
         print("Original name: \(original.name)")
         print("Modified name: \(modified.name)")
         print("Original emails: \(original.emails)")
         print("Modified emails: \(modified.emails)")
+        */
+        
+        // Simple placeholder example using only dynamic messages
+        print("Message conversion example requires implementation of Person message type")
     }
     
     /// Example of generic message processing
@@ -135,14 +149,16 @@ public class AnyProtoMessageExample {
         ))
         dynamicMessage.setValue("Hello World", forField: 1)
         
+        /* COMMENTED - Need to implement Person message
         var swiftMessage = Person.with {
             $0.name = "Test Person"
         }
+        */
         
         let dynamicMetadata = extractMetadata(dynamicMessage)
-        let swiftMetadata = extractMetadata(swiftMessage)
+        // let swiftMetadata = extractMetadata(swiftMessage)
         
         print("Dynamic message metadata: \(dynamicMetadata)")
-        print("Swift message metadata: \(swiftMetadata)")
+        // print("Swift message metadata: \(swiftMetadata)")
     }
 }

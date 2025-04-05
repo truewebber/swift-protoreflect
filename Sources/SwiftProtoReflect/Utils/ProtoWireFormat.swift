@@ -34,28 +34,269 @@ public struct ProtoWireFormat {
 
   /// Serializes a ProtoMessage into protobuf wire format.
   ///
-  /// - Parameter message: The message to serialize.
-  /// - Returns: The serialized data, or nil if serialization fails.
-  public static func marshal(message: ProtoMessage) -> Data? {
-    do {
+  /// - Parameters:
+  ///   - message: The message to serialize.
+  ///   - options: Options for controlling the serialization process.
+  /// - Returns: The serialized data.
+  /// - Throws: `ProtoWireFormatError` if validation fails or serialization encounters an error.
+  public static func marshal(message: ProtoMessage, options: SerializationOptions = SerializationOptions()) throws -> Data {
+    // Validate the message if required
+    if options.validateFields {
       try validateMessage(message)
-      var data = Data()
+    }
+    
+    let estimatedSize = estimateMessageSize(message)
+    var data: Data
+    
+    if options.useBufferPool {
+      // Use buffer pool for memory allocation
+      let buffer = BufferPool.shared.acquire(size: estimatedSize)
+      defer { BufferPool.shared.release(buffer) }
+      
+      // Create a Data instance from the buffer
+      data = Data(bytesNoCopy: buffer.data.baseAddress!,
+                 count: buffer.data.count,
+                 deallocator: .none)
+      data.count = 0  // Reset for appending
+    } else {
+      // Allocate memory directly
+      data = Data(capacity: estimatedSize)
+    }
 
       // Marshal all fields
       for field in message.descriptor().fields {
         if let value = message.get(field: field) {
-          do {
+        // Skip fields with default values in proto3 if not preserving defaults
+        if !options.preserveProto3Defaults && isProto3DefaultValue(value, for: field) {
+          continue
+        }
+        
             try encodeField(field: field, value: value, to: &data)
           }
-          catch {
-            return nil
-          }
-        }
+    }
+    
+    // Include unknown fields if not skipping them
+    if !options.skipUnknownFields, let dynamicMessage = message as? ProtoDynamicMessage {
+      let unknownFields = dynamicMessage.getUnknownFields()
+      encodeUnknownFields(unknownFields, to: &data)
       }
 
       return data
-    } catch {
-      return nil
+  }
+  
+  /// Estimates the size of a serialized message.
+  ///
+  /// - Parameter message: The message to estimate.
+  /// - Returns: The estimated size in bytes.
+  private static func estimateMessageSize(_ message: ProtoMessage) -> Int {
+    var size = 0
+    
+    // Estimate for each field
+    for field in message.descriptor().fields {
+      if let value = message.get(field: field) {
+        size += estimateFieldSize(field: field, value: value)
+      }
+    }
+    
+    // Estimate for unknown fields
+    if let dynamicMessage = message as? ProtoDynamicMessage {
+      let unknownFields = dynamicMessage.getUnknownFields()
+      for (_, dataArray) in unknownFields {
+        for data in dataArray {
+          size += data.count
+        }
+      }
+    }
+    
+    // Add some buffer for good measure
+    return max(size, 64) * 2  // Double it to be safe
+  }
+  
+  /// Estimates the size of a serialized field.
+  ///
+  /// - Parameters:
+  ///   - field: The field descriptor.
+  ///   - value: The field value.
+  /// - Returns: The estimated size in bytes.
+  private static func estimateFieldSize(field: ProtoFieldDescriptor, value: ProtoValue) -> Int {
+    // Size of field tag (varint field number + wire type)
+    let tagSize = sizeOfVarint(UInt64(field.number << 3))
+    
+    if field.isRepeated {
+      guard case .repeatedValue(let array) = value else { return tagSize }
+      
+      var elementSize = 0
+      for element in array {
+        elementSize += estimateValueSize(field: field, value: element)
+      }
+      
+      return tagSize + elementSize
+    }
+    
+    if field.isMap {
+      guard case .mapValue(let map) = value else { return tagSize }
+      
+      var entriesSize = 0
+      for (key, value) in map {
+        // Each map entry is a nested message with key (field 1) and value (field 2)
+        let keyTagSize = sizeOfVarint(1 << 3 | UInt64(wireTypeLengthDelimited))
+        let keySize = sizeOfString(key)
+        let valueTagSize = sizeOfVarint(2 << 3 | UInt64(determineWireType(for: field.type)))
+        let valueSize = estimateValueSize(field: field, value: value)
+        
+        let entrySize = keyTagSize + keySize + valueTagSize + valueSize
+        entriesSize += tagSize + sizeOfVarint(UInt64(entrySize)) + entrySize
+      }
+      
+      return entriesSize
+    }
+    
+    return tagSize + estimateValueSize(field: field, value: value)
+  }
+  
+  /// Estimates the size of a serialized value.
+  ///
+  /// - Parameters:
+  ///   - field: The field descriptor.
+  ///   - value: The field value.
+  /// - Returns: The estimated size in bytes.
+  private static func estimateValueSize(field: ProtoFieldDescriptor, value: ProtoValue) -> Int {
+    switch field.type {
+    case .int32, .int64, .uint32, .uint64, .bool, .enum:
+      if case .intValue(let intValue) = value {
+        return sizeOfVarint(UInt64(bitPattern: Int64(intValue)))
+      }
+      if case .uintValue(let uintValue) = value {
+        return sizeOfVarint(UInt64(uintValue))
+      }
+      if case .boolValue = value {
+        return 1  // Boolean is 1 byte
+      }
+      if case .enumValue(_, let number, _) = value {
+        return sizeOfVarint(UInt64(number))
+      }
+      return 1  // Default estimate
+      
+    case .sint32:
+      if case .intValue(let intValue) = value {
+        return sizeOfVarint(UInt64(encodeZigZag32(Int32(intValue))))
+      }
+      return 1  // Default estimate
+      
+    case .sint64:
+      if case .intValue(let intValue) = value {
+        return sizeOfVarint(UInt64(encodeZigZag64(Int64(intValue))))
+      }
+      return 1  // Default estimate
+      
+    case .fixed32, .sfixed32, .float:
+      return 4  // Fixed 32-bit types always use 4 bytes
+      
+    case .fixed64, .sfixed64, .double:
+      return 8  // Fixed 64-bit types always use 8 bytes
+      
+    case .string:
+      if case .stringValue(let stringValue) = value {
+        return sizeOfString(stringValue)
+      }
+      return 1  // Default estimate
+      
+    case .bytes:
+      if case .bytesValue(let bytesValue) = value {
+        return sizeOfBytes(bytesValue)
+      }
+      return 1  // Default estimate
+      
+    case .message:
+      if case .messageValue(let messageValue) = value {
+        let messageSize = estimateMessageSize(messageValue)
+        return sizeOfVarint(UInt64(messageSize)) + messageSize
+      }
+      return 1  // Default estimate
+      
+    default:
+      return 1  // Default estimate for unknown types
+    }
+  }
+  
+  /// Calculates the size of a varint.
+  ///
+  /// - Parameter value: The value to encode as a varint.
+  /// - Returns: The size in bytes.
+  private static func sizeOfVarint(_ value: UInt64) -> Int {
+    var size = 1
+    var v = value
+    while v >= 0x80 {
+      size += 1
+      v >>= 7
+    }
+    return size
+  }
+  
+  /// Calculates the size of a string.
+  ///
+  /// - Parameter value: The string to encode.
+  /// - Returns: The size in bytes.
+  private static func sizeOfString(_ value: String) -> Int {
+    if let data = value.data(using: .utf8) {
+      return sizeOfVarint(UInt64(data.count)) + data.count
+    }
+    return 1  // Default estimate
+  }
+  
+  /// Calculates the size of binary data.
+  ///
+  /// - Parameter value: The data to encode.
+  /// - Returns: The size in bytes.
+  private static func sizeOfBytes(_ value: Data) -> Int {
+    return sizeOfVarint(UInt64(value.count)) + value.count
+  }
+  
+  /// Checks if a value is the proto3 default value for its field.
+  ///
+  /// - Parameters:
+  ///   - value: The value to check.
+  ///   - field: The field descriptor.
+  /// - Returns: `true` if the value is the proto3 default, `false` otherwise.
+  private static func isProto3DefaultValue(_ value: ProtoValue, for field: ProtoFieldDescriptor) -> Bool {
+    switch value {
+    case .intValue(let intValue):
+      return intValue == 0
+    case .uintValue(let uintValue):
+      return uintValue == 0
+    case .boolValue(let boolValue):
+      return boolValue == false
+    case .floatValue(let floatValue):
+      return floatValue == 0.0
+    case .doubleValue(let doubleValue):
+      return doubleValue == 0.0
+    case .stringValue(let stringValue):
+      return stringValue.isEmpty
+    case .bytesValue(let bytesValue):
+      return bytesValue.isEmpty
+    case .enumValue(_, let number, _):
+      return number == 0
+    case .messageValue(_):
+      // For message fields, nil is the default, not an empty message
+      // But since we're dealing with an actual message, it's not the default
+      return false
+    case .repeatedValue(let arrayValue):
+      return arrayValue.isEmpty
+    case .mapValue(let mapValue):
+      return mapValue.isEmpty
+    }
+  }
+  
+  /// Encodes unknown fields to the output data.
+  ///
+  /// - Parameters:
+  ///   - unknownFields: The unknown fields to encode.
+  ///   - data: The data buffer to append to.
+  private static func encodeUnknownFields(_ unknownFields: [Int: [Data]], to data: inout Data) {
+    for (_, fieldDataArray) in unknownFields.sorted(by: { $0.key < $1.key }) {
+      for fieldData in fieldDataArray {
+        data.append(fieldData)
+      }
     }
   }
 
@@ -64,8 +305,9 @@ public struct ProtoWireFormat {
   /// - Parameters:
   ///   - data: The serialized data.
   ///   - messageDescriptor: The descriptor for the message type.
+  ///   - options: Options for controlling the deserialization process.
   /// - Returns: The deserialized message, or nil if deserialization fails.
-  public static func unmarshal(data: Data, messageDescriptor: ProtoMessageDescriptor) -> ProtoMessage? {
+  public static func unmarshal(data: Data, messageDescriptor: ProtoMessageDescriptor, options: SerializationOptions = SerializationOptions()) -> ProtoMessage? {
     // Create a new message
     let message = ProtoDynamicMessage(descriptor: messageDescriptor)
     
@@ -78,6 +320,21 @@ public struct ProtoWireFormat {
     var remainingData = data
     
     do {
+        // Track recursion depth for nested messages
+        var recursionDepth = 0
+        let maxDepth = options.maxDepth
+        
+        // Used to track repeated and map fields
+        var repeatedFields: [Int: [ProtoValue]] = [:]
+        var mapFields: [Int: [String: ProtoValue]] = [:]
+        
+        // Initialize empty repeated fields
+        for field in messageDescriptor.fields {
+            if field.isRepeated {
+                repeatedFields[field.number] = []
+            }
+        }
+        
         // Unmarshal the data into the message
         while !remainingData.isEmpty {
             // Decode the field key
@@ -94,7 +351,33 @@ public struct ProtoWireFormat {
             
             // Find the field descriptor
             guard let fieldDescriptor = messageDescriptor.field(number: fieldNumber) else {
-                // Unknown field, skip it
+                // Unknown field, preserve it if not configured to skip
+                if !options.skipUnknownFields {
+                    // Capture field data based on wire type
+                    var fieldData = Data()
+                    
+                    // Store the field key
+                    fieldData.append(encodeVarint(key))
+                    
+                    // Skip over this field and preserve its data
+                    if !captureUnknownField(wireType: wireType, data: &remainingData, into: &fieldData) {
+                        return nil  // Truncated message
+                    }
+                    
+                    message.setUnknownField(fieldNumber: fieldNumber, data: fieldData)
+                } else {
+                    // Just skip the field
+                    if !skipField(wireType: wireType, data: &remainingData) {
+                        return nil  // Failed to skip field
+                    }
+                }
+                continue
+            }
+            
+            // Check if the wire type matches the expected wire type for the field type
+            let expectedWireType = determineWireType(for: fieldDescriptor.type)
+            if wireType != expectedWireType {
+                // Wire type mismatch, skip the field
                 if !skipField(wireType: wireType, data: &remainingData) {
                     return nil  // Failed to skip field
                 }
@@ -105,11 +388,59 @@ public struct ProtoWireFormat {
             let value = try decodeFieldValue(
                 wireType: wireType,
                 fieldDescriptor: fieldDescriptor,
-                data: &remainingData
+                data: &remainingData,
+                recursionDepth: &recursionDepth,
+                maxDepth: maxDepth,
+                options: options
             )
             
-            // Set the field value on the message
+            // Handle different field types
+            if fieldDescriptor.isRepeated {
+                // Add to repeated field collection
+                var values = repeatedFields[fieldDescriptor.number] ?? []
+                values.append(value)
+                repeatedFields[fieldDescriptor.number] = values
+            } else if fieldDescriptor.isMap {
+                // Handle map entry (which is encoded as a nested message)
+                if case .messageValue(let mapEntryMessage) = value {
+                    let keyField = mapEntryMessage.descriptor().field(number: 1)
+                    let valueField = mapEntryMessage.descriptor().field(number: 2)
+                    
+                    let keyValue = keyField.flatMap { mapEntryMessage.get(field: $0) }
+                    let valueValue = valueField.flatMap { mapEntryMessage.get(field: $0) }
+                    
+                    if case .stringValue(let key)? = keyValue {
+                        // Add the key-value pair to the map field collection
+                        var entries = mapFields[fieldDescriptor.number] ?? [:]
+                        entries[key] = valueValue
+                        mapFields[fieldDescriptor.number] = entries
+                    }
+                }
+            } else {
+                // Regular field
             message.set(field: fieldDescriptor, value: value)
+            }
+        }
+        
+        // Set all repeated fields
+        for (fieldNumber, values) in repeatedFields {
+            if let fieldDescriptor = messageDescriptor.field(number: fieldNumber) {
+                message.set(field: fieldDescriptor, value: .repeatedValue(values))
+            }
+        }
+        
+        // Set all map fields
+        for (fieldNumber, entries) in mapFields {
+            if let fieldDescriptor = messageDescriptor.field(number: fieldNumber) {
+                message.set(field: fieldDescriptor, value: .mapValue(entries))
+            }
+        }
+        
+        // Validate if configured
+        if options.validateFields {
+            if !message.validateFields() {
+                return nil  // Validation failed
+            }
         }
         
         return message
@@ -119,175 +450,300 @@ public struct ProtoWireFormat {
     }
   }
 
-  /// Deserializes protobuf wire format data into an existing ProtoMessage.
+  /// Captures an unknown field's data based on its wire type.
   ///
   /// - Parameters:
-  ///   - data: The serialized data.
-  ///   - message: The message to populate with deserialized data.
-  /// - Throws: An error if deserialization fails.
-  public static func unmarshal(data: Data, to message: ProtoDynamicMessage) throws {
-    var dataStream = data
-    let messageDescriptor = message.descriptor()
+  ///   - wireType: The wire type.
+  ///   - data: The data buffer to read from.
+  ///   - fieldData: The destination buffer to append the field data to.
+  /// - Returns: `true` if the field was successfully captured, `false` otherwise.
+  private static func captureUnknownField(wireType: Int, data: inout Data, into fieldData: inout Data) -> Bool {
+    switch wireType {
+    case wireTypeVarint:  // Varint
+        let (value, valueBytes) = decodeVarint(data)
+        if valueBytes >= data.count || value == nil {
+            return false
+        }
+        if let value = value {
+            fieldData.append(encodeVarint(value))
+        }
+        data.removeFirst(valueBytes)
+        return true
+        
+    case wireTypeFixed64:  // Fixed 64-bit
+        if data.count < 8 {
+            return false
+        }
+        fieldData.append(contentsOf: data.prefix(8))
+        data.removeFirst(8)
+        return true
+        
+    case wireTypeLengthDelimited:  // Length-delimited
+        let (lengthValue, lengthBytes) = decodeVarint(data)
+        if lengthBytes >= data.count || lengthValue == nil {
+            return false
+        }
+        data.removeFirst(lengthBytes)
+        
+        let length = Int(lengthValue!)
+        if length > data.count {
+            return false
+        }
+        
+        // Append length and data
+        fieldData.append(encodeVarint(lengthValue!))
+        fieldData.append(contentsOf: data.prefix(length))
+        data.removeFirst(length)
+        return true
+        
+    case wireTypeFixed32:  // Fixed 32-bit
+        if data.count < 4 {
+            return false
+        }
+        fieldData.append(contentsOf: data.prefix(4))
+        data.removeFirst(4)
+        return true
+        
+    default:
+        return skipField(wireType: wireType, data: &data)  // Use skip for unsupported types
+    }
+  }
+  
+  /// Decodes a field value from the wire format.
+  ///
+  /// - Parameters:
+  ///   - wireType: The wire type.
+  ///   - fieldDescriptor: The field descriptor.
+  ///   - data: The data buffer to read from.
+  ///   - recursionDepth: The current recursion depth for nested messages.
+  ///   - maxDepth: The maximum allowed recursion depth.
+  ///   - options: The serialization options.
+  /// - Returns: The decoded field value.
+  /// - Throws: An error if decoding fails.
+  private static func decodeFieldValue(
+    wireType: Int,
+    fieldDescriptor: ProtoFieldDescriptor,
+    data: inout Data,
+    recursionDepth: inout Int,
+    maxDepth: Int,
+    options: SerializationOptions
+  ) throws -> ProtoValue {
+    switch wireType {
+    case wireTypeVarint:
+      let (value, bytes) = decodeVarint(data)
+      guard let varIntValue = value else {
+        throw ProtoWireFormatError.malformedVarint
+      }
+      data.removeFirst(bytes)
 
-    // Track repeated fields to collect all values
+      switch fieldDescriptor.type {
+      case .int32, .int64:
+        return .intValue(Int(Int64(bitPattern: UInt64(varIntValue))))
+      case .uint32, .uint64:
+        return .uintValue(UInt(varIntValue))
+      case .bool:
+        return .boolValue(varIntValue != 0)
+      case .enum:
+        return .intValue(Int(varIntValue))
+      case .sint32:
+        let value = decodeZigZag32(UInt32(truncatingIfNeeded: varIntValue))
+        return .intValue(Int(value))
+      case .sint64:
+        let value = decodeZigZag64(UInt64(varIntValue))
+        return .intValue(Int(value))
+      default:
+        throw ProtoWireFormatError.wireTypeMismatch
+      }
+
+    case wireTypeFixed64:
+      guard data.count >= 8 else {
+        throw ProtoWireFormatError.truncatedMessage
+      }
+
+      var bytes = [UInt8](repeating: 0, count: MemoryLayout<UInt64>.size)
+      let bytesWritten = bytes.withUnsafeMutableBytes { target in
+        data.prefix(8).copyBytes(to: target)
+      }
+      guard bytesWritten == 8 else {
+              throw ProtoWireFormatError.truncatedMessage
+            }
+      data.removeFirst(8)
+
+      switch fieldDescriptor.type {
+      case .fixed64, .sfixed64:
+        let value = bytes.withUnsafeBytes { ptr in
+          ptr.baseAddress!.assumingMemoryBound(to: UInt64.self).pointee
+        }
+        return .uintValue(UInt(value))
+      case .double:
+        let value = bytes.withUnsafeBytes { ptr in
+          ptr.baseAddress!.assumingMemoryBound(to: Double.self).pointee
+        }
+        return .doubleValue(value)
+      default:
+        throw ProtoWireFormatError.wireTypeMismatch
+      }
+
+    case wireTypeFixed32:
+      guard data.count >= 4 else {
+          throw ProtoWireFormatError.truncatedMessage
+        }
+
+      var bytes = [UInt8](repeating: 0, count: MemoryLayout<UInt32>.size)
+      let bytesWritten = bytes.withUnsafeMutableBytes { target in
+        data.prefix(4).copyBytes(to: target)
+      }
+      guard bytesWritten == 4 else {
+        throw ProtoWireFormatError.truncatedMessage
+      }
+      data.removeFirst(4)
+
+      switch fieldDescriptor.type {
+      case .fixed32, .sfixed32:
+        let value = bytes.withUnsafeBytes { ptr in
+          ptr.baseAddress!.assumingMemoryBound(to: UInt32.self).pointee
+        }
+        return .uintValue(UInt(value))
+      case .float:
+        let value = bytes.withUnsafeBytes { ptr in
+          ptr.baseAddress!.assumingMemoryBound(to: Float.self).pointee
+        }
+        return .floatValue(value)
+      default:
+        throw ProtoWireFormatError.wireTypeMismatch
+      }
+
+    case wireTypeLengthDelimited:
+      let (lengthVarint, lengthBytes) = decodeVarint(data)
+      guard let length = lengthVarint else {
+        throw ProtoWireFormatError.malformedVarint
+      }
+      data.removeFirst(lengthBytes)
+
+      guard data.count >= Int(length) else {
+        throw ProtoWireFormatError.truncatedMessage
+      }
+
+      let valueData = data.prefix(Int(length))
+      data.removeFirst(Int(length))
+
+      switch fieldDescriptor.type {
+      case .string:
+        if options.validateUTF8 {
+          guard let stringValue = String(data: valueData, encoding: .utf8) else {
+            throw ProtoWireFormatError.invalidUtf8String
+          }
+          return .stringValue(stringValue)
+        } else {
+          // Skip UTF-8 validation if not required
+          let stringValue = String(data: valueData, encoding: .utf8) ?? ""
+          return .stringValue(stringValue)
+        }
+
+      case .bytes:
+        return .bytesValue(Data(valueData))
+
+      case .message:
+        // Check recursion depth
+        recursionDepth += 1
+        if recursionDepth > maxDepth {
+          throw ProtoWireFormatError.validationError(fieldName: fieldDescriptor.name, reason: "Maximum recursion depth exceeded")
+        }
+        
+        guard let messageType = fieldDescriptor.messageType else {
+          throw ProtoWireFormatError.invalidMessageType
+        }
+        
+        // Recursively decode the nested message
+        let nestedMessage = try decodeMessageData(Data(valueData), messageDescriptor: messageType, recursionDepth: &recursionDepth, options: options)
+        
+        // Decrement recursion depth after processing nested message
+        recursionDepth -= 1
+        
+        return .messageValue(nestedMessage)
+
+      default:
+        throw ProtoWireFormatError.wireTypeMismatch
+      }
+
+    default:
+      throw ProtoWireFormatError.unsupportedWireType
+    }
+  }
+  
+  /// Decodes message data into a ProtoMessage.
+  ///
+  /// - Parameters:
+  ///   - data: The message data.
+  ///   - messageDescriptor: The message descriptor.
+  ///   - recursionDepth: The current recursion depth.
+  ///   - options: The serialization options.
+  /// - Returns: The decoded message.
+  /// - Throws: An error if decoding fails.
+  private static func decodeMessageData(
+    _ data: Data,
+    messageDescriptor: ProtoMessageDescriptor,
+    recursionDepth: inout Int,
+    options: SerializationOptions
+  ) throws -> ProtoMessage {
+    // Create a new message
+    let message = ProtoDynamicMessage(descriptor: messageDescriptor)
+    
+    // Handle empty data
+    if data.isEmpty {
+      return message
+    }
+    
+    // Create a mutable copy of the data
+    var remainingData = data
+    
+    // Used to track repeated and map fields
     var repeatedFields: [Int: [ProtoValue]] = [:]
-
+    var mapFields: [Int: [String: ProtoValue]] = [:]
+    
     // Initialize empty repeated fields
     for field in messageDescriptor.fields {
       if field.isRepeated {
         repeatedFields[field.number] = []
       }
     }
-
-    // Track map fields to collect all entries
-    var mapFields: [Int: [String: ProtoValue]] = [:]
-
-    while !dataStream.isEmpty {
+    
+    // Unmarshal the data into the message
+    while !remainingData.isEmpty {
       // Decode the field key
-      let (fieldKey, fieldKeyBytes) = decodeVarint(dataStream)
-      guard let fieldKey = fieldKey else {
+      let (keyValue, keyBytes) = decodeVarint(remainingData)
+      guard let key = keyValue else {
         throw ProtoWireFormatError.invalidFieldKey
       }
-
-      if fieldKeyBytes > dataStream.count {
-        break  // End of data
-      }
-
-      dataStream.removeFirst(fieldKeyBytes)
-
-      // Extract field number and wire type from fieldKey
-      let fieldNumber = Int(fieldKey >> 3)
-      let wireType = Int(fieldKey & 0x07)
-
-      // Special handling for START_GROUP and END_GROUP wire types
-      if wireType == wireTypeStartGroup {
-        // For START_GROUP, we need to find the matching END_GROUP
-        var nestedGroups = 1
-
-        while nestedGroups > 0 && !dataStream.isEmpty {
-          // Read the next field key
-          let (nextFieldKey, nextFieldKeyBytes) = decodeVarint(dataStream)
-          guard let nextFieldKey = nextFieldKey else {
-            throw ProtoWireFormatError.invalidFieldKey
-          }
-
-          if nextFieldKeyBytes > dataStream.count {
-            throw ProtoWireFormatError.truncatedMessage
-          }
-
-          dataStream.removeFirst(nextFieldKeyBytes)
-
-          // Extract wire type from field key
-          let nextWireType = Int(nextFieldKey & 0x07)
-
-          if nextWireType == wireTypeStartGroup {
-            nestedGroups += 1
-          }
-          else if nextWireType == wireTypeEndGroup {
-            nestedGroups -= 1
-
-            // If we've found the matching END_GROUP for the outermost group, we're done
-            if nestedGroups == 0 {
-              break
-            }
-          }
-          else {
-            // Skip this field
-            if !skipField(wireType: nextWireType, data: &dataStream) {
-              throw ProtoWireFormatError.truncatedMessage
-            }
-          }
-        }
-
-        // If we couldn't find the matching END_GROUP, throw an error
-        if nestedGroups != 0 {
-          throw ProtoWireFormatError.truncatedMessage
-        }
-
-        // Continue to the next field
-        continue
-      }
-
-      if wireType == wireTypeEndGroup {
-        // END_GROUP should only be encountered when processing a START_GROUP
-        // If we encounter it here, it's an error
-        throw ProtoWireFormatError.wireTypeMismatch
-      }
-
-      // Find the field descriptor using the field number
+      
+      remainingData.removeFirst(keyBytes)
+      
+      // Extract field number and wire type
+      let fieldNumber = Int(key >> 3)
+      let wireType = Int(key & 0x7)
+      
+      // Find the field descriptor
       guard let fieldDescriptor = messageDescriptor.field(number: fieldNumber) else {
-        // This is an unknown field, capture it instead of just skipping it
-        var fieldData = Data()
-
-        // Store the field key
-        fieldData.append(encodeVarint(fieldKey))
-
-        // Capture the field value based on wire type
-        switch wireType {
-        case wireTypeVarint:
-          // For varint, read the value and append it
-          let (value, valueBytes) = decodeVarint(dataStream)
-          if let value = value {
-            fieldData.append(encodeVarint(value))
-            dataStream.removeFirst(valueBytes)
-          }
-          else {
-            throw ProtoWireFormatError.malformedVarint
-          }
-
-        case wireTypeFixed64:
-          // For fixed 64-bit, read 8 bytes
-          if dataStream.count >= 8 {
-            let bytes = dataStream.prefix(8)
-            fieldData.append(bytes)
-            dataStream.removeFirst(8)
-          }
-          else {
+        // Unknown field, preserve it if not configured to skip
+        if !options.skipUnknownFields {
+          // Capture field data based on wire type
+          var fieldData = Data()
+          
+          // Store the field key
+          fieldData.append(encodeVarint(key))
+          
+          // Skip over this field and preserve its data
+          if !captureUnknownField(wireType: wireType, data: &remainingData, into: &fieldData) {
             throw ProtoWireFormatError.truncatedMessage
-          }
-
-        case wireTypeLengthDelimited:
-          // For length-delimited, read the length and then the data
-          let (lengthValue, lengthBytes) = decodeVarint(dataStream)
-          if let length = lengthValue {
-            fieldData.append(encodeVarint(length))
-            dataStream.removeFirst(lengthBytes)
-
-            if dataStream.count >= Int(length) {
-              let bytes = dataStream.prefix(Int(length))
-              fieldData.append(bytes)
-              dataStream.removeFirst(Int(length))
-            }
-            else {
-              throw ProtoWireFormatError.truncatedMessage
-            }
-          }
-          else {
-            throw ProtoWireFormatError.malformedVarint
-          }
-
-        case wireTypeFixed32:
-          // For fixed 32-bit, read 4 bytes
-          if dataStream.count >= 4 {
-            let bytes = dataStream.prefix(4)
-            fieldData.append(bytes)
-            dataStream.removeFirst(4)
-          }
-          else {
-            throw ProtoWireFormatError.truncatedMessage
-          }
-
-        default:
-          // For other wire types, just skip
-          if !skipField(wireType: wireType, data: &dataStream) {
-            throw ProtoWireFormatError.truncatedMessage
-          }
-          // Don't store fields we can't properly handle
-          continue
         }
 
-        // Store the unknown field
         message.setUnknownField(fieldNumber: fieldNumber, data: fieldData)
+        } else {
+          // Just skip the field
+          if !skipField(wireType: wireType, data: &remainingData) {
+            throw ProtoWireFormatError.truncatedMessage
+          }
+        }
         continue
       }
 
@@ -295,19 +751,30 @@ public struct ProtoWireFormat {
       let expectedWireType = determineWireType(for: fieldDescriptor.type)
       if wireType != expectedWireType {
         // Wire type mismatch, skip the field
-        if !skipField(wireType: wireType, data: &dataStream) {
+        if !skipField(wireType: wireType, data: &remainingData) {
           throw ProtoWireFormatError.truncatedMessage
         }
         continue
       }
 
-      // Decode the value based on wire type and field type
-      if let value = try decodeField(fieldDescriptor: fieldDescriptor, wireType: wireType, data: &dataStream) {
-        // Handle map fields (which are encoded as repeated message fields)
-        if fieldDescriptor.isMap,
-          case .message = fieldDescriptor.type,
-          fieldDescriptor.messageType != nil
-        {
+      // Decode the field value
+      let value = try decodeFieldValue(
+        wireType: wireType,
+        fieldDescriptor: fieldDescriptor,
+        data: &remainingData,
+        recursionDepth: &recursionDepth,
+        maxDepth: options.maxDepth,
+        options: options
+      )
+      
+      // Handle different field types
+      if fieldDescriptor.isRepeated {
+        // Add to repeated field collection
+        var values = repeatedFields[fieldDescriptor.number] ?? []
+        values.append(value)
+        repeatedFields[fieldDescriptor.number] = values
+      } else if fieldDescriptor.isMap {
+        // Handle map entry (which is encoded as a nested message)
           if case .messageValue(let mapEntryMessage) = value {
             let keyField = mapEntryMessage.descriptor().field(number: 1)
             let valueField = mapEntryMessage.descriptor().field(number: 2)
@@ -317,40 +784,34 @@ public struct ProtoWireFormat {
 
             if case .stringValue(let key)? = keyValue {
               // Add the key-value pair to the map field collection
-              var entries = mapFields[fieldNumber] ?? [:]
+            var entries = mapFields[fieldDescriptor.number] ?? [:]
               entries[key] = valueValue
-              mapFields[fieldNumber] = entries
-            }
+            mapFields[fieldDescriptor.number] = entries
           }
         }
-        // Handle repeated fields
-        else if fieldDescriptor.isRepeated {
-          // Add the value to the repeated field collection
-          var values = repeatedFields[fieldNumber] ?? []
-          values.append(value)
-          repeatedFields[fieldNumber] = values
-        }
-        // Handle regular fields
-        else {
+      } else {
+        // Regular field
           message.set(field: fieldDescriptor, value: value)
-        }
       }
     }
 
     // Set all repeated fields
-    for field in messageDescriptor.fields {
-      if field.isRepeated {
-        let values = repeatedFields[field.number] ?? []
-        message.set(field: field, value: .repeatedValue(values))
+    for (fieldNumber, values) in repeatedFields {
+      if let fieldDescriptor = messageDescriptor.field(number: fieldNumber),
+         !values.isEmpty {
+        message.set(field: fieldDescriptor, value: .repeatedValue(values))
       }
     }
 
     // Set all map fields
     for (fieldNumber, entries) in mapFields {
-      if let fieldDescriptor = messageDescriptor.field(number: fieldNumber) {
+      if let fieldDescriptor = messageDescriptor.field(number: fieldNumber),
+         !entries.isEmpty {
         message.set(field: fieldDescriptor, value: .mapValue(entries))
       }
     }
+    
+    return message
   }
 
   // MARK: - Field Encoding
@@ -428,27 +889,37 @@ public struct ProtoWireFormat {
       let tag = (UInt64(field.number) << 3) | UInt64(wireTypeFixed32)
       data.append(encodeVarint(tag))
       
-      var bytes = [UInt8](repeating: 0, count: MemoryLayout<UInt32>.size)
-      let bytesWritten = bytes.withUnsafeMutableBytes { target in
-        data.prefix(4).copyBytes(to: target)
+      if case .uintValue(let uintValue) = value {
+        var v = UInt32(uintValue)
+        var bytes = [UInt8](repeating: 0, count: 4)
+        withUnsafeBytes(of: &v) { valueBytes in
+          bytes.withUnsafeMutableBytes { target in
+            target.copyMemory(from: valueBytes)
+          }
+        }
+        data.append(contentsOf: bytes)
       }
-      guard bytesWritten == 4 else {
-        throw ProtoWireFormatError.truncatedMessage
+      else {
+        throw ProtoWireFormatError.typeMismatch
       }
-      data.removeFirst(4)
 
     case .fixed64, .sfixed64:
       let tag = (UInt64(field.number) << 3) | UInt64(wireTypeFixed64)
       data.append(encodeVarint(tag))
       
-      var bytes = [UInt8](repeating: 0, count: MemoryLayout<UInt64>.size)
-      let bytesWritten = bytes.withUnsafeMutableBytes { target in
-        data.prefix(8).copyBytes(to: target)
+      if case .uintValue(let uintValue) = value {
+        var v = UInt64(uintValue)
+        var bytes = [UInt8](repeating: 0, count: 8)
+        withUnsafeBytes(of: &v) { valueBytes in
+          bytes.withUnsafeMutableBytes { target in
+            target.copyMemory(from: valueBytes)
+          }
+        }
+        data.append(contentsOf: bytes)
       }
-      guard bytesWritten == 8 else {
-        throw ProtoWireFormatError.truncatedMessage
+      else {
+        throw ProtoWireFormatError.typeMismatch
       }
-      data.removeFirst(8)
 
     case .float:
       let tag = (UInt64(field.number) << 3) | UInt64(wireTypeFixed32)
@@ -587,347 +1058,13 @@ public struct ProtoWireFormat {
     data.append(encodeVarint(tag))
     
     // 2. Serialize message to temporary buffer
-    guard let messageData = marshal(message: message) else {
-      throw ProtoWireFormatError.typeMismatch
-    }
+    let messageData = try marshal(message: message)
     
     // 3. Write length
     data.append(encodeVarint(UInt64(messageData.count)))
     
     // 4. Write message data
     data.append(messageData)
-  }
-
-  // MARK: - Field Decoding
-
-  /// Decodes a field value from the wire format.
-  ///
-  /// - Parameters:
-  ///   - fieldDescriptor: The field descriptor.
-  ///   - wireType: The wire type.
-  ///   - data: The data buffer to read from.
-  /// - Returns: The decoded field value, or nil if decoding fails.
-  /// - Throws: An error if decoding fails.
-  private static func decodeField(fieldDescriptor: ProtoFieldDescriptor, wireType: Int, data: inout Data) throws
-    -> ProtoValue?
-  {
-    // Verify that the wire type matches the expected wire type for the field type
-    let expectedWireType = determineWireType(for: fieldDescriptor.type)
-    if wireType != expectedWireType {
-      throw ProtoWireFormatError.wireTypeMismatch
-    }
-
-    switch fieldDescriptor.type {
-    case .int32, .int64, .uint32, .uint64, .bool, .enum:
-      // Varint wire type (0)
-      let (varintValue, valueBytes) = decodeVarint(data)
-
-      if valueBytes > data.count {
-        throw ProtoWireFormatError.truncatedMessage
-      }
-
-      guard let value = varintValue else {
-        throw ProtoWireFormatError.malformedVarint
-      }
-
-      data.removeFirst(valueBytes)
-
-      switch fieldDescriptor.type {
-      case .int32, .int64:
-        return .intValue(Int(Int64(bitPattern: value)))
-      case .uint32, .uint64:
-        return .uintValue(UInt(value))
-      case .bool:
-        return .boolValue(value != 0)
-      case .enum:
-        let intValue = Int(value)
-        // If we have an enum type, try to convert the int value to an enum value
-        if let enumType = fieldDescriptor.enumType, let enumValue = enumType.value(withNumber: intValue) {
-          return .enumValue(name: enumValue.name, number: enumValue.number, enumDescriptor: enumType)
-        }
-        // Fall back to int value if we can't find the enum value
-        return .intValue(intValue)
-      default:
-        throw ProtoWireFormatError.unsupportedType
-      }
-
-    case .sint32:
-      // Varint wire type (0) with zigzag encoding
-      let (varintValue, valueBytes) = decodeVarint(data)
-      if valueBytes >= data.count {
-        throw ProtoWireFormatError.truncatedMessage
-      }
-      data.removeFirst(valueBytes)
-
-      guard let value = varintValue else {
-        throw ProtoWireFormatError.malformedVarint
-      }
-
-      // Decode zigzag value
-      let decodedValue = decodeZigZag32(UInt32(truncatingIfNeeded: value))
-      return .intValue(Int(decodedValue))
-
-    case .sint64:
-      // Varint wire type (0) with zigzag encoding
-      let (varintValue, valueBytes) = decodeVarint(data)
-      if valueBytes >= data.count {
-        throw ProtoWireFormatError.truncatedMessage
-      }
-      data.removeFirst(valueBytes)
-
-      guard let value = varintValue else {
-        throw ProtoWireFormatError.malformedVarint
-      }
-
-      // Decode zigzag value
-      let decodedValue = decodeZigZag64(value)
-      return .intValue(Int(decodedValue))
-
-    case .fixed32, .sfixed32, .float:
-      // Fixed 32-bit wire type (5)
-      if data.count < 4 {
-        throw ProtoWireFormatError.truncatedMessage
-      }
-
-      var bytes = [UInt8](repeating: 0, count: MemoryLayout<UInt32>.size)
-      let bytesWritten = bytes.withUnsafeMutableBytes { target in
-        data.prefix(4).copyBytes(to: target)
-      }
-      guard bytesWritten == 4 else {
-        throw ProtoWireFormatError.truncatedMessage
-      }
-      data.removeFirst(4)
-
-      switch fieldDescriptor.type {
-      case .fixed32:
-        let value: UInt32 = bytes.withUnsafeBytes { ptr in
-          ptr.baseAddress!.assumingMemoryBound(to: UInt32.self).pointee
-        }
-        return .uintValue(UInt(value))
-      case .sfixed32:
-        let value: Int32 = bytes.withUnsafeBytes { ptr in
-          ptr.baseAddress!.assumingMemoryBound(to: Int32.self).pointee
-        }
-        return .intValue(Int(value))
-      case .float:
-        let value: Float = bytes.withUnsafeBytes { ptr in
-          ptr.baseAddress!.assumingMemoryBound(to: Float.self).pointee
-        }
-        return .floatValue(value)
-      default:
-        throw ProtoWireFormatError.unsupportedType
-      }
-
-    case .fixed64, .sfixed64, .double:
-      // Fixed 64-bit wire type (1)
-      if data.count < 8 {
-        throw ProtoWireFormatError.truncatedMessage
-      }
-
-      var bytes = [UInt8](repeating: 0, count: MemoryLayout<UInt64>.size)
-      let bytesWritten = bytes.withUnsafeMutableBytes { target in
-        data.prefix(8).copyBytes(to: target)
-      }
-      guard bytesWritten == 8 else {
-        throw ProtoWireFormatError.truncatedMessage
-      }
-      data.removeFirst(8)
-
-      switch fieldDescriptor.type {
-      case .fixed64, .sfixed64:
-        let value = bytes.withUnsafeBytes { ptr in
-          ptr.baseAddress!.assumingMemoryBound(to: UInt64.self).pointee
-        }
-        return .uintValue(UInt(value))
-      case .double:
-        let value = bytes.withUnsafeBytes { ptr in
-          ptr.baseAddress!.assumingMemoryBound(to: Double.self).pointee
-        }
-        return .doubleValue(value)
-      default:
-        throw ProtoWireFormatError.wireTypeMismatch
-      }
-
-    case .string, .bytes, .message:
-      // Length-delimited wire type (2)
-      let (lengthVarint, lengthBytes) = decodeVarint(data)
-
-      if lengthBytes >= data.count {
-        throw ProtoWireFormatError.truncatedMessage
-      }
-      data.removeFirst(lengthBytes)
-
-      guard let length = lengthVarint else {
-        throw ProtoWireFormatError.malformedVarint
-      }
-
-      if UInt64(data.count) < length {
-        throw ProtoWireFormatError.truncatedMessage
-      }
-
-      let valueData = data.prefix(Int(length))
-      data.removeFirst(Int(length))
-
-      switch fieldDescriptor.type {
-      case .string:
-        if let stringValue = String(data: valueData, encoding: .utf8) {
-          return .stringValue(stringValue)
-        }
-        else {
-          throw ProtoWireFormatError.invalidUtf8String
-        }
-      case .bytes:
-        return .bytesValue(Data(valueData))
-      case .message:
-        if let messageType = fieldDescriptor.messageType {
-          // Create a new message for the message field
-          let nestedMessage = ProtoDynamicMessage(descriptor: messageType)
-
-          // Unmarshal the nested message
-          do {
-            try unmarshal(data: Data(valueData), to: nestedMessage)
-            return .messageValue(nestedMessage)
-          }
-          catch {
-            throw ProtoWireFormatError.invalidMessageType
-          }
-        }
-        else {
-          throw ProtoWireFormatError.invalidMessageType
-        }
-      default:
-        throw ProtoWireFormatError.unsupportedType
-      }
-
-    default:
-      throw ProtoWireFormatError.unsupportedType
-    }
-  }
-
-  private static func decodeFieldValue(wireType: Int, fieldDescriptor: ProtoFieldDescriptor, data: inout Data) throws -> ProtoValue {
-    switch wireType {
-    case wireTypeVarint:
-      let (value, bytes) = decodeVarint(data)
-      guard let varIntValue = value else {
-        throw ProtoWireFormatError.malformedVarint
-      }
-      data.removeFirst(bytes)
-
-      switch fieldDescriptor.type {
-      case .int32, .int64:
-        return .intValue(Int(Int64(bitPattern: UInt64(varIntValue))))
-      case .uint32, .uint64:
-        return .uintValue(UInt(varIntValue))
-      case .bool:
-        return .boolValue(varIntValue != 0)
-      case .enum:
-        return .intValue(Int(varIntValue))
-      case .sint32:
-        let value = decodeZigZag32(UInt32(truncatingIfNeeded: varIntValue))
-        return .intValue(Int(value))
-      case .sint64:
-        let value = decodeZigZag64(UInt64(varIntValue))
-        return .intValue(Int(value))
-      default:
-        throw ProtoWireFormatError.wireTypeMismatch
-      }
-
-    case wireTypeFixed64:
-      guard data.count >= 8 else {
-        throw ProtoWireFormatError.truncatedMessage
-      }
-
-      var bytes = [UInt8](repeating: 0, count: MemoryLayout<UInt64>.size)
-      let bytesWritten = bytes.withUnsafeMutableBytes { target in
-        data.prefix(8).copyBytes(to: target)
-      }
-      guard bytesWritten == 8 else {
-        throw ProtoWireFormatError.truncatedMessage
-      }
-      data.removeFirst(8)
-
-      switch fieldDescriptor.type {
-      case .fixed64, .sfixed64:
-        let value = bytes.withUnsafeBytes { ptr in
-          ptr.baseAddress!.assumingMemoryBound(to: UInt64.self).pointee
-        }
-        return .uintValue(UInt(value))
-      case .double:
-        let value = bytes.withUnsafeBytes { ptr in
-          ptr.baseAddress!.assumingMemoryBound(to: Double.self).pointee
-        }
-        return .doubleValue(value)
-      default:
-        throw ProtoWireFormatError.wireTypeMismatch
-      }
-
-    case wireTypeFixed32:
-      guard data.count >= 4 else {
-        throw ProtoWireFormatError.truncatedMessage
-      }
-
-      var bytes = [UInt8](repeating: 0, count: MemoryLayout<UInt32>.size)
-      let bytesWritten = bytes.withUnsafeMutableBytes { target in
-        data.prefix(4).copyBytes(to: target)
-      }
-      guard bytesWritten == 4 else {
-        throw ProtoWireFormatError.truncatedMessage
-      }
-      data.removeFirst(4)
-
-      switch fieldDescriptor.type {
-      case .fixed32, .sfixed32:
-        let value = bytes.withUnsafeBytes { ptr in
-          ptr.baseAddress!.assumingMemoryBound(to: UInt32.self).pointee
-        }
-        return .uintValue(UInt(value))
-      case .float:
-        let value = bytes.withUnsafeBytes { ptr in
-          ptr.baseAddress!.assumingMemoryBound(to: Float.self).pointee
-        }
-        return .floatValue(value)
-      default:
-        throw ProtoWireFormatError.wireTypeMismatch
-      }
-
-    case wireTypeLengthDelimited:
-      let (lengthVarint, lengthBytes) = decodeVarint(data)
-      guard let length = lengthVarint else {
-        throw ProtoWireFormatError.malformedVarint
-      }
-      data.removeFirst(lengthBytes)
-
-      guard data.count >= Int(length) else {
-        throw ProtoWireFormatError.truncatedMessage
-      }
-
-      let valueData = data.prefix(Int(length))
-      data.removeFirst(Int(length))
-
-      switch fieldDescriptor.type {
-      case .string:
-        guard let stringValue = String(data: valueData, encoding: .utf8) else {
-          throw ProtoWireFormatError.invalidUtf8String
-        }
-        return .stringValue(stringValue)
-
-      case .bytes:
-        return .bytesValue(Data(valueData))
-
-      case .message:
-        guard let messageType = fieldDescriptor.messageType else {
-          throw ProtoWireFormatError.invalidMessageType
-        }
-        let nestedMessage = try decodeMessageLengthDelimited(Data(valueData), messageDescriptor: messageType)
-        return .messageValue(nestedMessage)
-
-      default:
-        throw ProtoWireFormatError.wireTypeMismatch
-      }
-
-    default:
-      throw ProtoWireFormatError.unsupportedWireType
-    }
   }
 
   // MARK: - Helper Methods
@@ -1326,55 +1463,6 @@ public struct ProtoWireFormat {
     return bytes.withUnsafeBytes { ptr in
         ptr.load(fromByteOffset: 0, as: T.self)
     }
-  }
-
-  private static func decodeMessageLengthDelimited(_ data: Data, messageDescriptor: ProtoMessageDescriptor) throws -> ProtoMessage {
-    // Create a new message
-    let message = ProtoDynamicMessage(descriptor: messageDescriptor)
-    
-    // Handle empty data
-    if data.isEmpty {
-      return message
-    }
-    
-    // Create a mutable copy of the data
-    var remainingData = data
-    
-    // Unmarshal the data into the message
-    while !remainingData.isEmpty {
-      // Decode the field key
-      let (keyValue, keyBytes) = decodeVarint(remainingData)
-      guard let key = keyValue else {
-        throw ProtoWireFormatError.invalidFieldKey
-      }
-      
-      remainingData.removeFirst(keyBytes)
-      
-      // Extract field number and wire type
-      let fieldNumber = Int(key >> 3)
-      let wireType = Int(key & 0x7)
-      
-      // Find the field descriptor
-      guard let fieldDescriptor = messageDescriptor.field(number: fieldNumber) else {
-        // Unknown field, skip it
-        if !skipField(wireType: wireType, data: &remainingData) {
-          throw ProtoWireFormatError.truncatedMessage
-        }
-        continue
-      }
-      
-      // Decode the field value
-      let value = try decodeFieldValue(
-        wireType: wireType,
-        fieldDescriptor: fieldDescriptor,
-        data: &remainingData
-      )
-      
-      // Set the field value on the message
-      message.set(field: fieldDescriptor, value: value)
-    }
-    
-    return message
   }
 }
 

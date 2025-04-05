@@ -162,10 +162,13 @@ public class ProtoReflect {
 
   /// Serializes a ProtoMessage into Protocol Buffer wire format.
   ///
-  /// - Parameter message: The message to serialize.
-  /// - Returns: The serialized data, or nil if serialization fails.
-  public static func marshal(message: ProtoMessage) -> Data? {
-    return ProtoWireFormat.marshal(message: message)
+  /// - Parameters:
+  ///   - message: The message to serialize.
+  ///   - options: Options for controlling the serialization process.
+  /// - Returns: The serialized data.
+  /// - Throws: Error if serialization fails.
+  public static func marshal(message: ProtoMessage, options: SerializationOptions = SerializationOptions()) throws -> Data {
+    return try ProtoWireFormat.marshal(message: message, options: options)
   }
 
   /// Deserializes Protocol Buffer wire format data into a dynamic ProtoMessage.
@@ -173,9 +176,10 @@ public class ProtoReflect {
   /// - Parameters:
   ///   - data: The data to deserialize.
   ///   - descriptor: The descriptor defining the message structure.
+  ///   - options: Options for controlling the deserialization process.
   /// - Returns: The deserialized message, or nil if deserialization fails.
-  public static func unmarshal(data: Data, descriptor: ProtoMessageDescriptor) -> ProtoMessage? {
-    return ProtoWireFormat.unmarshal(data: data, messageDescriptor: descriptor)
+  public static func unmarshal(data: Data, descriptor: ProtoMessageDescriptor, options: SerializationOptions = SerializationOptions()) -> ProtoMessage? {
+    return ProtoWireFormat.unmarshal(data: data, messageDescriptor: descriptor, options: options)
   }
 
   /// Prints a description of the ProtoMessage, including its fields and types.

@@ -63,24 +63,25 @@ class BasicSerializationTests: XCTestCase {
     message.set(fieldName: "bool_field", value: .boolValue(true))
 
     // Serialize the message
-    guard let data = ProtoWireFormat.marshal(message: message) else {
-      XCTFail("Failed to marshal message")
-      return
-    }
+    do {
+      let data = try ProtoWireFormat.marshal(message: message)
 
-    // Deserialize the message
-    guard
-      let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal message")
-      return
-    }
+      // Deserialize the message
+      guard
+        let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+          as? ProtoDynamicMessage
+      else {
+        XCTFail("Failed to unmarshal message")
+        return
+      }
 
-    // Verify the field values were preserved
-    XCTAssertEqual(deserializedMessage.get(fieldName: "int32_field")?.getInt(), 42)
-    XCTAssertEqual(deserializedMessage.get(fieldName: "string_field")?.getString(), "Hello, world!")
-    XCTAssertEqual(deserializedMessage.get(fieldName: "bool_field")?.getBool(), true)
+      // Verify the field values were preserved
+      XCTAssertEqual(deserializedMessage.get(fieldName: "int32_field")?.getInt(), 42)
+      XCTAssertEqual(deserializedMessage.get(fieldName: "string_field")?.getString(), "Hello, world!")
+      XCTAssertEqual(deserializedMessage.get(fieldName: "bool_field")?.getBool(), true)
+    } catch {
+      XCTFail("Failed to marshal message: \(error)")
+    }
   }
 
   func testAllPrimitiveFieldTypes() {
@@ -127,49 +128,50 @@ class BasicSerializationTests: XCTestCase {
     message.set(fieldName: "bytes_field", value: .bytesValue(Data([0x00, 0x01, 0x02, 0x03, 0xFF])))
 
     // Serialize the message
-    guard let data = ProtoWireFormat.marshal(message: message) else {
-      XCTFail("Failed to marshal message")
-      return
-    }
+    do {
+      let data = try ProtoWireFormat.marshal(message: message)
 
-    // Deserialize the message
-    guard
-      let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal message")
-      return
-    }
+      // Deserialize the message
+      guard
+        let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+          as? ProtoDynamicMessage
+      else {
+        XCTFail("Failed to unmarshal message")
+        return
+      }
 
-    // Verify the field values were preserved
-    XCTAssertEqual(deserializedMessage.get(fieldName: "int32_field")?.getInt(), 42)
-    XCTAssertEqual(deserializedMessage.get(fieldName: "int64_field")?.getInt(), 9_223_372_036_854_775_807)
-    XCTAssertEqual(deserializedMessage.get(fieldName: "uint32_field")?.getUInt(), 4_294_967_295)
-    XCTAssertEqual(deserializedMessage.get(fieldName: "uint64_field")?.getUInt(), 18_446_744_073_709_551_615)
-    XCTAssertEqual(deserializedMessage.get(fieldName: "sint32_field")?.getInt(), -42)
-    XCTAssertEqual(deserializedMessage.get(fieldName: "sint64_field")?.getInt(), -42)
-    XCTAssertEqual(deserializedMessage.get(fieldName: "fixed32_field")?.getUInt(), 42)
-    XCTAssertEqual(deserializedMessage.get(fieldName: "fixed64_field")?.getUInt(), 42)
-    XCTAssertEqual(deserializedMessage.get(fieldName: "sfixed32_field")?.getInt(), -42)
-    XCTAssertEqual(deserializedMessage.get(fieldName: "sfixed64_field")?.getInt(), -42)
+      // Verify the field values were preserved
+      XCTAssertEqual(deserializedMessage.get(fieldName: "int32_field")?.getInt(), 42)
+      XCTAssertEqual(deserializedMessage.get(fieldName: "int64_field")?.getInt(), 9_223_372_036_854_775_807)
+      XCTAssertEqual(deserializedMessage.get(fieldName: "uint32_field")?.getUInt(), 4_294_967_295)
+      XCTAssertEqual(deserializedMessage.get(fieldName: "uint64_field")?.getUInt(), 18_446_744_073_709_551_615)
+      XCTAssertEqual(deserializedMessage.get(fieldName: "sint32_field")?.getInt(), -42)
+      XCTAssertEqual(deserializedMessage.get(fieldName: "sint64_field")?.getInt(), -42)
+      XCTAssertEqual(deserializedMessage.get(fieldName: "fixed32_field")?.getUInt(), 42)
+      XCTAssertEqual(deserializedMessage.get(fieldName: "fixed64_field")?.getUInt(), 42)
+      XCTAssertEqual(deserializedMessage.get(fieldName: "sfixed32_field")?.getInt(), -42)
+      XCTAssertEqual(deserializedMessage.get(fieldName: "sfixed64_field")?.getInt(), -42)
 
-    if let floatValue = deserializedMessage.get(fieldName: "float_field")?.getFloat() {
-      XCTAssertEqual(floatValue, 3.14159, accuracy: 0.00001)
-    }
-    else {
-      XCTFail("Float value should not be nil")
-    }
+      if let floatValue = deserializedMessage.get(fieldName: "float_field")?.getFloat() {
+        XCTAssertEqual(floatValue, 3.14159, accuracy: 0.00001)
+      }
+      else {
+        XCTFail("Float value should not be nil")
+      }
 
-    if let doubleValue = deserializedMessage.get(fieldName: "double_field")?.getDouble() {
-      XCTAssertEqual(doubleValue, 2.71828, accuracy: 0.00001)
-    }
-    else {
-      XCTFail("Double value should not be nil")
-    }
+      if let doubleValue = deserializedMessage.get(fieldName: "double_field")?.getDouble() {
+        XCTAssertEqual(doubleValue, 2.71828, accuracy: 0.00001)
+      }
+      else {
+        XCTFail("Double value should not be nil")
+      }
 
-    XCTAssertEqual(deserializedMessage.get(fieldName: "bool_field")?.getBool(), true)
-    XCTAssertEqual(deserializedMessage.get(fieldName: "string_field")?.getString(), "Hello, Protocol Buffers!")
-    XCTAssertEqual(deserializedMessage.get(fieldName: "bytes_field")?.getBytes(), Data([0x00, 0x01, 0x02, 0x03, 0xFF]))
+      XCTAssertEqual(deserializedMessage.get(fieldName: "bool_field")?.getBool(), true)
+      XCTAssertEqual(deserializedMessage.get(fieldName: "string_field")?.getString(), "Hello, Protocol Buffers!")
+      XCTAssertEqual(deserializedMessage.get(fieldName: "bytes_field")?.getBytes(), Data([0x00, 0x01, 0x02, 0x03, 0xFF]))
+    } catch {
+      XCTFail("Failed to marshal message: \(error)")
+    }
   }
 
   func testEdgeCases() {
@@ -201,27 +203,28 @@ class BasicSerializationTests: XCTestCase {
     message.set(fieldName: "large_string", value: .stringValue(largeString))
 
     // Serialize the message
-    guard let data = ProtoWireFormat.marshal(message: message) else {
-      XCTFail("Failed to marshal message")
-      return
-    }
+    do {
+      let data = try ProtoWireFormat.marshal(message: message)
 
-    // Deserialize the message
-    guard
-      let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal message")
-      return
-    }
+      // Deserialize the message
+      guard
+        let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+          as? ProtoDynamicMessage
+      else {
+        XCTFail("Failed to unmarshal message")
+        return
+      }
 
-    // Verify the field values were preserved
-    XCTAssertEqual(deserializedMessage.get(fieldName: "empty_string")?.getString(), "")
-    XCTAssertEqual(deserializedMessage.get(fieldName: "empty_bytes")?.getBytes(), Data())
-    XCTAssertEqual(deserializedMessage.get(fieldName: "zero_int")?.getInt(), 0)
-    XCTAssertEqual(deserializedMessage.get(fieldName: "zero_float")?.getFloat(), 0.0)
-    XCTAssertEqual(deserializedMessage.get(fieldName: "false_bool")?.getBool(), false)
-    XCTAssertEqual(deserializedMessage.get(fieldName: "large_string")?.getString(), largeString)
+      // Verify the field values were preserved
+      XCTAssertEqual(deserializedMessage.get(fieldName: "empty_string")?.getString(), "")
+      XCTAssertEqual(deserializedMessage.get(fieldName: "empty_bytes")?.getBytes(), Data())
+      XCTAssertEqual(deserializedMessage.get(fieldName: "zero_int")?.getInt(), 0)
+      XCTAssertEqual(deserializedMessage.get(fieldName: "zero_float")?.getFloat(), 0.0)
+      XCTAssertEqual(deserializedMessage.get(fieldName: "false_bool")?.getBool(), false)
+      XCTAssertEqual(deserializedMessage.get(fieldName: "large_string")?.getString(), largeString)
+    } catch {
+      XCTFail("Failed to marshal message: \(error)")
+    }
   }
 
   func testFieldValidation() {
@@ -249,8 +252,12 @@ class BasicSerializationTests: XCTestCase {
     validMessage.set(fieldName: "bool_field", value: .boolValue(true))
     validMessage.set(fieldName: "bytes_field", value: .bytesValue(Data([0x00, 0x01, 0x02])))
 
-    let validData = ProtoWireFormat.marshal(message: validMessage)
-    XCTAssertNotNil(validData, "Serialization should succeed with valid field values")
+    do {
+      let validData = try ProtoWireFormat.marshal(message: validMessage)
+      XCTAssertNotNil(validData, "Serialization should succeed with valid field values")
+    } catch {
+      XCTFail("Serialization should succeed with valid field values: \(error)")
+    }
 
     // Test 2: Invalid type for int32 field
     let invalidIntMessage = ProtoDynamicMessage(descriptor: messageDescriptor)
@@ -260,8 +267,7 @@ class BasicSerializationTests: XCTestCase {
     invalidIntMessage.set(fieldName: "string_field", value: .stringValue("Hello"))
     invalidIntMessage.set(fieldName: "float_field", value: .floatValue(3.14))
 
-    let invalidIntData = ProtoWireFormat.marshal(message: invalidIntMessage)
-    XCTAssertNil(invalidIntData, "Serialization should fail with invalid int32 value")
+    XCTAssertThrowsError(try ProtoWireFormat.marshal(message: invalidIntMessage), "Serialization should fail with invalid int32 value")
 
     // Test 3: Invalid type for float field
     let invalidFloatMessage = ProtoDynamicMessage(descriptor: messageDescriptor)
@@ -271,8 +277,7 @@ class BasicSerializationTests: XCTestCase {
       invalidFloatMessage.set(field: field, value: .boolValue(true))
     }
 
-    let invalidFloatData = ProtoWireFormat.marshal(message: invalidFloatMessage)
-    XCTAssertNil(invalidFloatData, "Serialization should fail with invalid float value")
+    XCTAssertThrowsError(try ProtoWireFormat.marshal(message: invalidFloatMessage), "Serialization should fail with invalid float value")
 
     // Test 4: Invalid wire format for int32 field
     let invalidWireFormatMessage = ProtoDynamicMessage(descriptor: messageDescriptor)
@@ -282,8 +287,7 @@ class BasicSerializationTests: XCTestCase {
     invalidWireFormatMessage.set(fieldName: "string_field", value: .stringValue("Hello"))
     invalidWireFormatMessage.set(fieldName: "float_field", value: .floatValue(3.14))
 
-    let invalidWireFormatData = ProtoWireFormat.marshal(message: invalidWireFormatMessage)
-    XCTAssertNil(invalidWireFormatData, "Serialization should fail with invalid wire format")
+    XCTAssertThrowsError(try ProtoWireFormat.marshal(message: invalidWireFormatMessage), "Serialization should fail with invalid wire format")
 
     // Test 5: Edge cases for numeric types
     let edgeCaseMessage = ProtoDynamicMessage(descriptor: messageDescriptor)
@@ -292,8 +296,12 @@ class BasicSerializationTests: XCTestCase {
     edgeCaseMessage.set(fieldName: "double_field", value: .doubleValue(Double.infinity))
     edgeCaseMessage.set(fieldName: "string_field", value: .stringValue("Hello"))
 
-    let edgeCaseData = ProtoWireFormat.marshal(message: edgeCaseMessage)
-    XCTAssertNotNil(edgeCaseData, "Serialization should succeed with edge case values")
+    do {
+      let edgeCaseData = try ProtoWireFormat.marshal(message: edgeCaseMessage)
+      XCTAssertNotNil(edgeCaseData, "Serialization should succeed with edge case values")
+    } catch {
+      XCTFail("Serialization should succeed with edge case values: \(error)")
+    }
 
     // Test 6: Invalid repeated field value
     let invalidRepeatedMessage = ProtoDynamicMessage(descriptor: messageDescriptor)
@@ -301,8 +309,7 @@ class BasicSerializationTests: XCTestCase {
     invalidRepeatedMessage.set(fieldName: "string_field", value: .stringValue("Hello"))
     invalidRepeatedMessage.set(fieldName: "float_field", value: .floatValue(3.14))
 
-    let invalidRepeatedData = ProtoWireFormat.marshal(message: invalidRepeatedMessage)
-    XCTAssertNil(invalidRepeatedData, "Serialization should fail with repeated value for non-repeated field")
+    XCTAssertThrowsError(try ProtoWireFormat.marshal(message: invalidRepeatedMessage), "Serialization should fail with repeated value for non-repeated field")
   }
 
   func testRepeatedFieldTypes() {
@@ -328,30 +335,31 @@ class BasicSerializationTests: XCTestCase {
     )
 
     // Serialize the message
-    guard let data = ProtoWireFormat.marshal(message: message) else {
-      XCTFail("Failed to marshal message")
-      return
-    }
+    do {
+      let data = try ProtoWireFormat.marshal(message: message)
 
-    // Deserialize the message
-    guard
-      let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal message")
-      return
-    }
+      // Deserialize the message
+      guard
+        let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+          as? ProtoDynamicMessage
+      else {
+        XCTFail("Failed to unmarshal message")
+        return
+      }
 
-    // Verify the repeated field values were preserved
-    guard let repeatedValues = deserializedMessage.get(fieldName: "repeated_int32")?.getRepeated() else {
-      XCTFail("Failed to get repeated field values")
-      return
-    }
+      // Verify the repeated field values were preserved
+      guard let repeatedValues = deserializedMessage.get(fieldName: "repeated_int32")?.getRepeated() else {
+        XCTFail("Failed to get repeated field values")
+        return
+      }
 
-    XCTAssertEqual(repeatedValues.count, 3)
-    XCTAssertEqual(repeatedValues[0].getInt(), 1)
-    XCTAssertEqual(repeatedValues[1].getInt(), 2)
-    XCTAssertEqual(repeatedValues[2].getInt(), 3)
+      XCTAssertEqual(repeatedValues.count, 3)
+      XCTAssertEqual(repeatedValues[0].getInt(), 1)
+      XCTAssertEqual(repeatedValues[1].getInt(), 2)
+      XCTAssertEqual(repeatedValues[2].getInt(), 3)
+    } catch {
+      XCTFail("Failed to marshal message: \(error)")
+    }
   }
 
   func testSimpleMapField() {
@@ -613,32 +621,33 @@ class BasicSerializationTests: XCTestCase {
     }
 
     // Serialize the message
-    guard let data = ProtoWireFormat.marshal(message: message) else {
-      XCTFail("Failed to marshal message")
-      return
-    }
+    do {
+      let data = try ProtoWireFormat.marshal(message: message)
 
-    // Deserialize the message
-    guard
-      let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal message")
-      return
-    }
+      // Deserialize the message
+      guard
+        let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+          as? ProtoDynamicMessage
+      else {
+        XCTFail("Failed to unmarshal message")
+        return
+      }
 
-    // Verify the map field values in the unmarshalled message
-    guard let mapValue = deserializedMessage.get(field: mapFieldDescriptor) else {
-      XCTFail("Map field should be present in unmarshalled message")
-      return
-    }
+      // Verify the map field values in the unmarshalled message
+      guard let mapValue = deserializedMessage.get(field: mapFieldDescriptor) else {
+        XCTFail("Map field should be present in unmarshalled message")
+        return
+      }
 
-    if case let ProtoValue.mapValue(entries) = mapValue {
-      XCTAssertEqual(entries.count, 1, "Map should have 1 entry")
-      XCTAssertEqual(entries["key1"]?.getString(), "value1", "Value for key 'key1' should be 'value1'")
-    }
-    else {
-      XCTFail("Field value should be a map value")
+      if case let ProtoValue.mapValue(entries) = mapValue {
+        XCTAssertEqual(entries.count, 1, "Map should have 1 entry")
+        XCTAssertEqual(entries["key1"]?.getString(), "value1", "Value for key 'key1' should be 'value1'")
+      }
+      else {
+        XCTFail("Field value should be a map value")
+      }
+    } catch {
+      XCTFail("Failed to marshal message: \(error)")
     }
   }
 
@@ -653,41 +662,42 @@ class BasicSerializationTests: XCTestCase {
     person.set(field: personDescriptor.field(named: "address")!, value: .messageValue(address))
     
     // Test length-delimited format
-    guard let data = ProtoWireFormat.marshal(message: person) else {
-        XCTFail("Failed to marshal message")
-        return
+    do {
+      let data = try ProtoWireFormat.marshal(message: person)
+      
+      // Verify length-delimited format
+      var offset = 0
+      while offset < data.count {
+          let (tag, tagBytes) = ProtoWireFormat.decodeVarint(data.dropFirst(offset))
+          XCTAssertNotNil(tag)
+          offset += tagBytes
+          
+          let wireType = Int(tag! & 0x7)
+          if wireType == ProtoWireFormat.wireTypeLengthDelimited {
+              let (length, lengthBytes) = ProtoWireFormat.decodeVarint(data.dropFirst(offset))
+              XCTAssertNotNil(length)
+              offset += lengthBytes
+              offset += Int(length!)
+          }
+      }
+      
+      // Test deserialization
+      guard let decodedPerson = ProtoWireFormat.unmarshal(data: data, messageDescriptor: personDescriptor) else {
+          XCTFail("Failed to unmarshal message")
+          return
+      }
+      
+      // Verify decoded values
+      XCTAssertEqual(decodedPerson.get(field: personDescriptor.field(named: "name")!)?.getString(), "John Doe")
+      guard case .messageValue(let decodedAddress) = decodedPerson.get(field: personDescriptor.field(named: "address")!) else {
+          XCTFail("Failed to get address field")
+          return
+      }
+      XCTAssertEqual(decodedAddress.get(field: addressDescriptor.field(named: "street")!)?.getString(), "123 Main St")
+      XCTAssertEqual(decodedAddress.get(field: addressDescriptor.field(named: "city")!)?.getString(), "Springfield")
+    } catch {
+      XCTFail("Failed to marshal message: \(error)")
     }
-    
-    // Verify length-delimited format
-    var offset = 0
-    while offset < data.count {
-        let (tag, tagBytes) = ProtoWireFormat.decodeVarint(data.dropFirst(offset))
-        XCTAssertNotNil(tag)
-        offset += tagBytes
-        
-        let wireType = Int(tag! & 0x7)
-        if wireType == ProtoWireFormat.wireTypeLengthDelimited {
-            let (length, lengthBytes) = ProtoWireFormat.decodeVarint(data.dropFirst(offset))
-            XCTAssertNotNil(length)
-            offset += lengthBytes
-            offset += Int(length!)
-        }
-    }
-    
-    // Test deserialization
-    guard let decodedPerson = ProtoWireFormat.unmarshal(data: data, messageDescriptor: personDescriptor) else {
-        XCTFail("Failed to unmarshal message")
-        return
-    }
-    
-    // Verify decoded values
-    XCTAssertEqual(decodedPerson.get(field: personDescriptor.field(named: "name")!)?.getString(), "John Doe")
-    guard case .messageValue(let decodedAddress) = decodedPerson.get(field: personDescriptor.field(named: "address")!) else {
-        XCTFail("Failed to get address field")
-        return
-    }
-    XCTAssertEqual(decodedAddress.get(field: addressDescriptor.field(named: "street")!)?.getString(), "123 Main St")
-    XCTAssertEqual(decodedAddress.get(field: addressDescriptor.field(named: "city")!)?.getString(), "Springfield")
 
     // Test 2: Deeply nested messages
     let cityDescriptor = ProtoMessageDescriptor(
@@ -781,58 +791,59 @@ class BasicSerializationTests: XCTestCase {
     country.set(field: countryDescriptor.field(named: "states")!, value: .repeatedValue([.messageValue(state)]))
 
     // Test serialization of deeply nested structure
-    guard let deepData = ProtoWireFormat.marshal(message: country) else {
-      XCTFail("Failed to marshal deeply nested message")
-      return
-    }
+    do {
+      let deepData = try ProtoWireFormat.marshal(message: country)
 
-    // Test deserialization of deeply nested structure
-    guard let decodedCountry = ProtoWireFormat.unmarshal(data: deepData, messageDescriptor: countryDescriptor) as? ProtoDynamicMessage else {
-      XCTFail("Failed to unmarshal deeply nested message")
-      return
-    }
+      // Test deserialization of deeply nested structure
+      guard let decodedCountry = ProtoWireFormat.unmarshal(data: deepData, messageDescriptor: countryDescriptor) as? ProtoDynamicMessage else {
+        XCTFail("Failed to unmarshal deeply nested message")
+        return
+      }
 
-    // Verify deeply nested structure
-    XCTAssertEqual(decodedCountry.get(field: countryDescriptor.field(named: "name")!)?.getString(), "United States")
-    
-    guard case .messageValue(let decodedCapital) = decodedCountry.get(field: countryDescriptor.field(named: "capital")!) else {
-      XCTFail("Failed to get capital")
-      return
-    }
-    XCTAssertEqual(decodedCapital.get(field: cityDescriptor.field(named: "name")!)?.getString(), "Washington")
-    XCTAssertEqual(decodedCapital.get(field: cityDescriptor.field(named: "population")!)?.getInt(), 705749)
+      // Verify deeply nested structure
+      XCTAssertEqual(decodedCountry.get(field: countryDescriptor.field(named: "name")!)?.getString(), "United States")
+      
+      guard case .messageValue(let decodedCapital) = decodedCountry.get(field: countryDescriptor.field(named: "capital")!) else {
+        XCTFail("Failed to get capital")
+        return
+      }
+      XCTAssertEqual(decodedCapital.get(field: cityDescriptor.field(named: "name")!)?.getString(), "Washington")
+      XCTAssertEqual(decodedCapital.get(field: cityDescriptor.field(named: "population")!)?.getInt(), 705749)
 
-    guard let states = decodedCountry.get(field: countryDescriptor.field(named: "states")!)?.getRepeated() else {
-      XCTFail("Failed to get states")
-      return
-    }
-    XCTAssertEqual(states.count, 1)
+      guard let states = decodedCountry.get(field: countryDescriptor.field(named: "states")!)?.getRepeated() else {
+        XCTFail("Failed to get states")
+        return
+      }
+      XCTAssertEqual(states.count, 1)
 
-    guard case .messageValue(let decodedState) = states[0] else {
-      XCTFail("Failed to get first state")
-      return
-    }
-    XCTAssertEqual(decodedState.get(field: stateDescriptor.field(named: "name")!)?.getString(), "California")
+      guard case .messageValue(let decodedState) = states[0] else {
+        XCTFail("Failed to get first state")
+        return
+      }
+      XCTAssertEqual(decodedState.get(field: stateDescriptor.field(named: "name")!)?.getString(), "California")
 
-    guard let decodedCities = decodedState.get(field: stateDescriptor.field(named: "cities")!)?.getRepeated() else {
-      XCTFail("Failed to get cities")
-      return
-    }
-    XCTAssertEqual(decodedCities.count, 2)
+      guard let decodedCities = decodedState.get(field: stateDescriptor.field(named: "cities")!)?.getRepeated() else {
+        XCTFail("Failed to get cities")
+        return
+      }
+      XCTAssertEqual(decodedCities.count, 2)
 
-    guard case .messageValue(let firstCity) = decodedCities[0] else {
-      XCTFail("Failed to get first city")
-      return
-    }
-    XCTAssertEqual(firstCity.get(field: cityDescriptor.field(named: "name")!)?.getString(), "San Francisco")
-    XCTAssertEqual(firstCity.get(field: cityDescriptor.field(named: "population")!)?.getInt(), 873965)
+      guard case .messageValue(let firstCity) = decodedCities[0] else {
+        XCTFail("Failed to get first city")
+        return
+      }
+      XCTAssertEqual(firstCity.get(field: cityDescriptor.field(named: "name")!)?.getString(), "San Francisco")
+      XCTAssertEqual(firstCity.get(field: cityDescriptor.field(named: "population")!)?.getInt(), 873965)
 
-    guard case .messageValue(let secondCity) = decodedCities[1] else {
-      XCTFail("Failed to get second city")
-      return
+      guard case .messageValue(let secondCity) = decodedCities[1] else {
+        XCTFail("Failed to get second city")
+        return
+      }
+      XCTAssertEqual(secondCity.get(field: cityDescriptor.field(named: "name")!)?.getString(), "Los Angeles")
+      XCTAssertEqual(secondCity.get(field: cityDescriptor.field(named: "population")!)?.getInt(), 3898747)
+    } catch {
+      XCTFail("Failed to marshal deeply nested message: \(error)")
     }
-    XCTAssertEqual(secondCity.get(field: cityDescriptor.field(named: "name")!)?.getString(), "Los Angeles")
-    XCTAssertEqual(secondCity.get(field: cityDescriptor.field(named: "population")!)?.getInt(), 3898747)
   }
 
   func testPerformanceSerialization() {
@@ -859,7 +870,11 @@ class BasicSerializationTests: XCTestCase {
     // Measure serialization performance
     measure {
       for _ in 0..<1000 {
-        _ = ProtoWireFormat.marshal(message: message)
+        do {
+          _ = try ProtoWireFormat.marshal(message: message)
+        } catch {
+          // Ignore errors during performance testing
+        }
       }
     }
   }
@@ -886,16 +901,17 @@ class BasicSerializationTests: XCTestCase {
     message.set(fieldName: "double_field", value: .doubleValue(3.14159))
 
     // Serialize the message once to get the data for deserialization testing
-    guard let data = ProtoWireFormat.marshal(message: message) else {
-      XCTFail("Failed to marshal message")
-      return
-    }
+    do {
+      let data = try ProtoWireFormat.marshal(message: message)
 
-    // Measure deserialization performance
-    measure {
-      for _ in 0..<1000 {
-        _ = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+      // Measure deserialization performance
+      measure {
+        for _ in 0..<1000 {
+          _ = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+        }
       }
+    } catch {
+      XCTFail("Failed to marshal message for performance testing: \(error)")
     }
   }
 
@@ -935,27 +951,28 @@ class BasicSerializationTests: XCTestCase {
     )
 
     // Serialize the message
-    guard let data = ProtoWireFormat.marshal(message: message) else {
-      XCTFail("Failed to marshal message with enum field")
-      return
-    }
+    do {
+      let data = try ProtoWireFormat.marshal(message: message)
 
-    // Deserialize the message
-    guard
-      let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal message with enum field")
-      return
-    }
+      // Deserialize the message
+      guard
+        let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+          as? ProtoDynamicMessage
+      else {
+        XCTFail("Failed to unmarshal message with enum field")
+        return
+      }
 
-    // Verify the enum field value
-    if let enumValue = deserializedMessage.get(fieldName: "color")?.getEnum() {
-      XCTAssertEqual(enumValue.number, 1)
-      XCTAssertEqual(enumValue.name, "GREEN")
-    }
-    else {
-      XCTFail("Enum field should be present and have the correct value")
+      // Verify the enum field value
+      if let enumValue = deserializedMessage.get(fieldName: "color")?.getEnum() {
+        XCTAssertEqual(enumValue.number, 1)
+        XCTAssertEqual(enumValue.name, "GREEN")
+      }
+      else {
+        XCTFail("Enum field should be present and have the correct value")
+      }
+    } catch {
+      XCTFail("Failed to marshal message with enum field: \(error)")
     }
   }
 
@@ -982,32 +999,33 @@ class BasicSerializationTests: XCTestCase {
     message.set(fieldName: "repeated_string", value: .repeatedValue(stringValues))
 
     // Serialize the message
-    guard let data = ProtoWireFormat.marshal(message: message) else {
-      XCTFail("Failed to marshal large message")
-      return
+    do {
+      let data = try ProtoWireFormat.marshal(message: message)
+
+      // Verify the serialized data is not empty
+      XCTAssertFalse(data.isEmpty, "Serialized data should not be empty")
+
+      // Deserialize the message
+      guard
+        let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+          as? ProtoDynamicMessage
+      else {
+        XCTFail("Failed to unmarshal large message")
+        return
+      }
+
+      // Verify the repeated field values were preserved
+      guard let repeatedValues = deserializedMessage.get(fieldName: "repeated_string")?.getRepeated() else {
+        XCTFail("Failed to get repeated field values")
+        return
+      }
+
+      XCTAssertEqual(repeatedValues.count, 1000, "Should have 1000 string values")
+      XCTAssertEqual(repeatedValues[0].getString(), "String value 0")
+      XCTAssertEqual(repeatedValues[999].getString(), "String value 999")
+    } catch {
+      XCTFail("Failed to marshal large message: \(error)")
     }
-
-    // Verify the serialized data is not empty
-    XCTAssertFalse(data.isEmpty, "Serialized data should not be empty")
-
-    // Deserialize the message
-    guard
-      let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal large message")
-      return
-    }
-
-    // Verify the repeated field values were preserved
-    guard let repeatedValues = deserializedMessage.get(fieldName: "repeated_string")?.getRepeated() else {
-      XCTFail("Failed to get repeated field values")
-      return
-    }
-
-    XCTAssertEqual(repeatedValues.count, 1000, "Should have 1000 string values")
-    XCTAssertEqual(repeatedValues[0].getString(), "String value 0")
-    XCTAssertEqual(repeatedValues[999].getString(), "String value 999")
   }
 
   func testErrorHandlingDuringDeserialization() {
@@ -1084,17 +1102,18 @@ class BasicSerializationTests: XCTestCase {
     XCTAssertEqual(unknownFields[50]?.first, Data([50, 5]))
 
     // Test 6: Serialize message with unknown fields
-    guard let reserializedData = ProtoWireFormat.marshal(message: message) else {
-      XCTFail("Failed to reserialize message with unknown fields")
-      return
-    }
+    do {
+      let reserializedData = try ProtoWireFormat.marshal(message: message)
 
-    // Verify that unknown fields are preserved in reserialization
-    XCTAssertTrue(reserializedData.contains(Data([16, 1])))  // unknown_field = 1
-    XCTAssertTrue(reserializedData.contains(Data([24, 2])))  // another_unknown_field = 2
-    XCTAssertTrue(reserializedData.contains(Data([32, 3])))  // unknown_enum_field = 3
-    XCTAssertTrue(reserializedData.contains(Data([42, 4])))  // unknown_bytes_field = 4
-    XCTAssertTrue(reserializedData.contains(Data([50, 5])))  // unknown_string_field = 5
+      // Verify that unknown fields are preserved in reserialization
+      XCTAssertTrue(reserializedData.contains(Data([16, 1])))  // unknown_field = 1
+      XCTAssertTrue(reserializedData.contains(Data([24, 2])))  // another_unknown_field = 2
+      XCTAssertTrue(reserializedData.contains(Data([32, 3])))  // unknown_enum_field = 3
+      XCTAssertTrue(reserializedData.contains(Data([42, 4])))  // unknown_bytes_field = 4
+      XCTAssertTrue(reserializedData.contains(Data([50, 5])))  // unknown_string_field = 5
+    } catch {
+      XCTFail("Failed to reserialize message with unknown fields: \(error)")
+    }
 
     // Test 7: Unknown fields in nested message
     let nestedMessageDescriptor = ProtoMessageDescriptor(
@@ -1154,45 +1173,47 @@ class BasicSerializationTests: XCTestCase {
     XCTAssertEqual(message.get(fieldName: "int_field")?.getInt(), 42)
 
     // Test 3: Serialization and deserialization
-    guard let data = ProtoWireFormat.marshal(message: message) else {
-      XCTFail("Failed to marshal message with oneof field")
-      return
-    }
+    do {
+      let data = try ProtoWireFormat.marshal(message: message)
 
-    guard
-      let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal message with oneof field")
-      return
-    }
+      guard
+        let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+          as? ProtoDynamicMessage
+      else {
+        XCTFail("Failed to unmarshal message with oneof field")
+        return
+      }
 
-    // Verify deserialized message
-    XCTAssertEqual(deserializedMessage.get(fieldName: "name")?.getString(), "John")
-    XCTAssertEqual(deserializedMessage.get(fieldName: "age")?.getInt(), 30)
-    XCTAssertNil(deserializedMessage.get(fieldName: "string_field"))
-    XCTAssertEqual(deserializedMessage.get(fieldName: "int_field")?.getInt(), 42)
+      // Verify deserialized message
+      XCTAssertEqual(deserializedMessage.get(fieldName: "name")?.getString(), "John")
+      XCTAssertEqual(deserializedMessage.get(fieldName: "age")?.getInt(), 30)
+      XCTAssertNil(deserializedMessage.get(fieldName: "string_field"))
+      XCTAssertEqual(deserializedMessage.get(fieldName: "int_field")?.getInt(), 42)
+    } catch {
+      XCTFail("Failed to marshal message with oneof field: \(error)")
+    }
 
     // Test 4: Empty oneof field
     let emptyMessage = ProtoDynamicMessage(descriptor: messageDescriptor)
     emptyMessage.set(fieldName: "name", value: ProtoValue.stringValue("Empty"))
 
-    guard let emptyData = ProtoWireFormat.marshal(message: emptyMessage) else {
-      XCTFail("Failed to marshal message with empty oneof field")
-      return
-    }
+    do {
+      let emptyData = try ProtoWireFormat.marshal(message: emptyMessage)
 
-    guard
-      let deserializedEmptyMessage = ProtoWireFormat.unmarshal(data: emptyData, messageDescriptor: messageDescriptor)
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal message with empty oneof field")
-      return
-    }
+      guard
+        let deserializedEmptyMessage = ProtoWireFormat.unmarshal(data: emptyData, messageDescriptor: messageDescriptor)
+          as? ProtoDynamicMessage
+      else {
+        XCTFail("Failed to unmarshal message with empty oneof field")
+        return
+      }
 
-    XCTAssertEqual(deserializedEmptyMessage.get(fieldName: "name")?.getString(), "Empty")
-    XCTAssertNil(deserializedEmptyMessage.get(fieldName: "string_field"))
-    XCTAssertNil(deserializedEmptyMessage.get(fieldName: "int_field"))
+      XCTAssertEqual(deserializedEmptyMessage.get(fieldName: "name")?.getString(), "Empty")
+      XCTAssertNil(deserializedEmptyMessage.get(fieldName: "string_field"))
+      XCTAssertNil(deserializedEmptyMessage.get(fieldName: "int_field"))
+    } catch {
+      XCTFail("Failed to marshal message with empty oneof field: \(error)")
+    }
 
     // Test 5: Setting non-oneof field doesn't affect oneof
     let nonOneofMessage = ProtoDynamicMessage(descriptor: messageDescriptor)
@@ -1241,21 +1262,22 @@ class BasicSerializationTests: XCTestCase {
     XCTAssertEqual(message.get(fieldName: "extension_field")?.getString(), "extension value")
 
     // Test 2: Serialization and deserialization
-    guard let data = ProtoWireFormat.marshal(message: message) else {
-      XCTFail("Failed to marshal message with extension")
-      return
-    }
+    do {
+      let data = try ProtoWireFormat.marshal(message: message)
 
-    guard
-      let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal message with extension")
-      return
-    }
+      guard
+        let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+          as? ProtoDynamicMessage
+      else {
+        XCTFail("Failed to unmarshal message with extension")
+        return
+      }
 
-    // Verify extension field is preserved
-    XCTAssertEqual(deserializedMessage.get(fieldName: "extension_field")?.getString(), "extension value")
+      // Verify extension field is preserved
+      XCTAssertEqual(deserializedMessage.get(fieldName: "extension_field")?.getString(), "extension value")
+    } catch {
+      XCTFail("Failed to marshal message with extension: \(error)")
+    }
 
     // Test 3: Multiple extension fields
     let messageWithMultipleExtensions = ProtoMessageDescriptor(
@@ -1274,26 +1296,27 @@ class BasicSerializationTests: XCTestCase {
     multipleExtensionsMessage.set(fieldName: "extension_field", value: ProtoValue.stringValue("first extension"))
     multipleExtensionsMessage.set(fieldName: "extension_field2", value: ProtoValue.intValue(100))
 
-    guard let multipleExtensionsData = ProtoWireFormat.marshal(message: multipleExtensionsMessage) else {
-      XCTFail("Failed to marshal message with multiple extensions")
-      return
-    }
+    do {
+      let multipleExtensionsData = try ProtoWireFormat.marshal(message: multipleExtensionsMessage)
 
-    guard
-      let deserializedMultipleExtensionsMessage = ProtoWireFormat.unmarshal(
-        data: multipleExtensionsData,
-        messageDescriptor: messageWithMultipleExtensions
-      ) as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal message with multiple extensions")
-      return
-    }
+      guard
+        let deserializedMultipleExtensionsMessage = ProtoWireFormat.unmarshal(
+          data: multipleExtensionsData,
+          messageDescriptor: messageWithMultipleExtensions
+        ) as? ProtoDynamicMessage
+      else {
+        XCTFail("Failed to unmarshal message with multiple extensions")
+        return
+      }
 
-    XCTAssertEqual(
-      deserializedMultipleExtensionsMessage.get(fieldName: "extension_field")?.getString(),
-      "first extension"
-    )
-    XCTAssertEqual(deserializedMultipleExtensionsMessage.get(fieldName: "extension_field2")?.getInt(), 100)
+      XCTAssertEqual(
+        deserializedMultipleExtensionsMessage.get(fieldName: "extension_field")?.getString(),
+        "first extension"
+      )
+      XCTAssertEqual(deserializedMultipleExtensionsMessage.get(fieldName: "extension_field2")?.getInt(), 100)
+    } catch {
+      XCTFail("Failed to marshal message with multiple extensions: \(error)")
+    }
 
     // Test 4: Extension field in nested message
     let nestedMessageDescriptor = ProtoMessageDescriptor(
@@ -1310,22 +1333,152 @@ class BasicSerializationTests: XCTestCase {
     nestedMessage.set(fieldName: "nested_field", value: ProtoValue.intValue(42))
     nestedMessage.set(fieldName: "extension_field", value: ProtoValue.stringValue("nested extension"))
 
-    guard let nestedData = ProtoWireFormat.marshal(message: nestedMessage) else {
-      XCTFail("Failed to marshal nested message with extension")
-      return
-    }
+    do {
+      let nestedData = try ProtoWireFormat.marshal(message: nestedMessage)
 
-    guard
-      let deserializedNestedMessage = ProtoWireFormat.unmarshal(
-        data: nestedData,
-        messageDescriptor: nestedMessageDescriptor
-      ) as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal nested message with extension")
-      return
-    }
+      guard
+        let deserializedNestedMessage = ProtoWireFormat.unmarshal(
+          data: nestedData,
+          messageDescriptor: nestedMessageDescriptor
+        ) as? ProtoDynamicMessage
+      else {
+        XCTFail("Failed to unmarshal nested message with extension")
+        return
+      }
 
-    XCTAssertEqual(deserializedNestedMessage.get(fieldName: "nested_field")?.getInt(), 42)
-    XCTAssertEqual(deserializedNestedMessage.get(fieldName: "extension_field")?.getString(), "nested extension")
+      XCTAssertEqual(deserializedNestedMessage.get(fieldName: "nested_field")?.getInt(), 42)
+      XCTAssertEqual(deserializedNestedMessage.get(fieldName: "extension_field")?.getString(), "nested extension")
+    } catch {
+      XCTFail("Failed to marshal nested message with extension: \(error)")
+    }
+  }
+
+  func testSimpleRepeatedString() {
+    // Create a message descriptor with a repeated string field
+    let messageDescriptor = ProtoMessageDescriptor(
+      fullName: "TestMessage",
+      fields: [
+        ProtoFieldDescriptor(name: "repeated_string", number: 1, type: .string, isRepeated: true, isMap: false)
+      ],
+      enums: [],
+      nestedMessages: []
+    )
+    
+    // Create a message with a few repeated values
+    let message = ProtoDynamicMessage(descriptor: messageDescriptor)
+    message.set(fieldName: "repeated_string", value: .repeatedValue([
+      .stringValue("test1"),
+      .stringValue("test2"),
+      .stringValue("test3")
+    ]))
+    
+    // Serialize
+    do {
+      let data = try ProtoWireFormat.marshal(message: message)
+      XCTAssertFalse(data.isEmpty, "Serialized data should not be empty")
+      
+      // Deserialize
+      guard let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage else {
+        XCTFail("Failed to unmarshal message")
+        return
+      }
+      
+      // Verify values
+      guard let repeatedValues = deserializedMessage.get(fieldName: "repeated_string")?.getRepeated() else {
+        XCTFail("Failed to get repeated values")
+        return
+      }
+      
+      XCTAssertEqual(repeatedValues.count, 3, "Should have 3 values")
+      XCTAssertEqual(repeatedValues[0].getString(), "test1")
+      XCTAssertEqual(repeatedValues[1].getString(), "test2")
+      XCTAssertEqual(repeatedValues[2].getString(), "test3")
+    } catch {
+      XCTFail("Failed to marshal message: \(error)")
+    }
+  }
+  
+  func testRepeatedInt32() {
+    // Create a message descriptor with a repeated int32 field
+    let messageDescriptor = ProtoMessageDescriptor(
+      fullName: "TestMessage",
+      fields: [
+        ProtoFieldDescriptor(name: "repeated_int32", number: 1, type: .int32, isRepeated: true, isMap: false)
+      ],
+      enums: [],
+      nestedMessages: []
+    )
+    
+    // Create a message with repeated int32 values
+    let message = ProtoDynamicMessage(descriptor: messageDescriptor)
+    message.set(fieldName: "repeated_int32", value: .repeatedValue([
+      .intValue(1),
+      .intValue(2),
+      .intValue(3)
+    ]))
+    
+    // Serialize
+    do {
+      let data = try ProtoWireFormat.marshal(message: message)
+      XCTAssertFalse(data.isEmpty, "Serialized data should not be empty")
+      
+      // Deserialize
+      guard let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage else {
+        XCTFail("Failed to unmarshal message")
+        return
+      }
+      
+      // Verify values
+      guard let repeatedValues = deserializedMessage.get(fieldName: "repeated_int32")?.getRepeated() else {
+        XCTFail("Failed to get repeated values")
+        return
+      }
+      
+      XCTAssertEqual(repeatedValues.count, 3, "Should have 3 values")
+      XCTAssertEqual(repeatedValues[0].getInt(), 1)
+      XCTAssertEqual(repeatedValues[1].getInt(), 2)
+      XCTAssertEqual(repeatedValues[2].getInt(), 3)
+    } catch {
+      XCTFail("Failed to marshal message: \(error)")
+    }
+  }
+  
+  func testEmptyRepeatedField() {
+    // Create a message descriptor with a repeated field
+    let messageDescriptor = ProtoMessageDescriptor(
+      fullName: "TestMessage",
+      fields: [
+        ProtoFieldDescriptor(name: "repeated_string", number: 1, type: .string, isRepeated: true, isMap: false)
+      ],
+      enums: [],
+      nestedMessages: []
+    )
+    
+    // Create a message with empty repeated field
+    let message = ProtoDynamicMessage(descriptor: messageDescriptor)
+    message.set(fieldName: "repeated_string", value: .repeatedValue([]))
+    
+    // Serialize
+    do {
+      let data = try ProtoWireFormat.marshal(message: message)
+      // Empty repeated field should still produce valid serialized data
+      XCTAssertFalse(data.isEmpty, "Serialized data should not be empty even with empty repeated field")
+      
+      // Deserialize
+      guard let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage else {
+        XCTFail("Failed to unmarshal message")
+        return
+      }
+      
+      // Verify empty values array
+      guard let repeatedValues = deserializedMessage.get(fieldName: "repeated_string")?.getRepeated() else {
+        XCTFail("Failed to get repeated values")
+        return
+      }
+      
+      XCTAssertEqual(repeatedValues.count, 0, "Should have no values")
+    } catch {
+      XCTFail("Failed to marshal message: \(error)")
+    }
   }
 }
