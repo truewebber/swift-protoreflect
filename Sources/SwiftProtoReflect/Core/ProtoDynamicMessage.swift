@@ -381,7 +381,7 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
         fields.removeValue(forKey: oneofField.number)
       }
     }
-    
+
     return try trySet(field: field, value: value)
   }
 

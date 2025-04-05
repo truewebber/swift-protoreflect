@@ -104,23 +104,30 @@ class SimpleMapFieldTests: XCTestCase {
     entryMessage.set(field: valueFieldDescriptor, value: .stringValue("value1"))
 
     // Serialize just the entry message
-    guard let data = ProtoWireFormat.marshal(message: entryMessage) else {
-      XCTFail("Failed to marshal map entry message")
-      return
-    }
+    do {
+      let data = try ProtoWireFormat.marshal(message: entryMessage)
 
-    // Deserialize the entry message
-    guard
-      let deserializedEntry = ProtoWireFormat.unmarshal(data: data, messageDescriptor: entryDescriptor)
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal map entry message")
-      return
-    }
+      // Deserialize the entry message
+      do {
+        guard
+          let deserializedEntry = try ProtoWireFormat.unmarshal(data: data, messageDescriptor: entryDescriptor)
+            as? ProtoDynamicMessage
+        else {
+          XCTFail("Failed to unmarshal map entry message")
+          return
+        }
 
-    // Verify the entry fields were preserved
-    XCTAssertEqual(deserializedEntry.get(field: keyFieldDescriptor)?.getString(), "key1")
-    XCTAssertEqual(deserializedEntry.get(field: valueFieldDescriptor)?.getString(), "value1")
+        // Verify key and value were preserved
+        XCTAssertEqual(deserializedEntry.get(fieldName: "key")?.getString(), "key1")
+        XCTAssertEqual(deserializedEntry.get(fieldName: "value")?.getString(), "value1")
+      }
+      catch {
+        XCTFail("Failed to unmarshal map entry: \(error)")
+      }
+    }
+    catch {
+      XCTFail("Failed to marshal map entry message: \(error)")
+    }
   }
 
   func testMapFieldAsRepeatedMessage() {
@@ -189,44 +196,72 @@ class SimpleMapFieldTests: XCTestCase {
     )
 
     // Serialize the message
-    guard let data = ProtoWireFormat.marshal(message: message) else {
-      XCTFail("Failed to marshal message with repeated entries")
-      return
-    }
+    do {
+      let data = try ProtoWireFormat.marshal(message: message)
 
-    // Deserialize the message
-    guard
-      let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal message with repeated entries")
-      return
-    }
+      // Deserialize the message
+      do {
+        guard
+          let deserializedMessage = try ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+            as? ProtoDynamicMessage
+        else {
+          XCTFail("Failed to unmarshal message with repeated entries")
+          return
+        }
 
-    // Verify the repeated field was preserved
-    guard let repeatedValue = deserializedMessage.get(field: repeatedMessageFieldDescriptor)?.getRepeated() else {
-      XCTFail("Failed to get repeated field")
-      return
-    }
+        // Verify map field was preserved
+        guard let mapField = deserializedMessage.get(field: repeatedMessageFieldDescriptor) else {
+          XCTFail("Map field not found in deserialized message")
+          return
+        }
 
-    XCTAssertEqual(repeatedValue.count, 2, "Should have 2 entries")
+        guard case .repeatedValue(let repeatedValue) = mapField else {
+          XCTFail("Field should be a repeated value")
+          return
+        }
 
-    // Check first entry
-    if case .messageValue(let entryMsg1) = repeatedValue[0] {
-      XCTAssertEqual(entryMsg1.get(field: keyFieldDescriptor)?.getString(), "key1")
-      XCTAssertEqual(entryMsg1.get(field: valueFieldDescriptor)?.getString(), "value1")
-    }
-    else {
-      XCTFail("First entry should be a message")
-    }
+        XCTAssertEqual(repeatedValue.count, 2)
 
-    // Check second entry
-    if case .messageValue(let entryMsg2) = repeatedValue[1] {
-      XCTAssertEqual(entryMsg2.get(field: keyFieldDescriptor)?.getString(), "key2")
-      XCTAssertEqual(entryMsg2.get(field: valueFieldDescriptor)?.getString(), "value2")
+        // Check first entry
+        if case .messageValue(let entryMsg1) = repeatedValue[0] {
+          XCTAssertEqual(entryMsg1.get(field: keyFieldDescriptor)?.getString(), "key1")
+          XCTAssertEqual(entryMsg1.get(field: valueFieldDescriptor)?.getString(), "value1")
+        }
+        else {
+          XCTFail("First entry should be a message")
+        }
+
+        // Check second entry
+        if case .messageValue(let entryMsg2) = repeatedValue[1] {
+          XCTAssertEqual(entryMsg2.get(field: keyFieldDescriptor)?.getString(), "key2")
+          XCTAssertEqual(entryMsg2.get(field: valueFieldDescriptor)?.getString(), "value2")
+        }
+        else {
+          XCTFail("Second entry should be a message")
+        }
+
+        // Дополнительная проверка: если интерпретировать повторяющиеся сообщения как карту
+        // В некоторых случаях Proto3 может обрабатывать повторяющиеся записи как map
+        var extractedMap: [String: String] = [:]
+        for element in repeatedValue {
+          if case .messageValue(let entryMsg) = element,
+            let key = entryMsg.get(field: keyFieldDescriptor)?.getString(),
+            let value = entryMsg.get(field: valueFieldDescriptor)?.getString()
+          {
+            extractedMap[key] = value
+          }
+        }
+
+        XCTAssertEqual(extractedMap.count, 2, "Should successfully extract 2 key-value pairs")
+        XCTAssertEqual(extractedMap["key1"], "value1", "Value for key 'key1' should be 'value1'")
+        XCTAssertEqual(extractedMap["key2"], "value2", "Value for key 'key2' should be 'value2'")
+      }
+      catch {
+        XCTFail("Failed to unmarshal message: \(error)")
+      }
     }
-    else {
-      XCTFail("Second entry should be a message")
+    catch {
+      XCTFail("Failed to marshal message with repeated entries: \(error)")
     }
   }
 
@@ -286,53 +321,40 @@ class SimpleMapFieldTests: XCTestCase {
     message.set(field: mapFieldDescriptor, value: .mapValue(mapEntries))
 
     // Serialize the message
-    guard let data = ProtoWireFormat.marshal(message: message) else {
-      XCTFail("Failed to marshal message with map entries")
-      return
-    }
+    do {
+      let data = try ProtoWireFormat.marshal(message: message)
 
-    // Deserialize the message
-    guard
-      let deserializedMessage = ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
-        as? ProtoDynamicMessage
-    else {
-      XCTFail("Failed to unmarshal message with map entries")
-      return
-    }
-
-    // The deserialized message should have a map field
-    let mapValue = deserializedMessage.get(field: mapFieldDescriptor)
-    XCTAssertNotNil(mapValue, "Map field should be present in unmarshalled message")
-
-    if let mapValue = mapValue {
-      // Check if it was deserialized as a map
-      if case .mapValue(let entries) = mapValue {
-        XCTAssertEqual(entries.count, 2, "Map should have 2 entries")
-        XCTAssertEqual(entries["key1"]?.getString(), "value1", "Value for key 'key1' should be 'value1'")
-        XCTAssertEqual(entries["key2"]?.getString(), "value2", "Value for key 'key2' should be 'value2'")
-      }
-      // Or as a repeated field (which is also valid)
-      else if case .repeatedValue(let repeatedEntries) = mapValue {
-        XCTAssertEqual(repeatedEntries.count, 2, "Should have 2 entries")
-
-        // Extract keys and values from the repeated entries
-        var extractedMap: [String: String] = [:]
-        for entry in repeatedEntries {
-          if case .messageValue(let entryMsg) = entry,
-            let key = entryMsg.get(field: keyFieldDescriptor)?.getString(),
-            let value = entryMsg.get(field: valueFieldDescriptor)?.getString()
-          {
-            extractedMap[key] = value
-          }
+      // Deserialize the message
+      do {
+        guard
+          let deserializedMessage = try ProtoWireFormat.unmarshal(data: data, messageDescriptor: messageDescriptor)
+            as? ProtoDynamicMessage
+        else {
+          XCTFail("Failed to unmarshal message with map entries")
+          return
         }
 
-        XCTAssertEqual(extractedMap.count, 2, "Should have 2 key-value pairs")
-        XCTAssertEqual(extractedMap["key1"], "value1", "Value for key 'key1' should be 'value1'")
-        XCTAssertEqual(extractedMap["key2"], "value2", "Value for key 'key2' should be 'value2'")
+        // Verify map field was preserved
+        guard let mapField = deserializedMessage.get(field: mapFieldDescriptor) else {
+          XCTFail("Map field not found in deserialized message")
+          return
+        }
+
+        guard case .mapValue(let mapValues) = mapField else {
+          XCTFail("Field should be a map value")
+          return
+        }
+
+        XCTAssertEqual(mapValues.count, 2)
+        XCTAssertEqual(mapValues["key1"]?.getString(), "value1")
+        XCTAssertEqual(mapValues["key2"]?.getString(), "value2")
       }
-      else {
-        XCTFail("Field value should be a map value or repeated value, but got \(mapValue)")
+      catch {
+        XCTFail("Failed to unmarshal message: \(error)")
       }
+    }
+    catch {
+      XCTFail("Failed to marshal message with map entries: \(error)")
     }
   }
 }

@@ -213,21 +213,31 @@ class ProtoReflectTests: XCTestCase {
     person.set("address.street", to: "123 Main St")
 
     // Marshal to wire format
-    let data = ProtoReflect.marshal(message: person.build())
-    XCTAssertNotNil(data)
+    do {
+      let data = try ProtoReflect.marshal(message: person.build())
+      XCTAssertNotNil(data)
 
-    // Unmarshal from wire format
-    let unmarshaledMessage = ProtoReflect.unmarshal(data: data!, descriptor: personDescriptor)
-    XCTAssertNotNil(unmarshaledMessage)
+      // Unmarshal from wire format
+      do {
+        let unmarshaledMessage = try ProtoReflect.unmarshal(data: data, descriptor: personDescriptor)
+        XCTAssertNotNil(unmarshaledMessage)
 
-    // Verify values
-    let unmarshaledPerson = unmarshaledMessage as? ProtoDynamicMessage
-    XCTAssertNotNil(unmarshaledPerson)
+        // Verify values
+        let unmarshaledPerson = unmarshaledMessage as? ProtoDynamicMessage
+        XCTAssertNotNil(unmarshaledPerson)
 
-    let name = unmarshaledPerson?.get(field: personDescriptor.field(named: "name")!)
-    XCTAssertEqual(name?.getString(), "John Doe")
+        let name = unmarshaledPerson?.get(field: personDescriptor.field(named: "name")!)
+        XCTAssertEqual(name?.getString(), "John Doe")
 
-    let age = unmarshaledPerson?.get(field: personDescriptor.field(named: "age")!)
-    XCTAssertEqual(age?.getInt(), 30)
+        let age = unmarshaledPerson?.get(field: personDescriptor.field(named: "age")!)
+        XCTAssertEqual(age?.getInt(), 30)
+      }
+      catch {
+        XCTFail("Failed to unmarshal message: \(error)")
+      }
+    }
+    catch {
+      XCTFail("Failed to marshal message: \(error)")
+    }
   }
 }

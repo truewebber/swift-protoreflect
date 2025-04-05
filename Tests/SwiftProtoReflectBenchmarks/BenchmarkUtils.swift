@@ -52,9 +52,8 @@ public class BenchmarkUtils {
   public static func benchmark<T>(name: String, iterations: Int = 1000, operation: () -> T) -> BenchmarkResult {
     let start = Date()
 
-    var lastValue: T!
     for _ in 0..<iterations {
-      lastValue = operation()
+      _ = operation()
     }
 
     let end = Date()

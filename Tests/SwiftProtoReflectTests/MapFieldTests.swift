@@ -71,15 +71,14 @@ class MapFieldTests: XCTestCase {
       XCTFail("Field value should be a map value")
     }
 
-    // Marshal the message
-    guard let serializedData = ProtoWireFormat.marshal(message: message) else {
-      XCTFail("Failed to marshal message")
+    // Marshal the message using the safe helper
+    guard let serializedData = safeMarshal(message: message) else {
       return
     }
 
-    // Unmarshal the message
+    // Unmarshal using the safe helper
     let unmarshalledMessage =
-      ProtoWireFormat.unmarshal(data: serializedData, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage
+      safeUnmarshal(data: serializedData, messageDescriptor: messageDescriptor) as? ProtoDynamicMessage
     XCTAssertNotNil(unmarshalledMessage, "Message should be deserialized")
 
     // Verify the map field values in the unmarshalled message

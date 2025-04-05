@@ -167,7 +167,9 @@ public class ProtoReflect {
   ///   - options: Options for controlling the serialization process.
   /// - Returns: The serialized data.
   /// - Throws: Error if serialization fails.
-  public static func marshal(message: ProtoMessage, options: SerializationOptions = SerializationOptions()) throws -> Data {
+  public static func marshal(message: ProtoMessage, options: SerializationOptions = SerializationOptions()) throws
+    -> Data
+  {
     return try ProtoWireFormat.marshal(message: message, options: options)
   }
 
@@ -177,9 +179,14 @@ public class ProtoReflect {
   ///   - data: The data to deserialize.
   ///   - descriptor: The descriptor defining the message structure.
   ///   - options: Options for controlling the deserialization process.
-  /// - Returns: The deserialized message, or nil if deserialization fails.
-  public static func unmarshal(data: Data, descriptor: ProtoMessageDescriptor, options: SerializationOptions = SerializationOptions()) -> ProtoMessage? {
-    return ProtoWireFormat.unmarshal(data: data, messageDescriptor: descriptor, options: options)
+  /// - Returns: The deserialized message.
+  /// - Throws: Error if deserialization fails.
+  public static func unmarshal(
+    data: Data,
+    descriptor: ProtoMessageDescriptor,
+    options: SerializationOptions = SerializationOptions()
+  ) throws -> ProtoMessage {
+    return try ProtoWireFormat.unmarshal(data: data, messageDescriptor: descriptor, options: options)
   }
 
   /// Prints a description of the ProtoMessage, including its fields and types.

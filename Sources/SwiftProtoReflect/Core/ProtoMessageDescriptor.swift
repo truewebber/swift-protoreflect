@@ -94,7 +94,7 @@ public class ProtoMessageDescriptor {
     else {
       self.fullName = "\(packageName).\(messageName)"
     }
-    
+
     // Create oneof descriptors first (without fields)
     var oneofDescriptors: [ProtoOneofDescriptor] = []
     var oneofMap: [Int: ProtoOneofDescriptor] = [:]
@@ -107,7 +107,7 @@ public class ProtoMessageDescriptor {
     // Create field descriptors
     var fieldDescriptors: [ProtoFieldDescriptor] = []
     var oneofFields: [Int: [ProtoFieldDescriptor]] = [:]
-    
+
     for fieldProto in descriptorProto.field {
       // Determine if this field is part of a oneof
       var oneofDescriptor: ProtoOneofDescriptor? = nil
@@ -115,14 +115,14 @@ public class ProtoMessageDescriptor {
         let oneofIndex = Int(fieldProto.oneofIndex)
         oneofDescriptor = oneofMap[oneofIndex]
       }
-      
+
       if let fieldDescriptor = ProtoFieldDescriptor(
         fieldProto: fieldProto,
         messageProto: descriptorProto,
         oneofDescriptor: oneofDescriptor
       ) {
         fieldDescriptors.append(fieldDescriptor)
-        
+
         // If this is a oneof field, add it to the appropriate collection
         if let _ = oneofDescriptor, fieldProto.hasOneofIndex {
           let oneofIndex = Int(fieldProto.oneofIndex)
@@ -133,7 +133,7 @@ public class ProtoMessageDescriptor {
         }
       }
     }
-    
+
     // Update oneof descriptors with their fields
     for (index, fields) in oneofFields {
       if let oneofDescriptor = oneofMap[index] {
@@ -142,17 +142,17 @@ public class ProtoMessageDescriptor {
           oneofProto: oneofDescriptor.originalOneofProto()!,
           fields: fields
         )
-        
+
         // Replace the old descriptor with the updated one
         if let descriptorIndex = oneofDescriptors.firstIndex(where: { $0.name == updatedDescriptor.name }) {
           oneofDescriptors[descriptorIndex] = updatedDescriptor
-          
+
           // Update the reference in the map
           oneofMap[index] = updatedDescriptor
         }
       }
     }
-    
+
     self.fields = fieldDescriptors
     self.oneofs = oneofDescriptors
 
@@ -233,11 +233,11 @@ public class ProtoMessageDescriptor {
   /// - Returns: A dictionary mapping oneof names to arrays of their field descriptors.
   public func oneofFields() -> [String: [ProtoFieldDescriptor]] {
     var result: [String: [ProtoFieldDescriptor]] = [:]
-    
+
     for oneof in oneofs {
       result[oneof.name] = oneof.fields
     }
-    
+
     return result
   }
 
@@ -314,13 +314,13 @@ extension ProtoMessageDescriptor {
     // Create oneof descriptors and establish relationships
     var oneofDescriptors: [ProtoOneofDescriptor] = []
     var allFields = regularFields
-    
+
     for (name, fields) in oneofs {
       let oneof = ProtoOneofDescriptor.create(name: name, fields: fields)
       oneofDescriptors.append(oneof)
       allFields.append(contentsOf: fields)
     }
-    
+
     return ProtoMessageDescriptor(
       fullName: fullName,
       fields: allFields,
