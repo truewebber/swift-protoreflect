@@ -296,7 +296,10 @@ public class ProtoMessageDescriptor {
 
 /// Extension with factory methods for creating message descriptors
 extension ProtoMessageDescriptor {
-  /// Creates a new message descriptor with oneof fields
+  /// Creates a new message descriptor with oneof fields.
+  ///
+  /// This is a convenience method for creating message descriptors with oneof fields.
+  /// It handles setting up the bidirectional relationships between oneof descriptors and field descriptors.
   /// - Parameters:
   ///   - fullName: The full name of the message including package and parent message names
   ///   - regularFields: Regular fields not part of any oneof

@@ -1,7 +1,10 @@
 import Foundation
 import SwiftProtobuf
 
-/// Protocol that any protobuf message can conform to
+/// Protocol that any protobuf message can conform to.
+///
+/// This protocol allows for uniform handling of both static SwiftProtobuf messages
+/// and dynamic messages created at runtime.
 public protocol AnyProtoMessage {
   /// Serialize message to binary format
   func serializedData() throws -> Data

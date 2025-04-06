@@ -78,8 +78,8 @@ public class ProtoFieldDescriptor: Hashable {
   public let enumType: ProtoEnumDescriptor?
 
   /// If this field is part of a oneof, the descriptor for the oneof.
-  /// This property provides a reference to the oneof descriptor that contains this field.
-  /// For fields that are not part of a oneof, this will be nil.
+  ///
+  /// For regular fields, this property is nil.
   public private(set) var oneofDescriptor: ProtoOneofDescriptor?
 
   /// Indicates whether this field is part of a oneof declaration.
@@ -411,9 +411,11 @@ public class ProtoFieldDescriptor: Hashable {
     return fieldProto
   }
 
-  /// Links this field with a oneof descriptor
-  /// - Parameter oneof: The oneof descriptor to which this field will belong
-  /// - Returns: This field descriptor for method chaining
+  /// Links this field with a oneof descriptor.
+  ///
+  /// This method establishes a bidirectional relationship between the field and the oneof.
+  /// - Parameter oneof: The oneof descriptor to link with this field
+  /// - Returns: This field descriptor (for method chaining)
   @discardableResult
   public func setOneof(_ oneof: ProtoOneofDescriptor) -> ProtoFieldDescriptor {
     self.oneofDescriptor = oneof

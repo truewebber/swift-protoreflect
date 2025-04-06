@@ -201,31 +201,31 @@ public enum ProtoWireFormatErrorEnhanced: Error, Equatable {
 
   // MARK: - Conversion
 
-  /// Convert from simple ProtoWireFormatError
-  public static func from(_ error: SwiftProtoReflect.ProtoWireFormatError) -> ProtoWireFormatErrorEnhanced {
+  /// Convert from simple ProtoWireFormatError.
+  init(_ error: ProtoWireFormatError) {
     switch error {
     case .typeMismatch:
-      return .typeMismatch(expected: .unknown, got: .unknown)
+      self = .typeMismatch(expected: .unknown, got: .unknown)
     case .unsupportedType:
-      return .unsupportedType
+      self = .unsupportedType
     case .malformedVarint:
-      return .malformedVarint
+      self = .malformedVarint
     case .truncatedMessage:
-      return .truncatedMessage
+      self = .truncatedMessage
     case .invalidUtf8String:
-      return .invalidUtf8String
+      self = .invalidUtf8String
     case .invalidMessageType:
-      return .invalidMessageType
+      self = .invalidMessageType
     case .wireTypeMismatch:
-      return .wireTypeMismatch(expected: -1, got: -1)
+      self = .wireTypeMismatch(expected: -1, got: -1)
     case .validationError(let fieldName, let reason):
-      return .validationError(fieldName: fieldName, reason: reason)
+      self = .validationError(fieldName: fieldName, reason: reason)
     case .unsupportedWireType:
-      return .unsupportedWireType
+      self = .unsupportedWireType
     case .invalidFieldKey:
-      return .invalidFieldKey
+      self = .invalidFieldKey
     case .invalidMapEntry:
-      return .invalidMessageType
+      self = .invalidMessageType
     }
   }
 }

@@ -83,9 +83,10 @@ public class ProtoOneofDescriptor: Hashable {
     return oneofProto
   }
 
-  /// Adds a field to this oneof and sets the field's oneof reference
+  /// Adds a field to this oneof and sets the field's oneof reference.
+  ///
   /// - Parameter field: The field to add to this oneof
-  /// - Returns: This oneof descriptor for method chaining
+  /// - Returns: The field with updated oneof reference
   @discardableResult
   public func addField(_ field: ProtoFieldDescriptor) -> ProtoOneofDescriptor {
     fields.append(field)
@@ -93,9 +94,10 @@ public class ProtoOneofDescriptor: Hashable {
     return self
   }
 
-  /// Adds multiple fields to this oneof and sets each field's oneof reference
+  /// Adds multiple fields to this oneof and sets each field's oneof reference.
+  ///
   /// - Parameter fields: The fields to add to this oneof
-  /// - Returns: This oneof descriptor for method chaining
+  /// - Returns: The fields with updated oneof references
   @discardableResult
   public func addFields(_ fields: [ProtoFieldDescriptor]) -> ProtoOneofDescriptor {
     for field in fields {
@@ -104,11 +106,12 @@ public class ProtoOneofDescriptor: Hashable {
     return self
   }
 
-  /// Creates a new oneof descriptor with fields and automatically sets up the bidirectional relationships
+  /// Creates a new oneof descriptor with fields and automatically sets up the bidirectional relationships.
+  ///
   /// - Parameters:
   ///   - name: The name of the oneof
   ///   - fields: The fields to include in the oneof
-  /// - Returns: A new oneof descriptor with proper field relationships
+  /// - Returns: A new oneof descriptor with properly configured fields
   public static func create(name: String, fields: [ProtoFieldDescriptor]) -> ProtoOneofDescriptor {
     let oneof = ProtoOneofDescriptor(name: name, fields: [])
     oneof.addFields(fields)

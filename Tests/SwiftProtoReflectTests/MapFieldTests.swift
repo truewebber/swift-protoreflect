@@ -63,7 +63,7 @@ class MapFieldTests: XCTestCase {
     let mapFieldValue = message.get(field: mapFieldDescriptor)
     XCTAssertNotNil(mapFieldValue, "Map field value should not be nil")
 
-    if case let ProtoValue.mapValue(entries)? = mapFieldValue {
+    if case .mapValue(let entries)? = mapFieldValue {
       XCTAssertEqual(entries.count, 1, "Map should have 1 entry")
       XCTAssertEqual(entries["one"]?.getInt(), 1, "Value for key 'one' should be 1")
     }
@@ -85,7 +85,7 @@ class MapFieldTests: XCTestCase {
     let mapValue = unmarshalledMessage?.get(field: mapFieldDescriptor)
     XCTAssertNotNil(mapValue, "Map field should be present in unmarshalled message")
 
-    if case let ProtoValue.mapValue(entries)? = mapValue {
+    if case .mapValue(let entries)? = mapValue {
       XCTAssertEqual(entries.count, 1, "Map should have 1 entry")
       XCTAssertEqual(entries["one"]?.getInt(), 1, "Value for key 'one' should be 1")
     }

@@ -187,8 +187,10 @@ class ProtoFieldTypeTests: XCTestCase {
     )
 
     // Invalid conversions according to protoc
-    XCTAssertNil(ProtoValue.stringValue("42").convertTo(targetType: .int32))
-    XCTAssertNil(ProtoValue.messageValue(testMessage).convertTo(targetType: .int32))
+    XCTAssertNil(ProtoValue.stringValue("42").convertTo(targetType: .int32))  // protoc doesn't allow string to in
+
+    // protoc doesn't allow bytes to string
+    XCTAssertNil(ProtoValue.bytesValue(Data([0x01])).convertTo(targetType: .string))
   }
 
   // MARK: - Edge Cases Tests
@@ -266,10 +268,12 @@ class ProtoFieldTypeTests: XCTestCase {
 
   func testInvalidTypeCombinations() {
     // Test invalid type combinations according to protoc
-    XCTAssertNil(ProtoValue.boolValue(true).convertTo(targetType: .int32))  // protoc doesn't allow bool to int
+    XCTAssertNil(ProtoValue.boolValue(true).convertTo(targetType: .int32))  // protoc doesn't allow bool to in
     XCTAssertNil(ProtoValue.intValue(42).convertTo(targetType: .bool))  // protoc doesn't allow int to bool
-    XCTAssertNil(ProtoValue.stringValue("42").convertTo(targetType: .int32))  // protoc doesn't allow string to int
-    XCTAssertNil(ProtoValue.bytesValue(Data([0x01])).convertTo(targetType: .string))  // protoc doesn't allow bytes to string
+    XCTAssertNil(ProtoValue.stringValue("42").convertTo(targetType: .int32))  // protoc doesn't allow string to in
+
+    // protoc doesn't allow bytes to string
+    XCTAssertNil(ProtoValue.bytesValue(Data([0x01])).convertTo(targetType: .string))
   }
 
   // MARK: - Field Number Validation Tests

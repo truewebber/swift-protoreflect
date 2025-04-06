@@ -561,7 +561,7 @@ class BasicSerializationTests: XCTestCase {
     let mapFieldValue = message.get(field: mapFieldDescriptor)
     XCTAssertNotNil(mapFieldValue, "Map field value should not be nil")
 
-    if case let ProtoValue.mapValue(entries)? = mapFieldValue {
+    if case .mapValue(let entries)? = mapFieldValue {
       XCTAssertEqual(entries.count, 1, "Map should have 1 entry")
       XCTAssertEqual(entries["one"]?.getInt(), 1, "Value for key 'one' should be 1")
     }
@@ -754,7 +754,7 @@ class BasicSerializationTests: XCTestCase {
     let mapFieldValue = message.get(field: mapFieldDescriptor)
     XCTAssertNotNil(mapFieldValue, "Map field value should not be nil")
 
-    if case let ProtoValue.mapValue(entries)? = mapFieldValue {
+    if case .mapValue(let entries)? = mapFieldValue {
       XCTAssertEqual(entries.count, 1, "Map should have 1 entry")
       XCTAssertEqual(entries["key1"]?.getString(), "value1", "Value for key 'key1' should be 'value1'")
     }
@@ -781,7 +781,7 @@ class BasicSerializationTests: XCTestCase {
         return
       }
 
-      if case let ProtoValue.mapValue(entries) = mapValue {
+      if case .mapValue(let entries) = mapValue {
         XCTAssertEqual(entries.count, 1, "Map should have 1 entry")
         XCTAssertEqual(entries["key1"]?.getString(), "value1", "Value for key 'key1' should be 'value1'")
       }

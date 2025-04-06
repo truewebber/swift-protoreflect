@@ -5,7 +5,7 @@ import XCTest
 extension XCTestCase {
   // Вспомогательные функции для безопасного вызова методов сериализации/десериализации
 
-  /// Безопасная сериализация сообщения с обработкой исключений
+  /// Безопасная сериализация сообщения с обработкой исключений.
   func safeMarshal(message: ProtoMessage, file: StaticString = #filePath, line: UInt = #line) -> Data? {
     do {
       return try ProtoWireFormat.marshal(message: message)
@@ -16,7 +16,7 @@ extension XCTestCase {
     }
   }
 
-  /// Безопасная десериализация данных с обработкой исключений
+  /// Безопасная десериализация данных с обработкой исключений.
   func safeUnmarshal(
     data: Data,
     messageDescriptor: ProtoMessageDescriptor,
@@ -32,7 +32,7 @@ extension XCTestCase {
     }
   }
 
-  /// Безопасная полная проверка сериализации и десериализации
+  /// Безопасная полная проверка сериализации и десериализации.
   func safeRoundTrip(message: ProtoMessage, file: StaticString = #filePath, line: UInt = #line) -> ProtoMessage? {
     guard let data = safeMarshal(message: message, file: file, line: line) else {
       return nil

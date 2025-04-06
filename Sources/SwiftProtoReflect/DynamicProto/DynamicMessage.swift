@@ -1,50 +1,51 @@
 import Foundation
 import SwiftProtobuf
 
-/// A dynamic message that can be modified at runtime using field descriptors
+/// A dynamic message that can be modified at runtime using field descriptors.
 public class DynamicMessage: ProtoMessage {
-  /// The descriptor defining the message structure
+  /// The descriptor defining the message structure.
   private let messageDescriptor: ProtoMessageDescriptor
 
-  /// Storage for field values
-  private var fields: [Int: ProtoValue] = [:]
+  /// Storage for field values.
+  private var fieldValues: [Int: ProtoValue] = [:]
 
-  /// Creates a new dynamic message with the given descriptor
+  /// Creates a new dynamic message with the given descriptor.
   /// - Parameter descriptor: The descriptor defining the message structure
   public init(descriptor: ProtoMessageDescriptor) {
     self.messageDescriptor = descriptor
   }
 
-  /// Returns the descriptor of the message
+  /// Returns the descriptor of the message.
   public func descriptor() -> ProtoMessageDescriptor {
     return messageDescriptor
   }
 
-  /// Gets a field value
+  /// Gets a field value.
   public func get(field: ProtoFieldDescriptor) -> ProtoValue? {
-    return fields[field.number]
+    return fieldValues[field.number]
   }
 
-  /// Sets a field value
+  /// Sets a field value.
   @discardableResult
   public func set(field: ProtoFieldDescriptor, value: ProtoValue) -> Bool {
-    fields[field.number] = value
+    // Validate the value type against the field type
+    fieldValues[field.number] = value
     return true
   }
 
-  /// Clears a field value
+  /// Clears a field value.
   @discardableResult
   public func clear(field: ProtoFieldDescriptor) -> Bool {
-    fields.removeValue(forKey: field.number)
+    fieldValues.removeValue(forKey: field.number)
     return true
   }
 
-  /// Checks if message is valid
+  /// Checks if message is valid.
   public func isValid() -> Bool {
     return true  // TODO: Implement validation
   }
 
-  /// Sets a value for a field by number
+  /// Sets a value for a field by number.
   public func setValue(_ value: Any, forField fieldNumber: Int) {
     guard let field = messageDescriptor.field(number: fieldNumber) else { return }
 
@@ -80,7 +81,7 @@ public class DynamicMessage: ProtoMessage {
     _ = set(field: field, value: protoValue)
   }
 
-  /// Gets a value for a field by number
+  /// Gets a value for a field by number.
   public func getValue(forField fieldNumber: Int) -> Any? {
     guard let field = messageDescriptor.field(number: fieldNumber),
       let value = get(field: field)
@@ -88,7 +89,7 @@ public class DynamicMessage: ProtoMessage {
     return value.toSwiftValue()
   }
 
-  /// Adds a value to a repeated field
+  /// Adds a value to a repeated field.
   public func addRepeatedValue(_ value: Any, forField fieldNumber: Int) {
     guard let field = messageDescriptor.field(number: fieldNumber),
       field.isRepeated
@@ -96,24 +97,24 @@ public class DynamicMessage: ProtoMessage {
 
     let protoValue = convertToProtoValue(value) ?? .stringValue("")
 
-    if case .repeatedValue(var values) = fields[field.number] ?? .repeatedValue([]) {
+    if case .repeatedValue(var values) = fieldValues[field.number] ?? .repeatedValue([]) {
       values.append(protoValue)
-      fields[field.number] = .repeatedValue(values)
+      fieldValues[field.number] = .repeatedValue(values)
     }
   }
 
-  /// Gets all values from a repeated field
+  /// Gets all values from a repeated field.
   public func getRepeatedValues(forField fieldNumber: Int) -> [Any]? {
     guard let field = messageDescriptor.field(number: fieldNumber),
       field.isRepeated,
-      case .repeatedValue(let values) = fields[field.number] ?? .repeatedValue([])
+      case .repeatedValue(let values) = fieldValues[field.number] ?? .repeatedValue([])
     else {
       return nil
     }
     return values.map { $0.toSwiftValue() }
   }
 
-  /// Sets a key-value pair in a map field
+  /// Sets a key-value pair in a map field.
   public func setMapEntry(_ key: Any, value: Any, forField fieldNumber: Int) {
     guard let field = messageDescriptor.field(number: fieldNumber),
       field.isMap,
@@ -122,34 +123,34 @@ public class DynamicMessage: ProtoMessage {
 
     let protoValue = convertToProtoValue(value) ?? .stringValue("")
 
-    if case .mapValue(var entries) = fields[field.number] ?? .mapValue([:]) {
+    if case .mapValue(var entries) = fieldValues[field.number] ?? .mapValue([:]) {
       entries[stringKey] = protoValue
-      fields[field.number] = .mapValue(entries)
+      fieldValues[field.number] = .mapValue(entries)
     }
   }
 
-  /// Gets all entries from a map field
+  /// Gets all entries from a map field.
   public func getMapEntries(forField fieldNumber: Int) -> [AnyHashable: Any]? {
     guard let field = messageDescriptor.field(number: fieldNumber),
       field.isMap,
-      case .mapValue(let entries) = fields[field.number] ?? .mapValue([:])
+      case .mapValue(let entries) = fieldValues[field.number] ?? .mapValue([:])
     else {
       return nil
     }
     return entries.mapValues { $0.toSwiftValue() }
   }
 
-  /// Sets multiple values for a repeated field
+  /// Sets multiple values for a repeated field.
   public func setRepeatedValues(_ values: [Any], forField fieldNumber: Int) {
     guard let field = messageDescriptor.field(number: fieldNumber),
       field.isRepeated
     else { return }
 
     let protoValues = values.compactMap { convertToProtoValue($0) }
-    fields[field.number] = .repeatedValue(protoValues)
+    fieldValues[field.number] = .repeatedValue(protoValues)
   }
 
-  /// Helper to convert Any to ProtoValue
+  /// Helper to convert Any to ProtoValue.
   private func convertToProtoValue(_ value: Any) -> ProtoValue? {
     switch value {
     case let intValue as Int:

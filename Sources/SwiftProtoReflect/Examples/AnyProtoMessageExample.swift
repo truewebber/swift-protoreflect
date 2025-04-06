@@ -1,10 +1,10 @@
 import Foundation
 import SwiftProtobuf
 
-/// Examples demonstrating the usage of AnyProtoMessage protocol
-public class AnyProtoMessageExample {
+/// Examples demonstrating the usage of AnyProtoMessage protocol.
+public struct AnyProtoMessageExamples {
 
-  /// Example of working with both SwiftProtobuf and dynamic messages uniformly
+  /// Example of working with both SwiftProtobuf and dynamic messages uniformly.
   public static func demonstrateUniformHandling() throws {
     // Create a dynamic message
     let personDescriptor = ProtoMessageDescriptor(
@@ -23,14 +23,13 @@ public class AnyProtoMessageExample {
     dynamicPerson.setValue(30, forField: 2)
     dynamicPerson.setRepeatedValues(["john@example.com", "doe@example.com"], forField: 3)
 
-    /* COMMENTED - Need to implement Person message
-    // Create a SwiftProtobuf message (assuming we have Person.proto generated)
-    var swiftPerson = Person.with {
-        $0.name = "Jane Doe"
-        $0.age = 25
-        $0.emails = ["jane@example.com"]
-    }
-    */
+    // COMMENTED - Need to implement Person message
+    // // Create a SwiftProtobuf message (assuming we have Person.proto generated)
+    // var swiftPerson = Person.with {
+    //     $0.name = "Jane Doe"
+    //     $0.age = 25
+    //     $0.emails = ["jane@example.com"]
+    // }
 
     // Function that works with any proto message
     func processMessage(_ message: AnyProtoMessage) throws {
@@ -60,64 +59,62 @@ public class AnyProtoMessageExample {
     print("Processing dynamic message:")
     try processMessage(dynamicPerson)
 
-    /* COMMENTED - Need to implement Person message
-    print("\nProcessing SwiftProtobuf message:")
-    try processMessage(swiftPerson)
-    */
+    // COMMENTED - Need to implement Person message
+    // print("\nProcessing SwiftProtobuf message:")
+    // try processMessage(swiftPerson)
   }
 
-  /// Example of message conversion and modification
+  /// Example of message conversion and modification.
   public static func demonstrateMessageConversion() throws {
-    /* COMMENTED - Need to implement Person message
-    // Create a SwiftProtobuf message
-    var original = Person.with {
-        $0.name = "Alice"
-        $0.age = 20
-        $0.emails = ["alice@example.com"]
-    }
-    
-    // Convert to binary
-    let data = try original.serializedData()
-    
-    // Create a dynamic message from the same schema
-    let personDescriptor = ProtoMessageDescriptor(
-        fullName: "Person",
-        fields: [
-            ProtoFieldDescriptor(name: "name", number: 1, type: .string, isRepeated: false, isMap: false),
-            ProtoFieldDescriptor(name: "age", number: 2, type: .int32, isRepeated: false, isMap: false),
-            ProtoFieldDescriptor(name: "emails", number: 3, type: .string, isRepeated: true, isMap: false)
-        ],
-        enums: [],
-        nestedMessages: []
-    )
-    
-    let dynamic = DynamicMessage(descriptor: personDescriptor)
-    
-    // Merge the SwiftProtobuf data into dynamic message
-    dynamic = try dynamic.merging(serializedData: data)
-    
-    // Modify the dynamic message
-    dynamic.setValue("Alice Smith", forField: 1) // Change name
-    dynamic.addRepeatedValue("alice.smith@example.com", forField: 3) // Add email
-    
-    // Convert back to binary
-    let modifiedData = try dynamic.serializedData()
-    
-    // Create a new SwiftProtobuf message from modified data
-    // Use merging instead of merge for structs
-    let modified = try Person().merging(serializedData: modifiedData)
-    
-    print("Original name: \(original.name)")
-    print("Modified name: \(modified.name)")
-    print("Original emails: \(original.emails)")
-    print("Modified emails: \(modified.emails)")
-    */
+    // COMMENTED - Need to implement Person message
+    // // Create a SwiftProtobuf message
+    // var original = Person.with {
+    //     $0.name = "Alice"
+    //     $0.age = 20
+    //     $0.emails = ["alice@example.com"]
+    // }
+    //
+    // // Convert to binary
+    // let data = try original.serializedData()
+    //
+    // // Create a dynamic message from the same schema
+    // let personDescriptor = ProtoMessageDescriptor(
+    //     fullName: "Person",
+    //     fields: [
+    //         ProtoFieldDescriptor(name: "name", number: 1, type: .string, isRepeated: false, isMap: false),
+    //         ProtoFieldDescriptor(name: "age", number: 2, type: .int32, isRepeated: false, isMap: false),
+    //         ProtoFieldDescriptor(name: "emails", number: 3, type: .string, isRepeated: true, isMap: false)
+    //     ],
+    //     enums: [],
+    //     nestedMessages: []
+    // )
+    //
+    // let dynamic = DynamicMessage(descriptor: personDescriptor)
+    //
+    // // Merge the SwiftProtobuf data into dynamic message
+    // dynamic = try dynamic.merging(serializedData: data)
+    //
+    // // Modify the dynamic message
+    // dynamic.setValue("Alice Smith", forField: 1) // Change name
+    // dynamic.addRepeatedValue("alice.smith@example.com", forField: 3) // Add email
+    //
+    // // Convert back to binary
+    // let modifiedData = try dynamic.serializedData()
+    //
+    // // Create a new SwiftProtobuf message from modified data
+    // // Use merging instead of merge for structs
+    // let modified = try Person().merging(serializedData: modifiedData)
+    //
+    // print("Original name: \(original.name)")
+    // print("Modified name: \(modified.name)")
+    // print("Original emails: \(original.emails)")
+    // print("Modified emails: \(modified.emails)")
 
     // Simple placeholder example using only dynamic messages
     print("Message conversion example requires implementation of Person message type")
   }
 
-  /// Example of generic message processing
+  /// Example of generic message processing.
   public static func demonstrateGenericProcessing() {
     /// Generic function to extract message metadata
     func extractMetadata<T: AnyProtoMessage>(_ message: T) -> [String: Any] {
@@ -152,11 +149,10 @@ public class AnyProtoMessageExample {
     )
     dynamicMessage.setValue("Hello World", forField: 1)
 
-    /* COMMENTED - Need to implement Person message
-    var swiftMessage = Person.with {
-        $0.name = "Test Person"
-    }
-    */
+    // COMMENTED - Need to implement Person message
+    // var swiftMessage = Person.with {
+    //     $0.name = "Test Person"
+    // }
 
     let dynamicMetadata = extractMetadata(dynamicMessage)
     // let swiftMetadata = extractMetadata(swiftMessage)

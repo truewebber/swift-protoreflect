@@ -17,55 +17,55 @@ public final class BufferPool {
   /// The shared singleton instance of the buffer pool.
   public static let shared = BufferPool()
 
-  /// Configurable buffer sizes
+  /// Configurable buffer sizes.
   public static let smallMessageSize = 1024  // 1KB
   public static let mediumMessageSize = 1_048_576  // 1MB
   public static let largeMessageSize = 52_428_800  // 50MB
 
-  /// Maximum pool size in bytes
+  /// Maximum pool size in bytes.
   public static let maxPoolSize = 268_435_456  // 256MB
 
-  /// Maximum number of buffers in the pool
+  /// Maximum number of buffers in the pool.
   private static let maxBuffers = 100
 
-  /// Thread-safe pool access
+  /// Thread-safe pool access.
   private let lock = NSLock()
 
-  /// Available buffers organized by size category
+  /// Available buffers organized by size category.
   private var smallBuffers: [Buffer] = []
   private var mediumBuffers: [Buffer] = []
   private var largeBuffers: [Buffer] = []
 
-  /// Pool statistics
+  /// Pool statistics.
   private var stats = PoolStatistics()
 
-  /// Represents a reusable memory buffer
+  /// Represents a reusable memory buffer.
   public class Buffer {
-    /// The underlying data storage
+    /// The underlying data storage.
     public private(set) var data: UnsafeMutableRawBufferPointer
 
-    /// The size of the buffer in bytes
+    /// The size of the buffer in bytes.
     public var size: Int { data.count }
 
-    /// Whether the buffer is currently in use
+    /// Whether the buffer is currently in use.
     public private(set) var isInUse = false
 
-    /// Internal counter for tracking buffer usage
+    /// Internal counter for tracking buffer usage.
     private var useCount = 0
 
-    /// Initialize a new buffer with the specified size
+    /// Initialize a new buffer with the specified size.
     fileprivate init(size: Int) {
       data = UnsafeMutableRawBufferPointer.allocate(byteCount: size, alignment: MemoryLayout<UInt64>.alignment)
       self.isInUse = true
     }
 
-    /// Mark this buffer as in use
+    /// Mark this buffer as in use.
     fileprivate func markAsInUse() {
       isInUse = true
       useCount += 1
     }
 
-    /// Mark this buffer as available
+    /// Mark this buffer as available.
     fileprivate func markAsAvailable() {
       isInUse = false
     }
@@ -75,29 +75,29 @@ public final class BufferPool {
     }
   }
 
-  /// Statistics about buffer pool usage
+  /// Statistics about buffer pool usage.
   public struct PoolStatistics {
-    /// Total number of buffers created
+    /// Total number of buffers created.
     public internal(set) var totalBuffersCreated = 0
 
-    /// Total number of buffer acquisitions
+    /// Total number of buffer acquisitions.
     public internal(set) var totalAcquisitions = 0
 
-    /// Total number of cache hits (reused buffers)
+    /// Total number of cache hits (reused buffers).
     public internal(set) var cacheHits = 0
 
-    /// Current size of the pool in bytes
+    /// Current size of the pool in bytes.
     public internal(set) var currentPoolSize = 0
 
-    /// Peak size of the pool in bytes
+    /// Peak size of the pool in bytes.
     public internal(set) var peakPoolSize = 0
 
-    /// Average buffer size
+    /// Average buffer size.
     public var averageBufferSize: Int {
       return totalBuffersCreated > 0 ? currentPoolSize / totalBuffersCreated : 0
     }
 
-    /// Cache hit rate (percentage)
+    /// Cache hit rate (percentage).
     public var cacheHitRate: Double {
       return totalAcquisitions > 0 ? Double(cacheHits) / Double(totalAcquisitions) * 100.0 : 0.0
     }
@@ -121,17 +121,17 @@ public final class BufferPool {
     }
   }
 
-  /// Private initializer to enforce singleton pattern
+  /// Private initializer to enforce singleton pattern.
   private init() {}
 
-  /// Current statistics about pool usage
+  /// Current statistics about pool usage.
   public var poolStats: PoolStatistics {
     lock.lock()
     defer { lock.unlock() }
     return stats
   }
 
-  /// Acquires a buffer of at least the specified size
+  /// Acquires a buffer of at least the specified size.
   ///
   /// - Parameter size: The minimum required buffer size in bytes
   /// - Returns: A buffer suitable for the requested size
@@ -191,7 +191,7 @@ public final class BufferPool {
     return buffer
   }
 
-  /// Releases a buffer back to the pool for reuse
+  /// Releases a buffer back to the pool for reuse.
   ///
   /// - Parameter buffer: The buffer to release
   public func release(_ buffer: Buffer) {
@@ -204,7 +204,7 @@ public final class BufferPool {
     pruneExcessBuffers()
   }
 
-  /// Finds an available buffer in the specified category
+  /// Finds an available buffer in the specified category.
   private func findAvailableBuffer(in buffers: inout [Buffer]) -> Buffer? {
     for buffer in buffers where !buffer.isInUse {
       return buffer
@@ -212,7 +212,7 @@ public final class BufferPool {
     return nil
   }
 
-  /// Prunes excess buffers to stay within our maximum pool size
+  /// Prunes excess buffers to stay within our maximum pool size.
   private func pruneExcessBuffers() {
     // Check if we need to prune any buffers
     var totalSize = calculateTotalPoolSize()
@@ -266,13 +266,13 @@ public final class BufferPool {
     stats.updatePoolSize(totalSize)
   }
 
-  /// Calculates the total size of all buffers in the pool
+  /// Calculates the total size of all buffers in the pool.
   private func calculateTotalPoolSize() -> Int {
     return smallBuffers.reduce(0) { $0 + $1.size } + mediumBuffers.reduce(0) { $0 + $1.size }
       + largeBuffers.reduce(0) { $0 + $1.size }
   }
 
-  /// Clears all unused buffers from the pool
+  /// Clears all unused buffers from the pool.
   public func clearUnusedBuffers() {
     lock.lock()
     defer { lock.unlock() }

@@ -2,7 +2,7 @@ import Foundation
 import SwiftProtobuf
 
 extension SwiftProtobuf.Message {
-  /// Convert SwiftProtobuf message to our ProtoMessage protocol
+  /// Convert SwiftProtobuf message to our ProtoMessage protocol.
   public func asProtoMessage() -> ProtoMessage {
     // Create a basic descriptor for the message type
     let typeName = String(describing: Self.self)
@@ -31,7 +31,10 @@ extension SwiftProtobuf.Message {
     return dynamicMessage
   }
 
-  /// Get fields for this message type
+  /// Get fields for this message type.
+  ///
+  /// This extension allows access to a message's field descriptors.
+  /// - Returns: An array of field descriptors defining the message's structure
   private func getFieldsFromType() -> [ProtoFieldDescriptor] {
     // This is a simplified implementation
     // In a real implementation, you would use reflection or codable to get field information
@@ -39,7 +42,11 @@ extension SwiftProtobuf.Message {
     return []
   }
 
-  /// Get value for field number
+  /// Get value for field number.
+  ///
+  /// This extension allows values to be extracted from a message by field number.
+  /// - Parameter fieldNumber: The field number to retrieve
+  /// - Returns: The field value or nil if not present
   private func getValue(_ fieldNumber: Int) -> Any? {
     // This would need to use runtime reflection or codable
     // to access field values. For now just a placeholder
@@ -48,7 +55,10 @@ extension SwiftProtobuf.Message {
 }
 
 extension ProtoFieldType {
-  /// Create field type from SwiftProtobuf type
+  /// Create field type from SwiftProtobuf type.
+  ///
+  /// - Parameter type: The SwiftProtobuf field type
+  /// - Returns: The equivalent ProtoFieldType
   init(swiftType: Any.Type) {
     // Map Swift types to proto types
     switch swiftType {

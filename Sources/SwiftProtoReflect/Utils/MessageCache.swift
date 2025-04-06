@@ -16,34 +16,34 @@ public final class MessageCache {
   /// The shared singleton instance of the message cache.
   public static let shared = MessageCache()
 
-  /// Maximum number of entries in the cache
+  /// Maximum number of entries in the cache.
   private static let maxCacheSize = 10_000
 
-  /// Thread-safe cache access
+  /// Thread-safe cache access.
   private let lock = NSLock()
 
-  /// Storage for cached messages, using descriptor's full name as the key
+  /// Storage for cached messages, using descriptor's full name as the key.
   private var cache: [String: CacheEntry] = [:]
 
-  /// Timestamp for tracking least recently used entries
+  /// Timestamp for tracking least recently used entries.
   private var timestamp: UInt64 = 0
 
-  /// Entry in the message cache
+  /// Entry in the message cache.
   private struct CacheEntry {
-    /// The cached message
+    /// The cached message.
     let message: SwiftProtobuf.Message
 
-    /// Last accessed timestamp for LRU tracking
+    /// Last accessed timestamp for LRU tracking.
     var lastAccessed: UInt64
 
-    /// Create a new cache entry
+    /// Create a new cache entry.
     init(message: SwiftProtobuf.Message, timestamp: UInt64) {
       self.message = message
       self.lastAccessed = timestamp
     }
   }
 
-  /// Private initializer to enforce singleton pattern
+  /// Private initializer to enforce singleton pattern.
   private init() {}
 
   /// Caches a SwiftProtobuf message for a specific descriptor.
