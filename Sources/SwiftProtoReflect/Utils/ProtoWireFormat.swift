@@ -1669,7 +1669,7 @@ public struct ProtoWireFormat {
         if case .mapValue(let entries) = value {
           // Verify that the map entries match the expected types
           if let entryDescriptor = field.messageType,
-            let _: ProtoFieldDescriptor = entryDescriptor.field(number: 1),
+            entryDescriptor.field(number: 1) != nil,
             let valueField = entryDescriptor.field(number: 2)
           {
 

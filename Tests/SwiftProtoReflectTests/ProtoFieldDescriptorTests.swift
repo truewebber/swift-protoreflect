@@ -86,7 +86,7 @@ class ProtoFieldDescriptorTests: XCTestCase {
   func testFieldDescriptorHashable() {
     // Given
     let field = ProtoFieldDescriptor(name: "field1", number: 1, type: .int32, isRepeated: false, isMap: false)
-    var fieldMap = [ProtoFieldDescriptor: ProtoValue]()
+    var fieldMap: [ProtoFieldDescriptor: ProtoValue] = [:]
 
     // When
     fieldMap[field] = .intValue(123)

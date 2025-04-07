@@ -124,7 +124,7 @@ public class ProtoMessageDescriptor {
         fieldDescriptors.append(fieldDescriptor)
 
         // If this is a oneof field, add it to the appropriate collection
-        if let _ = oneofDescriptor, fieldProto.hasOneofIndex {
+        if oneofDescriptor != nil, fieldProto.hasOneofIndex {
           let oneofIndex = Int(fieldProto.oneofIndex)
           if oneofFields[oneofIndex] == nil {
             oneofFields[oneofIndex] = []

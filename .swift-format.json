@@ -45,6 +45,8 @@
     "UseSynthesizedInitializer": true,
     "UseTripleSlashForDocumentationComments": true,
     "UseWhereClausesInForLoops": true,
-    "ValidateDocumentationComments": false
+    "ValidateDocumentationComments": false,
+    "AlwaysUseLiteralForEmptyCollectionInit": true,
+    "UseExplicitNilCheckInConditions": true
   }
 } 
