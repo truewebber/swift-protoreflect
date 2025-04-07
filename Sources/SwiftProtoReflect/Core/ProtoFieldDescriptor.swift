@@ -59,6 +59,19 @@ public class ProtoFieldDescriptor: Hashable {
   /// In Protocol Buffers, map fields are defined with the `map<key_type, value_type>` syntax.
   public let isMap: Bool
 
+  /// Indicates whether the field has explicit presence semantics.
+  ///
+  /// In proto3, fields normally don't track presence, but fields marked as `optional`
+  /// do have explicit presence tracking. This allows distinguishing between an unset field
+  /// and a field set to its default value.
+  ///
+  /// Example in proto3:
+  /// ```
+  /// optional int32 foo = 1;  // has explicit presence
+  /// int32 bar = 2;           // no explicit presence
+  /// ```
+  public let hasExplicitPresence: Bool
+
   /// Default value of the field, if any.
   ///
   /// This value is used when the field is not present in the serialized data.
@@ -98,6 +111,7 @@ public class ProtoFieldDescriptor: Hashable {
   ///   - type: The data type of the field.
   ///   - isRepeated: Whether the field can contain multiple values.
   ///   - isMap: Whether the field is a map type.
+  ///   - hasExplicitPresence: Whether the field has explicit presence semantics (proto3 optional).
   ///   - defaultValue: The default value for the field, if any.
   ///   - messageType: For message fields, the descriptor of the nested message type.
   ///   - enumType: For enum fields, the descriptor of the enum type.
@@ -111,6 +125,7 @@ public class ProtoFieldDescriptor: Hashable {
     type: ProtoFieldType,
     isRepeated: Bool,
     isMap: Bool,
+    hasExplicitPresence: Bool = false,
     defaultValue: ProtoValue? = nil,
     messageType: ProtoMessageDescriptor? = nil,
     enumType: ProtoEnumDescriptor? = nil,
@@ -121,6 +136,7 @@ public class ProtoFieldDescriptor: Hashable {
     self.type = type
     self.isRepeated = isRepeated
     self.isMap = isMap
+    self.hasExplicitPresence = hasExplicitPresence
     self.defaultValue = defaultValue
     self.messageType = messageType
     self.enumType = enumType
@@ -151,6 +167,15 @@ public class ProtoFieldDescriptor: Hashable {
 
     self.name = fieldProto.name
     self.number = Int(fieldProto.number)
+    
+    // Determine if field has explicit presence (proto3 optional)
+    // Для proto3 поле считается имеющим explicit presence если:
+    // 1. Оно явно помечено как optional (label == .optional)
+    // 2. Оно находится в oneof (oneofIndex задан) 
+    // 3. Это поле сообщения (message)
+    self.hasExplicitPresence = (fieldProto.label == .optional) || 
+                               fieldProto.hasOneofIndex || 
+                               fieldProto.type == .message
 
     // Map the field type
     switch fieldProto.type {

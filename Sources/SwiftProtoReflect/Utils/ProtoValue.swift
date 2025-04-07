@@ -1089,4 +1089,78 @@ public enum ProtoValue: Hashable {
       return nil
     }
   }
+
+  // MARK: - Methods with default values for proto3
+  
+  /// Returns the value as an Int with a default value if nil.
+  ///
+  /// - Parameter defaultValue: The default value to return if the value is not an Int.
+  /// - Returns: The value as an Int, or the provided default value.
+  public func getIntWithDefault(_ defaultValue: Int = 0) -> Int {
+    return getInt() ?? defaultValue
+  }
+
+  /// Returns the value as a UInt with a default value if nil.
+  ///
+  /// - Parameter defaultValue: The default value to return if the value is not a UInt.
+  /// - Returns: The value as a UInt, or the provided default value.
+  public func getUIntWithDefault(_ defaultValue: UInt = 0) -> UInt {
+    return getUInt() ?? defaultValue
+  }
+
+  /// Returns the value as a Float with a default value if nil.
+  ///
+  /// - Parameter defaultValue: The default value to return if the value is not a Float.
+  /// - Returns: The value as a Float, or the provided default value.
+  public func getFloatWithDefault(_ defaultValue: Float = 0.0) -> Float {
+    return getFloat() ?? defaultValue
+  }
+
+  /// Returns the value as a Double with a default value if nil.
+  ///
+  /// - Parameter defaultValue: The default value to return if the value is not a Double.
+  /// - Returns: The value as a Double, or the provided default value.
+  public func getDoubleWithDefault(_ defaultValue: Double = 0.0) -> Double {
+    return getDouble() ?? defaultValue
+  }
+
+  /// Returns the value as a Bool with a default value if nil.
+  ///
+  /// - Parameter defaultValue: The default value to return if the value is not a Bool.
+  /// - Returns: The value as a Bool, or the provided default value.
+  public func getBoolWithDefault(_ defaultValue: Bool = false) -> Bool {
+    return getBool() ?? defaultValue
+  }
+
+  /// Returns the value as a String with a default value if nil.
+  ///
+  /// - Parameter defaultValue: The default value to return if the value is not a String.
+  /// - Returns: The value as a String, or the provided default value.
+  public func getStringWithDefault(_ defaultValue: String = "") -> String {
+    return getString() ?? defaultValue
+  }
+
+  /// Returns the value as Data with a default value if nil.
+  ///
+  /// - Parameter defaultValue: The default value to return if the value is not Data.
+  /// - Returns: The value as Data, or the provided default value.
+  public func getBytesWithDefault(_ defaultValue: Data = Data()) -> Data {
+    return getBytes() ?? defaultValue
+  }
+
+  /// Returns the value as an array of ProtoValues with a default value if nil.
+  ///
+  /// - Parameter defaultValue: The default value to return if the value is not a repeated value.
+  /// - Returns: The value as an array of ProtoValues, or the provided default value.
+  public func getRepeatedWithDefault(_ defaultValue: [ProtoValue] = []) -> [ProtoValue] {
+    return getRepeated() ?? defaultValue
+  }
+
+  /// Returns the value as a dictionary of ProtoValues with a default value if nil.
+  ///
+  /// - Parameter defaultValue: The default value to return if the value is not a map value.
+  /// - Returns: The value as a dictionary of ProtoValues, or the provided default value.
+  public func getMapWithDefault(_ defaultValue: [String: ProtoValue] = [:]) -> [String: ProtoValue] {
+    return getMap() ?? defaultValue
+  }
 }

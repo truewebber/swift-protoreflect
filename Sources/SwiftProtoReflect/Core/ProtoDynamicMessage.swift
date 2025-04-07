@@ -269,40 +269,112 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
   /// Non-throwing version of tryGet(field:) for backward compatibility.
   ///
   /// - Parameter field: The descriptor of the field to retrieve.
-  /// - Returns: The field value, or nil if the field is not set or an error occurs.
+  /// - Returns: The field value, or a default value for proto3 if the field is not set, or nil if an error occurs.
   public func get(field: ProtoFieldDescriptor) -> ProtoValue? {
-    do {
-      return try tryGet(field: field)
-    }
-    catch {
+    guard let fieldDescriptor = validateFieldDescriptor(field) else {
       return nil
+    }
+    
+    // Если поле явно установлено, возвращаем его значение
+    if let value = fields[fieldDescriptor.number] {
+      return value
+    }
+    
+    // Для полей в oneof, возвращаем nil если не установлены
+    if fieldDescriptor.isOneofField {
+      return nil
+    }
+    
+    // Для полей с explicit presence в proto3, возвращаем nil
+    if fieldDescriptor.hasExplicitPresence {
+      return nil
+    }
+    
+    // Для message полей, возвращаем nil (а не пустой экземпляр)
+    if case .message = fieldDescriptor.type {
+      return nil
+    }
+    
+    // Для repeated полей, возвращаем пустой массив
+    if fieldDescriptor.isRepeated {
+      return .repeatedValue([])
+    }
+    
+    // Для map полей, возвращаем пустой словарь
+    if fieldDescriptor.isMap {
+      return .mapValue([:])
+    }
+    
+    // Для остальных полей proto3, возвращаем дефолтное значение
+    return getDefaultValueForField(fieldDescriptor)
+  }
+  
+  /// Возвращает значение по умолчанию для поля.
+  ///
+  /// - Parameter field: Дескриптор поля
+  /// - Returns: Значение по умолчанию в формате ProtoValue
+  private func getDefaultValueForField(_ field: ProtoFieldDescriptor) -> ProtoValue {
+    // Сначала проверяем, есть ли явно заданное значение по умолчанию
+    if let defaultValue = field.defaultValue {
+      return defaultValue
+    }
+    
+    // Иначе возвращаем стандартное значение по умолчанию для типа поля
+    switch field.type {
+    case .int32, .int64, .sint32, .sint64, .sfixed32, .sfixed64:
+      return .intValue(0)
+    case .uint32, .uint64, .fixed32, .fixed64:
+      return .uintValue(0)
+    case .float:
+      return .floatValue(0.0)
+    case .double:
+      return .doubleValue(0.0)
+    case .bool:
+      return .boolValue(false)
+    case .string:
+      return .stringValue("")
+    case .bytes:
+      return .bytesValue(Data())
+    case .enum:
+      // В proto3 первое значение всегда должно быть 0
+      if let enumType = field.enumType {
+        // Находим значение с номером 0
+        if let zeroValue = enumType.values.first(where: { $0.number == 0 }) {
+          return .enumValue(name: zeroValue.name, number: 0, enumDescriptor: enumType)
+        }
+      }
+      return .intValue(0)
+    case .message:
+      // Для message полей этот метод не должен вызываться,
+      // так как они обрабатываются отдельно выше
+      return .intValue(0)
+    default:
+      return .intValue(0)
     }
   }
 
   /// Non-throwing version of tryGet(fieldName:) for backward compatibility.
   ///
   /// - Parameter name: The name of the field to retrieve.
-  /// - Returns: The field value, or nil if the field is not found or not set or an error occurs.
+  /// - Returns: The field value, or a default value for proto3 if the field is not set, or nil if the field is not found.
   public func get(fieldName: String) -> ProtoValue? {
-    do {
-      return try tryGet(fieldName: fieldName)
-    }
-    catch {
+    guard let field = messageDescriptor.field(named: fieldName) else {
       return nil
     }
+    
+    return get(field: field)
   }
 
   /// Non-throwing version of tryGet(fieldNumber:) for backward compatibility.
   ///
   /// - Parameter number: The number of the field to retrieve.
-  /// - Returns: The field value, or nil if the field is not found or not set or an error occurs.
+  /// - Returns: The field value, or a default value for proto3 if the field is not set, or nil if the field is not found.
   public func get(fieldNumber: Int) -> ProtoValue? {
-    do {
-      return try tryGet(fieldNumber: fieldNumber)
-    }
-    catch {
+    guard let field = messageDescriptor.field(number: fieldNumber) else {
       return nil
     }
+    
+    return get(field: field)
   }
 
   /// Sets the value of the specified field.
@@ -478,17 +550,44 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
 
   /// Checks if a field is set in the message.
   ///
+  /// For proto3, this method has special semantics:
+  /// - For message fields: returns true if the field is set (not nil)
+  /// - For oneof fields: returns true if this field is the active field in the oneof
+  /// - For fields with explicit presence (optional): returns true if the field is set
+  /// - For other scalar fields: always returns false (has() shouldn't be used)
+  ///
   /// - Parameter field: The descriptor of the field to check.
-  /// - Returns: `true` if the field is set, `false` otherwise.
+  /// - Returns: `true` if the field is set according to proto3 semantics, `false` otherwise.
   public func has(field: ProtoFieldDescriptor) -> Bool {
     guard let fieldDescriptor = validateFieldDescriptor(field) else {
       return false
     }
 
-    return fields[fieldDescriptor.number] != nil
+    // В proto3 has() имеет особую семантику:
+    
+    // 1. Для сообщений: возвращает true если поле установлено (не nil)
+    if case .message = fieldDescriptor.type {
+      return fields[fieldDescriptor.number] != nil
+    }
+    
+    // 2. Для полей в oneof: возвращает true если это поле является активным в oneof
+    if fieldDescriptor.isOneofField {
+      return fields[fieldDescriptor.number] != nil
+    }
+    
+    // 3. Для полей с explicit presence (optional): возвращает true если поле установлено
+    if fieldDescriptor.hasExplicitPresence {
+      return fields[fieldDescriptor.number] != nil
+    }
+    
+    // 4. Для других скалярных полей в proto3: has() не должен использоваться,
+    // поскольку невозможно отличить "установленное дефолтное значение" от "неустановленного поля"
+    return false
   }
 
   /// Checks if a field is set in the message by its name.
+  ///
+  /// For proto3 semantics, see has(field:).
   ///
   /// - Parameter name: The name of the field to check.
   /// - Returns: `true` if the field is set, `false` otherwise.
@@ -501,6 +600,8 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
   }
 
   /// Checks if a field is set in the message by its number.
+  ///
+  /// For proto3 semantics, see has(field:).
   ///
   /// - Parameter number: The number of the field to check.
   /// - Returns: `true` if the field is set, `false` otherwise.
