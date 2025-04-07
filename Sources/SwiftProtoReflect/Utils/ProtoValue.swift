@@ -1091,7 +1091,7 @@ public enum ProtoValue: Hashable {
   }
 
   // MARK: - Methods with default values for proto3
-  
+
   /// Returns the value as an Int with a default value if nil.
   ///
   /// - Parameter defaultValue: The default value to return if the value is not an Int.

@@ -167,15 +167,14 @@ public class ProtoFieldDescriptor: Hashable {
 
     self.name = fieldProto.name
     self.number = Int(fieldProto.number)
-    
+
     // Determine if field has explicit presence (proto3 optional)
     // Для proto3 поле считается имеющим explicit presence если:
     // 1. Оно явно помечено как optional (label == .optional)
-    // 2. Оно находится в oneof (oneofIndex задан) 
+    // 2. Оно находится в oneof (oneofIndex задан)
     // 3. Это поле сообщения (message)
-    self.hasExplicitPresence = (fieldProto.label == .optional) || 
-                               fieldProto.hasOneofIndex || 
-                               fieldProto.type == .message
+    self.hasExplicitPresence =
+      (fieldProto.label == .optional) || fieldProto.hasOneofIndex || fieldProto.type == .message
 
     // Map the field type
     switch fieldProto.type {

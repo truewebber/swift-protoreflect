@@ -274,41 +274,41 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
     guard let fieldDescriptor = validateFieldDescriptor(field) else {
       return nil
     }
-    
+
     // Если поле явно установлено, возвращаем его значение
     if let value = fields[fieldDescriptor.number] {
       return value
     }
-    
+
     // Для полей в oneof, возвращаем nil если не установлены
     if fieldDescriptor.isOneofField {
       return nil
     }
-    
+
     // Для полей с explicit presence в proto3, возвращаем nil
     if fieldDescriptor.hasExplicitPresence {
       return nil
     }
-    
+
     // Для message полей, возвращаем nil (а не пустой экземпляр)
     if case .message = fieldDescriptor.type {
       return nil
     }
-    
+
     // Для repeated полей, возвращаем пустой массив
     if fieldDescriptor.isRepeated {
       return .repeatedValue([])
     }
-    
+
     // Для map полей, возвращаем пустой словарь
     if fieldDescriptor.isMap {
       return .mapValue([:])
     }
-    
+
     // Для остальных полей proto3, возвращаем дефолтное значение
     return getDefaultValueForField(fieldDescriptor)
   }
-  
+
   /// Возвращает значение по умолчанию для поля.
   ///
   /// - Parameter field: Дескриптор поля
@@ -318,7 +318,7 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
     if let defaultValue = field.defaultValue {
       return defaultValue
     }
-    
+
     // Иначе возвращаем стандартное значение по умолчанию для типа поля
     switch field.type {
     case .int32, .int64, .sint32, .sint64, .sfixed32, .sfixed64:
@@ -361,7 +361,7 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
     guard let field = messageDescriptor.field(named: fieldName) else {
       return nil
     }
-    
+
     return get(field: field)
   }
 
@@ -373,7 +373,7 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
     guard let field = messageDescriptor.field(number: fieldNumber) else {
       return nil
     }
-    
+
     return get(field: field)
   }
 
@@ -564,22 +564,22 @@ public class ProtoDynamicMessage: ProtoMessage, Hashable {
     }
 
     // В proto3 has() имеет особую семантику:
-    
+
     // 1. Для сообщений: возвращает true если поле установлено (не nil)
     if case .message = fieldDescriptor.type {
       return fields[fieldDescriptor.number] != nil
     }
-    
+
     // 2. Для полей в oneof: возвращает true если это поле является активным в oneof
     if fieldDescriptor.isOneofField {
       return fields[fieldDescriptor.number] != nil
     }
-    
+
     // 3. Для полей с explicit presence (optional): возвращает true если поле установлено
     if fieldDescriptor.hasExplicitPresence {
       return fields[fieldDescriptor.number] != nil
     }
-    
+
     // 4. Для других скалярных полей в proto3: has() не должен использоваться,
     // поскольку невозможно отличить "установленное дефолтное значение" от "неустановленного поля"
     return false
