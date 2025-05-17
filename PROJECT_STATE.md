@@ -40,5 +40,5 @@
 3. Настроить тестовую инфраструктуру
 
 ## Последние обновления
-
+- 2025-05-17: [Setup] Initial project structure - Framework for development with memory constraints - Created modules and documentation
 - 2024-06-09: Инициализация проекта
