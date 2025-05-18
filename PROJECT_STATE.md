@@ -3,13 +3,18 @@
 ## Текущая фаза: Подготовка инфраструктуры
 
 - [x] Создана базовая структура проекта
-- [ ] Настроена система отслеживания прогресса
+- [x] Настроена система отслеживания прогресса
 - [ ] Созданы заготовки для основных модулей
 
 ## Предстоящие фазы разработки (по порядку)
 
 1. **Foundation Phase**: Core descriptor and message implementations
    - [ ] Descriptor System
+     - [x] FileDescriptor
+     - [x] MessageDescriptor
+     - [ ] FieldDescriptor
+     - [ ] EnumDescriptor
+     - [ ] ServiceDescriptor
    - [ ] Dynamic Message
    - [ ] Type Registry
 
@@ -36,9 +41,18 @@
 ## Активные задачи (текущие приоритеты)
 
 1. Создать базовую структуру основных модулей
+   - [x] Создан компонент FileDescriptor в модуле Descriptor
+   - [x] Создан компонент MessageDescriptor в модуле Descriptor
+   - [ ] Создать FieldDescriptor в модуле Descriptor
+   - [ ] Создать EnumDescriptor в модуле Descriptor
+   - [ ] Создать ServiceDescriptor в модуле Descriptor
 2. Создать заглушки для ключевых интерфейсов
 3. Настроить тестовую инфраструктуру
+   - [x] Исправить проблему с XCTest при запуске тестов
+   - [x] Решить проблему с циклическими ссылками в структурах
 
 ## Последние обновления
+- 2025-05-18: [Descriptor] Создан компонент MessageDescriptor - Базовая структура для описания протобаф-сообщений - Решены проблемы с циклическими ссылками - Далее реализовать FieldDescriptor
+- 2025-05-17: [Descriptor] Создан компонент FileDescriptor - Основа для работы с метаданными proto-файлов - Далее реализовать MessageDescriptor
 - 2025-05-17: [Setup] Initial project structure - Framework for development with memory constraints - Created modules and documentation
 - 2024-06-09: Инициализация проекта

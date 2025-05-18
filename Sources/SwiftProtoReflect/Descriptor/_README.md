@@ -8,8 +8,8 @@
 
 ## Состояние модуля
 
-- [ ] FileDescriptor
-- [ ] MessageDescriptor
+- [x] FileDescriptor
+- [x] MessageDescriptor
 - [ ] FieldDescriptor
 - [ ] EnumDescriptor
 - [ ] ServiceDescriptor
