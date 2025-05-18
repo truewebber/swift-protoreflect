@@ -22,6 +22,15 @@ let package = Package(
       name: "SwiftProtoReflect",
       dependencies: [
         .product(name: "SwiftProtobuf", package: "swift-protobuf")
+      ],
+      exclude: [
+        "Service/_README.md",
+        "Errors/_README.md",
+        "Dynamic/_README.md",
+        "Bridge/_README.md",
+        "Descriptor/_README.md",
+        "Serialization/_README.md",
+        "Registry/_README.md"
       ]
     ),
     .testTarget(

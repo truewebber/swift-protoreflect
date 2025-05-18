@@ -52,19 +52,19 @@ format:
 ## Run tests
 test:
 	@echo "Running swift test..."
-	$(SWIFT_TEST) -q --parallel --filter SwiftProtoReflectTests
-	@echo "Tests complete."
-
-bench:
-	@echo "Running swift test..."
-	$(SWIFT_TEST) -q --filter SwiftProtoReflectBenchmarks
+	$(SWIFT_TEST) --enable-code-coverage --parallel --filter SwiftProtoReflectTests
 	@echo "Tests complete."
 
 ## Generate a code coverage report
 coverage:
 	@echo "Generating code coverage report..."
-	./coverage-report.sh
-	@echo "Coverage report complete. See docs/SwiftProtoReflect_Coverage_Report.md for details."
+	xcrun llvm-profdata merge -sparse .build/debug/codecov/*.profraw -o .build/debug/codecov/default.profdata
+	xcrun llvm-cov report \
+		.build/debug/SwiftProtoReflectPackageTests.xctest/Contents/MacOS/SwiftProtoReflectPackageTests \
+		-instr-profile=.build/debug/codecov/default.profdata \
+		-name-regex="^Sources/SwiftProtoReflect/" \
+		-ignore-filename-regex=".build|Tests|checkouts" \
+		-use-color
 
 ## List available Swift toolchains
 list-toolchains:

@@ -50,9 +50,11 @@
 3. Настроить тестовую инфраструктуру
    - [x] Исправить проблему с XCTest при запуске тестов
    - [x] Решить проблему с циклическими ссылками в структурах
+   - [x] Добавить проверку покрытия кода тестами (100%)
 
 ## Последние обновления
-- 2025-05-18: [Descriptor] Создан компонент MessageDescriptor - Базовая структура для описания протобаф-сообщений - Решены проблемы с циклическими ссылками - Далее реализовать FieldDescriptor
+- 2025-05-18: [Tests] Update coverage process - Added test for initialize method - Updated DEVELOPER_GUIDE.md with coverage requirements
+- 2025-05-18: [Descriptor] Implemented MessageDescriptor - Basic structure for Protocol Buffers message representation - Solved cyclic reference issues - Next step: implement FieldDescriptor
 - 2025-05-17: [Descriptor] Создан компонент FileDescriptor - Основа для работы с метаданными proto-файлов - Далее реализовать MessageDescriptor
 - 2025-05-17: [Setup] Initial project structure - Framework for development with memory constraints - Created modules and documentation
 - 2024-06-09: Инициализация проекта
