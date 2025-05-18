@@ -156,7 +156,8 @@ final class MessageDescriptorTests: XCTestCase {
     let addressField = FieldDescriptor(
       name: "address",
       number: 1,
-      type: .message("example.person.Address"),
+      type: .message,
+      typeName: "example.person.Address",
       isOptional: true
     )
     
@@ -164,7 +165,8 @@ final class MessageDescriptorTests: XCTestCase {
     let genderField = FieldDescriptor(
       name: "gender",
       number: 2,
-      type: .enum("example.person.Gender"),
+      type: .enum,
+      typeName: "example.person.Gender",
       isOptional: true
     )
     
@@ -197,25 +199,16 @@ final class MessageDescriptorTests: XCTestCase {
     }
     
     // Проверяем тип поля address
-    if case .message(let typeName) = addressFieldResult.type {
-      XCTAssertEqual(typeName, "example.person.Address")
-    } else {
-      XCTFail("Поле address должно иметь тип .message")
-    }
+    XCTAssertEqual(addressFieldResult.type, .message)
+    XCTAssertEqual(addressFieldResult.typeName, "example.person.Address")
     
     // Проверяем тип поля gender
-    if case .enum(let typeName) = genderFieldResult.type {
-      XCTAssertEqual(typeName, "example.person.Gender")
-    } else {
-      XCTFail("Поле gender должно иметь тип .enum")
-    }
+    XCTAssertEqual(genderFieldResult.type, .enum)
+    XCTAssertEqual(genderFieldResult.typeName, "example.person.Gender")
     
     // Проверяем тип поля phones
-    if case .string = phoneFieldResult.type {
-      XCTAssertTrue(phoneFieldResult.isRepeated)
-    } else {
-      XCTFail("Поле phones должно иметь тип .string")
-    }
+    XCTAssertEqual(phoneFieldResult.type, .string)
+    XCTAssertTrue(phoneFieldResult.isRepeated)
   }
   
   // MARK: - Helpers

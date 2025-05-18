@@ -12,7 +12,7 @@
    - [ ] Descriptor System
      - [x] FileDescriptor
      - [x] MessageDescriptor
-     - [ ] FieldDescriptor
+     - [x] FieldDescriptor
      - [ ] EnumDescriptor
      - [ ] ServiceDescriptor
    - [ ] Dynamic Message
@@ -43,7 +43,7 @@
 1. Создать базовую структуру основных модулей
    - [x] Создан компонент FileDescriptor в модуле Descriptor
    - [x] Создан компонент MessageDescriptor в модуле Descriptor
-   - [ ] Создать FieldDescriptor в модуле Descriptor
+   - [x] Создан компонент FieldDescriptor в модуле Descriptor
    - [ ] Создать EnumDescriptor в модуле Descriptor
    - [ ] Создать ServiceDescriptor в модуле Descriptor
 2. Создать заглушки для ключевых интерфейсов
@@ -53,6 +53,8 @@
    - [x] Добавить проверку покрытия кода тестами (100%)
 
 ## Последние обновления
+- 2025-05-18: [Project] Fix formatting in PROJECT_STATE.md - Fixed merged lines in 'Последние обновления' section - Added test coverage task
+- 2025-05-19: [Descriptor] Реализован компонент FieldDescriptor - Создана полная реализация с поддержкой всех типов полей - Решены проблемы с циклическими ссылками для Map типов - Следующий шаг: реализовать EnumDescriptor
 - 2025-05-18: [Tests] Update coverage process - Added test for initialize method - Updated DEVELOPER_GUIDE.md with coverage requirements
 - 2025-05-18: [Descriptor] Implemented MessageDescriptor - Basic structure for Protocol Buffers message representation - Solved cyclic reference issues - Next step: implement FieldDescriptor
 - 2025-05-17: [Descriptor] Создан компонент FileDescriptor - Основа для работы с метаданными proto-файлов - Далее реализовать MessageDescriptor

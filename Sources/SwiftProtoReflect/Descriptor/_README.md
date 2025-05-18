@@ -10,7 +10,7 @@
 
 - [x] FileDescriptor
 - [x] MessageDescriptor
-- [ ] FieldDescriptor
+- [x] FieldDescriptor
 - [ ] EnumDescriptor
 - [ ] ServiceDescriptor
 
