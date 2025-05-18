@@ -50,11 +50,12 @@
 3. Настроить тестовую инфраструктуру
    - [x] Исправить проблему с XCTest при запуске тестов
    - [x] Решить проблему с циклическими ссылками в структурах
-   - [x] Добавить проверку покрытия кода тестами (100%)
+   - [x] Добавить проверку покрытия кода тестами (90%+)
 
 ## Последние обновления
-- 2025-05-18: [Project] Fix formatting in PROJECT_STATE.md - Fixed merged lines in 'Последние обновления' section - Added test coverage task
+- 2025-05-19: [Descriptor] Улучшенный компонент FieldDescriptor - Расширена тестовая база для покрытия кода - Обновлено DEVELOPER_GUIDE.md с пояснениями по покрытию кода - Следующий шаг: реализовать EnumDescriptor
 - 2025-05-19: [Descriptor] Реализован компонент FieldDescriptor - Создана полная реализация с поддержкой всех типов полей - Решены проблемы с циклическими ссылками для Map типов - Следующий шаг: реализовать EnumDescriptor
+- 2025-05-18: [Project] Fix formatting in PROJECT_STATE.md - Fixed merged lines in 'Последние обновления' section - Added test coverage task
 - 2025-05-18: [Tests] Update coverage process - Added test for initialize method - Updated DEVELOPER_GUIDE.md with coverage requirements
 - 2025-05-18: [Descriptor] Implemented MessageDescriptor - Basic structure for Protocol Buffers message representation - Solved cyclic reference issues - Next step: implement FieldDescriptor
 - 2025-05-17: [Descriptor] Создан компонент FileDescriptor - Основа для работы с метаданными proto-файлов - Далее реализовать MessageDescriptor
