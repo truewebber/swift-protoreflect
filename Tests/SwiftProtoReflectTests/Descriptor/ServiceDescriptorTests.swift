@@ -337,4 +337,254 @@ final class ServiceDescriptorTests: XCTestCase {
     // Act & Assert
     XCTAssertNotEqual(method1, method2)
   }
+  
+  // MARK: Дополнительные тесты для повышения покрытия кода
+  
+  // MARK: Дополнительные тесты для MethodDescriptor
+  
+  func testMethodDescriptorDifferentOptions() {
+    // Arrange
+    let method1 = ServiceDescriptor.MethodDescriptor(
+      name: methodName,
+      inputType: inputType,
+      outputType: outputType,
+      options: ["option1": true, "option2": "value"]
+    )
+    
+    let method2 = ServiceDescriptor.MethodDescriptor(
+      name: methodName,
+      inputType: inputType,
+      outputType: outputType,
+      options: ["option1": true, "option3": "different"]
+    )
+    
+    // Act & Assert
+    XCTAssertNotEqual(method1, method2)
+  }
+  
+  func testMethodDescriptorOptionsWithDifferentTypes() {
+    // Проверка различных типов опций
+    
+    // Boolean options
+    let method1 = ServiceDescriptor.MethodDescriptor(
+      name: methodName,
+      inputType: inputType,
+      outputType: outputType,
+      options: ["boolOption": true]
+    )
+    
+    let method2 = ServiceDescriptor.MethodDescriptor(
+      name: methodName,
+      inputType: inputType,
+      outputType: outputType,
+      options: ["boolOption": false]
+    )
+    
+    XCTAssertNotEqual(method1, method2)
+    
+    // Integer options
+    let method3 = ServiceDescriptor.MethodDescriptor(
+      name: methodName,
+      inputType: inputType,
+      outputType: outputType,
+      options: ["intOption": 10]
+    )
+    
+    let method4 = ServiceDescriptor.MethodDescriptor(
+      name: methodName,
+      inputType: inputType,
+      outputType: outputType,
+      options: ["intOption": 20]
+    )
+    
+    XCTAssertNotEqual(method3, method4)
+    
+    // String options
+    let method5 = ServiceDescriptor.MethodDescriptor(
+      name: methodName,
+      inputType: inputType,
+      outputType: outputType,
+      options: ["stringOption": "value1"]
+    )
+    
+    let method6 = ServiceDescriptor.MethodDescriptor(
+      name: methodName,
+      inputType: inputType,
+      outputType: outputType,
+      options: ["stringOption": "value2"]
+    )
+    
+    XCTAssertNotEqual(method5, method6)
+    
+    // Custom type options
+    let customValue1 = ["key": "value"]
+    let customValue2 = ["key": "different"]
+    
+    let method7 = ServiceDescriptor.MethodDescriptor(
+      name: methodName,
+      inputType: inputType,
+      outputType: outputType,
+      options: ["customOption": customValue1]
+    )
+    
+    let method8 = ServiceDescriptor.MethodDescriptor(
+      name: methodName,
+      inputType: inputType,
+      outputType: outputType,
+      options: ["customOption": customValue2]
+    )
+    
+    XCTAssertNotEqual(method7, method8)
+  }
+  
+  // MARK: Дополнительные тесты для ServiceDescriptor
+  
+  func testServiceDescriptorDifferentMethodCount() {
+    // Arrange
+    var service1 = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
+    var service2 = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
+    
+    let method1 = ServiceDescriptor.MethodDescriptor(
+      name: "Method1",
+      inputType: inputType,
+      outputType: outputType
+    )
+    let method2 = ServiceDescriptor.MethodDescriptor(
+      name: "Method2",
+      inputType: inputType,
+      outputType: outputType
+    )
+    
+    // Act
+    service1.addMethod(method1)
+    service1.addMethod(method2)
+    service2.addMethod(method1)
+    
+    // Assert - разное количество методов
+    XCTAssertNotEqual(service1, service2)
+  }
+  
+  func testServiceDescriptorWithDifferentOptions() {
+    // Arrange
+    let options1: [String: Any] = ["option1": true, "option2": "value"]
+    let options2: [String: Any] = ["option1": true, "option3": "different"]
+    
+    let service1 = ServiceDescriptor(name: serviceName, fullName: serviceFullName, options: options1)
+    let service2 = ServiceDescriptor(name: serviceName, fullName: serviceFullName, options: options2)
+    
+    // Act & Assert
+    XCTAssertNotEqual(service1, service2)
+  }
+  
+  func testServiceDescriptorOptionsWithDifferentTypes() {
+    // Boolean options
+    let service1 = ServiceDescriptor(
+      name: serviceName,
+      fullName: serviceFullName,
+      options: ["boolOption": true]
+    )
+    
+    let service2 = ServiceDescriptor(
+      name: serviceName,
+      fullName: serviceFullName,
+      options: ["boolOption": false]
+    )
+    
+    XCTAssertNotEqual(service1, service2)
+    
+    // Integer options
+    let service3 = ServiceDescriptor(
+      name: serviceName,
+      fullName: serviceFullName,
+      options: ["intOption": 10]
+    )
+    
+    let service4 = ServiceDescriptor(
+      name: serviceName,
+      fullName: serviceFullName,
+      options: ["intOption": 20]
+    )
+    
+    XCTAssertNotEqual(service3, service4)
+    
+    // String options
+    let service5 = ServiceDescriptor(
+      name: serviceName,
+      fullName: serviceFullName,
+      options: ["stringOption": "value1"]
+    )
+    
+    let service6 = ServiceDescriptor(
+      name: serviceName,
+      fullName: serviceFullName,
+      options: ["stringOption": "value2"]
+    )
+    
+    XCTAssertNotEqual(service5, service6)
+    
+    // Custom type options
+    let customValue1 = ["key": "value"]
+    let customValue2 = ["key": "different"]
+    
+    let service7 = ServiceDescriptor(
+      name: serviceName,
+      fullName: serviceFullName,
+      options: ["customOption": customValue1]
+    )
+    
+    let service8 = ServiceDescriptor(
+      name: serviceName,
+      fullName: serviceFullName,
+      options: ["customOption": customValue2]
+    )
+    
+    XCTAssertNotEqual(service7, service8)
+  }
+  
+  // Тест для покрытия сравнения сложных типов в опциях
+  func testServiceDescriptorComplexOptionsComparison() {
+    // Используем класс для создания сложного типа данных
+    class ComplexValue: CustomStringConvertible {
+      let value: String
+      
+      init(value: String) {
+        self.value = value
+      }
+      
+      // Реализация протокола CustomStringConvertible
+      var description: String {
+        return "ComplexValue(\(value))"
+      }
+    }
+    
+    // Создаем два сервиса с разными сложными опциями
+    let complex1 = ComplexValue(value: "value1")
+    let complex2 = ComplexValue(value: "value2")
+    
+    let service1 = ServiceDescriptor(
+      name: serviceName,
+      fullName: serviceFullName,
+      options: ["complexOption": complex1]
+    )
+    
+    let service2 = ServiceDescriptor(
+      name: serviceName,
+      fullName: serviceFullName,
+      options: ["complexOption": complex2]
+    )
+    
+    // Эти сервисы должны быть разными из-за разных значений сложной опции
+    XCTAssertNotEqual(service1, service2)
+    
+    // Проверяем, что сервисы с одинаковыми сложными опциями равны
+    let complex3 = ComplexValue(value: "value1")
+    let service3 = ServiceDescriptor(
+      name: serviceName,
+      fullName: serviceFullName,
+      options: ["complexOption": complex3]
+    )
+    
+    // Они должны быть равны, потому что description одинаковый
+    XCTAssertEqual(service1, service3)
+  }
 }
