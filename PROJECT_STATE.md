@@ -14,7 +14,7 @@
      - [x] MessageDescriptor
      - [x] FieldDescriptor
      - [x] EnumDescriptor
-     - [ ] ServiceDescriptor
+     - [x] ServiceDescriptor
    - [ ] Dynamic Message
    - [ ] Type Registry
 
@@ -45,7 +45,7 @@
    - [x] Создан компонент MessageDescriptor в модуле Descriptor
    - [x] Создан компонент FieldDescriptor в модуле Descriptor
    - [x] Создан компонент EnumDescriptor в модуле Descriptor
-   - [ ] Создать ServiceDescriptor в модуле Descriptor
+   - [x] Создать ServiceDescriptor в модуле Descriptor
 2. Создать заглушки для ключевых интерфейсов
 3. Настроить тестовую инфраструктуру
    - [x] Исправить проблему с XCTest при запуске тестов
@@ -54,7 +54,8 @@
    - [x] Создать план тестирования соответствия протоколу Proto3 и поведению C++ protoc
 
 ## Последние обновления
-- 2025-05-25: [Tests] Created Protocol Conformance Test Plan - Created detailed test structure for protocol conformance verification - Implemented test file templates for all test categories - Next step: start implementing serialization tests
+- 2025-05-23: [Descriptor] Implemented ServiceDescriptor - Created full implementation with support for gRPC service methods - Added tests with support for streaming and standard methods - Next step: start implementing DynamicMessage
+- 2025-05-22: [Tests] Created Protocol Conformance Test Plan - Created detailed test structure for protocol conformance verification - Implemented test file templates for all test categories - Next step: start implementing serialization tests
 - 2025-05-22: [Descriptor] Implemented EnumDescriptor - Created full implementation with support for enum values - Added tests with high code coverage - Next step: implement ServiceDescriptor
 - 2025-05-18: [Tests] Expand test coverage for FieldDescriptor - Added tests for Equatable implementation - Updated coverage requirements in DEVELOPER_GUIDE.md - Next step: implement EnumDescriptor
 - 2025-05-19: [Descriptor] Улучшенный компонент FieldDescriptor - Расширена тестовая база для покрытия кода - Обновлено DEVELOPER_GUIDE.md с пояснениями по покрытию кода - Следующий шаг: реализовать EnumDescriptor

@@ -127,7 +127,7 @@ final class FileDescriptorTests: XCTestCase {
   /// - Проверять типы входных и выходных параметров
   /// - Проверять опции сервиса и методов
   func testAddService() {
-    let personService = ServiceDescriptor(name: "PersonService")
+    let personService = ServiceDescriptor(name: "PersonService", parent: fileDescriptor)
     fileDescriptor.addService(personService)
     
     XCTAssertEqual(fileDescriptor.services.count, 1)
@@ -137,11 +137,11 @@ final class FileDescriptorTests: XCTestCase {
   
   func testAddServiceReplacement() {
     // Добавляем первый сервис
-    let service1 = ServiceDescriptor(name: "DataService")
+    let service1 = ServiceDescriptor(name: "DataService", parent: fileDescriptor)
     fileDescriptor.addService(service1)
     
     // Добавляем второй сервис с тем же именем
-    let service2 = ServiceDescriptor(name: "DataService")
+    let service2 = ServiceDescriptor(name: "DataService", parent: fileDescriptor)
     fileDescriptor.addService(service2)
     
     // Проверяем, что количество сервисов не изменилось (произошла замена)
@@ -183,7 +183,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertFalse(fileDescriptor.hasService(named: "PersonService"))
     
     // Добавляем сервис
-    let personService = ServiceDescriptor(name: "PersonService")
+    let personService = ServiceDescriptor(name: "PersonService", parent: fileDescriptor)
     fileDescriptor.addService(personService)
     
     // Проверяем наличие сервиса
@@ -209,7 +209,7 @@ final class FileDescriptorTests: XCTestCase {
     // Проверяем методы отдельно, так как они mutating и не могут вызываться цепочкой
     let personMessage = MessageDescriptor(name: "Person")
     let genderEnum = EnumDescriptor(name: "Gender")
-    let personService = ServiceDescriptor(name: "PersonService")
+    let personService = ServiceDescriptor(name: "PersonService", parent: fileDescriptor)
     
     // Вызываем методы последовательно
     fileDescriptor.addMessage(personMessage)

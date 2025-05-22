@@ -123,14 +123,3 @@ public struct FileDescriptor {
     return services[name] != nil
   }
 }
-
-
-/// Заглушка для ServiceDescriptor
-/// TODO: Заменить на реальную реализацию из модуля Descriptor
-public struct ServiceDescriptor {
-  public let name: String
-  
-  public init(name: String) {
-    self.name = name
-  }
-}
