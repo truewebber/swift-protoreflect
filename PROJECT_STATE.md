@@ -51,9 +51,11 @@
    - [x] Исправить проблему с XCTest при запуске тестов
    - [x] Решить проблему с циклическими ссылками в структурах
    - [x] Добавить проверку покрытия кода тестами (90%+)
+   - [x] Создать план тестирования соответствия протоколу Proto3 и поведению C++ protoc
 
 ## Последние обновления
-- 2025-05-22: [Descriptor] Реализован компонент EnumDescriptor - Создана полная реализация с поддержкой значений перечислений - Добавлены тесты с высоким покрытием кода - Следующий шаг: реализовать ServiceDescriptor
+- 2025-05-25: [Tests] Created Protocol Conformance Test Plan - Created detailed test structure for protocol conformance verification - Implemented test file templates for all test categories - Next step: start implementing serialization tests
+- 2025-05-22: [Descriptor] Implemented EnumDescriptor - Created full implementation with support for enum values - Added tests with high code coverage - Next step: implement ServiceDescriptor
 - 2025-05-18: [Tests] Expand test coverage for FieldDescriptor - Added tests for Equatable implementation - Updated coverage requirements in DEVELOPER_GUIDE.md - Next step: implement EnumDescriptor
 - 2025-05-19: [Descriptor] Улучшенный компонент FieldDescriptor - Расширена тестовая база для покрытия кода - Обновлено DEVELOPER_GUIDE.md с пояснениями по покрытию кода - Следующий шаг: реализовать EnumDescriptor
 - 2025-05-19: [Descriptor] Реализован компонент FieldDescriptor - Создана полная реализация с поддержкой всех типов полей - Решены проблемы с циклическими ссылками для Map типов - Следующий шаг: реализовать EnumDescriptor
