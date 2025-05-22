@@ -11,7 +11,7 @@
 - [x] FileDescriptor
 - [x] MessageDescriptor
 - [x] FieldDescriptor
-- [ ] EnumDescriptor
+- [x] EnumDescriptor
 - [ ] ServiceDescriptor
 
 ## Взаимодействие с другими модулями

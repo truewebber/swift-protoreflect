@@ -13,7 +13,7 @@
      - [x] FileDescriptor
      - [x] MessageDescriptor
      - [x] FieldDescriptor
-     - [ ] EnumDescriptor
+     - [x] EnumDescriptor
      - [ ] ServiceDescriptor
    - [ ] Dynamic Message
    - [ ] Type Registry
@@ -44,7 +44,7 @@
    - [x] Создан компонент FileDescriptor в модуле Descriptor
    - [x] Создан компонент MessageDescriptor в модуле Descriptor
    - [x] Создан компонент FieldDescriptor в модуле Descriptor
-   - [ ] Создать EnumDescriptor в модуле Descriptor
+   - [x] Создан компонент EnumDescriptor в модуле Descriptor
    - [ ] Создать ServiceDescriptor в модуле Descriptor
 2. Создать заглушки для ключевых интерфейсов
 3. Настроить тестовую инфраструктуру
@@ -53,6 +53,8 @@
    - [x] Добавить проверку покрытия кода тестами (90%+)
 
 ## Последние обновления
+- 2025-05-22: [Descriptor] Реализован компонент EnumDescriptor - Создана полная реализация с поддержкой значений перечислений - Добавлены тесты с высоким покрытием кода - Следующий шаг: реализовать ServiceDescriptor
+- 2025-05-18: [Tests] Expand test coverage for FieldDescriptor - Added tests for Equatable implementation - Updated coverage requirements in DEVELOPER_GUIDE.md - Next step: implement EnumDescriptor
 - 2025-05-19: [Descriptor] Улучшенный компонент FieldDescriptor - Расширена тестовая база для покрытия кода - Обновлено DEVELOPER_GUIDE.md с пояснениями по покрытию кода - Следующий шаг: реализовать EnumDescriptor
 - 2025-05-19: [Descriptor] Реализован компонент FieldDescriptor - Создана полная реализация с поддержкой всех типов полей - Решены проблемы с циклическими ссылками для Map типов - Следующий шаг: реализовать EnumDescriptor
 - 2025-05-18: [Project] Fix formatting in PROJECT_STATE.md - Fixed merged lines in 'Последние обновления' section - Added test coverage task

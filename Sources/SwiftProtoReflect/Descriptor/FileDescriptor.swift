@@ -124,15 +124,6 @@ public struct FileDescriptor {
   }
 }
 
-/// Заглушка для EnumDescriptor
-/// TODO: Заменить на реальную реализацию из модуля Descriptor
-public struct EnumDescriptor {
-  public let name: String
-  
-  public init(name: String) {
-    self.name = name
-  }
-}
 
 /// Заглушка для ServiceDescriptor
 /// TODO: Заменить на реальную реализацию из модуля Descriptor
