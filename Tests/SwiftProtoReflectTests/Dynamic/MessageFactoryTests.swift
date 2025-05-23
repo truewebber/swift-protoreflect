@@ -606,4 +606,5 @@ final class MessageFactoryTests: XCTestCase {
     let result = factory.validate(message)
     XCTAssertTrue(result.isValid)
   }
+
 }

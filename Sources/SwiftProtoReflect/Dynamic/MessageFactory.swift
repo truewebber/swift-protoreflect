@@ -79,41 +79,41 @@ public struct MessageFactory {
       if try message.hasValue(forField: field.number) {
         let value = try message.get(forField: field.number)
         
-        if let nonNilValue = value {
-          // Для вложенных сообщений создаем глубокую копию
-          if field.type == .message, let nestedMessage = nonNilValue as? DynamicMessage {
+        // Обрабатываем значение, включая случаи когда оно может быть nil
+        // Для вложенных сообщений создаем глубокую копию
+        if field.type == .message && !field.isRepeated && !field.isMap {
+          if let nestedMessage = value as? DynamicMessage {
             let clonedNestedMessage = try clone(nestedMessage)
             try clonedMessage.set(clonedNestedMessage, forField: field.number)
-          } else if field.isRepeated && field.type == .message {
-            // Для repeated полей с сообщениями создаем копии всех элементов
-            if let array = nonNilValue as? [Any] {
-              var clonedArray: [Any] = []
-              for item in array {
-                if let messageItem = item as? DynamicMessage {
-                  clonedArray.append(try clone(messageItem))
-                } else {
-                  clonedArray.append(item)
-                }
-              }
-              try clonedMessage.set(clonedArray, forField: field.number)
-            }
-          } else if field.isMap {
-            // Для map полей
-            if let map = nonNilValue as? [AnyHashable: Any] {
-              var clonedMap: [AnyHashable: Any] = [:]
-              for (key, mapValue) in map {
-                if field.mapEntryInfo?.valueFieldInfo.type == .message, let messageValue = mapValue as? DynamicMessage {
-                  clonedMap[key] = try clone(messageValue)
-                } else {
-                  clonedMap[key] = mapValue
-                }
-              }
-              try clonedMessage.set(clonedMap, forField: field.number)
-            }
-          } else {
-            // Для всех остальных типов просто копируем значение
-            try clonedMessage.set(nonNilValue, forField: field.number)
           }
+        } else if field.isRepeated && field.type == .message && !field.isMap {
+          // Для repeated полей с сообщениями создаем копии всех элементов
+          if let array = value as? [Any] {
+            var clonedArray: [Any] = []
+            for item in array {
+              if let messageItem = item as? DynamicMessage {
+                clonedArray.append(try clone(messageItem))
+              } else {
+                clonedArray.append(item)
+              }
+            }
+            try clonedMessage.set(clonedArray, forField: field.number)
+          }
+        } else if field.isMap {
+          // Для map полей - используем setMapEntry для каждой пары ключ-значение
+          if let map = value as? [AnyHashable: Any] {
+            for (key, mapValue) in map {
+              if field.mapEntryInfo?.valueFieldInfo.type == .message, let messageValue = mapValue as? DynamicMessage {
+                let clonedNestedMessage = try clone(messageValue)
+                try clonedMessage.setMapEntry(clonedNestedMessage, forKey: key, inField: field.number)
+              } else {
+                try clonedMessage.setMapEntry(mapValue, forKey: key, inField: field.number)
+              }
+            }
+          }
+        } else if let actualValue = value {
+          // Для всех остальных типов просто копируем значение, если оно не nil
+          try clonedMessage.set(actualValue, forField: field.number)
         }
       }
     }

@@ -374,9 +374,13 @@ public struct DynamicMessage: Equatable {
     // Проверяем тип значения
     try validateMapValue(value, for: mapInfo.valueFieldInfo)
 
+    // Конвертируем ключ и значение в правильные типы
+    let convertedKey = convertMapKey(key, for: mapInfo.keyFieldInfo)
+    let convertedValue = convertMapValue(value, for: mapInfo.valueFieldInfo)
+
     // Добавляем в map
     var currentMap = mapValues[fieldNumber] ?? [:]
-    currentMap[key] = value
+    currentMap[convertedKey] = convertedValue
     mapValues[fieldNumber] = currentMap
 
     return self

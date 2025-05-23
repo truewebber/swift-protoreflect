@@ -92,7 +92,8 @@ public struct FieldDescriptor: Equatable {
     self.type = type
     self.typeName = typeName
     self.jsonName = jsonName ?? name
-    self.isRepeated = isRepeated
+    // Map поля автоматически являются repeated полями в Protocol Buffers
+    self.isRepeated = isMap ? true : isRepeated
     self.isOptional = isOptional
     self.isRequired = isRequired
     self.isMap = isMap
