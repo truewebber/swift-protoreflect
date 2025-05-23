@@ -1,6 +1,6 @@
 /// SwiftProtoReflect
 ///
-/// Библиотека для динамической работы с Protocol Buffers сообщениями в Swift 
+/// Библиотека для динамической работы с Protocol Buffers сообщениями в Swift
 /// без предварительно скомпилированных .pb файлов.
 ///
 /// Основные компоненты:
@@ -15,7 +15,7 @@ import SwiftProtobuf
 public enum SwiftProtoReflect {
   /// Текущая версия библиотеки
   public static let version = "0.1.0"
-  
+
   /// Инициализация библиотеки с возможностью настройки
   public static func initialize(options: [String: Any] = [:]) {
     // Будет реализовано в будущем

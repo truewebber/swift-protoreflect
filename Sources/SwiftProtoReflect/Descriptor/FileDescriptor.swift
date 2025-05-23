@@ -14,30 +14,30 @@ import SwiftProtobuf
 /// сервисах и других элементах, определенных в файле Protocol Buffers.
 public struct FileDescriptor {
   // MARK: - Properties
-  
+
   /// Имя файла (например, "person.proto")
   public let name: String
-  
+
   /// Пакет, к которому относится файл (например, "example.person")
   public let package: String
-  
+
   /// Зависимости файла (импортированные .proto файлы)
   public let dependencies: [String]
-  
+
   /// Опции файла
   public let options: [String: Any]
-  
+
   /// Список сообщений, определенных в файле
   public private(set) var messages: [String: MessageDescriptor] = [:]
-  
+
   /// Список перечислений, определенных в файле
   public private(set) var enums: [String: EnumDescriptor] = [:]
-  
+
   /// Список сервисов, определенных в файле
   public private(set) var services: [String: ServiceDescriptor] = [:]
-  
+
   // MARK: - Initialization
-  
+
   /// Создает новый экземпляр FileDescriptor
   public init(
     name: String,
@@ -50,9 +50,9 @@ public struct FileDescriptor {
     self.dependencies = dependencies
     self.options = options
   }
-  
+
   // MARK: - Methods
-  
+
   /// Добавляет дескриптор сообщения в файл
   ///
   /// - Parameter messageDescriptor: Дескриптор сообщения для добавления
@@ -61,16 +61,16 @@ public struct FileDescriptor {
   public mutating func addMessage(_ messageDescriptor: MessageDescriptor) -> Self {
     // Создаем новое сообщение с учетом родительского файла
     var newMessage = messageDescriptor
-    
+
     // Устанавливаем путь к файловому дескриптору, если не задан
     if newMessage.fileDescriptorPath == nil && newMessage.parentMessageFullName == nil {
       newMessage.fileDescriptorPath = self.name
     }
-    
+
     messages[messageDescriptor.name] = newMessage
     return self
   }
-  
+
   /// Добавляет дескриптор перечисления в файл
   ///
   /// - Parameter enumDescriptor: Дескриптор перечисления для добавления
@@ -80,7 +80,7 @@ public struct FileDescriptor {
     enums[enumDescriptor.name] = enumDescriptor
     return self
   }
-  
+
   /// Добавляет дескриптор сервиса в файл
   ///
   /// - Parameter serviceDescriptor: Дескриптор сервиса для добавления
@@ -90,7 +90,7 @@ public struct FileDescriptor {
     services[serviceDescriptor.name] = serviceDescriptor
     return self
   }
-  
+
   /// Получает полный путь для типа в этом файле
   ///
   /// - Parameter typeName: Имя типа
@@ -98,7 +98,7 @@ public struct FileDescriptor {
   public func getFullName(for typeName: String) -> String {
     return package.isEmpty ? typeName : "\(package).\(typeName)"
   }
-  
+
   /// Проверяет, содержит ли файл указанное сообщение
   ///
   /// - Parameter name: Имя сообщения
@@ -106,7 +106,7 @@ public struct FileDescriptor {
   public func hasMessage(named name: String) -> Bool {
     return messages[name] != nil
   }
-  
+
   /// Проверяет, содержит ли файл указанное перечисление
   ///
   /// - Parameter name: Имя перечисления
@@ -114,7 +114,7 @@ public struct FileDescriptor {
   public func hasEnum(named name: String) -> Bool {
     return enums[name] != nil
   }
-  
+
   /// Проверяет, содержит ли файл указанный сервис
   ///
   /// - Parameter name: Имя сервиса

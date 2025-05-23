@@ -6,6 +6,7 @@
 //
 
 import XCTest
+
 @testable import SwiftProtoReflect
 
 /// Тесты для компонента FileDescriptor
@@ -18,11 +19,11 @@ import XCTest
 /// - Проверить обработку импортированных типов
 final class FileDescriptorTests: XCTestCase {
   // MARK: - Properties
-  
+
   var fileDescriptor: FileDescriptor!
-  
+
   // MARK: - Setup
-  
+
   override func setUp() {
     super.setUp()
     fileDescriptor = FileDescriptor(
@@ -32,14 +33,14 @@ final class FileDescriptorTests: XCTestCase {
       options: ["java_package": "com.example.person"]
     )
   }
-  
+
   override func tearDown() {
     fileDescriptor = nil
     super.tearDown()
   }
-  
+
   // MARK: - Tests
-  
+
   func testInitialization() {
     XCTAssertEqual(fileDescriptor.name, "person.proto")
     XCTAssertEqual(fileDescriptor.package, "example.person")
@@ -49,7 +50,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertTrue(fileDescriptor.enums.isEmpty)
     XCTAssertTrue(fileDescriptor.services.isEmpty)
   }
-  
+
   func testInitializationWithDefaults() {
     let descriptor = FileDescriptor(name: "empty.proto", package: "test")
     XCTAssertEqual(descriptor.name, "empty.proto")
@@ -63,7 +64,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(descriptor.name, "no_package.proto")
     XCTAssertEqual(descriptor.package, "")
   }
-  
+
   /// Тестирует добавление сообщения в файл
   ///
   /// # TODO: Дополнить тест
@@ -73,25 +74,25 @@ final class FileDescriptorTests: XCTestCase {
   func testAddMessage() {
     let personMessage = MessageDescriptor(name: "Person")
     fileDescriptor.addMessage(personMessage)
-    
+
     XCTAssertEqual(fileDescriptor.messages.count, 1)
     XCTAssertTrue(fileDescriptor.hasMessage(named: "Person"))
     XCTAssertEqual(fileDescriptor.messages["Person"]?.name, "Person")
   }
-  
+
   func testAddMessageReplacement() {
     // Добавляем первое сообщение
     let personMessage1 = MessageDescriptor(name: "Person")
     fileDescriptor.addMessage(personMessage1)
-    
+
     // Добавляем второе сообщение с тем же именем
     let personMessage2 = MessageDescriptor(name: "Person")
     fileDescriptor.addMessage(personMessage2)
-    
+
     // Проверяем, что количество сообщений не изменилось (произошла замена)
     XCTAssertEqual(fileDescriptor.messages.count, 1)
   }
-  
+
   /// Тестирует добавление перечисления в файл
   ///
   /// # TODO: Дополнить тест
@@ -101,25 +102,25 @@ final class FileDescriptorTests: XCTestCase {
   func testAddEnum() {
     let genderEnum = EnumDescriptor(name: "Gender")
     fileDescriptor.addEnum(genderEnum)
-    
+
     XCTAssertEqual(fileDescriptor.enums.count, 1)
     XCTAssertTrue(fileDescriptor.hasEnum(named: "Gender"))
     XCTAssertEqual(fileDescriptor.enums["Gender"]?.name, "Gender")
   }
-  
+
   func testAddEnumReplacement() {
     // Добавляем первое перечисление
     let enum1 = EnumDescriptor(name: "Status")
     fileDescriptor.addEnum(enum1)
-    
+
     // Добавляем второе перечисление с тем же именем
     let enum2 = EnumDescriptor(name: "Status")
     fileDescriptor.addEnum(enum2)
-    
+
     // Проверяем, что количество перечислений не изменилось (произошла замена)
     XCTAssertEqual(fileDescriptor.enums.count, 1)
   }
-  
+
   /// Тестирует добавление сервиса в файл
   ///
   /// # TODO: Дополнить тест
@@ -129,70 +130,70 @@ final class FileDescriptorTests: XCTestCase {
   func testAddService() {
     let personService = ServiceDescriptor(name: "PersonService", parent: fileDescriptor)
     fileDescriptor.addService(personService)
-    
+
     XCTAssertEqual(fileDescriptor.services.count, 1)
     XCTAssertTrue(fileDescriptor.hasService(named: "PersonService"))
     XCTAssertEqual(fileDescriptor.services["PersonService"]?.name, "PersonService")
   }
-  
+
   func testAddServiceReplacement() {
     // Добавляем первый сервис
     let service1 = ServiceDescriptor(name: "DataService", parent: fileDescriptor)
     fileDescriptor.addService(service1)
-    
+
     // Добавляем второй сервис с тем же именем
     let service2 = ServiceDescriptor(name: "DataService", parent: fileDescriptor)
     fileDescriptor.addService(service2)
-    
+
     // Проверяем, что количество сервисов не изменилось (произошла замена)
     XCTAssertEqual(fileDescriptor.services.count, 1)
   }
-  
+
   func testHasMessage() {
     // Проверяем отсутствие сообщения
     XCTAssertFalse(fileDescriptor.hasMessage(named: "Person"))
-    
+
     // Добавляем сообщение
     let personMessage = MessageDescriptor(name: "Person")
     fileDescriptor.addMessage(personMessage)
-    
+
     // Проверяем наличие сообщения
     XCTAssertTrue(fileDescriptor.hasMessage(named: "Person"))
-    
+
     // Проверяем отсутствие другого сообщения
     XCTAssertFalse(fileDescriptor.hasMessage(named: "Address"))
   }
-  
+
   func testHasEnum() {
     // Проверяем отсутствие перечисления
     XCTAssertFalse(fileDescriptor.hasEnum(named: "Gender"))
-    
+
     // Добавляем перечисление
     let genderEnum = EnumDescriptor(name: "Gender")
     fileDescriptor.addEnum(genderEnum)
-    
+
     // Проверяем наличие перечисления
     XCTAssertTrue(fileDescriptor.hasEnum(named: "Gender"))
-    
+
     // Проверяем отсутствие другого перечисления
     XCTAssertFalse(fileDescriptor.hasEnum(named: "Status"))
   }
-  
+
   func testHasService() {
     // Проверяем отсутствие сервиса
     XCTAssertFalse(fileDescriptor.hasService(named: "PersonService"))
-    
+
     // Добавляем сервис
     let personService = ServiceDescriptor(name: "PersonService", parent: fileDescriptor)
     fileDescriptor.addService(personService)
-    
+
     // Проверяем наличие сервиса
     XCTAssertTrue(fileDescriptor.hasService(named: "PersonService"))
-    
+
     // Проверяем отсутствие другого сервиса
     XCTAssertFalse(fileDescriptor.hasService(named: "AddressService"))
   }
-  
+
   /// Тестирует получение полного имени типа
   ///
   /// # TODO: Дополнить тест
@@ -200,26 +201,26 @@ final class FileDescriptorTests: XCTestCase {
   /// - Проверить поведение для импортированных типов
   func testGetFullName() {
     XCTAssertEqual(fileDescriptor.getFullName(for: "Person"), "example.person.Person")
-    
+
     let emptyPackageFileDescriptor = FileDescriptor(name: "test.proto", package: "")
     XCTAssertEqual(emptyPackageFileDescriptor.getFullName(for: "Test"), "Test")
   }
-  
+
   func testFluentInterface() {
     // Проверяем методы отдельно, так как они mutating и не могут вызываться цепочкой
     let personMessage = MessageDescriptor(name: "Person")
     let genderEnum = EnumDescriptor(name: "Gender")
     let personService = ServiceDescriptor(name: "PersonService", parent: fileDescriptor)
-    
+
     // Вызываем методы последовательно
     fileDescriptor.addMessage(personMessage)
     fileDescriptor.addEnum(genderEnum)
     fileDescriptor.addService(personService)
-    
+
     XCTAssertTrue(fileDescriptor.hasMessage(named: "Person"))
     XCTAssertTrue(fileDescriptor.hasEnum(named: "Gender"))
     XCTAssertTrue(fileDescriptor.hasService(named: "PersonService"))
   }
-  
+
   // MARK: - Helpers
 }

@@ -30,7 +30,7 @@ let package = Package(
         "Bridge/_README.md",
         "Descriptor/_README.md",
         "Serialization/_README.md",
-        "Registry/_README.md"
+        "Registry/_README.md",
       ]
     ),
     .testTarget(
@@ -46,6 +46,6 @@ let package = Package(
         "TestUtils/README.md",
         "TestResources/README.md",
       ]
-    )
+    ),
   ]
 )

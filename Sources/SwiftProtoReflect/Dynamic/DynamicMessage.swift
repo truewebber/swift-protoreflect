@@ -15,36 +15,36 @@ import SwiftProtobuf
 /// во время выполнения без предварительной генерации кода.
 public struct DynamicMessage: Equatable {
   // MARK: - Properties
-  
+
   /// Дескриптор сообщения, определяющий его структуру
   public let descriptor: MessageDescriptor
-  
+
   /// Хранилище значений полей
   private var values: [Int: Any] = [:]
-  
+
   /// Хранилище для вложенных сообщений
   private var nestedMessages: [Int: DynamicMessage] = [:]
-  
+
   /// Хранилище для repeated полей
   private var repeatedValues: [Int: [Any]] = [:]
-  
+
   /// Хранилище для map полей
   private var mapValues: [Int: [AnyHashable: Any]] = [:]
-  
+
   /// Информация о том, какой oneOf активен (если есть)
   private var activeOneofFields: [Int: Int] = [:]
-  
+
   // MARK: - Initialization
-  
+
   /// Создает новый экземпляр DynamicMessage
-  /// 
+  ///
   /// - Parameter descriptor: Дескриптор сообщения
   public init(descriptor: MessageDescriptor) {
     self.descriptor = descriptor
   }
-  
+
   // MARK: - Field Access Methods
-  
+
   /// Устанавливает значение поля по его имени
   ///
   /// - Parameters:
@@ -57,10 +57,10 @@ public struct DynamicMessage: Equatable {
     guard let field = descriptor.field(named: fieldName) else {
       throw DynamicMessageError.fieldNotFound(fieldName: fieldName)
     }
-    
+
     return try set(value, forField: field.number)
   }
-  
+
   /// Устанавливает значение поля по его номеру
   ///
   /// - Parameters:
@@ -73,7 +73,7 @@ public struct DynamicMessage: Equatable {
     guard let field = descriptor.field(number: fieldNumber) else {
       throw DynamicMessageError.fieldNotFoundByNumber(fieldNumber: fieldNumber)
     }
-    
+
     // Обработка oneof полей
     if let oneofIndex = field.oneofIndex {
       if let currentField = activeOneofFields[oneofIndex], currentField != fieldNumber {
@@ -82,7 +82,7 @@ public struct DynamicMessage: Equatable {
       }
       activeOneofFields[oneofIndex] = fieldNumber
     }
-    
+
     // Обработка различных типов полей
     if field.isRepeated {
       // Repeated поля
@@ -95,9 +95,9 @@ public struct DynamicMessage: Equatable {
             actualValue: value
           )
         }
-        
+
         try validateMapValues(mapValue, for: field)
-        
+
         // Преобразуем ключи и значения в map если нужно
         var convertedMap: [AnyHashable: Any] = [:]
         for (key, val) in mapValue {
@@ -105,9 +105,10 @@ public struct DynamicMessage: Equatable {
           let convertedValue = convertMapValue(val, for: field.mapEntryInfo!.valueFieldInfo)
           convertedMap[convertedKey] = convertedValue
         }
-        
+
         mapValues[fieldNumber] = convertedMap
-      } else {
+      }
+      else {
         // Обычные repeated поля
         guard let arrayValue = value as? [Any] else {
           throw DynamicMessageError.typeMismatch(
@@ -116,41 +117,44 @@ public struct DynamicMessage: Equatable {
             actualValue: value
           )
         }
-        
+
         // Проверяем и преобразуем все элементы массива
         var convertedArray: [Any] = []
         for (index, item) in arrayValue.enumerated() {
           try validateValue(item, for: field, itemIndex: index)
           convertedArray.append(convertToCorrectType(item, for: field))
         }
-        
+
         repeatedValues[fieldNumber] = convertedArray
       }
-    } else {
+    }
+    else {
       // Обычные (не repeated) поля
       try validateValue(value, for: field)
-      
+
       if case .message = field.type {
         if let dynamicMessage = value as? DynamicMessage {
           // Сохраняем вложенное динамическое сообщение
           nestedMessages[fieldNumber] = dynamicMessage
-        } else {
+        }
+        else {
           throw DynamicMessageError.typeMismatch(
             fieldName: field.name,
             expectedType: "DynamicMessage",
             actualValue: value
           )
         }
-      } else {
+      }
+      else {
         // Преобразуем и сохраняем обычное значение
         let convertedValue = convertToCorrectType(value, for: field)
         values[fieldNumber] = convertedValue
       }
     }
-    
+
     return self
   }
-  
+
   /// Получает значение поля по его имени
   ///
   /// - Parameter fieldName: Имя поля
@@ -160,10 +164,10 @@ public struct DynamicMessage: Equatable {
     guard let field = descriptor.field(named: fieldName) else {
       throw DynamicMessageError.fieldNotFound(fieldName: fieldName)
     }
-    
+
     return try get(forField: field.number)
   }
-  
+
   /// Получает значение поля по его номеру
   ///
   /// - Parameter fieldNumber: Номер поля
@@ -173,21 +177,24 @@ public struct DynamicMessage: Equatable {
     guard let field = descriptor.field(number: fieldNumber) else {
       throw DynamicMessageError.fieldNotFoundByNumber(fieldNumber: fieldNumber)
     }
-    
+
     // Определяем, откуда взять значение в зависимости от типа поля
     if field.isRepeated {
       if field.isMap {
         return mapValues[fieldNumber]
-      } else {
+      }
+      else {
         return repeatedValues[fieldNumber]
       }
-    } else if case .message = field.type {
+    }
+    else if case .message = field.type {
       return nestedMessages[fieldNumber]
-    } else {
+    }
+    else {
       return values[fieldNumber] ?? field.defaultValue
     }
   }
-  
+
   /// Проверяет, было ли установлено значение для поля
   ///
   /// - Parameter fieldName: Имя поля
@@ -197,10 +204,10 @@ public struct DynamicMessage: Equatable {
     guard let field = descriptor.field(named: fieldName) else {
       throw DynamicMessageError.fieldNotFound(fieldName: fieldName)
     }
-    
+
     return try hasValue(forField: field.number)
   }
-  
+
   /// Проверяет, было ли установлено значение для поля
   ///
   /// - Parameter fieldNumber: Номер поля
@@ -210,20 +217,23 @@ public struct DynamicMessage: Equatable {
     guard let field = descriptor.field(number: fieldNumber) else {
       throw DynamicMessageError.fieldNotFoundByNumber(fieldNumber: fieldNumber)
     }
-    
+
     if field.isRepeated {
       if field.isMap {
         return mapValues[fieldNumber] != nil
-      } else {
+      }
+      else {
         return repeatedValues[fieldNumber] != nil
       }
-    } else if case .message = field.type {
+    }
+    else if case .message = field.type {
       return nestedMessages[fieldNumber] != nil
-    } else {
+    }
+    else {
       return values[fieldNumber] != nil
     }
   }
-  
+
   /// Очищает значение поля
   ///
   /// - Parameter fieldName: Имя поля
@@ -234,10 +244,10 @@ public struct DynamicMessage: Equatable {
     guard let field = descriptor.field(named: fieldName) else {
       throw DynamicMessageError.fieldNotFound(fieldName: fieldName)
     }
-    
+
     return try clearField(field.number)
   }
-  
+
   /// Очищает значение поля
   ///
   /// - Parameter fieldNumber: Номер поля
@@ -248,29 +258,32 @@ public struct DynamicMessage: Equatable {
     guard let field = descriptor.field(number: fieldNumber) else {
       throw DynamicMessageError.fieldNotFoundByNumber(fieldNumber: fieldNumber)
     }
-    
+
     if field.isRepeated {
       if field.isMap {
         mapValues.removeValue(forKey: fieldNumber)
-      } else {
+      }
+      else {
         repeatedValues.removeValue(forKey: fieldNumber)
       }
-    } else if case .message = field.type {
+    }
+    else if case .message = field.type {
       nestedMessages.removeValue(forKey: fieldNumber)
-    } else {
+    }
+    else {
       values.removeValue(forKey: fieldNumber)
     }
-    
+
     // Обновляем состояние oneof полей
     if let oneofIndex = field.oneofIndex, activeOneofFields[oneofIndex] == fieldNumber {
       activeOneofFields.removeValue(forKey: oneofIndex)
     }
-    
+
     return self
   }
-  
+
   // MARK: - Repeated Field Methods
-  
+
   /// Добавляет элемент в repeated поле
   ///
   /// - Parameters:
@@ -283,10 +296,10 @@ public struct DynamicMessage: Equatable {
     guard let field = descriptor.field(named: fieldName) else {
       throw DynamicMessageError.fieldNotFound(fieldName: fieldName)
     }
-    
+
     return try addRepeatedValue(value, forField: field.number)
   }
-  
+
   /// Добавляет элемент в repeated поле
   ///
   /// - Parameters:
@@ -299,27 +312,27 @@ public struct DynamicMessage: Equatable {
     guard let field = descriptor.field(number: fieldNumber) else {
       throw DynamicMessageError.fieldNotFoundByNumber(fieldNumber: fieldNumber)
     }
-    
+
     guard field.isRepeated && !field.isMap else {
       throw DynamicMessageError.notRepeatedField(fieldName: field.name)
     }
-    
+
     // Проверяем тип значения
     try validateValue(value, for: field)
-    
+
     // Преобразуем значение если нужно
     let convertedValue = convertToCorrectType(value, for: field)
-    
+
     // Добавляем в массив
     var currentValues = repeatedValues[fieldNumber] ?? []
     currentValues.append(convertedValue)
     repeatedValues[fieldNumber] = currentValues
-    
+
     return self
   }
-  
+
   // MARK: - Map Field Methods
-  
+
   /// Устанавливает запись в map поле
   ///
   /// - Parameters:
@@ -333,10 +346,10 @@ public struct DynamicMessage: Equatable {
     guard let field = descriptor.field(named: fieldName) else {
       throw DynamicMessageError.fieldNotFound(fieldName: fieldName)
     }
-    
+
     return try setMapEntry(value, forKey: key, inField: field.number)
   }
-  
+
   /// Устанавливает запись в map поле
   ///
   /// - Parameters:
@@ -350,27 +363,27 @@ public struct DynamicMessage: Equatable {
     guard let field = descriptor.field(number: fieldNumber) else {
       throw DynamicMessageError.fieldNotFoundByNumber(fieldNumber: fieldNumber)
     }
-    
+
     guard field.isMap, let mapInfo = field.mapEntryInfo else {
       throw DynamicMessageError.notMapField(fieldName: field.name)
     }
-    
+
     // Проверяем тип ключа
     try validateMapKey(key, for: mapInfo.keyFieldInfo)
-    
+
     // Проверяем тип значения
     try validateMapValue(value, for: mapInfo.valueFieldInfo)
-    
+
     // Добавляем в map
     var currentMap = mapValues[fieldNumber] ?? [:]
     currentMap[key] = value
     mapValues[fieldNumber] = currentMap
-    
+
     return self
   }
-  
+
   // MARK: - Validation Methods
-  
+
   /// Проверяет, соответствует ли значение требуемому типу поля
   ///
   /// - Parameters:
@@ -381,7 +394,7 @@ public struct DynamicMessage: Equatable {
   private func validateValue(_ value: Any, for field: FieldDescriptor, itemIndex: Int? = nil) throws {
     let indexSuffix = itemIndex != nil ? " at index \(itemIndex!)" : ""
     let fieldDesc = "\(field.name)\(indexSuffix)"
-    
+
     switch field.type {
     case .double:
       guard value is Double || value is NSNumber else {
@@ -463,12 +476,12 @@ public struct DynamicMessage: Equatable {
           actualValue: value
         )
       }
-      
+
       // Проверяем, соответствует ли тип сообщения ожидаемому
       let message = value as! DynamicMessage
       let expectedTypeName = field.typeName ?? ""
       let actualTypeName = message.descriptor.fullName
-      
+
       guard expectedTypeName == actualTypeName else {
         throw DynamicMessageError.messageMismatch(
           fieldName: fieldDesc,
@@ -485,8 +498,8 @@ public struct DynamicMessage: Equatable {
           actualValue: value
         )
       }
-      
-      // TODO: Полная проверка значений enum при наличии реестра типов
+
+    // TODO: Полная проверка значений enum при наличии реестра типов
     case .group:
       // Group - устаревший тип, поддерживаем для совместимости с proto2
       guard value is DynamicMessage else {
@@ -498,7 +511,7 @@ public struct DynamicMessage: Equatable {
       }
     }
   }
-  
+
   /// Проверяет правильность значений в map
   ///
   /// - Parameters:
@@ -509,14 +522,14 @@ public struct DynamicMessage: Equatable {
     guard let mapInfo = field.mapEntryInfo else {
       throw DynamicMessageError.notMapField(fieldName: field.name)
     }
-    
+
     // Проверяем все ключи и значения
     for (key, value) in mapValue {
       try validateMapKey(key, for: mapInfo.keyFieldInfo)
       try validateMapValue(value, for: mapInfo.valueFieldInfo)
     }
   }
-  
+
   /// Проверяет правильность ключа в map
   ///
   /// - Parameters:
@@ -578,7 +591,7 @@ public struct DynamicMessage: Equatable {
       throw DynamicMessageError.invalidMapKeyType(type: keyFieldInfo.type)
     }
   }
-  
+
   /// Проверяет правильность значения в map
   ///
   /// - Parameters:
@@ -593,10 +606,10 @@ public struct DynamicMessage: Equatable {
       type: valueFieldInfo.type,
       typeName: valueFieldInfo.typeName
     )
-    
+
     try validateValue(value, for: tempField)
   }
-  
+
   /// Конвертирует значение в правильный тип для сохранения, если требуется
   ///
   /// - Parameters:
@@ -634,7 +647,7 @@ public struct DynamicMessage: Equatable {
     }
     return value
   }
-  
+
   /// Преобразует ключ map в правильный тип
   private func convertMapKey(_ key: AnyHashable, for keyFieldInfo: KeyFieldInfo) -> AnyHashable {
     switch keyFieldInfo.type {
@@ -659,7 +672,7 @@ public struct DynamicMessage: Equatable {
     }
     return key
   }
-  
+
   /// Преобразует значение map в правильный тип
   private func convertMapValue(_ value: Any, for valueFieldInfo: ValueFieldInfo) -> Any {
     // Создаем временный дескриптор поля для переиспользования проверки
@@ -669,80 +682,81 @@ public struct DynamicMessage: Equatable {
       type: valueFieldInfo.type,
       typeName: valueFieldInfo.typeName
     )
-    
+
     return convertToCorrectType(value, for: tempField)
   }
-  
+
   // MARK: - Equatable
-  
+
   public static func == (lhs: DynamicMessage, rhs: DynamicMessage) -> Bool {
     // Сравниваем по дескриптору и значениям полей
     guard lhs.descriptor.fullName == rhs.descriptor.fullName else {
       return false
     }
-    
+
     // Получаем все поля дескриптора
     let allFields = lhs.descriptor.allFields()
-    
+
     for field in allFields {
       let fieldNumber = field.number
-      
+
       do {
         let lhsHasValue = try lhs.hasValue(forField: fieldNumber)
         let rhsHasValue = try rhs.hasValue(forField: fieldNumber)
-        
+
         // Если наличие значения различается, сообщения не равны
         if lhsHasValue != rhsHasValue {
           return false
         }
-        
+
         // Если оба не имеют значения, переходим к следующему полю
         if !lhsHasValue && !rhsHasValue {
           continue
         }
-        
+
         // Получаем значения
         let lhsValue = try lhs.get(forField: fieldNumber)
         let rhsValue = try rhs.get(forField: fieldNumber)
-        
+
         // Сравниваем значения в зависимости от типа поля
         if field.isRepeated {
           if field.isMap {
             // Сравниваем map
             let lhsMap = lhsValue as? [AnyHashable: Any]
             let rhsMap = rhsValue as? [AnyHashable: Any]
-            
+
             guard let lm = lhsMap, let rm = rhsMap, lm.count == rm.count else {
               return false
             }
-            
+
             // Сравниваем ключи
             let lhsKeys = Set(lm.keys.map { String(describing: $0) })
             let rhsKeys = Set(rm.keys.map { String(describing: $0) })
-            
+
             if lhsKeys != rhsKeys {
               return false
             }
-            
+
             // Сравниваем значения для каждого ключа
             for (key, lhsMapValue) in lm {
               guard let rhsMapValue = rm[key] else {
                 return false
               }
-              
+
               if !areValuesEqual(lhsMapValue, rhsMapValue, fieldType: field.mapEntryInfo?.valueFieldInfo.type) {
                 return false
               }
             }
-          } else {
+          }
+          else {
             // Сравниваем repeated
             let lhsArray = lhsValue as? [Any]
             let rhsArray = rhsValue as? [Any]
-            
+
             guard let la = lhsArray, let ra = rhsArray, la.count == ra.count else {
               return false
             }
-            
+
             // Сравниваем каждый элемент
             for i in 0..<la.count {
               if !areValuesEqual(la[i], ra[i], fieldType: field.type) {
@@ -750,21 +764,23 @@ public struct DynamicMessage: Equatable {
               }
             }
           }
-        } else {
+        }
+        else {
           // Сравниваем обычные поля
           if !areValuesEqual(lhsValue!, rhsValue!, fieldType: field.type) {
             return false
           }
         }
-      } catch {
+      }
+      catch {
         // При ошибке доступа к полю считаем, что сообщения не равны
         return false
       }
     }
-    
+
     return true
   }
-  
+
   /// Сравнивает два значения на равенство с учетом типа поля
   ///
   /// - Parameters:
@@ -796,9 +812,11 @@ public struct DynamicMessage: Equatable {
       // Для enum сравниваем либо номера, либо строки
       if let lhsInt = lhs as? Int32, let rhsInt = rhs as? Int32 {
         return lhsInt == rhsInt
-      } else if let lhsStr = lhs as? String, let rhsStr = rhs as? String {
+      }
+      else if let lhsStr = lhs as? String, let rhsStr = rhs as? String {
         return lhsStr == rhsStr
-      } else {
+      }
+      else {
         return false
       }
     case .message, .group:
@@ -820,7 +838,7 @@ public enum DynamicMessageError: Error, LocalizedError {
   case notRepeatedField(fieldName: String)
   case notMapField(fieldName: String)
   case invalidMapKeyType(type: FieldType)
-  
+
   public var errorDescription: String? {
     switch self {
     case .fieldNotFound(let fieldName):

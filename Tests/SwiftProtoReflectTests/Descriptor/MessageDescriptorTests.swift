@@ -6,6 +6,7 @@
 //
 
 import XCTest
+
 @testable import SwiftProtoReflect
 
 /// Тесты для компонента MessageDescriptor
@@ -17,34 +18,34 @@ import XCTest
 /// - Проверить обработку импортированных типов
 final class MessageDescriptorTests: XCTestCase {
   // MARK: - Properties
-  
+
   var messageDescriptor: MessageDescriptor!
   var fileDescriptor: FileDescriptor!
-  
+
   // MARK: - Setup
-  
+
   override func setUp() {
     super.setUp()
     fileDescriptor = FileDescriptor(
       name: "person.proto",
       package: "example.person"
     )
-    
+
     messageDescriptor = MessageDescriptor(
       name: "Person",
       parent: fileDescriptor,
       options: ["deprecated": false]
     )
   }
-  
+
   override func tearDown() {
     messageDescriptor = nil
     fileDescriptor = nil
     super.tearDown()
   }
-  
+
   // MARK: - Tests
-  
+
   func testInitialization() {
     XCTAssertEqual(messageDescriptor.name, "Person")
     XCTAssertEqual(messageDescriptor.fullName, "example.person.Person")
@@ -55,7 +56,7 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertEqual(messageDescriptor.fileDescriptorPath, "person.proto")
     XCTAssertNil(messageDescriptor.parentMessageFullName)
   }
-  
+
   func testInitializationWithoutParent() {
     let descriptor = MessageDescriptor(name: "Test", fullName: "test.Test")
     XCTAssertEqual(descriptor.name, "Test")
@@ -63,17 +64,17 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertNil(descriptor.fileDescriptorPath)
     XCTAssertNil(descriptor.parentMessageFullName)
   }
-  
+
   func testInitializationWithParentMessage() {
     let parentMessage = MessageDescriptor(name: "Parent", fullName: "example.Parent")
     let childMessage = MessageDescriptor(name: "Child", parent: parentMessage)
-    
+
     XCTAssertEqual(childMessage.name, "Child")
     XCTAssertEqual(childMessage.fullName, "example.Parent.Child")
     XCTAssertNotNil(childMessage.parentMessageFullName)
     XCTAssertEqual(childMessage.parentMessageFullName, "example.Parent")
   }
-  
+
   func testAddField() {
     let nameField = FieldDescriptor(
       name: "name",
@@ -81,30 +82,30 @@ final class MessageDescriptorTests: XCTestCase {
       type: .string,
       isOptional: true
     )
-    
+
     messageDescriptor.addField(nameField)
-    
+
     XCTAssertEqual(messageDescriptor.fields.count, 1)
     XCTAssertTrue(messageDescriptor.hasField(number: 1))
     XCTAssertTrue(messageDescriptor.hasField(named: "name"))
     XCTAssertEqual(messageDescriptor.field(number: 1)?.name, "name")
     XCTAssertEqual(messageDescriptor.field(named: "name")?.number, 1)
   }
-  
+
   func testAddMultipleFields() {
     let nameField = FieldDescriptor(name: "name", number: 1, type: .string)
     let ageField = FieldDescriptor(name: "age", number: 2, type: .int32)
     let activeField = FieldDescriptor(name: "active", number: 3, type: .bool)
-    
+
     messageDescriptor.addField(nameField)
     messageDescriptor.addField(ageField)
     messageDescriptor.addField(activeField)
-    
+
     XCTAssertEqual(messageDescriptor.fields.count, 3)
     XCTAssertTrue(messageDescriptor.hasField(number: 1))
     XCTAssertTrue(messageDescriptor.hasField(number: 2))
     XCTAssertTrue(messageDescriptor.hasField(number: 3))
-    
+
     // Проверяем упорядоченный список полей
     let allFields = messageDescriptor.allFields()
     XCTAssertEqual(allFields.count, 3)
@@ -112,25 +113,25 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertEqual(allFields[1].number, 2)
     XCTAssertEqual(allFields[2].number, 3)
   }
-  
+
   func testAddFieldReplacement() {
     let nameField1 = FieldDescriptor(name: "name", number: 1, type: .string)
     messageDescriptor.addField(nameField1)
-    
+
     let nameField2 = FieldDescriptor(name: "name", number: 1, type: .string, isOptional: true)
     messageDescriptor.addField(nameField2)
-    
+
     XCTAssertEqual(messageDescriptor.fields.count, 1, "Поле должно быть заменено")
     XCTAssertTrue(messageDescriptor.field(number: 1)!.isOptional, "Должно быть использовано новое поле")
   }
-  
+
   func testAddNestedMessage() {
     let addressMessage = MessageDescriptor(name: "Address", parent: messageDescriptor)
     messageDescriptor.addNestedMessage(addressMessage)
-    
+
     XCTAssertEqual(messageDescriptor.nestedMessages.count, 1)
     XCTAssertTrue(messageDescriptor.hasNestedMessage(named: "Address"))
-    
+
     let nestedAddress = messageDescriptor.nestedMessage(named: "Address")
     XCTAssertNotNil(nestedAddress)
     XCTAssertEqual(nestedAddress?.name, "Address")
@@ -138,19 +139,19 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertEqual(nestedAddress?.parentMessageFullName, "example.person.Person")
     XCTAssertEqual(nestedAddress?.fileDescriptorPath, "person.proto")
   }
-  
+
   func testAddNestedEnum() {
     let genderEnum = EnumDescriptor(name: "Gender")
     messageDescriptor.addNestedEnum(genderEnum)
-    
+
     XCTAssertEqual(messageDescriptor.nestedEnums.count, 1)
     XCTAssertTrue(messageDescriptor.hasNestedEnum(named: "Gender"))
-    
+
     let nestedGender = messageDescriptor.nestedEnum(named: "Gender")
     XCTAssertNotNil(nestedGender)
     XCTAssertEqual(nestedGender?.name, "Gender")
   }
-  
+
   func testMessageWithComplexFields() {
     // Создаем поле с типом сообщения
     let addressField = FieldDescriptor(
@@ -160,7 +161,7 @@ final class MessageDescriptorTests: XCTestCase {
       typeName: "example.person.Address",
       isOptional: true
     )
-    
+
     // Создаем поле с типом перечисления
     let genderField = FieldDescriptor(
       name: "gender",
@@ -169,7 +170,7 @@ final class MessageDescriptorTests: XCTestCase {
       typeName: "example.person.Gender",
       isOptional: true
     )
-    
+
     // Создаем повторяющееся поле
     let phoneField = FieldDescriptor(
       name: "phones",
@@ -177,39 +178,39 @@ final class MessageDescriptorTests: XCTestCase {
       type: .string,
       isRepeated: true
     )
-    
+
     messageDescriptor.addField(addressField)
     messageDescriptor.addField(genderField)
     messageDescriptor.addField(phoneField)
-    
+
     // Проверяем типы полей
     guard let addressFieldResult = messageDescriptor.field(number: 1) else {
       XCTFail("Поле address не найдено")
       return
     }
-    
+
     guard let genderFieldResult = messageDescriptor.field(number: 2) else {
       XCTFail("Поле gender не найдено")
       return
     }
-    
+
     guard let phoneFieldResult = messageDescriptor.field(number: 3) else {
       XCTFail("Поле phones не найдено")
       return
     }
-    
+
     // Проверяем тип поля address
     XCTAssertEqual(addressFieldResult.type, .message)
     XCTAssertEqual(addressFieldResult.typeName, "example.person.Address")
-    
+
     // Проверяем тип поля gender
     XCTAssertEqual(genderFieldResult.type, .enum)
     XCTAssertEqual(genderFieldResult.typeName, "example.person.Gender")
-    
+
     // Проверяем тип поля phones
     XCTAssertEqual(phoneFieldResult.type, .string)
     XCTAssertTrue(phoneFieldResult.isRepeated)
   }
-  
+
   // MARK: - Helpers
 }
