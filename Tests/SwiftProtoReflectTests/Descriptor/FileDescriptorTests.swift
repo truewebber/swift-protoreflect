@@ -9,14 +9,14 @@ import XCTest
 
 @testable import SwiftProtoReflect
 
-/// Тесты для компонента FileDescriptor
+/// Тесты для компонента FileDescriptor.
 ///
-/// # TODO: Расширение тестов
-/// - Добавить проверку свойств вложенных объектов (не только имени, но и других атрибутов)
-/// - Проверять корректность полного пути для вложенных типов
-/// - Проверить работу с OneOf полями
-/// - Тестировать циклические зависимости между сообщениями
-/// - Проверить обработку импортированных типов
+/// # TODO: Расширение тестов.
+/// - Добавить проверку свойств вложенных объектов (не только имени, но и других атрибутов).
+/// - Проверять корректность полного пути для вложенных типов.
+/// - Проверить работу с OneOf полями.
+/// - Тестировать циклические зависимости между сообщениями.
+/// - Проверить обработку импортированных типов.
 final class FileDescriptorTests: XCTestCase {
   // MARK: - Properties
 
@@ -65,12 +65,12 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(descriptor.package, "")
   }
 
-  /// Тестирует добавление сообщения в файл
+  /// Тестирует добавление сообщения в файл.
   ///
-  /// # TODO: Дополнить тест
-  /// - Проверять типы полей сообщения
-  /// - Проверять номера полей
-  /// - Проверять опции полей
+  /// # TODO: Дополнить тест.
+  /// - Проверять типы полей сообщения.
+  /// - Проверять номера полей.
+  /// - Проверять опции полей.
   func testAddMessage() {
     let personMessage = MessageDescriptor(name: "Person")
     fileDescriptor.addMessage(personMessage)
@@ -93,12 +93,12 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(fileDescriptor.messages.count, 1)
   }
 
-  /// Тестирует добавление перечисления в файл
+  /// Тестирует добавление перечисления в файл.
   ///
-  /// # TODO: Дополнить тест
-  /// - Проверять значения перечисления
-  /// - Проверять опции перечисления
-  /// - Проверять опции для отдельных значений
+  /// # TODO: Дополнить тест.
+  /// - Проверять значения перечисления.
+  /// - Проверять опции перечисления.
+  /// - Проверять опции для отдельных значений.
   func testAddEnum() {
     let genderEnum = EnumDescriptor(name: "Gender")
     fileDescriptor.addEnum(genderEnum)
@@ -121,12 +121,12 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(fileDescriptor.enums.count, 1)
   }
 
-  /// Тестирует добавление сервиса в файл
+  /// Тестирует добавление сервиса в файл.
   ///
-  /// # TODO: Дополнить тест
-  /// - Проверять методы сервиса
-  /// - Проверять типы входных и выходных параметров
-  /// - Проверять опции сервиса и методов
+  /// # TODO: Дополнить тест.
+  /// - Проверять методы сервиса.
+  /// - Проверять типы входных и выходных параметров.
+  /// - Проверять опции сервиса и методов.
   func testAddService() {
     let personService = ServiceDescriptor(name: "PersonService", parent: fileDescriptor)
     fileDescriptor.addService(personService)
@@ -194,11 +194,11 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertFalse(fileDescriptor.hasService(named: "AddressService"))
   }
 
-  /// Тестирует получение полного имени типа
+  /// Тестирует получение полного имени типа.
   ///
-  /// # TODO: Дополнить тест
-  /// - Проверить получение имени для вложенных типов
-  /// - Проверить поведение для импортированных типов
+  /// # TODO: Дополнить тест.
+  /// - Проверить получение имени для вложенных типов.
+  /// - Проверить поведение для импортированных типов.
   func testGetFullName() {
     XCTAssertEqual(fileDescriptor.getFullName(for: "Person"), "example.person.Person")
 

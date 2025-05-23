@@ -8,50 +8,50 @@
 import Foundation
 import SwiftProtobuf
 
-/// DynamicMessage
+/// DynamicMessage.
 ///
-/// Динамическое представление Protocol Buffers сообщения,
-/// которое позволяет создавать и манипулировать сообщениями
+/// Динамическое представление Protocol Buffers сообщения,.
+/// которое позволяет создавать и манипулировать сообщениями.
 /// во время выполнения без предварительной генерации кода.
 public struct DynamicMessage: Equatable {
   // MARK: - Properties
 
-  /// Дескриптор сообщения, определяющий его структуру
+  /// Дескриптор сообщения, определяющий его структуру.
   public let descriptor: MessageDescriptor
 
-  /// Хранилище значений полей
+  /// Хранилище значений полей.
   private var values: [Int: Any] = [:]
 
-  /// Хранилище для вложенных сообщений
+  /// Хранилище для вложенных сообщений.
   private var nestedMessages: [Int: DynamicMessage] = [:]
 
-  /// Хранилище для repeated полей
+  /// Хранилище для repeated полей.
   private var repeatedValues: [Int: [Any]] = [:]
 
-  /// Хранилище для map полей
+  /// Хранилище для map полей.
   private var mapValues: [Int: [AnyHashable: Any]] = [:]
 
-  /// Информация о том, какой oneOf активен (если есть)
+  /// Информация о том, какой oneOf активен (если есть).
   private var activeOneofFields: [Int: Int] = [:]
 
   // MARK: - Initialization
 
-  /// Создает новый экземпляр DynamicMessage
+  /// Создает новый экземпляр DynamicMessage.
   ///
-  /// - Parameter descriptor: Дескриптор сообщения
+  /// - Parameter descriptor: Дескриптор сообщения.
   public init(descriptor: MessageDescriptor) {
     self.descriptor = descriptor
   }
 
   // MARK: - Field Access Methods
 
-  /// Устанавливает значение поля по его имени
+  /// Устанавливает значение поля по его имени.
   ///
-  /// - Parameters:
-  ///   - value: Значение для установки
-  ///   - fieldName: Имя поля
-  /// - Returns: Обновленное сообщение
-  /// - Throws: Ошибку, если поле не существует или типы несовместимы
+  /// - Parameters:.
+  ///   - value: Значение для установки.
+  ///   - fieldName: Имя поля.
+  /// - Returns: Обновленное сообщение.
+  /// - Throws: Ошибку, если поле не существует или типы несовместимы.
   @discardableResult
   public mutating func set(_ value: Any, forField fieldName: String) throws -> Self {
     guard let field = descriptor.field(named: fieldName) else {
@@ -61,13 +61,13 @@ public struct DynamicMessage: Equatable {
     return try set(value, forField: field.number)
   }
 
-  /// Устанавливает значение поля по его номеру
+  /// Устанавливает значение поля по его номеру.
   ///
-  /// - Parameters:
-  ///   - value: Значение для установки
-  ///   - fieldNumber: Номер поля
-  /// - Returns: Обновленное сообщение
-  /// - Throws: Ошибку, если поле не существует или типы несовместимы
+  /// - Parameters:.
+  ///   - value: Значение для установки.
+  ///   - fieldNumber: Номер поля.
+  /// - Returns: Обновленное сообщение.
+  /// - Throws: Ошибку, если поле не существует или типы несовместимы.
   @discardableResult
   public mutating func set(_ value: Any, forField fieldNumber: Int) throws -> Self {
     guard let field = descriptor.field(number: fieldNumber) else {
@@ -155,11 +155,11 @@ public struct DynamicMessage: Equatable {
     return self
   }
 
-  /// Получает значение поля по его имени
+  /// Получает значение поля по его имени.
   ///
-  /// - Parameter fieldName: Имя поля
-  /// - Returns: Значение поля или nil, если значение не установлено
-  /// - Throws: Ошибку, если поле не существует
+  /// - Parameter fieldName: Имя поля.
+  /// - Returns: Значение поля или nil, если значение не установлено.
+  /// - Throws: Ошибку, если поле не существует.
   public func get(forField fieldName: String) throws -> Any? {
     guard let field = descriptor.field(named: fieldName) else {
       throw DynamicMessageError.fieldNotFound(fieldName: fieldName)
@@ -168,11 +168,11 @@ public struct DynamicMessage: Equatable {
     return try get(forField: field.number)
   }
 
-  /// Получает значение поля по его номеру
+  /// Получает значение поля по его номеру.
   ///
-  /// - Parameter fieldNumber: Номер поля
-  /// - Returns: Значение поля или nil, если значение не установлено
-  /// - Throws: Ошибку, если поле не существует
+  /// - Parameter fieldNumber: Номер поля.
+  /// - Returns: Значение поля или nil, если значение не установлено.
+  /// - Throws: Ошибку, если поле не существует.
   public func get(forField fieldNumber: Int) throws -> Any? {
     guard let field = descriptor.field(number: fieldNumber) else {
       throw DynamicMessageError.fieldNotFoundByNumber(fieldNumber: fieldNumber)
@@ -195,11 +195,11 @@ public struct DynamicMessage: Equatable {
     }
   }
 
-  /// Проверяет, было ли установлено значение для поля
+  /// Проверяет, было ли установлено значение для поля.
   ///
-  /// - Parameter fieldName: Имя поля
-  /// - Returns: true, если значение установлено
-  /// - Throws: Ошибку, если поле не существует
+  /// - Parameter fieldName: Имя поля.
+  /// - Returns: true, если значение установлено.
+  /// - Throws: Ошибку, если поле не существует.
   public func hasValue(forField fieldName: String) throws -> Bool {
     guard let field = descriptor.field(named: fieldName) else {
       throw DynamicMessageError.fieldNotFound(fieldName: fieldName)
@@ -208,11 +208,11 @@ public struct DynamicMessage: Equatable {
     return try hasValue(forField: field.number)
   }
 
-  /// Проверяет, было ли установлено значение для поля
+  /// Проверяет, было ли установлено значение для поля.
   ///
-  /// - Parameter fieldNumber: Номер поля
-  /// - Returns: true, если значение установлено
-  /// - Throws: Ошибку, если поле не существует
+  /// - Parameter fieldNumber: Номер поля.
+  /// - Returns: true, если значение установлено.
+  /// - Throws: Ошибку, если поле не существует.
   public func hasValue(forField fieldNumber: Int) throws -> Bool {
     guard let field = descriptor.field(number: fieldNumber) else {
       throw DynamicMessageError.fieldNotFoundByNumber(fieldNumber: fieldNumber)
@@ -234,11 +234,11 @@ public struct DynamicMessage: Equatable {
     }
   }
 
-  /// Очищает значение поля
+  /// Очищает значение поля.
   ///
-  /// - Parameter fieldName: Имя поля
-  /// - Returns: Обновленное сообщение
-  /// - Throws: Ошибку, если поле не существует
+  /// - Parameter fieldName: Имя поля.
+  /// - Returns: Обновленное сообщение.
+  /// - Throws: Ошибку, если поле не существует.
   @discardableResult
   public mutating func clearField(_ fieldName: String) throws -> Self {
     guard let field = descriptor.field(named: fieldName) else {
@@ -248,11 +248,11 @@ public struct DynamicMessage: Equatable {
     return try clearField(field.number)
   }
 
-  /// Очищает значение поля
+  /// Очищает значение поля.
   ///
-  /// - Parameter fieldNumber: Номер поля
-  /// - Returns: Обновленное сообщение
-  /// - Throws: Ошибку, если поле не существует
+  /// - Parameter fieldNumber: Номер поля.
+  /// - Returns: Обновленное сообщение.
+  /// - Throws: Ошибку, если поле не существует.
   @discardableResult
   public mutating func clearField(_ fieldNumber: Int) throws -> Self {
     guard let field = descriptor.field(number: fieldNumber) else {
@@ -284,13 +284,13 @@ public struct DynamicMessage: Equatable {
 
   // MARK: - Repeated Field Methods
 
-  /// Добавляет элемент в repeated поле
+  /// Добавляет элемент в repeated поле.
   ///
-  /// - Parameters:
-  ///   - value: Значение для добавления
-  ///   - fieldName: Имя поля
-  /// - Returns: Обновленное сообщение
-  /// - Throws: Ошибку, если поле не существует, не является repeated, или тип не соответствует
+  /// - Parameters:.
+  ///   - value: Значение для добавления.
+  ///   - fieldName: Имя поля.
+  /// - Returns: Обновленное сообщение.
+  /// - Throws: Ошибку, если поле не существует, не является repeated, или тип не соответствует.
   @discardableResult
   public mutating func addRepeatedValue(_ value: Any, forField fieldName: String) throws -> Self {
     guard let field = descriptor.field(named: fieldName) else {
@@ -300,13 +300,13 @@ public struct DynamicMessage: Equatable {
     return try addRepeatedValue(value, forField: field.number)
   }
 
-  /// Добавляет элемент в repeated поле
+  /// Добавляет элемент в repeated поле.
   ///
-  /// - Parameters:
-  ///   - value: Значение для добавления
-  ///   - fieldNumber: Номер поля
-  /// - Returns: Обновленное сообщение
-  /// - Throws: Ошибку, если поле не существует, не является repeated, или тип не соответствует
+  /// - Parameters:.
+  ///   - value: Значение для добавления.
+  ///   - fieldNumber: Номер поля.
+  /// - Returns: Обновленное сообщение.
+  /// - Throws: Ошибку, если поле не существует, не является repeated, или тип не соответствует.
   @discardableResult
   public mutating func addRepeatedValue(_ value: Any, forField fieldNumber: Int) throws -> Self {
     guard let field = descriptor.field(number: fieldNumber) else {
@@ -333,14 +333,14 @@ public struct DynamicMessage: Equatable {
 
   // MARK: - Map Field Methods
 
-  /// Устанавливает запись в map поле
+  /// Устанавливает запись в map поле.
   ///
-  /// - Parameters:
-  ///   - value: Значение для установки
-  ///   - key: Ключ
-  ///   - fieldName: Имя поля
-  /// - Returns: Обновленное сообщение
-  /// - Throws: Ошибку, если поле не существует, не является map, или типы не соответствуют
+  /// - Parameters:.
+  ///   - value: Значение для установки.
+  ///   - key: Ключ.
+  ///   - fieldName: Имя поля.
+  /// - Returns: Обновленное сообщение.
+  /// - Throws: Ошибку, если поле не существует, не является map, или типы не соответствуют.
   @discardableResult
   public mutating func setMapEntry(_ value: Any, forKey key: AnyHashable, inField fieldName: String) throws -> Self {
     guard let field = descriptor.field(named: fieldName) else {
@@ -350,14 +350,14 @@ public struct DynamicMessage: Equatable {
     return try setMapEntry(value, forKey: key, inField: field.number)
   }
 
-  /// Устанавливает запись в map поле
+  /// Устанавливает запись в map поле.
   ///
-  /// - Parameters:
-  ///   - value: Значение для установки
-  ///   - key: Ключ
-  ///   - fieldNumber: Номер поля
-  /// - Returns: Обновленное сообщение
-  /// - Throws: Ошибку, если поле не существует, не является map, или типы не соответствуют
+  /// - Parameters:.
+  ///   - value: Значение для установки.
+  ///   - key: Ключ.
+  ///   - fieldNumber: Номер поля.
+  /// - Returns: Обновленное сообщение.
+  /// - Throws: Ошибку, если поле не существует, не является map, или типы не соответствуют.
   @discardableResult
   public mutating func setMapEntry(_ value: Any, forKey key: AnyHashable, inField fieldNumber: Int) throws -> Self {
     guard let field = descriptor.field(number: fieldNumber) else {
@@ -384,13 +384,13 @@ public struct DynamicMessage: Equatable {
 
   // MARK: - Validation Methods
 
-  /// Проверяет, соответствует ли значение требуемому типу поля
+  /// Проверяет, соответствует ли значение требуемому типу поля.
   ///
-  /// - Parameters:
-  ///   - value: Проверяемое значение
-  ///   - field: Дескриптор поля
-  ///   - itemIndex: Индекс элемента в массиве (для repeated полей)
-  /// - Throws: Ошибку, если тип не соответствует
+  /// - Parameters:.
+  ///   - value: Проверяемое значение.
+  ///   - field: Дескриптор поля.
+  ///   - itemIndex: Индекс элемента в массиве (для repeated полей).
+  /// - Throws: Ошибку, если тип не соответствует.
   private func validateValue(_ value: Any, for field: FieldDescriptor, itemIndex: Int? = nil) throws {
     let indexSuffix = itemIndex != nil ? " at index \(itemIndex!)" : ""
     let fieldDesc = "\(field.name)\(indexSuffix)"
@@ -512,12 +512,12 @@ public struct DynamicMessage: Equatable {
     }
   }
 
-  /// Проверяет правильность значений в map
+  /// Проверяет правильность значений в map.
   ///
-  /// - Parameters:
-  ///   - mapValue: Map для проверки
-  ///   - field: Дескриптор поля
-  /// - Throws: Ошибку, если тип ключа или значения не соответствует
+  /// - Parameters:.
+  ///   - mapValue: Map для проверки.
+  ///   - field: Дескриптор поля.
+  /// - Throws: Ошибку, если тип ключа или значения не соответствует.
   private func validateMapValues(_ mapValue: [AnyHashable: Any], for field: FieldDescriptor) throws {
     guard let mapInfo = field.mapEntryInfo else {
       throw DynamicMessageError.notMapField(fieldName: field.name)
@@ -530,12 +530,12 @@ public struct DynamicMessage: Equatable {
     }
   }
 
-  /// Проверяет правильность ключа в map
+  /// Проверяет правильность ключа в map.
   ///
-  /// - Parameters:
-  ///   - key: Ключ для проверки
-  ///   - keyFieldInfo: Информация о поле ключа
-  /// - Throws: Ошибку, если тип ключа не соответствует
+  /// - Parameters:.
+  ///   - key: Ключ для проверки.
+  ///   - keyFieldInfo: Информация о поле ключа.
+  /// - Throws: Ошибку, если тип ключа не соответствует.
   private func validateMapKey(_ key: AnyHashable, for keyFieldInfo: KeyFieldInfo) throws {
     switch keyFieldInfo.type {
     case .int32, .sint32, .sfixed32:
@@ -592,12 +592,12 @@ public struct DynamicMessage: Equatable {
     }
   }
 
-  /// Проверяет правильность значения в map
+  /// Проверяет правильность значения в map.
   ///
-  /// - Parameters:
-  ///   - value: Значение для проверки
-  ///   - valueFieldInfo: Информация о поле значения
-  /// - Throws: Ошибку, если тип значения не соответствует
+  /// - Parameters:.
+  ///   - value: Значение для проверки.
+  ///   - valueFieldInfo: Информация о поле значения.
+  /// - Throws: Ошибку, если тип значения не соответствует.
   private func validateMapValue(_ value: Any, for valueFieldInfo: ValueFieldInfo) throws {
     // Создаем временный дескриптор поля для переиспользования проверки
     let tempField = FieldDescriptor(
@@ -610,12 +610,12 @@ public struct DynamicMessage: Equatable {
     try validateValue(value, for: tempField)
   }
 
-  /// Конвертирует значение в правильный тип для сохранения, если требуется
+  /// Конвертирует значение в правильный тип для сохранения, если требуется.
   ///
-  /// - Parameters:
-  ///   - value: Исходное значение
-  ///   - field: Дескриптор поля
-  /// - Returns: Преобразованное значение, подходящее для сохранения
+  /// - Parameters:.
+  ///   - value: Исходное значение.
+  ///   - field: Дескриптор поля.
+  /// - Returns: Преобразованное значение, подходящее для сохранения.
   private func convertToCorrectType(_ value: Any, for field: FieldDescriptor) -> Any {
     switch field.type {
     case .int32, .sint32, .sfixed32:
@@ -648,7 +648,7 @@ public struct DynamicMessage: Equatable {
     return value
   }
 
-  /// Преобразует ключ map в правильный тип
+  /// Преобразует ключ map в правильный тип.
   private func convertMapKey(_ key: AnyHashable, for keyFieldInfo: KeyFieldInfo) -> AnyHashable {
     switch keyFieldInfo.type {
     case .int32, .sint32, .sfixed32:
@@ -673,7 +673,7 @@ public struct DynamicMessage: Equatable {
     return key
   }
 
-  /// Преобразует значение map в правильный тип
+  /// Преобразует значение map в правильный тип.
   private func convertMapValue(_ value: Any, for valueFieldInfo: ValueFieldInfo) -> Any {
     // Создаем временный дескриптор поля для переиспользования проверки
     let tempField = FieldDescriptor(
@@ -758,10 +758,8 @@ public struct DynamicMessage: Equatable {
             }
 
             // Сравниваем каждый элемент
-            for i in 0..<la.count {
-              if !areValuesEqual(la[i], ra[i], fieldType: field.type) {
-                return false
-              }
+            for i in 0..<la.count where !areValuesEqual(la[i], ra[i], fieldType: field.type) {
+              return false
             }
           }
         }
@@ -781,13 +779,13 @@ public struct DynamicMessage: Equatable {
     return true
   }
 
-  /// Сравнивает два значения на равенство с учетом типа поля
+  /// Сравнивает два значения на равенство с учетом типа поля.
   ///
-  /// - Parameters:
-  ///   - lhs: Первое значение
-  ///   - rhs: Второе значение
-  ///   - fieldType: Тип поля
-  /// - Returns: true, если значения равны
+  /// - Parameters:.
+  ///   - lhs: Первое значение.
+  ///   - rhs: Второе значение.
+  ///   - fieldType: Тип поля.
+  /// - Returns: true, если значения равны.
   private static func areValuesEqual(_ lhs: Any, _ rhs: Any, fieldType: FieldType?) -> Bool {
     switch fieldType {
     case .double:
@@ -829,7 +827,7 @@ public struct DynamicMessage: Equatable {
   }
 }
 
-/// Ошибки, возникающие при работе с динамическими сообщениями
+/// Ошибки, возникающие при работе с динамическими сообщениями.
 public enum DynamicMessageError: Error, LocalizedError {
   case fieldNotFound(fieldName: String)
   case fieldNotFoundByNumber(fieldNumber: Int)

@@ -8,30 +8,30 @@
 import Foundation
 import SwiftProtobuf
 
-/// EnumDescriptor
+/// EnumDescriptor.
 ///
-/// Дескриптор перечисления Protocol Buffers, который описывает
+/// Дескриптор перечисления Protocol Buffers, который описывает.
 /// значения перечисления, их имена, числовые значения и опции.
 public struct EnumDescriptor: Equatable {
   // MARK: - Types
 
-  /// Значение перечисления с его именем и опциями
+  /// Значение перечисления с его именем и опциями.
   public struct EnumValue: Equatable {
-    /// Имя значения перечисления (например, "UNKNOWN")
+    /// Имя значения перечисления (например, "UNKNOWN").
     public let name: String
 
-    /// Числовое значение элемента перечисления
+    /// Числовое значение элемента перечисления.
     public let number: Int
 
-    /// Опции значения перечисления
+    /// Опции значения перечисления.
     public let options: [String: Any]
 
-    /// Создает новое значение перечисления
+    /// Создает новое значение перечисления.
     ///
-    /// - Parameters:
-    ///   - name: Имя значения перечисления
-    ///   - number: Числовое значение
-    ///   - options: Опции значения перечисления
+    /// - Parameters:.
+    ///   - name: Имя значения перечисления.
+    ///   - number: Числовое значение.
+    ///   - options: Опции значения перечисления.
     public init(name: String, number: Int, options: [String: Any] = [:]) {
       self.name = name
       self.number = number
@@ -88,35 +88,35 @@ public struct EnumDescriptor: Equatable {
 
   // MARK: - Properties
 
-  /// Имя перечисления (например, "Status")
+  /// Имя перечисления (например, "Status").
   public let name: String
 
-  /// Полное имя перечисления, включая пакет (например, "example.Status")
+  /// Полное имя перечисления, включая пакет (например, "example.Status").
   public let fullName: String
 
-  /// Путь к родительскому файлу (для разрешения ссылок)
+  /// Путь к родительскому файлу (для разрешения ссылок).
   public var fileDescriptorPath: String?
 
-  /// Полное имя родительского сообщения (если это вложенное перечисление)
+  /// Полное имя родительского сообщения (если это вложенное перечисление).
   public var parentMessageFullName: String?
 
-  /// Список значений перечисления по имени
+  /// Список значений перечисления по имени.
   public private(set) var valuesByName: [String: EnumValue] = [:]
 
-  /// Список значений перечисления по числовому значению
+  /// Список значений перечисления по числовому значению.
   public private(set) var valuesByNumber: [Int: EnumValue] = [:]
 
-  /// Опции перечисления
+  /// Опции перечисления.
   public let options: [String: Any]
 
   // MARK: - Initialization
 
-  /// Создает новый экземпляр EnumDescriptor
+  /// Создает новый экземпляр EnumDescriptor.
   ///
-  /// - Parameters:
-  ///   - name: Имя перечисления
-  ///   - fullName: Полное имя перечисления
-  ///   - options: Опции перечисления
+  /// - Parameters:.
+  ///   - name: Имя перечисления.
+  ///   - fullName: Полное имя перечисления.
+  ///   - options: Опции перечисления.
   public init(
     name: String,
     fullName: String,
@@ -127,13 +127,14 @@ public struct EnumDescriptor: Equatable {
     self.options = options
   }
 
-  /// Создает новый экземпляр EnumDescriptor с базовым именем
-  /// Полное имя будет сгенерировано автоматически на основе родительского файла или сообщения
+  /// Создает новый экземпляр EnumDescriptor с базовым именем.
   ///
-  /// - Parameters:
-  ///   - name: Имя перечисления
-  ///   - parent: Родительский файл или сообщение
-  ///   - options: Опции перечисления
+  /// Полное имя будет сгенерировано автоматически на основе родительского файла или сообщения.
+  ///
+  /// - Parameters:.
+  ///   - name: Имя перечисления.
+  ///   - parent: Родительский файл или сообщение.
+  ///   - options: Опции перечисления.
   public init(
     name: String,
     parent: Any? = nil,
@@ -158,10 +159,10 @@ public struct EnumDescriptor: Equatable {
 
   // MARK: - Value Methods
 
-  /// Добавляет значение перечисления
+  /// Добавляет значение перечисления.
   ///
-  /// - Parameter value: Значение перечисления для добавления
-  /// - Returns: Обновленный EnumDescriptor
+  /// - Parameter value: Значение перечисления для добавления.
+  /// - Returns: Обновленный EnumDescriptor.
   @discardableResult
   public mutating func addValue(_ value: EnumValue) -> Self {
     valuesByName[value.name] = value
@@ -169,41 +170,41 @@ public struct EnumDescriptor: Equatable {
     return self
   }
 
-  /// Проверяет, содержит ли перечисление указанное значение по имени
+  /// Проверяет, содержит ли перечисление указанное значение по имени.
   ///
-  /// - Parameter name: Имя значения
-  /// - Returns: true, если значение существует
+  /// - Parameter name: Имя значения.
+  /// - Returns: true, если значение существует.
   public func hasValue(named name: String) -> Bool {
     return valuesByName[name] != nil
   }
 
-  /// Проверяет, содержит ли перечисление указанное значение по числу
+  /// Проверяет, содержит ли перечисление указанное значение по числу.
   ///
-  /// - Parameter number: Числовое значение
-  /// - Returns: true, если значение существует
+  /// - Parameter number: Числовое значение.
+  /// - Returns: true, если значение существует.
   public func hasValue(number: Int) -> Bool {
     return valuesByNumber[number] != nil
   }
 
-  /// Получает значение перечисления по имени
+  /// Получает значение перечисления по имени.
   ///
-  /// - Parameter name: Имя значения
-  /// - Returns: Значение перечисления, если оно существует
+  /// - Parameter name: Имя значения.
+  /// - Returns: Значение перечисления, если оно существует.
   public func value(named name: String) -> EnumValue? {
     return valuesByName[name]
   }
 
-  /// Получает значение перечисления по числовому значению
+  /// Получает значение перечисления по числовому значению.
   ///
-  /// - Parameter number: Числовое значение
-  /// - Returns: Значение перечисления, если оно существует
+  /// - Parameter number: Числовое значение.
+  /// - Returns: Значение перечисления, если оно существует.
   public func value(number: Int) -> EnumValue? {
     return valuesByNumber[number]
   }
 
-  /// Получает список всех значений перечисления, упорядоченных по числовому значению
+  /// Получает список всех значений перечисления, упорядоченных по числовому значению.
   ///
-  /// - Returns: Упорядоченный список значений перечисления
+  /// - Returns: Упорядоченный список значений перечисления.
   public func allValues() -> [EnumValue] {
     return valuesByNumber.sorted { $0.key < $1.key }.map { $0.value }
   }

@@ -8,42 +8,42 @@
 import Foundation
 import SwiftProtobuf
 
-/// ServiceDescriptor
+/// ServiceDescriptor.
 ///
-/// Дескриптор сервиса Protocol Buffers, который описывает gRPC сервис,
+/// Дескриптор сервиса Protocol Buffers, который описывает gRPC сервис,.
 /// его методы, входные и выходные типы сообщений, а также опции.
 public struct ServiceDescriptor: Equatable {
   // MARK: - Types
 
-  /// Дескриптор метода сервиса с именем, входными и выходными типами
+  /// Дескриптор метода сервиса с именем, входными и выходными типами.
   public struct MethodDescriptor: Equatable {
-    /// Имя метода (например, "GetUser")
+    /// Имя метода (например, "GetUser").
     public let name: String
 
-    /// Полное имя входного типа сообщения (например, "example.GetUserRequest")
+    /// Полное имя входного типа сообщения (например, "example.GetUserRequest").
     public let inputType: String
 
-    /// Полное имя выходного типа сообщения (например, "example.GetUserResponse")
+    /// Полное имя выходного типа сообщения (например, "example.GetUserResponse").
     public let outputType: String
 
-    /// Указывает, является ли метод клиентским потоковым (client streaming)
+    /// Указывает, является ли метод клиентским потоковым (client streaming).
     public let clientStreaming: Bool
 
-    /// Указывает, является ли метод серверным потоковым (server streaming)
+    /// Указывает, является ли метод серверным потоковым (server streaming).
     public let serverStreaming: Bool
 
-    /// Опции метода
+    /// Опции метода.
     public let options: [String: Any]
 
-    /// Создает новый дескриптор метода
+    /// Создает новый дескриптор метода.
     ///
-    /// - Parameters:
-    ///   - name: Имя метода
-    ///   - inputType: Полное имя входного типа сообщения
-    ///   - outputType: Полное имя выходного типа сообщения
-    ///   - clientStreaming: Флаг клиентского потока
-    ///   - serverStreaming: Флаг серверного потока
-    ///   - options: Опции метода
+    /// - Parameters:.
+    ///   - name: Имя метода.
+    ///   - inputType: Полное имя входного типа сообщения.
+    ///   - outputType: Полное имя выходного типа сообщения.
+    ///   - clientStreaming: Флаг клиентского потока.
+    ///   - serverStreaming: Флаг серверного потока.
+    ///   - options: Опции метода.
     public init(
       name: String,
       inputType: String,
@@ -113,29 +113,29 @@ public struct ServiceDescriptor: Equatable {
 
   // MARK: - Properties
 
-  /// Имя сервиса (например, "UserService")
+  /// Имя сервиса (например, "UserService").
   public let name: String
 
-  /// Полное имя сервиса, включая пакет (например, "example.UserService")
+  /// Полное имя сервиса, включая пакет (например, "example.UserService").
   public let fullName: String
 
-  /// Путь к родительскому файлу (для разрешения ссылок)
+  /// Путь к родительскому файлу (для разрешения ссылок).
   public var fileDescriptorPath: String?
 
-  /// Список методов сервиса по имени
+  /// Список методов сервиса по имени.
   public private(set) var methodsByName: [String: MethodDescriptor] = [:]
 
-  /// Опции сервиса
+  /// Опции сервиса.
   public let options: [String: Any]
 
   // MARK: - Initialization
 
-  /// Создает новый экземпляр ServiceDescriptor
+  /// Создает новый экземпляр ServiceDescriptor.
   ///
-  /// - Parameters:
-  ///   - name: Имя сервиса
-  ///   - fullName: Полное имя сервиса
-  ///   - options: Опции сервиса
+  /// - Parameters:.
+  ///   - name: Имя сервиса.
+  ///   - fullName: Полное имя сервиса.
+  ///   - options: Опции сервиса.
   public init(
     name: String,
     fullName: String,
@@ -146,13 +146,14 @@ public struct ServiceDescriptor: Equatable {
     self.options = options
   }
 
-  /// Создает новый экземпляр ServiceDescriptor с базовым именем
-  /// Полное имя будет сгенерировано автоматически на основе родительского файла
+  /// Создает новый экземпляр ServiceDescriptor с базовым именем.
   ///
-  /// - Parameters:
-  ///   - name: Имя сервиса
-  ///   - parent: Родительский файл
-  ///   - options: Опции сервиса
+  /// Полное имя будет сгенерировано автоматически на основе родительского файла.
+  ///
+  /// - Parameters:.
+  ///   - name: Имя сервиса.
+  ///   - parent: Родительский файл.
+  ///   - options: Опции сервиса.
   public init(
     name: String,
     parent: FileDescriptor,
@@ -166,35 +167,35 @@ public struct ServiceDescriptor: Equatable {
 
   // MARK: - Method Methods
 
-  /// Добавляет метод к сервису
+  /// Добавляет метод к сервису.
   ///
-  /// - Parameter method: Дескриптор метода для добавления
-  /// - Returns: Обновленный ServiceDescriptor
+  /// - Parameter method: Дескриптор метода для добавления.
+  /// - Returns: Обновленный ServiceDescriptor.
   @discardableResult
   public mutating func addMethod(_ method: MethodDescriptor) -> Self {
     methodsByName[method.name] = method
     return self
   }
 
-  /// Проверяет, содержит ли сервис указанный метод
+  /// Проверяет, содержит ли сервис указанный метод.
   ///
-  /// - Parameter name: Имя метода
-  /// - Returns: true, если метод существует
+  /// - Parameter name: Имя метода.
+  /// - Returns: true, если метод существует.
   public func hasMethod(named name: String) -> Bool {
     return methodsByName[name] != nil
   }
 
-  /// Получает метод по имени
+  /// Получает метод по имени.
   ///
-  /// - Parameter name: Имя метода
-  /// - Returns: Дескриптор метода, если он существует
+  /// - Parameter name: Имя метода.
+  /// - Returns: Дескриптор метода, если он существует.
   public func method(named name: String) -> MethodDescriptor? {
     return methodsByName[name]
   }
 
-  /// Получает список всех методов сервиса
+  /// Получает список всех методов сервиса.
   ///
-  /// - Returns: Список методов
+  /// - Returns: Список методов.
   public func allMethods() -> [MethodDescriptor] {
     return Array(methodsByName.values)
   }
