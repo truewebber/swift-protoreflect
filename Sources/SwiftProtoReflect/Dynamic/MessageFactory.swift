@@ -170,19 +170,25 @@ public struct MessageFactory {
   private func validateFieldValue(_ value: Any, for field: FieldDescriptor, message: DynamicMessage) throws -> [ValidationError] {
     var errors: [ValidationError] = []
     
-    // Для вложенных сообщений рекурсивно проверяем их содержимое
-    if field.type == .message {
-      if let nestedMessage = value as? DynamicMessage {
-        let nestedResult = validate(nestedMessage)
-        if !nestedResult.isValid {
-          errors.append(.nestedMessageValidationFailed(
-            fieldName: field.name,
-            nestedErrors: nestedResult.errors
-          ))
+    // Проверяем map поля ПЕРВЫМИ (поскольку они тоже имеют isRepeated = true)
+    if field.isMap && field.mapEntryInfo?.valueFieldInfo.type == .message {
+      // Для map полей с сообщениями в качестве значений
+      if let map = value as? [AnyHashable: Any] {
+        for (key, mapValue) in map {
+          if let messageValue = mapValue as? DynamicMessage {
+            let nestedResult = validate(messageValue)
+            if !nestedResult.isValid {
+              errors.append(.mapFieldValidationFailed(
+                fieldName: field.name,
+                key: String(describing: key),
+                nestedErrors: nestedResult.errors
+              ))
+            }
+          }
         }
       }
     } else if field.isRepeated && field.type == .message {
-      // Для repeated полей с сообщениями
+      // Для repeated полей с сообщениями (НЕ map)
       if let array = value as? [Any] {
         for (index, item) in array.enumerated() {
           if let messageItem = item as? DynamicMessage {
@@ -197,20 +203,15 @@ public struct MessageFactory {
           }
         }
       }
-    } else if field.isMap && field.mapEntryInfo?.valueFieldInfo.type == .message {
-      // Для map полей с сообщениями в качестве значений
-      if let map = value as? [AnyHashable: Any] {
-        for (key, mapValue) in map {
-          if let messageValue = mapValue as? DynamicMessage {
-            let nestedResult = validate(messageValue)
-            if !nestedResult.isValid {
-              errors.append(.mapFieldValidationFailed(
-                fieldName: field.name,
-                key: String(describing: key),
-                nestedErrors: nestedResult.errors
-              ))
-            }
-          }
+    } else if field.type == .message && !field.isRepeated && !field.isMap {
+      // Для простых вложенных сообщений
+      if let nestedMessage = value as? DynamicMessage {
+        let nestedResult = validate(nestedMessage)
+        if !nestedResult.isValid {
+          errors.append(.nestedMessageValidationFailed(
+            fieldName: field.name,
+            nestedErrors: nestedResult.errors
+          ))
         }
       }
     }
