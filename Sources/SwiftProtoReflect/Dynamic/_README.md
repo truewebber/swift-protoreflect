@@ -9,7 +9,7 @@
 ## Состояние модуля
 
 - [x] DynamicMessage
-- [ ] MessageFactory
+- [x] MessageFactory
 - [ ] FieldAccessor
 
 ## Взаимодействие с другими модулями

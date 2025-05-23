@@ -16,8 +16,8 @@
      - [x] EnumDescriptor
      - [x] ServiceDescriptor
    - [x] Dynamic Message
-     - [x] DynamicMessage (с высоким покрытием тестами: 95.34% строк)
-     - [ ] MessageFactory
+     - [x] DynamicMessage (с высоким покрытием тестами: 95.45% строк)
+     - [x] MessageFactory (покрытие 74.62%, есть проблемы с map полями)
      - [ ] FieldAccessor
    - [ ] Type Registry
 
@@ -51,7 +51,7 @@
    - [x] Покрыты тесты для конверсий типов и NSNumber
 
 2. **Следующие компоненты Dynamic модуля**
-   - [ ] Создать MessageFactory в модуле Dynamic
+   - [x] Создать MessageFactory в модуле Dynamic (74.62% покрытие, есть проблемы с map полями)
    - [ ] Создать FieldAccessor в модуле Dynamic
 
 3. **Настройка тестовой инфраструктуры**
@@ -61,6 +61,7 @@
    - [x] Создать план тестирования соответствия протоколу Proto3 и поведению C++ protoc
 
 ## Последние обновления
+- 2025-05-24: [Dynamic] Implemented MessageFactory - Создана полная реализация MessageFactory с методами создания, клонирования и валидации сообщений - Покрытие кода 74.62%, есть проблемы с map полями в клонировании - Следующий шаг: исправить проблемы с map полями и создать FieldAccessor
 - 2025-05-23: [Dynamic] Expanded DynamicMessage test coverage - Значительно повышено покрытие кода тестами для DynamicMessage с 80.45% до 95.34% строк кода - Добавлены тесты для всех типов ошибок, Equatable функциональности, типов полей и конверсий - Следующий шаг: реализовать MessageFactory
 - 2025-05-23: [Descriptor] Implemented ServiceDescriptor - Created full implementation with support for gRPC service methods - Added tests with support for streaming and standard methods - Next step: start implementing DynamicMessage
 - 2025-05-22: [Tests] Created Protocol Conformance Test Plan - Created detailed test structure for protocol conformance verification - Implemented test file templates for all test categories - Next step: start implementing serialization tests
@@ -78,11 +79,12 @@
 ## Текущие показатели качества кода
 
 ### Покрытие тестами (по модулям):
-- **EnumDescriptor**: 100% (154 из 154 строк)
+- **EnumDescriptor**: 100% (161 из 161 строк)
 - **FileDescriptor**: 100% (42 из 42 строк)  
-- **MessageDescriptor**: 100% (69 из 69 строк)
-- **DynamicMessage**: 95.34% (634 из 665 строк) ⭐
-- **ServiceDescriptor**: 100% (142 из 142 строк)
-- **FieldDescriptor**: 89.82% (150 из 167 строк)
+- **MessageDescriptor**: 100% (71 из 71 строк)
+- **DynamicMessage**: 95.45% (650 из 681 строк) ⭐
+- **ServiceDescriptor**: 96.58% (141 из 146 строк)
+- **FieldDescriptor**: 89.63% (147 из 164 строк)
+- **MessageFactory**: 74.62% (147 из 197 строк) 🔧
 
-### Общее покрытие проекта: 96.14% строк кода
+### Общее покрытие проекта: 92.97% строк кода
