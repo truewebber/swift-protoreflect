@@ -38,6 +38,13 @@ let package = Package(
       dependencies: [
         "SwiftProtoReflect",
         .product(name: "SwiftProtobuf", package: "swift-protobuf"),
+      ],
+      exclude: [
+        "PROTOCOL_CONFORMANCE_TEST_PLAN.md",
+        "Fixtures/README.md",
+        "Mocks/README.md",
+        "TestUtils/README.md",
+        "TestResources/README.md",
       ]
     )
   ]

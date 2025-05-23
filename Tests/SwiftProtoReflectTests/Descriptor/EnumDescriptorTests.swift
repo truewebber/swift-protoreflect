@@ -245,4 +245,143 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertEqual(enumDescriptor.value(named: "UNKNOWN"), value1)
     XCTAssertEqual(enumDescriptor.value(named: "STARTED"), value2)
   }
+  
+  // MARK: - Дополнительные тесты для повышения покрытия
+  
+  func testEnumValueEqualityWithDifferentOptionTypes() {
+    // Тестирование равенства значений перечисления с разными типами опций
+    
+    // Int опции
+    let value1 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["intOption": 10])
+    let value2 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["intOption": 10])
+    let value3 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["intOption": 20])
+    
+    XCTAssertEqual(value1, value2)
+    XCTAssertNotEqual(value1, value3)
+    
+    // String опции
+    let value4 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["stringOption": "value"])
+    let value5 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["stringOption": "value"])
+    let value6 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["stringOption": "other"])
+    
+    XCTAssertEqual(value4, value5)
+    XCTAssertNotEqual(value4, value6)
+    
+    // Custom опции
+    class CustomValue: CustomStringConvertible {
+      let value: String
+      
+      init(value: String) {
+        self.value = value
+      }
+      
+      var description: String {
+        return "CustomValue(\(value))"
+      }
+    }
+    
+    let custom1 = CustomValue(value: "test1")
+    let custom2 = CustomValue(value: "test1")
+    let custom3 = CustomValue(value: "test2")
+    
+    let value7 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["customOption": custom1])
+    let value8 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["customOption": custom2])
+    let value9 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["customOption": custom3])
+    
+    XCTAssertEqual(value7, value8)
+    XCTAssertNotEqual(value7, value9)
+  }
+  
+  func testEnumValueWithDifferentOptionKeys() {
+    // Проверяем сравнение значений с разными наборами ключей в опциях
+    let value1 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["option1": true, "option2": 42])
+    let value2 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["option1": true, "option3": "value"])
+    
+    XCTAssertNotEqual(value1, value2)
+  }
+  
+  func testEnumDescriptorWithDifferentFileDescriptorPath() {
+    // Проверяем, что дескрипторы с разными путями к файлу не равны
+    let enum1 = EnumDescriptor(name: "Status", fullName: "test.Status")
+    var enum2 = EnumDescriptor(name: "Status", fullName: "test.Status")
+    enum2.fileDescriptorPath = "different_path.proto"
+    
+    XCTAssertNotEqual(enum1, enum2)
+  }
+  
+  func testEnumDescriptorWithDifferentParentMessageFullName() {
+    // Проверяем, что дескрипторы с разными родительскими сообщениями не равны
+    let enum1 = EnumDescriptor(name: "Status", fullName: "test.Status")
+    var enum2 = EnumDescriptor(name: "Status", fullName: "test.Status")
+    enum2.parentMessageFullName = "test.ParentMessage"
+    
+    XCTAssertNotEqual(enum1, enum2)
+  }
+  
+  func testEnumDescriptorWithDifferentOptionTypes() {
+    // Тестирование дескрипторов с разными типами опций
+    
+    // Int опции
+    let enum1 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["intOption": 10])
+    let enum2 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["intOption": 10])
+    let enum3 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["intOption": 20])
+    
+    XCTAssertEqual(enum1, enum2)
+    XCTAssertNotEqual(enum1, enum3)
+    
+    // String опции
+    let enum4 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["stringOption": "value"])
+    let enum5 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["stringOption": "value"])
+    let enum6 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["stringOption": "other"])
+    
+    XCTAssertEqual(enum4, enum5)
+    XCTAssertNotEqual(enum4, enum6)
+    
+    // Custom опции
+    class CustomValue: CustomStringConvertible {
+      let value: String
+      
+      init(value: String) {
+        self.value = value
+      }
+      
+      var description: String {
+        return "CustomValue(\(value))"
+      }
+    }
+    
+    let custom1 = CustomValue(value: "test1")
+    let custom2 = CustomValue(value: "test1")
+    let custom3 = CustomValue(value: "test2")
+    
+    let enum7 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["customOption": custom1])
+    let enum8 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["customOption": custom2])
+    let enum9 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["customOption": custom3])
+    
+    XCTAssertEqual(enum7, enum8)
+    XCTAssertNotEqual(enum7, enum9)
+  }
+  
+  func testEnumDescriptorWithDifferentOptionKeys() {
+    // Проверяем сравнение дескрипторов с разными наборами ключей в опциях
+    let enum1 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["option1": true, "option2": 42])
+    let enum2 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["option1": true, "option3": "value"])
+    
+    XCTAssertNotEqual(enum1, enum2)
+  }
+  
+  func testEnumDescriptorWithDifferentEnumValues() {
+    // Проверка сравнения дескрипторов с разными наборами значений
+    var enum1 = EnumDescriptor(name: "Status", parent: fileDescriptor)
+    var enum2 = EnumDescriptor(name: "Status", parent: fileDescriptor)
+    
+    // Добавляем одинаковые значения, но с разными именами
+    enum1.addValue(EnumDescriptor.EnumValue(name: "VALUE1", number: 1))
+    enum1.addValue(EnumDescriptor.EnumValue(name: "VALUE2", number: 2))
+    
+    enum2.addValue(EnumDescriptor.EnumValue(name: "VALUE1", number: 1))
+    enum2.addValue(EnumDescriptor.EnumValue(name: "DIFFERENT", number: 2))
+    
+    XCTAssertNotEqual(enum1, enum2)
+  }
 }

@@ -12,7 +12,7 @@
 - [x] MessageDescriptor
 - [x] FieldDescriptor
 - [x] EnumDescriptor
-- [ ] ServiceDescriptor
+- [x] ServiceDescriptor
 
 ## Взаимодействие с другими модулями
 
