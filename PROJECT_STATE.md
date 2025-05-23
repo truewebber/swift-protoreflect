@@ -65,7 +65,7 @@
    - [x] Создать план тестирования соответствия протоколу Proto3 и поведению C++ protoc
 
 ## Последние обновления
-- 2025-05-24: [Dynamic] FieldAccessor COMPLETED - Создана полная реализация типобезопасного доступа к полям динамических сообщений - Покрытие кода: 90.77% (295/325 строк) - Все 32 теста проходят успешно - Общее покрытие проекта: 95.78% - Dynamic модуль полностью завершен ✅ - Следующий этап: Type Registry
+- 2025-05-24: [Dynamic] FieldAccessor COMPLETED - Type-safe field access implementation with 90.77% test coverage - All 32 tests passing - Dynamic module fully completed ✅ - Next phase: Type Registry
 - 2025-05-24: [Dynamic] MessageFactory COMPLETED - Полностью исправлены все проблемы MessageFactory: map поля, валидация вложенных сообщений в map/repeated полях - Покрытие кода: 97.54% (198/203 строк) - Все 162 теста проходят успешно - Общее покрытие проекта: 96.88% - MessageFactory готов к продакшену ✅
 - 2025-05-24: [Dynamic] Implemented MessageFactory - Создана полная реализация MessageFactory с методами создания, клонирования и валидации сообщений - Покрытие кода 74.62%, есть проблемы с map полями в клонировании - Следующий шаг: исправить проблемы с map полями и создать FieldAccessor
 - 2025-05-23: [Dynamic] Expanded DynamicMessage test coverage - Значительно повышено покрытие кода тестами для DynamicMessage с 80.45% до 95.34% строк кода - Добавлены тесты для всех типов ошибок, Equatable функциональности, типов полей и конверсий - Следующий шаг: реализовать MessageFactory
