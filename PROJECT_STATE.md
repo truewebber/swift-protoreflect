@@ -9,13 +9,16 @@
 ## Предстоящие фазы разработки (по порядку)
 
 1. **Foundation Phase**: Core descriptor and message implementations
-   - [ ] Descriptor System
+   - [x] Descriptor System
      - [x] FileDescriptor
      - [x] MessageDescriptor
      - [x] FieldDescriptor
      - [x] EnumDescriptor
      - [x] ServiceDescriptor
    - [ ] Dynamic Message
+     - [x] DynamicMessage
+     - [ ] MessageFactory
+     - [ ] FieldAccessor
    - [ ] Type Registry
 
 2. **Serialization Phase**: Binary and JSON serialization/deserialization
@@ -46,6 +49,7 @@
    - [x] Создан компонент FieldDescriptor в модуле Descriptor
    - [x] Создан компонент EnumDescriptor в модуле Descriptor
    - [x] Создать ServiceDescriptor в модуле Descriptor
+   - [x] Создать DynamicMessage в модуле Dynamic
 2. Создать заглушки для ключевых интерфейсов
 3. Настроить тестовую инфраструктуру
    - [x] Исправить проблему с XCTest при запуске тестов
