@@ -78,7 +78,7 @@ public struct DynamicMessage: Equatable {
     if let oneofIndex = field.oneofIndex {
       if let currentField = activeOneofFields[oneofIndex], currentField != fieldNumber {
         // Очищаем предыдущее значение в этой oneof группе
-        values.removeValue(forKey: currentField)
+        clearOneofField(currentField)
       }
       activeOneofFields[oneofIndex] = fieldNumber
     }
@@ -384,6 +384,31 @@ public struct DynamicMessage: Equatable {
     mapValues[fieldNumber] = currentMap
 
     return self
+  }
+
+  // MARK: - Private Helper Methods
+
+  /// Очищает значение oneof поля по его номеру.
+  /// Используется для правильной очистки всех типов полей при переключении oneof.
+  ///
+  /// - Parameter fieldNumber: Номер поля для очистки.
+  private mutating func clearOneofField(_ fieldNumber: Int) {
+    guard let field = descriptor.field(number: fieldNumber) else {
+      return  // Поле не найдено, ничего не делаем
+    }
+
+    // Очищаем значение из соответствующего хранилища в зависимости от типа поля
+    if field.isRepeated {
+      if field.isMap {
+        mapValues.removeValue(forKey: fieldNumber)
+      } else {
+        repeatedValues.removeValue(forKey: fieldNumber)
+      }
+    } else if case .message = field.type {
+      nestedMessages.removeValue(forKey: fieldNumber)
+    } else {
+      values.removeValue(forKey: fieldNumber)
+    }
   }
 
   // MARK: - Validation Methods

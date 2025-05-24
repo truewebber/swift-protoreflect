@@ -598,8 +598,7 @@ final class DynamicFieldAccessTests: XCTestCase {
         try message.set("new_string", forField: "oneof_string")
         
         let switchedAccessor = FieldAccessor(message)
-        // TODO: Fix oneof switching - currently message field is not cleared when switching oneof
-        // XCTAssertFalse(switchedAccessor.hasValue("oneof_message"))
+        XCTAssertFalse(switchedAccessor.hasValue("oneof_message"))
         XCTAssertTrue(switchedAccessor.hasValue("oneof_string"))
         XCTAssertEqual(switchedAccessor.getString("oneof_string"), "new_string")
     }
