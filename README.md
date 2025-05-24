@@ -16,16 +16,31 @@
 
 Текущий статус разработки отслеживается в [PROJECT_STATE.md](PROJECT_STATE.md).
 
-На данный момент завершена разработка системы дескрипторов:
-- ✅ FileDescriptor
-- ✅ MessageDescriptor
-- ✅ FieldDescriptor
-- ✅ EnumDescriptor
-- ✅ ServiceDescriptor
+### Foundation Phase - ПОЧТИ ЗАВЕРШЕНА ✅
 
-Следующий этап: реализация динамических сообщений и типов.
+- ✅ **Descriptor System** (100% завершено)
+  - ✅ FileDescriptor (100% покрытие тестами)
+  - ✅ MessageDescriptor (100% покрытие тестами)
+  - ✅ FieldDescriptor (89.70% покрытие тестами)
+  - ✅ EnumDescriptor (100% покрытие тестами)
+  - ✅ ServiceDescriptor (96.58% покрытие тестами)
+
+- ✅ **Dynamic Module** (100% завершено)
+  - ✅ DynamicMessage (96.44% покрытие тестами)
+  - ✅ MessageFactory (97.54% покрытие тестами)
+  - ✅ FieldAccessor (90.77% покрытие тестами)
+
+- ✅ **Registry Module** (100% завершено)
+  - ✅ TypeRegistry (97.73% покрытие тестами)
+  - ✅ DescriptorPool (реализован и протестирован)
+
+### Общее покрытие кода тестами: 95.82%
+
+**Следующий этап**: Serialization Phase - реализация сериализации в бинарный формат и JSON
 
 ## Примеры использования
+
+### Создание динамических сообщений
 
 ```swift
 // Создание дескриптора файла
@@ -47,19 +62,53 @@ personMessage.addField(FieldDescriptor(
     type: .int32
 ))
 
-// Создание и настройка сервиса
-var userService = ServiceDescriptor(name: "UserService", parent: fileDescriptor)
-
-// Добавление метода к сервису
-userService.addMethod(ServiceDescriptor.MethodDescriptor(
-    name: "GetUser",
-    inputType: "example.GetUserRequest",
-    outputType: "example.GetUserResponse"
-))
-
 // Регистрация компонентов
 fileDescriptor.addMessage(personMessage)
-fileDescriptor.addService(userService)
+
+// Создание сообщения через MessageFactory
+let factory = MessageFactory()
+let person = try factory.createMessage(descriptor: personMessage)
+
+// Установка значений полей
+try person.set(field: "name", value: "John Doe")
+try person.set(field: "age", value: 30)
+```
+
+### Работа с TypeRegistry и DescriptorPool
+
+```swift
+// Создание реестра типов
+let typeRegistry = TypeRegistry()
+try typeRegistry.registerFile(fileDescriptor)
+
+// Поиск типов
+let foundMessage = typeRegistry.findMessage(typeName: "example.Person")
+
+// Работа с DescriptorPool для динамического создания дескрипторов
+let pool = DescriptorPool()
+try pool.addFile(fileDescriptor)
+
+// Создание сообщения через pool
+let message = try pool.createMessage(typeName: "example.Person", fieldValues: [
+    "name": "Jane Doe",
+    "age": 25
+])
+```
+
+### Динамический доступ к полям
+
+```swift
+// Получение доступа к полям сообщения
+let accessor = FieldAccessor(message: person)
+
+// Чтение значений
+let name: String = try accessor.getString(fieldName: "name")
+let age: Int32 = try accessor.getInt32(fieldName: "age")
+
+// Проверка наличия полей
+if accessor.hasValue(fieldName: "name") {
+    print("Имя установлено: \(name)")
+}
 ```
 
 ## Архитектура
