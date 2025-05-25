@@ -8,11 +8,68 @@
 
 ## Состояние модуля
 
-- [ ] DynamicServiceClient
-- [ ] MethodInvoker
+- [x] **ServiceClient** - Динамический клиент для вызова gRPC методов ✅ ЗАВЕРШЕН
+  - [x] Unary вызовы (85.93% покрытие тестами)
+  - [x] Валидация типов запросов/ответов
+  - [x] Обработка ошибок (полное покрытие всех типов ошибок)
+  - [x] Настраиваемые опции вызова (таймауты, метаданные)
+  - [x] GRPCPayloadWrapper (полное покрытие сериализации/десериализации)
+  - [x] Helper методы (сериализация, десериализация, валидация)
+  - [ ] Client streaming вызовы (будущие версии)
+  - [ ] Server streaming вызовы (будущие версии)
+  - [ ] Bidirectional streaming вызовы (будущие версии)
+
+## Компоненты
+
+### ServiceClient
+
+Основной класс для выполнения динамических gRPC вызовов.
+
+**Возможности:**
+- Динамические unary вызовы на основе ServiceDescriptor
+- Автоматическая сериализация/десериализация DynamicMessage
+- Валидация совместимости типов
+- Настраиваемые опции (таймауты, метаданные)
+- Детальная обработка ошибок
+
+**Пример использования:**
+```swift
+let client = ServiceClient(channel: channel, typeRegistry: registry)
+
+let result = try await client.unaryCall(
+  service: serviceDescriptor,
+  method: "GetUser",
+  request: requestMessage,
+  options: ServiceClient.CallOptions(
+    timeout: .seconds(30),
+    metadata: ["authorization": "Bearer token"]
+  )
+)
+
+print("Response: \(result.response)")
+```
+
+### ServiceClientError
+
+Перечисление ошибок для ServiceClient с детальными описаниями:
+- `methodNotFound` - метод не найден в сервисе
+- `invalidMethodType` - неверный тип метода (например, streaming вместо unary)
+- `typeMismatch` - несовпадение типов сообщений
+- `typeNotFound` - тип не найден в реестре
+- `serializationError` - ошибка сериализации
+- `deserializationError` - ошибка десериализации
+- `grpcError` - ошибка gRPC
 
 ## Взаимодействие с другими модулями
 
 - **Descriptor**: для получения метаданных о сервисах и методах
 - **Dynamic**: для работы с динамическими сообщениями при выполнении вызовов
 - **Registry**: для разрешения типов при выполнении RPC вызовов
+- **Serialization**: для сериализации/десериализации сообщений
+
+## Архитектурные решения
+
+1. **Интеграция с gRPC Swift**: Использует низкоуровневый API gRPC Swift для максимальной гибкости
+2. **Type Safety**: Строгая проверка типов на этапе выполнения
+3. **Error Handling**: Детальная обработка ошибок с понятными сообщениями
+4. **Extensibility**: Архитектура позволяет легко добавить поддержку streaming методов
