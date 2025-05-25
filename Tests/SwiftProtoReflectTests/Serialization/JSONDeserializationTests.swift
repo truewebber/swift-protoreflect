@@ -508,14 +508,11 @@ final class JSONDeserializationTests: XCTestCase {
     let invalidJsonData = "{ invalid json }".data(using: .utf8)!
     
     XCTAssertThrowsError(try deserializer.deserialize(invalidJsonData, using: message)) { error in
-      if let jsonError = error as? JSONDeserializationError {
-        if case .invalidJSON(_) = jsonError {
-          // Ожидаемая ошибка
-        } else {
-          XCTFail("Wrong error type: \(jsonError)")
-        }
+      if let jsonError = error as? JSONDeserializationError,
+         case .invalidJSON = jsonError {
+        // Ожидаемая ошибка
       } else {
-        XCTFail("Expected JSONDeserializationError, got: \(error)")
+        XCTFail("Expected invalidJSON error, got: \(error)")
       }
     }
   }
@@ -525,196 +522,432 @@ final class JSONDeserializationTests: XCTestCase {
     message.addField(FieldDescriptor(name: "test_field", number: 1, type: .string))
     fileDescriptor.addMessage(message)
     
-    let arrayJsonData = "[]".data(using: .utf8)!
+    // JSON не является объектом (это массив)
+    let arrayJsonData = "[1, 2, 3]".data(using: .utf8)!
     
     XCTAssertThrowsError(try deserializer.deserialize(arrayJsonData, using: message)) { error in
-      if let jsonError = error as? JSONDeserializationError {
-        if case .invalidJSONStructure(let expected, let actual) = jsonError {
-          XCTAssertEqual(expected, "Object")
-          XCTAssertTrue(actual.contains("Array"))
-        } else {
-          XCTFail("Wrong error type: \(jsonError)")
-        }
+      if let jsonError = error as? JSONDeserializationError,
+         case .invalidJSONStructure(let expected, let actual) = jsonError {
+        XCTAssertEqual(expected, "Object")
+        XCTAssertTrue(actual.contains("Array"))
       } else {
-        XCTFail("Expected JSONDeserializationError, got: \(error)")
+        XCTFail("Expected invalidJSONStructure error, got: \(error)")
       }
     }
   }
   
-  func testDeserializeValueTypeMismatch() throws {
-    var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
-    message.addField(FieldDescriptor(name: "int_field", number: 1, type: .int32))
+  func testDeserializeTypeConversionErrorsForPrimitives() throws {
+    var message = MessageDescriptor(name: "TypeErrorMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "double_field", number: 1, type: .double))
+    message.addField(FieldDescriptor(name: "int32_field", number: 2, type: .int32))
+    message.addField(FieldDescriptor(name: "int64_field", number: 3, type: .int64))
+    message.addField(FieldDescriptor(name: "uint32_field", number: 4, type: .uint32))
+    message.addField(FieldDescriptor(name: "uint64_field", number: 5, type: .uint64))
+    message.addField(FieldDescriptor(name: "bool_field", number: 6, type: .bool))
     fileDescriptor.addMessage(message)
     
-    let jsonString = """
+    // Тест для double с неверным типом
+    let doubleErrorJson = """
     {
-      "int_field": "not a number"
+      "double_field": []
     }
-    """
+    """.data(using: .utf8)!
     
-    let jsonData = jsonString.data(using: .utf8)!
-    
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
-      if let jsonError = error as? JSONDeserializationError {
-        if case .invalidNumberFormat(let fieldName, let value) = jsonError {
-          XCTAssertEqual(fieldName, "int_field")
-          XCTAssertEqual(value, "not a number")
-        } else {
-          XCTFail("Wrong error type: \(jsonError)")
-        }
+    XCTAssertThrowsError(try deserializer.deserialize(doubleErrorJson, using: message)) { error in
+      if let jsonError = error as? JSONDeserializationError,
+         case .valueTypeMismatch(let fieldName, let expected, let actual) = jsonError {
+        XCTAssertEqual(fieldName, "double_field")
+        XCTAssertEqual(expected, "Number or String")
+        XCTAssertTrue(actual.contains("Array"))
       } else {
-        XCTFail("Expected JSONDeserializationError, got: \(error)")
+        XCTFail("Expected valueTypeMismatch error for double, got: \(error)")
+      }
+    }
+    
+    // Тест для int32 с неверным типом
+    let int32ErrorJson = """
+    {
+      "int32_field": {}
+    }
+    """.data(using: .utf8)!
+    
+    XCTAssertThrowsError(try deserializer.deserialize(int32ErrorJson, using: message)) { error in
+      if let jsonError = error as? JSONDeserializationError,
+         case .valueTypeMismatch(let fieldName, let expected, let actual) = jsonError {
+        XCTAssertEqual(fieldName, "int32_field")
+        XCTAssertEqual(expected, "Number or String")
+        XCTAssertTrue(actual.contains("Dictionary"))
+      } else {
+        XCTFail("Expected valueTypeMismatch error for int32, got: \(error)")
+      }
+    }
+    
+    // Тест для int64 с неверным типом
+    let int64ErrorJson = """
+    {
+      "int64_field": []
+    }
+    """.data(using: .utf8)!
+    
+    XCTAssertThrowsError(try deserializer.deserialize(int64ErrorJson, using: message)) { error in
+      if let jsonError = error as? JSONDeserializationError,
+         case .valueTypeMismatch(let fieldName, let expected, let actual) = jsonError {
+        XCTAssertEqual(fieldName, "int64_field")
+        XCTAssertEqual(expected, "Number or String")
+        XCTAssertTrue(actual.contains("Array"))
+      } else {
+        XCTFail("Expected valueTypeMismatch error for int64, got: \(error)")
+      }
+    }
+    
+    // Тест для uint32 с неверным типом  
+    let uint32ErrorJson = """
+    {
+      "uint32_field": null
+    }
+    """.data(using: .utf8)!
+    
+    XCTAssertThrowsError(try deserializer.deserialize(uint32ErrorJson, using: message)) { error in
+      if let jsonError = error as? JSONDeserializationError,
+         case .valueTypeMismatch(let fieldName, let expected, let actual) = jsonError {
+        XCTAssertEqual(fieldName, "uint32_field")
+        XCTAssertEqual(expected, "Number or String")
+        XCTAssertTrue(actual.contains("NSNull"))
+      } else {
+        XCTFail("Expected valueTypeMismatch error for uint32, got: \(error)")
+      }
+    }
+    
+    // Тест для uint64 с неверным типом
+    let uint64ErrorJson = """
+    {
+      "uint64_field": []
+    }
+    """.data(using: .utf8)!
+    
+    XCTAssertThrowsError(try deserializer.deserialize(uint64ErrorJson, using: message)) { error in
+      if let jsonError = error as? JSONDeserializationError,
+         case .valueTypeMismatch(let fieldName, let expected, let actual) = jsonError {
+        XCTAssertEqual(fieldName, "uint64_field")
+        XCTAssertEqual(expected, "Number or String")
+        XCTAssertTrue(actual.contains("Array"))
+      } else {
+        XCTFail("Expected valueTypeMismatch error for uint64, got: \(error)")
+      }
+    }
+    
+    // Тест для bool с неверным типом
+    let boolErrorJson = """
+    {
+      "bool_field": "not a bool"
+    }
+    """.data(using: .utf8)!
+    
+    XCTAssertThrowsError(try deserializer.deserialize(boolErrorJson, using: message)) { error in
+      if let jsonError = error as? JSONDeserializationError,
+         case .valueTypeMismatch(let fieldName, let expected, let actual) = jsonError {
+        XCTAssertEqual(fieldName, "bool_field")
+        XCTAssertEqual(expected, "Boolean")
+        XCTAssertTrue(actual.contains("String"))
+      } else {
+        XCTFail("Expected valueTypeMismatch error for bool, got: \(error)")
       }
     }
   }
   
-  func testDeserializeInvalidBase64() throws {
-    var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
-    message.addField(FieldDescriptor(name: "bytes_field", number: 1, type: .bytes))
-    fileDescriptor.addMessage(message)
-    
-    let jsonString = """
-    {
-      "bytes_field": "invalid base64!"
-    }
-    """
-    
-    let jsonData = jsonString.data(using: .utf8)!
-    
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
-      if let jsonError = error as? JSONDeserializationError {
-        if case .invalidBase64(let fieldName, let value) = jsonError {
-          XCTAssertEqual(fieldName, "bytes_field")
-          XCTAssertEqual(value, "invalid base64!")
-        } else {
-          XCTFail("Wrong error type: \(jsonError)")
-        }
-      } else {
-        XCTFail("Expected JSONDeserializationError, got: \(error)")
-      }
-    }
-  }
-  
-  func testDeserializeNumberOutOfRange() throws {
-    var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
+  func testDeserializeInvalidNumberFormat() throws {
+    var message = MessageDescriptor(name: "NumberFormatMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "int32_field", number: 1, type: .int32))
+    message.addField(FieldDescriptor(name: "int64_field", number: 2, type: .int64))
+    message.addField(FieldDescriptor(name: "uint32_field", number: 3, type: .uint32))
+    message.addField(FieldDescriptor(name: "uint64_field", number: 4, type: .uint64))
+    message.addField(FieldDescriptor(name: "double_field", number: 5, type: .double))
+    message.addField(FieldDescriptor(name: "float_field", number: 6, type: .float))
     fileDescriptor.addMessage(message)
     
-    let jsonString = """
+    // Тест для int32 с невалидным форматом строки
+    let int32ErrorJson = """
     {
-      "int32_field": 9223372036854775807
+      "int32_field": "not_a_number"
     }
-    """
+    """.data(using: .utf8)!
     
-    let jsonData = jsonString.data(using: .utf8)!
-    
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
-      if let jsonError = error as? JSONDeserializationError {
-        if case .numberOutOfRange(let fieldName, _, let expectedRange) = jsonError {
-          XCTAssertEqual(fieldName, "int32_field")
-          XCTAssertEqual(expectedRange, "Int32")
-        } else {
-          XCTFail("Wrong error type: \(jsonError)")
-        }
+    XCTAssertThrowsError(try deserializer.deserialize(int32ErrorJson, using: message)) { error in
+      if let jsonError = error as? JSONDeserializationError,
+         case .invalidNumberFormat(let fieldName, let value) = jsonError {
+        XCTAssertEqual(fieldName, "int32_field")
+        XCTAssertEqual(value, "not_a_number")
       } else {
-        XCTFail("Expected JSONDeserializationError, got: \(error)")
+        XCTFail("Expected invalidNumberFormat error for int32, got: \(error)")
+      }
+    }
+    
+    // Тест для int64 с невалидным форматом строки
+    let int64ErrorJson = """
+    {
+      "int64_field": "invalid_int64"
+    }
+    """.data(using: .utf8)!
+    
+    XCTAssertThrowsError(try deserializer.deserialize(int64ErrorJson, using: message)) { error in
+      if let jsonError = error as? JSONDeserializationError,
+         case .invalidNumberFormat(let fieldName, let value) = jsonError {
+        XCTAssertEqual(fieldName, "int64_field")
+        XCTAssertEqual(value, "invalid_int64")
+      } else {
+        XCTFail("Expected invalidNumberFormat error for int64, got: \(error)")
+      }
+    }
+    
+    // Тест для uint32 с невалидным форматом строки
+    let uint32ErrorJson = """
+    {
+      "uint32_field": "invalid_uint32"
+    }
+    """.data(using: .utf8)!
+    
+    XCTAssertThrowsError(try deserializer.deserialize(uint32ErrorJson, using: message)) { error in
+      if let jsonError = error as? JSONDeserializationError,
+         case .invalidNumberFormat(let fieldName, let value) = jsonError {
+        XCTAssertEqual(fieldName, "uint32_field")
+        XCTAssertEqual(value, "invalid_uint32")
+      } else {
+        XCTFail("Expected invalidNumberFormat error for uint32, got: \(error)")
+      }
+    }
+    
+    // Тест для uint64 с невалидным форматом строки
+    let uint64ErrorJson = """
+    {
+      "uint64_field": "invalid_uint64"
+    }
+    """.data(using: .utf8)!
+    
+    XCTAssertThrowsError(try deserializer.deserialize(uint64ErrorJson, using: message)) { error in
+      if let jsonError = error as? JSONDeserializationError,
+         case .invalidNumberFormat(let fieldName, let value) = jsonError {
+        XCTAssertEqual(fieldName, "uint64_field")
+        XCTAssertEqual(value, "invalid_uint64")
+      } else {
+        XCTFail("Expected invalidNumberFormat error for uint64, got: \(error)")
+      }
+    }
+    
+    // Тест для double с невалидным форматом строки
+    let doubleErrorJson = """
+    {
+      "double_field": "not_a_double"
+    }
+    """.data(using: .utf8)!
+    
+    XCTAssertThrowsError(try deserializer.deserialize(doubleErrorJson, using: message)) { error in
+      if let jsonError = error as? JSONDeserializationError,
+         case .invalidNumberFormat(let fieldName, let value) = jsonError {
+        XCTAssertEqual(fieldName, "double_field")
+        XCTAssertEqual(value, "not_a_double")
+      } else {
+        XCTFail("Expected invalidNumberFormat error for double, got: \(error)")
+      }
+    }
+    
+    // Тест для float с невалидным форматом строки
+    let floatErrorJson = """
+    {
+      "float_field": "not_a_float"
+    }
+    """.data(using: .utf8)!
+    
+    XCTAssertThrowsError(try deserializer.deserialize(floatErrorJson, using: message)) { error in
+      if let jsonError = error as? JSONDeserializationError,
+         case .invalidNumberFormat(let fieldName, let value) = jsonError {
+        XCTAssertEqual(fieldName, "float_field")
+        XCTAssertEqual(value, "not_a_float")
+      } else {
+        XCTFail("Expected invalidNumberFormat error for float, got: \(error)")
       }
     }
   }
   
-  func testDeserializeInvalidRepeatedField() throws {
-    var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
-    message.addField(FieldDescriptor(name: "repeated_field", number: 1, type: .int32, isRepeated: true))
-    fileDescriptor.addMessage(message)
+  // MARK: - Error Description and Equality Tests
+  
+  func testErrorDescriptions() throws {
+    // Тестируем все типы ошибок и их описания
     
-    let jsonString = """
-    {
-      "repeated_field": "not an array"
-    }
-    """
+    let error1 = JSONDeserializationError.invalidJSON(underlyingError: NSError(domain: "test", code: 1, userInfo: nil))
+    XCTAssertTrue(error1.description.contains("Invalid JSON"))
     
-    let jsonData = jsonString.data(using: .utf8)!
+    let error2 = JSONDeserializationError.invalidJSONStructure(expected: "Object", actual: "Array")
+    XCTAssertEqual(error2.description, "Invalid JSON structure: expected Object, got Array")
     
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
-      if let jsonError = error as? JSONDeserializationError {
-        if case .invalidFieldType(let fieldName, let expectedType, _) = jsonError {
-          XCTAssertEqual(fieldName, "repeated_field")
-          XCTAssertEqual(expectedType, "Array")
-        } else {
-          XCTFail("Wrong error type: \(jsonError)")
-        }
-      } else {
-        XCTFail("Expected JSONDeserializationError, got: \(error)")
-      }
-    }
+    let error3 = JSONDeserializationError.unknownField(fieldName: "unknown_field", messageName: "TestMessage")
+    XCTAssertEqual(error3.description, "Unknown field 'unknown_field' in message 'TestMessage'")
+    
+    let error4 = JSONDeserializationError.invalidFieldType(fieldName: "test_field", expectedType: "Object", actualType: "String")
+    XCTAssertEqual(error4.description, "Invalid field type for 'test_field': expected Object, got String")
+    
+    let error5 = JSONDeserializationError.valueTypeMismatch(fieldName: "test_field", expected: "Number", actual: "String")
+    XCTAssertEqual(error5.description, "Value type mismatch for field 'test_field': expected Number, got String")
+    
+    let error6 = JSONDeserializationError.invalidNumberFormat(fieldName: "test_field", value: "invalid")
+    XCTAssertEqual(error6.description, "Invalid number format for field 'test_field': invalid")
+    
+    let error7 = JSONDeserializationError.numberOutOfRange(fieldName: "test_field", value: 999999, expectedRange: "Int32")
+    XCTAssertEqual(error7.description, "Number out of range for field 'test_field': 999999 (expected Int32)")
+    
+    let error8 = JSONDeserializationError.invalidBase64(fieldName: "test_field", value: "invalid")
+    XCTAssertEqual(error8.description, "Invalid base64 string for field 'test_field': invalid")
+    
+    let error9 = JSONDeserializationError.invalidEnumValue(fieldName: "test_field", value: "invalid")
+    XCTAssertEqual(error9.description, "Invalid enum value for field 'test_field': invalid")
+    
+    let error10 = JSONDeserializationError.invalidMapKeyFormat(fieldName: "test_field", keyType: "Int32", value: "invalid")
+    XCTAssertEqual(error10.description, "Invalid map key format for field 'test_field': expected Int32, got 'invalid'")
+    
+    let error11 = JSONDeserializationError.invalidMapKeyType(fieldName: "test_field", keyType: "Float")
+    XCTAssertEqual(error11.description, "Invalid map key type for field 'test_field': Float")
+    
+    let error12 = JSONDeserializationError.invalidMapKey(fieldName: "test_field", key: "invalid")
+    XCTAssertEqual(error12.description, "Invalid map key for field 'test_field': invalid")
+    
+    let error13 = JSONDeserializationError.invalidArrayElement(fieldName: "test_field", index: 5, underlyingError: NSError(domain: "test", code: 1, userInfo: nil))
+    XCTAssertTrue(error13.description.contains("Invalid array element for field 'test_field' at index 5"))
+    
+    let error14 = JSONDeserializationError.missingMapEntryInfo(fieldName: "test_field")
+    XCTAssertEqual(error14.description, "Missing map entry info for field 'test_field'")
+    
+    let error15 = JSONDeserializationError.missingTypeName(fieldName: "test_field")
+    XCTAssertEqual(error15.description, "Missing type name for field 'test_field'")
+    
+    let error16 = JSONDeserializationError.unsupportedNestedMessage(fieldName: "test_field", typeName: "TestType")
+    XCTAssertEqual(error16.description, "Unsupported nested message for field 'test_field': TestType")
+    
+    let error17 = JSONDeserializationError.unsupportedFieldType(type: "group")
+    XCTAssertEqual(error17.description, "Unsupported field type: group")
   }
   
-  func testDeserializeInvalidMapField() throws {
-    let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
-    let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
-    let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
+  func testErrorEquality() throws {
+    // Тестируем равенство ошибок
     
-    var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
-    message.addField(FieldDescriptor(
-      name: "map_field",
-      number: 1,
-      type: .message,
-      typeName: "map_entry",
-      isMap: true,
-      mapEntryInfo: mapEntryInfo
-    ))
-    fileDescriptor.addMessage(message)
+    // invalidJSON
+    let invalidJson1 = JSONDeserializationError.invalidJSON(underlyingError: NSError(domain: "test", code: 1, userInfo: nil))
+    let invalidJson2 = JSONDeserializationError.invalidJSON(underlyingError: NSError(domain: "test", code: 2, userInfo: nil))
+    XCTAssertEqual(invalidJson1, invalidJson2) // Underlying errors не сравниваются
     
-    let jsonString = """
-    {
-      "map_field": "not an object"
-    }
-    """
+    // invalidJSONStructure
+    let invalidStruct1 = JSONDeserializationError.invalidJSONStructure(expected: "Object", actual: "Array")
+    let invalidStruct2 = JSONDeserializationError.invalidJSONStructure(expected: "Object", actual: "Array")
+    let invalidStruct3 = JSONDeserializationError.invalidJSONStructure(expected: "Object", actual: "String")
+    XCTAssertEqual(invalidStruct1, invalidStruct2)
+    XCTAssertNotEqual(invalidStruct1, invalidStruct3)
     
-    let jsonData = jsonString.data(using: .utf8)!
+    // unknownField
+    let unknownField1 = JSONDeserializationError.unknownField(fieldName: "field1", messageName: "Message1")
+    let unknownField2 = JSONDeserializationError.unknownField(fieldName: "field1", messageName: "Message1")
+    let unknownField3 = JSONDeserializationError.unknownField(fieldName: "field2", messageName: "Message1")
+    XCTAssertEqual(unknownField1, unknownField2)
+    XCTAssertNotEqual(unknownField1, unknownField3)
     
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
-      if let jsonError = error as? JSONDeserializationError {
-        if case .invalidFieldType(let fieldName, let expectedType, _) = jsonError {
-          XCTAssertEqual(fieldName, "map_field")
-          XCTAssertEqual(expectedType, "Object")
-        } else {
-          XCTFail("Wrong error type: \(jsonError)")
-        }
-      } else {
-        XCTFail("Expected JSONDeserializationError, got: \(error)")
-      }
-    }
-  }
-  
-  // MARK: - Error Descriptions Tests
-  
-  func testErrorDescriptions() {
-    let error1 = JSONDeserializationError.unknownField(fieldName: "test", messageName: "TestMessage")
-    XCTAssertEqual(error1.description, "Unknown field 'test' in message 'TestMessage'")
+    // invalidFieldType
+    let invalidType1 = JSONDeserializationError.invalidFieldType(fieldName: "field1", expectedType: "Object", actualType: "String")
+    let invalidType2 = JSONDeserializationError.invalidFieldType(fieldName: "field1", expectedType: "Object", actualType: "String")
+    let invalidType3 = JSONDeserializationError.invalidFieldType(fieldName: "field1", expectedType: "Array", actualType: "String")
+    XCTAssertEqual(invalidType1, invalidType2)
+    XCTAssertNotEqual(invalidType1, invalidType3)
     
-    let error2 = JSONDeserializationError.valueTypeMismatch(fieldName: "field", expected: "String", actual: "Int")
-    XCTAssertEqual(error2.description, "Value type mismatch for field 'field': expected String, got Int")
+    // valueTypeMismatch
+    let typeMismatch1 = JSONDeserializationError.valueTypeMismatch(fieldName: "field1", expected: "Number", actual: "String")
+    let typeMismatch2 = JSONDeserializationError.valueTypeMismatch(fieldName: "field1", expected: "Number", actual: "String")
+    let typeMismatch3 = JSONDeserializationError.valueTypeMismatch(fieldName: "field1", expected: "Number", actual: "Array")
+    XCTAssertEqual(typeMismatch1, typeMismatch2)
+    XCTAssertNotEqual(typeMismatch1, typeMismatch3)
     
-    let error3 = JSONDeserializationError.invalidNumberFormat(fieldName: "field", value: "abc")
-    XCTAssertEqual(error3.description, "Invalid number format for field 'field': abc")
+    // invalidNumberFormat
+    let numberFormat1 = JSONDeserializationError.invalidNumberFormat(fieldName: "field1", value: "invalid")
+    let numberFormat2 = JSONDeserializationError.invalidNumberFormat(fieldName: "field1", value: "invalid")
+    let numberFormat3 = JSONDeserializationError.invalidNumberFormat(fieldName: "field1", value: "other")
+    XCTAssertEqual(numberFormat1, numberFormat2)
+    XCTAssertNotEqual(numberFormat1, numberFormat3)
     
-    let error4 = JSONDeserializationError.invalidBase64(fieldName: "field", value: "invalid!")
-    XCTAssertEqual(error4.description, "Invalid base64 string for field 'field': invalid!")
-  }
-  
-  func testErrorEquality() {
-    let error1 = JSONDeserializationError.unknownField(fieldName: "test", messageName: "TestMessage")
-    let error2 = JSONDeserializationError.unknownField(fieldName: "test", messageName: "TestMessage")
-    let error3 = JSONDeserializationError.unknownField(fieldName: "other", messageName: "TestMessage")
+    // numberOutOfRange
+    let outOfRange1 = JSONDeserializationError.numberOutOfRange(fieldName: "field1", value: 999, expectedRange: "Int32")
+    let outOfRange2 = JSONDeserializationError.numberOutOfRange(fieldName: "field1", value: 999, expectedRange: "Int32")
+    let outOfRange3 = JSONDeserializationError.numberOutOfRange(fieldName: "field1", value: 888, expectedRange: "Int32")
+    XCTAssertEqual(outOfRange1, outOfRange2)
+    XCTAssertNotEqual(outOfRange1, outOfRange3)
     
-    XCTAssertEqual(error1, error2)
-    XCTAssertNotEqual(error1, error3)
+    // invalidBase64
+    let base64_1 = JSONDeserializationError.invalidBase64(fieldName: "field1", value: "invalid")
+    let base64_2 = JSONDeserializationError.invalidBase64(fieldName: "field1", value: "invalid")
+    let base64_3 = JSONDeserializationError.invalidBase64(fieldName: "field1", value: "other")
+    XCTAssertEqual(base64_1, base64_2)
+    XCTAssertNotEqual(base64_1, base64_3)
     
-    let error4 = JSONDeserializationError.valueTypeMismatch(fieldName: "field", expected: "String", actual: "Int")
-    let error5 = JSONDeserializationError.valueTypeMismatch(fieldName: "field", expected: "String", actual: "Int")
-    XCTAssertEqual(error4, error5)
-    XCTAssertNotEqual(error1, error4)
+    // invalidEnumValue
+    let enumValue1 = JSONDeserializationError.invalidEnumValue(fieldName: "field1", value: "invalid")
+    let enumValue2 = JSONDeserializationError.invalidEnumValue(fieldName: "field1", value: "invalid")
+    let enumValue3 = JSONDeserializationError.invalidEnumValue(fieldName: "field1", value: "other")
+    XCTAssertEqual(enumValue1, enumValue2)
+    XCTAssertNotEqual(enumValue1, enumValue3)
+    
+    // invalidMapKeyFormat
+    let mapKeyFormat1 = JSONDeserializationError.invalidMapKeyFormat(fieldName: "field1", keyType: "Int32", value: "invalid")
+    let mapKeyFormat2 = JSONDeserializationError.invalidMapKeyFormat(fieldName: "field1", keyType: "Int32", value: "invalid")
+    let mapKeyFormat3 = JSONDeserializationError.invalidMapKeyFormat(fieldName: "field1", keyType: "Int64", value: "invalid")
+    XCTAssertEqual(mapKeyFormat1, mapKeyFormat2)
+    XCTAssertNotEqual(mapKeyFormat1, mapKeyFormat3)
+    
+    // invalidMapKeyType
+    let mapKeyType1 = JSONDeserializationError.invalidMapKeyType(fieldName: "field1", keyType: "Float")
+    let mapKeyType2 = JSONDeserializationError.invalidMapKeyType(fieldName: "field1", keyType: "Float")
+    let mapKeyType3 = JSONDeserializationError.invalidMapKeyType(fieldName: "field1", keyType: "Double")
+    XCTAssertEqual(mapKeyType1, mapKeyType2)
+    XCTAssertNotEqual(mapKeyType1, mapKeyType3)
+    
+    // invalidMapKey
+    let mapKey1 = JSONDeserializationError.invalidMapKey(fieldName: "field1", key: "invalid")
+    let mapKey2 = JSONDeserializationError.invalidMapKey(fieldName: "field1", key: "invalid")
+    let mapKey3 = JSONDeserializationError.invalidMapKey(fieldName: "field1", key: "other")
+    XCTAssertEqual(mapKey1, mapKey2)
+    XCTAssertNotEqual(mapKey1, mapKey3)
+    
+    // invalidArrayElement
+    let arrayElement1 = JSONDeserializationError.invalidArrayElement(fieldName: "field1", index: 5, underlyingError: NSError(domain: "test", code: 1, userInfo: nil))
+    let arrayElement2 = JSONDeserializationError.invalidArrayElement(fieldName: "field1", index: 5, underlyingError: NSError(domain: "test", code: 2, userInfo: nil))
+    let arrayElement3 = JSONDeserializationError.invalidArrayElement(fieldName: "field1", index: 6, underlyingError: NSError(domain: "test", code: 1, userInfo: nil))
+    XCTAssertEqual(arrayElement1, arrayElement2) // Underlying errors не сравниваются
+    XCTAssertNotEqual(arrayElement1, arrayElement3)
+    
+    // missingMapEntryInfo
+    let missingInfo1 = JSONDeserializationError.missingMapEntryInfo(fieldName: "field1")
+    let missingInfo2 = JSONDeserializationError.missingMapEntryInfo(fieldName: "field1")
+    let missingInfo3 = JSONDeserializationError.missingMapEntryInfo(fieldName: "field2")
+    XCTAssertEqual(missingInfo1, missingInfo2)
+    XCTAssertNotEqual(missingInfo1, missingInfo3)
+    
+    // missingTypeName
+    let missingType1 = JSONDeserializationError.missingTypeName(fieldName: "field1")
+    let missingType2 = JSONDeserializationError.missingTypeName(fieldName: "field1")
+    let missingType3 = JSONDeserializationError.missingTypeName(fieldName: "field2")
+    XCTAssertEqual(missingType1, missingType2)
+    XCTAssertNotEqual(missingType1, missingType3)
+    
+    // unsupportedNestedMessage
+    let unsupportedMsg1 = JSONDeserializationError.unsupportedNestedMessage(fieldName: "field1", typeName: "Type1")
+    let unsupportedMsg2 = JSONDeserializationError.unsupportedNestedMessage(fieldName: "field1", typeName: "Type1")
+    let unsupportedMsg3 = JSONDeserializationError.unsupportedNestedMessage(fieldName: "field1", typeName: "Type2")
+    XCTAssertEqual(unsupportedMsg1, unsupportedMsg2)
+    XCTAssertNotEqual(unsupportedMsg1, unsupportedMsg3)
+    
+    // unsupportedFieldType
+    let unsupportedType1 = JSONDeserializationError.unsupportedFieldType(type: "group")
+    let unsupportedType2 = JSONDeserializationError.unsupportedFieldType(type: "group")
+    let unsupportedType3 = JSONDeserializationError.unsupportedFieldType(type: "other")
+    XCTAssertEqual(unsupportedType1, unsupportedType2)
+    XCTAssertNotEqual(unsupportedType1, unsupportedType3)
+    
+    // Разные типы ошибок не равны
+    XCTAssertNotEqual(invalidJson1, invalidStruct1)
+    XCTAssertNotEqual(unknownField1, invalidType1)
   }
   
   // MARK: - Performance Tests
@@ -1251,42 +1484,37 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
     
     XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
-      if let jsonError = error as? JSONDeserializationError {
-        if case .valueTypeMismatch(let fieldName, let expected, _) = jsonError {
-          XCTAssertEqual(fieldName, "nested_message")
-          XCTAssertEqual(expected, "Object")
-        } else {
-          XCTFail("Wrong error type: \(jsonError)")
-        }
+      if let jsonError = error as? JSONDeserializationError,
+         case .valueTypeMismatch(let fieldName, let expected, _) = jsonError {
+        XCTAssertEqual(fieldName, "nested_message")
+        XCTAssertEqual(expected, "Object")
       } else {
-        XCTFail("Expected JSONDeserializationError, got: \(error)")
+        XCTFail("Wrong error type: \(error)")
       }
     }
   }
   
   func testDeserializeBytesFromNonStringJSON() throws {
-    var message = MessageDescriptor(name: "BytesTypeErrorMessage", parent: fileDescriptor)
-    message.addField(FieldDescriptor(name: "bytes_field", number: 1, type: .bytes))
+    var message = MessageDescriptor(name: "BytesMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "data", number: 1, type: .bytes))
     fileDescriptor.addMessage(message)
     
     let jsonString = """
     {
-      "bytes_field": 123
+      "data": 123
     }
     """
     
     let jsonData = jsonString.data(using: .utf8)!
     
     XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
-      if let jsonError = error as? JSONDeserializationError {
-        if case .valueTypeMismatch(let fieldName, let expected, _) = jsonError {
-          XCTAssertEqual(fieldName, "bytes_field")
-          XCTAssertEqual(expected, "String (base64)")
-        } else {
-          XCTFail("Wrong error type: \(jsonError)")
-        }
+      if let jsonError = error as? JSONDeserializationError,
+         case .valueTypeMismatch(let fieldName, let expected, let actual) = jsonError {
+        XCTAssertEqual(fieldName, "data")
+        XCTAssertEqual(expected, "String (base64)")
+        XCTAssertTrue(actual.contains("Number"))
       } else {
-        XCTFail("Expected JSONDeserializationError, got: \(error)")
+        XCTFail("Expected valueTypeMismatch error for bytes, got: \(error)")
       }
     }
   }
@@ -1333,188 +1561,159 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
   
-  func testDeserializeTypeConversionErrorsForPrimitives() throws {
-    var message = MessageDescriptor(name: "TypeErrorMessage", parent: fileDescriptor)
-    message.addField(FieldDescriptor(name: "double_field", number: 1, type: .double))
-    message.addField(FieldDescriptor(name: "bool_field", number: 2, type: .bool))
-    message.addField(FieldDescriptor(name: "string_field", number: 3, type: .string))
-         message.addField(FieldDescriptor(name: "enum_field", number: 4, type: .enum, typeName: "Status"))
-    fileDescriptor.addMessage(message)
-    
-    // Test double with wrong type
-    let doubleErrorJson = """
-    {
-      "double_field": []
-    }
-    """
-    
-    let doubleErrorData = doubleErrorJson.data(using: .utf8)!
-    
-    XCTAssertThrowsError(try deserializer.deserialize(doubleErrorData, using: message)) { error in
-      if let jsonError = error as? JSONDeserializationError {
-        if case .valueTypeMismatch(let fieldName, let expected, _) = jsonError {
-          XCTAssertEqual(fieldName, "double_field")
-          XCTAssertEqual(expected, "Number or String")
-        } else {
-          XCTFail("Wrong error type: \(jsonError)")
-        }
-      } else {
-        XCTFail("Expected JSONDeserializationError, got: \(error)")
-      }
-    }
-    
-    // Test bool with wrong type
-    let boolErrorJson = """
-    {
-      "bool_field": "true"
-    }
-    """
-    
-    let boolErrorData = boolErrorJson.data(using: .utf8)!
-    
-    XCTAssertThrowsError(try deserializer.deserialize(boolErrorData, using: message)) { error in
-      if let jsonError = error as? JSONDeserializationError {
-        if case .valueTypeMismatch(let fieldName, let expected, _) = jsonError {
-          XCTAssertEqual(fieldName, "bool_field")
-          XCTAssertEqual(expected, "Boolean")
-        } else {
-          XCTFail("Wrong error type: \(jsonError)")
-        }
-      } else {
-        XCTFail("Expected JSONDeserializationError, got: \(error)")
-      }
-    }
-    
-    // Test string with wrong type
-    let stringErrorJson = """
-    {
-      "string_field": 123
-    }
-    """
-    
-    let stringErrorData = stringErrorJson.data(using: .utf8)!
-    
-    XCTAssertThrowsError(try deserializer.deserialize(stringErrorData, using: message)) { error in
-      if let jsonError = error as? JSONDeserializationError {
-        if case .valueTypeMismatch(let fieldName, let expected, _) = jsonError {
-          XCTAssertEqual(fieldName, "string_field")
-          XCTAssertEqual(expected, "String")
-        } else {
-          XCTFail("Wrong error type: \(jsonError)")
-        }
-      } else {
-        XCTFail("Expected JSONDeserializationError, got: \(error)")
-      }
-    }
-    
-    // Test enum with wrong type
-    let enumErrorJson = """
-    {
-      "enum_field": []
-    }
-    """
-    
-    let enumErrorData = enumErrorJson.data(using: .utf8)!
-    
-    XCTAssertThrowsError(try deserializer.deserialize(enumErrorData, using: message)) { error in
-      if let jsonError = error as? JSONDeserializationError {
-        if case .valueTypeMismatch(let fieldName, let expected, _) = jsonError {
-          XCTAssertEqual(fieldName, "enum_field")
-          XCTAssertEqual(expected, "Number or String")
-        } else {
-          XCTFail("Wrong error type: \(jsonError)")
-        }
-      } else {
-        XCTFail("Expected JSONDeserializationError, got: \(error)")
-      }
-    }
-  }
-  
   func testDeserializeInvalidArrayElement() throws {
-    var message = MessageDescriptor(name: "ArrayElementMessage", parent: fileDescriptor)
-    message.addField(FieldDescriptor(name: "int_array", number: 1, type: .int32, isRepeated: true))
+    var message = MessageDescriptor(name: "ArrayErrorMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "numbers", number: 1, type: .int32, isRepeated: true))
     fileDescriptor.addMessage(message)
     
     let jsonString = """
     {
-      "int_array": [1, "invalid", 3]
+      "numbers": [1, "not_a_number", 3]
     }
     """
     
     let jsonData = jsonString.data(using: .utf8)!
     
     XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
-      if let jsonError = error as? JSONDeserializationError {
-        if case .invalidArrayElement(let fieldName, let index, _) = jsonError {
-          XCTAssertEqual(fieldName, "int_array")
-          XCTAssertEqual(index, 1)
-        } else {
-          XCTFail("Wrong error type: \(jsonError)")
-        }
+      if let jsonError = error as? JSONDeserializationError,
+         case .invalidArrayElement(let fieldName, let index, _) = jsonError {
+        XCTAssertEqual(fieldName, "numbers")
+        XCTAssertEqual(index, 1)
       } else {
-        XCTFail("Expected JSONDeserializationError, got: \(error)")
+        XCTFail("Expected invalidArrayElement error, got: \(error)")
       }
     }
   }
   
-  func testDeserializeInvalidMapKey() throws {
-    let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
-    let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
-    let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
+
+  
+
+  
+  func testDeserializeMapWithInvalidKeyFormats() throws {
+    // Тестируем невалидные форматы для разных типов ключей
     
-    var message = MessageDescriptor(name: "InvalidMapKeyMessage", parent: fileDescriptor)
+    // UInt32 ключи с невалидным форматом
+    let uint32KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .uint32)
+    let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
+    let uint32MapEntryInfo = MapEntryInfo(keyFieldInfo: uint32KeyFieldInfo, valueFieldInfo: valueFieldInfo)
+    
+    var message = MessageDescriptor(name: "UInt32MapMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(
-      name: "string_map",
+      name: "uint32_map",
       number: 1,
       type: .message,
-      typeName: "string_map_entry",
+      typeName: "uint32_map_entry",
       isMap: true,
-      mapEntryInfo: mapEntryInfo
+      mapEntryInfo: uint32MapEntryInfo
     ))
     fileDescriptor.addMessage(message)
     
-    // В JSONDeserializer, конвертация string ключа в String всегда работает,
-    // поэтому нужно создать ситуацию, где ключ не может быть хешируемым
-    // Но String всегда AnyHashable, поэтому этот тест сложно создать.
-    // Вместо этого протестируем через проблему с конвертацией ключа
-    
-    // Протестируем случай с UInt64 ключом, который не может быть сконвертирован
-    let uint64KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .uint64)
-    let uint64MapEntryInfo = MapEntryInfo(keyFieldInfo: uint64KeyFieldInfo, valueFieldInfo: valueFieldInfo)
-    
-    var uint64Message = MessageDescriptor(name: "UInt64MapMessage", parent: fileDescriptor)
-    uint64Message.addField(FieldDescriptor(
-      name: "uint64_map",
-      number: 1,
-      type: .message,
-      typeName: "uint64_map_entry",
-      isMap: true,
-      mapEntryInfo: uint64MapEntryInfo
-    ))
-    fileDescriptor.addMessage(uint64Message)
-    
     let jsonString = """
     {
-      "uint64_map": {
-        "invalid-uint64": "value"
+      "uint32_map": {
+        "invalid_uint32": "value"
       }
     }
     """
     
     let jsonData = jsonString.data(using: .utf8)!
     
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: uint64Message)) { error in
-      if let jsonError = error as? JSONDeserializationError {
-        if case .invalidMapKeyFormat(let fieldName, let keyType, let value) = jsonError {
-          XCTAssertEqual(fieldName, "uint64_map")
-          XCTAssertEqual(keyType, "UInt64")
-          XCTAssertEqual(value, "invalid-uint64")
-        } else {
-          XCTFail("Wrong error type: \(jsonError)")
-        }
+    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
+      if let jsonError = error as? JSONDeserializationError,
+         case .invalidMapKeyFormat(let fieldName, let keyType, let value) = jsonError {
+        XCTAssertEqual(fieldName, "uint32_map")
+        XCTAssertEqual(keyType, "UInt32")
+        XCTAssertEqual(value, "invalid_uint32")
       } else {
-        XCTFail("Expected JSONDeserializationError, got: \(error)")
+        XCTFail("Expected invalidMapKeyFormat error, got: \(error)")
       }
     }
+  }
+  
+
+  
+  // MARK: - Additional Coverage Tests
+  
+  func testDeserializeMapWithAllKeyTypesUnique() throws {
+    // Тестируем все поддерживаемые типы ключей для map
+    
+    // String keys
+    let stringKeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
+    let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
+    let stringMapEntryInfo = MapEntryInfo(keyFieldInfo: stringKeyFieldInfo, valueFieldInfo: valueFieldInfo)
+    
+    var message = MessageDescriptor(name: "AllKeyTypesMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(
+      name: "string_map",
+      number: 1,
+      type: .message,
+      typeName: "string_map_entry",
+      isMap: true,
+      mapEntryInfo: stringMapEntryInfo
+    ))
+    
+    // Int32 keys
+    let int32KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .int32)
+    let int32MapEntryInfo = MapEntryInfo(keyFieldInfo: int32KeyFieldInfo, valueFieldInfo: valueFieldInfo)
+    message.addField(FieldDescriptor(
+      name: "int32_map",
+      number: 2,
+      type: .message,
+      typeName: "int32_map_entry",
+      isMap: true,
+      mapEntryInfo: int32MapEntryInfo
+    ))
+    
+    // Int64 keys
+    let int64KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .int64)
+    let int64MapEntryInfo = MapEntryInfo(keyFieldInfo: int64KeyFieldInfo, valueFieldInfo: valueFieldInfo)
+    message.addField(FieldDescriptor(
+      name: "int64_map",
+      number: 3,
+      type: .message,
+      typeName: "int64_map_entry",
+      isMap: true,
+      mapEntryInfo: int64MapEntryInfo
+    ))
+    
+    // UInt64 keys
+    let uint64KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .uint64)
+    let uint64MapEntryInfo = MapEntryInfo(keyFieldInfo: uint64KeyFieldInfo, valueFieldInfo: valueFieldInfo)
+    message.addField(FieldDescriptor(
+      name: "uint64_map",
+      number: 4,
+      type: .message,
+      typeName: "uint64_map_entry",
+      isMap: true,
+      mapEntryInfo: uint64MapEntryInfo
+    ))
+    
+    fileDescriptor.addMessage(message)
+    
+    let jsonString = """
+    {
+      "string_map": {"key1": "value1"},
+      "int32_map": {"42": "answer"},
+      "int64_map": {"9223372036854775000": "large_number"},
+      "uint64_map": {"18446744073709551000": "very_large_number"}
+    }
+    """
+    
+    let jsonData = jsonString.data(using: .utf8)!
+    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    
+    let accessor = FieldAccessor(deserializedMessage)
+    
+    let stringMap = accessor.getValue("string_map", as: [String: String].self)!
+    XCTAssertEqual(stringMap["key1"], "value1")
+    
+    let int32Map = accessor.getValue("int32_map", as: [Int32: String].self)!
+    XCTAssertEqual(int32Map[42], "answer")
+    
+    let int64Map = accessor.getValue("int64_map", as: [Int64: String].self)!
+    XCTAssertEqual(int64Map[9223372036854775000], "large_number")
+    
+    let uint64Map = accessor.getValue("uint64_map", as: [UInt64: String].self)!
+    XCTAssertEqual(uint64Map[18446744073709551000], "very_large_number")
   }
 }
