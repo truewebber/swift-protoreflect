@@ -359,17 +359,20 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(protobufService.name, "TestService")
     XCTAssertEqual(protobufService.method.count, 2)
     
-    let unaryMethod = protobufService.method[0]
-    XCTAssertEqual(unaryMethod.name, "UnaryMethod")
-    XCTAssertEqual(unaryMethod.inputType, "TestRequest")
-    XCTAssertEqual(unaryMethod.outputType, "TestResponse")
-    XCTAssertFalse(unaryMethod.clientStreaming)
-    XCTAssertFalse(unaryMethod.serverStreaming)
+    // Ищем методы по имени вместо проверки по индексам
+    let unaryMethod = protobufService.method.first { $0.name == "UnaryMethod" }
+    XCTAssertNotNil(unaryMethod, "UnaryMethod not found")
+    XCTAssertEqual(unaryMethod?.inputType, "TestRequest")
+    XCTAssertEqual(unaryMethod?.outputType, "TestResponse")
+    XCTAssertFalse(unaryMethod?.clientStreaming ?? true)
+    XCTAssertFalse(unaryMethod?.serverStreaming ?? true)
     
-    let streamingMethod = protobufService.method[1]
-    XCTAssertEqual(streamingMethod.name, "StreamingMethod")
-    XCTAssertTrue(streamingMethod.clientStreaming)
-    XCTAssertTrue(streamingMethod.serverStreaming)
+    let streamingMethod = protobufService.method.first { $0.name == "StreamingMethod" }
+    XCTAssertNotNil(streamingMethod, "StreamingMethod not found")
+    XCTAssertEqual(streamingMethod?.inputType, "TestRequest")
+    XCTAssertEqual(streamingMethod?.outputType, "TestResponse")
+    XCTAssertTrue(streamingMethod?.clientStreaming ?? false)
+    XCTAssertTrue(streamingMethod?.serverStreaming ?? false)
   }
   
   func testServiceDescriptorFromProtobuf() throws {
