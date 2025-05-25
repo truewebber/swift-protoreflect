@@ -58,10 +58,21 @@ test:
 ## Generate a code coverage report
 coverage:
 	@echo "Generating code coverage report..."
-	xcrun llvm-profdata merge -sparse .build/debug/codecov/*.profraw -o .build/debug/codecov/default.profdata
+	xcrun llvm-profdata merge -sparse .build/arm64-apple-macosx/debug/codecov/*.profraw -o .build/arm64-apple-macosx/debug/codecov/merged.profdata
 	xcrun llvm-cov report \
-		.build/debug/SwiftProtoReflectPackageTests.xctest/Contents/MacOS/SwiftProtoReflectPackageTests \
-		-instr-profile=.build/debug/codecov/default.profdata \
+		.build/arm64-apple-macosx/debug/SwiftProtoReflectPackageTests.xctest/Contents/MacOS/SwiftProtoReflectPackageTests \
+		-instr-profile=.build/arm64-apple-macosx/debug/codecov/merged.profdata \
+		-name-regex="^Sources/SwiftProtoReflect/" \
+		-ignore-filename-regex=".build|Tests|checkouts" \
+		-use-color
+
+## Generate a detailed code coverage report showing uncovered lines
+coverage-detailed:
+	@echo "Generating detailed code coverage report..."
+	xcrun llvm-profdata merge -sparse .build/arm64-apple-macosx/debug/codecov/*.profraw -o .build/arm64-apple-macosx/debug/codecov/merged.profdata
+	xcrun llvm-cov show \
+		.build/arm64-apple-macosx/debug/SwiftProtoReflectPackageTests.xctest/Contents/MacOS/SwiftProtoReflectPackageTests \
+		-instr-profile=.build/arm64-apple-macosx/debug/codecov/merged.profdata \
 		-name-regex="^Sources/SwiftProtoReflect/" \
 		-ignore-filename-regex=".build|Tests|checkouts" \
 		-use-color

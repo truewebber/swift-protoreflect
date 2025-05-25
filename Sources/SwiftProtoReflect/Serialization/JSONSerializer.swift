@@ -144,7 +144,7 @@ public struct JSONSerializer {
   }
   
   /// Конвертирует значение в JSON совместимый тип
-  private func convertValueToJSON(_ value: Any, type: FieldType, typeName: String?) throws -> Any {
+  internal func convertValueToJSON(_ value: Any, type: FieldType, typeName: String?) throws -> Any {
     switch type {
     case .double:
       guard let doubleValue = value as? Double else {
@@ -224,7 +224,7 @@ public struct JSONSerializer {
   }
   
   /// Конвертирует ключ map в JSON строку
-  private func convertMapKeyToJSONString(_ key: Any, keyType: FieldType) throws -> String {
+  internal func convertMapKeyToJSONString(_ key: Any, keyType: FieldType) throws -> String {
     switch keyType {
     case .string:
       guard let stringKey = key as? String else {
