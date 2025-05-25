@@ -941,4 +941,167 @@ final class FieldDescriptorTests: XCTestCase {
       return "CustomStringType(\(value))"
     }
   }
+  
+  // MARK: - Additional Coverage Tests
+  
+  func testDefaultValueForComplexTypes() {
+    // Тестируем случай, когда defaultValue возвращает nil для сложных типов
+    let messageField = FieldDescriptor(
+      name: "message_field",
+      number: 1,
+      type: .message,
+      typeName: "example.MessageType"
+    )
+    
+    let enumField = FieldDescriptor(
+      name: "enum_field", 
+      number: 2,
+      type: .enum,
+      typeName: "example.EnumType"
+    )
+    
+    let groupField = FieldDescriptor(
+      name: "group_field",
+      number: 3,
+      type: .group,
+      typeName: "example.GroupType"
+    )
+    
+    // Для сложных типов (message, enum, group) defaultValue должно возвращать nil
+    XCTAssertNil(messageField.defaultValue)
+    XCTAssertNil(enumField.defaultValue)
+    XCTAssertNil(groupField.defaultValue)
+  }
+  
+  func testDefaultValueForScalarTypes() {
+    // Тестируем, что для скалярных типов без явно заданного defaultValue возвращается nil
+    let stringField = FieldDescriptor(name: "string_field", number: 1, type: .string)
+    let boolField = FieldDescriptor(name: "bool_field", number: 2, type: .bool)
+    let bytesField = FieldDescriptor(name: "bytes_field", number: 3, type: .bytes)
+    
+    // Для скалярных типов без явно заданного defaultValue должно возвращаться nil
+    XCTAssertNil(stringField.defaultValue)
+    XCTAssertNil(boolField.defaultValue)
+    XCTAssertNil(bytesField.defaultValue)
+    
+    // Тестируем поля с явно заданными значениями по умолчанию
+    let stringFieldWithDefault = FieldDescriptor(
+      name: "string_field_with_default", 
+      number: 4, 
+      type: .string, 
+      defaultValue: "default_value"
+    )
+    let boolFieldWithDefault = FieldDescriptor(
+      name: "bool_field_with_default", 
+      number: 5, 
+      type: .bool, 
+      defaultValue: true
+    )
+    let bytesFieldWithDefault = FieldDescriptor(
+      name: "bytes_field_with_default", 
+      number: 6, 
+      type: .bytes, 
+      defaultValue: Data([1, 2, 3])
+    )
+    
+    // Проверяем, что явно заданные значения по умолчанию возвращаются правильно
+    XCTAssertEqual(stringFieldWithDefault.defaultValue as? String, "default_value")
+    XCTAssertEqual(boolFieldWithDefault.defaultValue as? Bool, true)
+    XCTAssertEqual(bytesFieldWithDefault.defaultValue as? Data, Data([1, 2, 3]))
+  }
+  
+  func testOptionsComparisonEdgeCases() {
+    // Тестируем специальные случаи сравнения опций, чтобы покрыть все ветви в compareOptions
+    
+    // Создаем поля с опциями разных типов для проверки строкового сравнения
+    struct CustomType: CustomStringConvertible {
+      let id: Int
+      var description: String { return "CustomType(\(id))" }
+    }
+    
+    let field1 = FieldDescriptor(
+      name: "test",
+      number: 1,
+      type: .string,
+      options: [
+        "customType": CustomType(id: 1),
+        "array": [1, 2, 3] as [Int],
+        "dict": ["key": "value"] as [String: String]
+      ]
+    )
+    
+    let field2 = FieldDescriptor(
+      name: "test",
+      number: 1,
+      type: .string,
+      options: [
+        "customType": CustomType(id: 1),
+        "array": [1, 2, 3] as [Int],
+        "dict": ["key": "value"] as [String: String]
+      ]
+    )
+    
+    let field3 = FieldDescriptor(
+      name: "test",
+      number: 1,
+      type: .string,
+      options: [
+        "customType": CustomType(id: 2), // Разное значение
+        "array": [1, 2, 3] as [Int],
+        "dict": ["key": "value"] as [String: String]
+      ]
+    )
+    
+    // Поля с одинаковыми строковыми представлениями опций должны быть равны
+    XCTAssertEqual(field1, field2)
+    
+    // Поля с разными строковыми представлениями опций должны быть не равны
+    XCTAssertNotEqual(field1, field3)
+  }
+  
+  func testMapEntryValidKeyTypesExtended() {
+    // Тестируем дополнительные валидные типы ключей для map
+    
+    let validKeyTypes: [FieldType] = [
+      .int32, .int64, .uint32, .uint64, .sint32, .sint64,
+      .fixed32, .fixed64, .sfixed32, .sfixed64, .bool, .string
+    ]
+    
+    for keyType in validKeyTypes {
+      let keyInfo = KeyFieldInfo(name: "key", number: 1, type: keyType)
+      let valueInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
+      
+      // Создание MapEntryInfo не должно вызывать fatalError для валидных типов
+      let mapInfo = MapEntryInfo(keyFieldInfo: keyInfo, valueFieldInfo: valueInfo)
+      
+      XCTAssertEqual(mapInfo.keyFieldInfo.type, keyType)
+      XCTAssertEqual(mapInfo.valueFieldInfo.type, .string)
+    }
+  }
+  
+  func testKeyFieldInfoAndValueFieldInfoWithComplexTypes() {
+    // Тестируем создание KeyFieldInfo и ValueFieldInfo с типами, требующими typeName
+    
+    // Для ValueFieldInfo с типом message
+    let messageValueInfo = ValueFieldInfo(
+      name: "message_value",
+      number: 2,
+      type: .message,
+      typeName: "example.MessageType"
+    )
+    
+    XCTAssertEqual(messageValueInfo.type, .message)
+    XCTAssertEqual(messageValueInfo.typeName, "example.MessageType")
+    
+    // Для ValueFieldInfo с типом enum
+    let enumValueInfo = ValueFieldInfo(
+      name: "enum_value",
+      number: 3,
+      type: .enum,
+      typeName: "example.EnumType"
+    )
+    
+    XCTAssertEqual(enumValueInfo.type, .enum)
+    XCTAssertEqual(enumValueInfo.typeName, "example.EnumType")
+  }
 }

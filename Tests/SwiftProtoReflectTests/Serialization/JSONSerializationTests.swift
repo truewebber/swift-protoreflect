@@ -749,4 +749,73 @@ final class JSONSerializationTests: XCTestCase {
     let jsonData = try serializer.serialize(dynamicMessage)
     XCTAssertFalse(jsonData.isEmpty)
   }
+
+  // MARK: - Error Coverage Tests
+  
+  func testJSONSerializationErrorCoverage() throws {
+    // Тестируем все непокрытые error descriptions
+    
+    let error1 = JSONSerializationError.invalidFieldType(fieldName: "test", expectedType: "String", actualType: "Int")
+    XCTAssertEqual(error1.description, "Invalid field type for field 'test': expected String, got Int")
+    
+    let error2 = JSONSerializationError.valueTypeMismatch(expected: "String", actual: "Int")
+    XCTAssertEqual(error2.description, "Value type mismatch: expected String, got Int")
+    
+    let error3 = JSONSerializationError.missingMapEntryInfo(fieldName: "map_field")
+    XCTAssertEqual(error3.description, "Missing map entry info for field 'map_field'")
+    
+    let error4 = JSONSerializationError.missingFieldValue(fieldName: "missing_field")
+    XCTAssertEqual(error4.description, "Missing value for field 'missing_field'")
+    
+    let error5 = JSONSerializationError.unsupportedFieldType(type: "group")
+    XCTAssertEqual(error5.description, "Unsupported field type: group")
+    
+    let error6 = JSONSerializationError.invalidMapKeyType(keyType: "FieldType.float")
+    XCTAssertEqual(error6.description, "Invalid map key type: FieldType.float")
+    
+    let underlyingError = NSError(domain: "TestDomain", code: 123, userInfo: [NSLocalizedDescriptionKey: "Test error"])
+    let error7 = JSONSerializationError.jsonWriteError(underlyingError: underlyingError)
+    XCTAssertTrue(error7.description.contains("JSON write error"))
+    XCTAssertTrue(error7.description.contains("Test error"))
+  }
+  
+  func testCompleteErrorEquality() throws {
+    // Test missingMapEntryInfo equality
+    let error1 = JSONSerializationError.missingMapEntryInfo(fieldName: "map1")
+    let error2 = JSONSerializationError.missingMapEntryInfo(fieldName: "map1")
+    let error3 = JSONSerializationError.missingMapEntryInfo(fieldName: "map2")
+    
+    XCTAssertEqual(error1, error2)
+    XCTAssertNotEqual(error1, error3)
+    
+    // Test missingFieldValue equality
+    let error4 = JSONSerializationError.missingFieldValue(fieldName: "field1")
+    let error5 = JSONSerializationError.missingFieldValue(fieldName: "field1")
+    let error6 = JSONSerializationError.missingFieldValue(fieldName: "field2")
+    
+    XCTAssertEqual(error4, error5)
+    XCTAssertNotEqual(error4, error6)
+    
+    // Test unsupportedFieldType equality
+    let error7 = JSONSerializationError.unsupportedFieldType(type: "group")
+    let error8 = JSONSerializationError.unsupportedFieldType(type: "group")
+    let error9 = JSONSerializationError.unsupportedFieldType(type: "unknown")
+    
+    XCTAssertEqual(error7, error8)
+    XCTAssertNotEqual(error7, error9)
+    
+    // Test invalidMapKeyType equality
+    let error10 = JSONSerializationError.invalidMapKeyType(keyType: "double")
+    let error11 = JSONSerializationError.invalidMapKeyType(keyType: "double")
+    let error12 = JSONSerializationError.invalidMapKeyType(keyType: "float")
+    
+    XCTAssertEqual(error10, error11)
+    XCTAssertNotEqual(error10, error12)
+    
+    // Test jsonWriteError equality
+    let error13 = JSONSerializationError.jsonWriteError(underlyingError: NSError(domain: "test", code: 1))
+    let error14 = JSONSerializationError.jsonWriteError(underlyingError: NSError(domain: "test", code: 2))
+    
+    XCTAssertEqual(error13, error14) // Should be equal as per implementation
+  }
 }
