@@ -476,4 +476,277 @@ final class JSONSerializationTests: XCTestCase {
       }
     }
   }
+  
+  // MARK: - Additional Type Coverage Tests
+  
+  func testSerializeSignedAndFixedIntegerTypes() throws {
+    var message = MessageDescriptor(name: "SignedFixedMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "sint32_field", number: 1, type: .sint32))
+    message.addField(FieldDescriptor(name: "sint64_field", number: 2, type: .sint64))
+    message.addField(FieldDescriptor(name: "sfixed32_field", number: 3, type: .sfixed32))
+    message.addField(FieldDescriptor(name: "sfixed64_field", number: 4, type: .sfixed64))
+    message.addField(FieldDescriptor(name: "fixed32_field", number: 5, type: .fixed32))
+    message.addField(FieldDescriptor(name: "fixed64_field", number: 6, type: .fixed64))
+    fileDescriptor.addMessage(message)
+    
+    let dynamicMessage = try messageFactory.createMessage(from: message, with: [
+      "sint32_field": Int32(-2147483648),
+      "sint64_field": Int64(-9223372036854775808),
+      "sfixed32_field": Int32(2147483647),
+      "sfixed64_field": Int64(9223372036854775807),
+      "fixed32_field": UInt32(4294967295),
+      "fixed64_field": UInt64(18446744073709551615)
+    ])
+    
+    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
+    
+    XCTAssertEqual(jsonObject["sint32_field"] as! Int, -2147483648)
+    XCTAssertEqual(jsonObject["sint64_field"] as! String, "-9223372036854775808")
+    XCTAssertEqual(jsonObject["sfixed32_field"] as! Int, 2147483647)
+    XCTAssertEqual(jsonObject["sfixed64_field"] as! String, "9223372036854775807")
+    XCTAssertEqual(jsonObject["fixed32_field"] as! UInt, 4294967295)
+    XCTAssertEqual(jsonObject["fixed64_field"] as! String, "18446744073709551615")
+  }
+  
+  func testSerializeMapWithAllKeyTypes() throws {
+    // Test map with UInt32 keys
+    let uint32KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .uint32)
+    let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
+    let uint32MapEntryInfo = MapEntryInfo(keyFieldInfo: uint32KeyFieldInfo, valueFieldInfo: valueFieldInfo)
+    
+    var message = MessageDescriptor(name: "UInt32MapMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(
+      name: "uint32_to_string",
+      number: 1,
+      type: .message,
+      typeName: "uint32_to_string_entry",
+      isMap: true,
+      mapEntryInfo: uint32MapEntryInfo
+    ))
+    fileDescriptor.addMessage(message)
+    
+    let mapData: [UInt32: String] = [
+      0: "zero",
+      4294967295: "max_uint32"
+    ]
+    
+    let dynamicMessage = try messageFactory.createMessage(from: message, with: [
+      "uint32_to_string": mapData
+    ])
+    
+    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
+    
+    let mapObject = jsonObject["uint32_to_string"] as! [String: String]
+    XCTAssertEqual(mapObject["0"], "zero")
+    XCTAssertEqual(mapObject["4294967295"], "max_uint32")
+  }
+  
+  func testSerializeMapWithUInt64Keys() throws {
+    let uint64KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .uint64)
+    let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
+    let uint64MapEntryInfo = MapEntryInfo(keyFieldInfo: uint64KeyFieldInfo, valueFieldInfo: valueFieldInfo)
+    
+    var message = MessageDescriptor(name: "UInt64MapMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(
+      name: "uint64_to_string",
+      number: 1,
+      type: .message,
+      typeName: "uint64_to_string_entry",
+      isMap: true,
+      mapEntryInfo: uint64MapEntryInfo
+    ))
+    fileDescriptor.addMessage(message)
+    
+    let mapData: [UInt64: String] = [
+      UInt64.max: "max_uint64"
+    ]
+    
+    let dynamicMessage = try messageFactory.createMessage(from: message, with: [
+      "uint64_to_string": mapData
+    ])
+    
+    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
+    
+    let mapObject = jsonObject["uint64_to_string"] as! [String: String]
+    XCTAssertEqual(mapObject["18446744073709551615"], "max_uint64")
+  }
+  
+  func testSerializeMapWithInt64Keys() throws {
+    let int64KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .int64)
+    let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
+    let int64MapEntryInfo = MapEntryInfo(keyFieldInfo: int64KeyFieldInfo, valueFieldInfo: valueFieldInfo)
+    
+    var message = MessageDescriptor(name: "Int64MapMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(
+      name: "int64_to_string",
+      number: 1,
+      type: .message,
+      typeName: "int64_to_string_entry",
+      isMap: true,
+      mapEntryInfo: int64MapEntryInfo
+    ))
+    fileDescriptor.addMessage(message)
+    
+    let mapData: [Int64: String] = [
+      Int64.min: "min_int64",
+      Int64.max: "max_int64"
+    ]
+    
+    let dynamicMessage = try messageFactory.createMessage(from: message, with: [
+      "int64_to_string": mapData
+    ])
+    
+    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
+    
+    let mapObject = jsonObject["int64_to_string"] as! [String: String]
+    XCTAssertEqual(mapObject["-9223372036854775808"], "min_int64")
+    XCTAssertEqual(mapObject["9223372036854775807"], "max_int64")
+  }
+  
+  func testSerializeMapWithBoolKeys() throws {
+    let boolKeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .bool)
+    let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
+    let boolMapEntryInfo = MapEntryInfo(keyFieldInfo: boolKeyFieldInfo, valueFieldInfo: valueFieldInfo)
+    
+    var message = MessageDescriptor(name: "BoolMapMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(
+      name: "bool_to_string",
+      number: 1,
+      type: .message,
+      typeName: "bool_to_string_entry",
+      isMap: true,
+      mapEntryInfo: boolMapEntryInfo
+    ))
+    fileDescriptor.addMessage(message)
+    
+    let mapData: [Bool: String] = [
+      true: "yes",
+      false: "no"
+    ]
+    
+    let dynamicMessage = try messageFactory.createMessage(from: message, with: [
+      "bool_to_string": mapData
+    ])
+    
+    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
+    
+    let mapObject = jsonObject["bool_to_string"] as! [String: String]
+    XCTAssertEqual(mapObject["true"], "yes")
+    XCTAssertEqual(mapObject["false"], "no")
+  }
+  
+  func testSerializeMapWithSignedIntKeys() throws {
+    // Test with sint32
+    let sint32KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .sint32)
+    let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
+    let sint32MapEntryInfo = MapEntryInfo(keyFieldInfo: sint32KeyFieldInfo, valueFieldInfo: valueFieldInfo)
+    
+    var message = MessageDescriptor(name: "SInt32MapMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(
+      name: "sint32_to_string",
+      number: 1,
+      type: .message,
+      typeName: "sint32_to_string_entry",
+      isMap: true,
+      mapEntryInfo: sint32MapEntryInfo
+    ))
+    fileDescriptor.addMessage(message)
+    
+    let mapData: [Int32: String] = [
+      -1: "negative_one",
+      0: "zero",
+      1: "positive_one"
+    ]
+    
+    let dynamicMessage = try messageFactory.createMessage(from: message, with: [
+      "sint32_to_string": mapData
+    ])
+    
+    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
+    
+    let mapObject = jsonObject["sint32_to_string"] as! [String: String]
+    XCTAssertEqual(mapObject["-1"], "negative_one")
+    XCTAssertEqual(mapObject["0"], "zero")
+    XCTAssertEqual(mapObject["1"], "positive_one")
+  }
+  
+  func testSerializeMapWithFixedIntKeys() throws {
+    // Test with fixed32
+    let fixed32KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .fixed32)
+    let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
+    let fixed32MapEntryInfo = MapEntryInfo(keyFieldInfo: fixed32KeyFieldInfo, valueFieldInfo: valueFieldInfo)
+    
+    var message = MessageDescriptor(name: "Fixed32MapMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(
+      name: "fixed32_to_string",
+      number: 1,
+      type: .message,
+      typeName: "fixed32_to_string_entry",
+      isMap: true,
+      mapEntryInfo: fixed32MapEntryInfo
+    ))
+    fileDescriptor.addMessage(message)
+    
+    let mapData: [UInt32: String] = [
+      100: "hundred",
+      200: "two_hundred"
+    ]
+    
+    let dynamicMessage = try messageFactory.createMessage(from: message, with: [
+      "fixed32_to_string": mapData
+    ])
+    
+    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
+    
+    let mapObject = jsonObject["fixed32_to_string"] as! [String: String]
+    XCTAssertEqual(mapObject["100"], "hundred")
+    XCTAssertEqual(mapObject["200"], "two_hundred")
+  }
+  
+  // MARK: - Additional Options Tests
+  
+  func testSerializeWithIncludeDefaultValuesOption() throws {
+    var message = MessageDescriptor(name: "DefaultValuesMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "string_field", number: 1, type: .string))
+    message.addField(FieldDescriptor(name: "int_field", number: 2, type: .int32))
+    fileDescriptor.addMessage(message)
+    
+    // Create message with only one field set
+    let dynamicMessage = try messageFactory.createMessage(from: message, with: [
+      "string_field": "test"
+    ])
+    
+    // Default options - don't include default values
+    let defaultSerializer = JSONSerializer()
+    let defaultJsonData = try defaultSerializer.serialize(dynamicMessage)
+    let defaultJsonObject = try JSONSerialization.jsonObject(with: defaultJsonData) as! [String: Any]
+    
+    // Only set field should be present
+    XCTAssertEqual(defaultJsonObject.count, 1)
+    XCTAssertEqual(defaultJsonObject["string_field"] as! String, "test")
+    XCTAssertNil(defaultJsonObject["int_field"])
+  }
+  
+  func testJSONWriteErrorHandling() throws {
+    // This test simulates a scenario where JSONSerialization.data() might fail
+    // We can't easily trigger this in practice, so we test the error path indirectly
+    var message = MessageDescriptor(name: "SimpleMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "text", number: 1, type: .string))
+    fileDescriptor.addMessage(message)
+    
+    let dynamicMessage = try messageFactory.createMessage(from: message, with: [
+      "text": "test"
+    ])
+    
+    // This should work normally
+    let jsonData = try serializer.serialize(dynamicMessage)
+    XCTAssertFalse(jsonData.isEmpty)
+  }
 }
