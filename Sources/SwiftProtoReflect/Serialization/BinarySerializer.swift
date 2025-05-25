@@ -330,18 +330,6 @@ public struct BinarySerializer {
   }
 }
 
-// MARK: - Wire Types
-
-/// Wire type для Protocol Buffers encoding
-private enum WireType: UInt32 {
-  case varint = 0
-  case fixed64 = 1
-  case lengthDelimited = 2
-  case startGroup = 3  // Устаревшее
-  case endGroup = 4    // Устаревшее
-  case fixed32 = 5
-}
-
 // MARK: - Binary Encoder
 
 /// Низкоуровневый binary encoder для Protocol Buffers wire format

@@ -8,12 +8,41 @@
 
 ## Состояние модуля
 
-- [ ] BinarySerializer
-- [ ] BinaryDeserializer
+- [x] **BinarySerializer** ✅ - полностью реализован с покрытием тестами 90.77%
+- [x] **BinaryDeserializer** ✅ - полностью реализован с покрытием тестами 100% (20 тестов)
+- [x] **WireFormat** ✅ - общие определения для wire типов Protocol Buffers
 - [ ] JSONAdapter
+
+## Реализованные компоненты
+
+### BinarySerializer
+- Поддержка всех скалярных типов Protocol Buffers
+- Repeated fields (packed и non-packed)
+- Map fields с различными типами ключей и значений
+- Nested messages и enum поля
+- ZigZag encoding для sint32/sint64
+- Wire format совместимость со стандартом Protocol Buffers
+
+### BinaryDeserializer
+- Round-trip десериализация со всеми типами полей
+- Обработка неизвестных полей для обратной совместимости
+- ZigZag декодирование
+- Обработка packed repeated fields
+- Корректная валидация UTF-8 строк
+- Детальная обработка ошибок
+
+### WireFormat
+- Публичные определения WireType для совместного использования
+- Соответствие стандарту Protocol Buffers wire format
 
 ## Взаимодействие с другими модулями
 
 - **Dynamic**: для работы с динамическими сообщениями
-- **Descriptor**: для получения метаданных о типах при сериализации
+- **Descriptor**: для получения метаданных о типах при сериализации/десериализации
 - **Bridge**: для интеграции с Swift Protobuf сериализацией
+
+## Покрытие тестами
+
+- **BinarySerializer**: 90.77% покрытие кода (27 тестов)
+- **BinaryDeserializer**: 100% покрытие функциональности (20 тестов)
+- **Round-trip тестирование**: все типы полей проверены на совместимость сериализации/десериализации
