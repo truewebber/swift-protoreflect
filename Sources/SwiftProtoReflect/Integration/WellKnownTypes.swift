@@ -294,9 +294,9 @@ public final class WellKnownTypesRegistry {
     private func registerDefaultHandlers() {
         // Critical types (Phase 1)
         register(TimestampHandler.self)
+        register(DurationHandler.self)
         
         // TODO: Добавить остальные обработчики
-        // register(DurationHandler.self)
         // register(EmptyHandler.self)
     }
 }
