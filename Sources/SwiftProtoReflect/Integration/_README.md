@@ -18,8 +18,8 @@
   - [x] **EmptyHandler** - ЗАВЕРШЕНО ✅ (google.protobuf.Empty)
   - [x] **FieldMaskHandler** - ЗАВЕРШЕНО ✅ (google.protobuf.FieldMask)
 - [ ] **Phase 2 Well-Known Types** - В РАЗРАБОТКЕ 🚧
-  - [ ] **StructHandler** - google.protobuf.Struct поддержка
-  - [ ] **ValueHandler** - google.protobuf.Value поддержка
+  - [x] **StructHandler** - google.protobuf.Struct поддержка (**ЗАВЕРШЕНО**)
+  - [x] **ValueHandler** - google.protobuf.Value поддержка (**ЗАВЕРШЕНО**)
 - [ ] **Phase 3** - ПЛАНИРУЕТСЯ
   - [ ] ExtensionSupport - обработка Protocol Buffers extensions
   - [ ] AdvancedInterop - продвинутые функции интеграции
@@ -129,3 +129,23 @@
 - **Comprehensive Error Handling** - 5 типов специализированных ошибок
 - **Thread Safety** - полная поддержка concurrent доступа к registry
 - **Покрытие тестами: 99.04%**
+
+### ✅ StructHandler (google.protobuf.Struct)
+- **StructValue** - типизированное представление с полной поддержкой динамических JSON-like структур
+- **Dictionary Integration** - seamless конвертация между Dictionary<String, Any> и StructValue
+- **Nested Structures Support** - поддержка вложенных структур и массивов
+- **ValueValue Integration** - тесная интеграция с ValueValue для типизированных значений
+- **JSON Mapping** - естественная конвертация в/из JSON формата
+- **Round-trip Compatibility** - полная совместимость конвертации туда-обратно
+- **Production Ready** - 21 тест покрывают все edge cases и сценарии
+- **Покрытие тестами: 83% регионов, 88.24% строк**
+
+### ✅ ValueHandler (google.protobuf.Value)
+- **ValueValue** - универсальное представление для всех типов google.protobuf.Value
+- **Universal Type Support** - поддержка null, number, string, bool, struct, list значений
+- **Any Integration** - seamless конвертация между произвольными Swift типами и ValueValue
+- **StructHandler Compatibility** - тесная интеграция с StructHandler для nested структур
+- **JSON-Natural Representation** - естественная работа с JSON-like значениями
+- **Round-trip Compatibility** - полная совместимость конвертации туда-обратно
+- **Production Ready** - 14 тестов покрывают все основные сценарии использования
+- **Registry Integration** - автоматическая регистрация в WellKnownTypesRegistry

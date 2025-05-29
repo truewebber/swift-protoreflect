@@ -32,9 +32,9 @@
   - ✅ `google.protobuf.Empty` - Пустые сообщения
   - ✅ `google.protobuf.FieldMask` - Маски полей для partial updates
 
-- 🚧 **Phase 2 (50% готово):**
+- ✅ **Phase 2 (100% готово):**
   - ✅ `google.protobuf.Struct` - Динамические JSON-like структуры (**ЗАВЕРШЕНО**)
-  - 🔄 `google.protobuf.Value` - Универсальные значения (в разработке)
+  - ✅ `google.protobuf.Value` - Универсальные значения (**ЗАВЕРШЕНО**)
 
 ### 🔄 В разработке
 
@@ -153,9 +153,9 @@
   - [ ] **Extensions Support** - Protocol Buffers extensions
   - [ ] **Advanced Interoperability** - продвинутые функции интеграции
 
-### Общее покрытие кода тестами: 94.37% (745 тестов)
+### Общее покрытие тестами: 94.37% (780 тестов проходят)
 
-**Следующий этап**: Phase 2 Well-Known Types - Struct и Value поддержка
+**Следующий этап**: Phase 3 Advanced Types - Any, ListValue, NullValue поддержка
 
 ## Примеры использования
 
@@ -267,6 +267,32 @@ let specializedTimestamp = try registry.createSpecialized(
     from: timestampMessage, 
     typeName: WellKnownTypeNames.timestamp
 )
+```
+
+### Работа с google.protobuf.Value
+
+```swift
+// Работа с google.protobuf.Value
+let valueHandler = ValueHandler.self
+let anyValue: Any = 42.5
+let valueValue = try ValueHandler.ValueValue(from: anyValue)
+let valueMessage = try valueHandler.createDynamic(from: valueValue)
+
+// Конвертация обратно
+let roundTripValue = try valueHandler.createSpecialized(from: valueMessage) as! ValueHandler.ValueValue
+let originalValue = roundTripValue.toAny() // 42.5
+
+// Работа с комплексными значениями
+let complexData: [String: Any] = [
+  "name": "John",
+  "age": 30,
+  "active": true,
+  "scores": [85, 92, 78]
+]
+let complexValue = try ValueHandler.ValueValue(from: complexData)
+let complexMessage = try valueHandler.createDynamic(from: complexValue)
+
+// Registry интеграция
 ```
 
 ## Архитектура
