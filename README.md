@@ -192,11 +192,11 @@ fileDescriptor.addMessage(personMessage)
 
 // Создание сообщения через MessageFactory
 let factory = MessageFactory()
-let person = try factory.createMessage(descriptor: personMessage)
+let person = factory.createMessage(from: personMessage)
 
 // Установка значений полей
-try person.set(field: "name", value: "John Doe")
-try person.set(field: "age", value: 30)
+try person.set("John Doe", forField: "name")
+try person.set(Int32(30), forField: "age")
 ```
 
 ### Работа с TypeRegistry и DescriptorPool
@@ -214,9 +214,9 @@ let pool = DescriptorPool()
 try pool.addFile(fileDescriptor)
 
 // Создание сообщения через pool
-let message = try pool.createMessage(typeName: "example.Person", fieldValues: [
+let message = try pool.createMessage(forType: "example.Person", fieldValues: [
     "name": "Jane Doe",
-    "age": 25
+    "age": Int32(25)
 ])
 ```
 
@@ -227,12 +227,12 @@ let message = try pool.createMessage(typeName: "example.Person", fieldValues: [
 let accessor = FieldAccessor(message: person)
 
 // Чтение значений
-let name: String = try accessor.getString(fieldName: "name")
-let age: Int32 = try accessor.getInt32(fieldName: "age")
+let name: String? = accessor.getString("name")
+let age: Int32? = accessor.getInt32("age")
 
 // Проверка наличия полей
-if accessor.hasValue(fieldName: "name") {
-    print("Имя установлено: \(name)")
+if accessor.hasValue("name") {
+    print("Имя установлено: \(name ?? "неизвестно")")
 }
 ```
 
@@ -265,7 +265,7 @@ let fieldMaskMessage = try fieldMaskHandler.createDynamic(from: fieldMaskValue)
 // FieldMask операции
 let union = fieldMaskValue.union(with: otherFieldMask)
 let intersection = fieldMaskValue.intersection(with: otherFieldMask)
-let coversField = fieldMaskValue.covers(path: "name")
+let coversField = fieldMaskValue.covers("name")
 
 // Registry интеграция
 let registry = WellKnownTypesRegistry.shared
