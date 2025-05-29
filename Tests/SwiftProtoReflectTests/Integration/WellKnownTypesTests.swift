@@ -418,4 +418,4 @@ struct MockWellKnownTypeHandler: WellKnownTypeHandler {
     static func validate(_ specialized: Any) -> Bool {
         return specialized is String
     }
-} 
+}

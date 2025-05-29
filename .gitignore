@@ -2,7 +2,7 @@
 .idea
 .vscode
 
-/.build
+/.build*
 /Packages
 xcuserdata/
 DerivedData/
