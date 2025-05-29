@@ -11,24 +11,30 @@
 
 **Integration Phase - В РАЗРАБОТКЕ 🚧**
 
-- [x] **WellKnownTypes Foundation** - ЗАВЕРШЕНО ✅
-- [x] **TimestampHandler** - ЗАВЕРШЕНО ✅ (google.protobuf.Timestamp)
-- [x] **DurationHandler** - ЗАВЕРШЕНО ✅ (google.protobuf.Duration)
-- [x] **EmptyHandler** - ЗАВЕРШЕНО ✅ (google.protobuf.Empty)
-- [ ] ExtensionSupport - обработка Protocol Buffers extensions
-- [ ] AdvancedInterop - продвинутые функции интеграции
-- [ ] PerformanceOptimizer - оптимизация производительности
+- [x] **Critical Phase 1** - ЗАВЕРШЕНО ✅
+  - [x] **WellKnownTypes Foundation** - ЗАВЕРШЕНО ✅
+  - [x] **TimestampHandler** - ЗАВЕРШЕНО ✅ (google.protobuf.Timestamp)
+  - [x] **DurationHandler** - ЗАВЕРШЕНО ✅ (google.protobuf.Duration)
+  - [x] **EmptyHandler** - ЗАВЕРШЕНО ✅ (google.protobuf.Empty)
+  - [x] **FieldMaskHandler** - ЗАВЕРШЕНО ✅ (google.protobuf.FieldMask)
+- [ ] **Phase 2 Well-Known Types** - В РАЗРАБОТКЕ 🚧
+  - [ ] **StructHandler** - google.protobuf.Struct поддержка
+  - [ ] **ValueHandler** - google.protobuf.Value поддержка
+- [ ] **Phase 3** - ПЛАНИРУЕТСЯ
+  - [ ] ExtensionSupport - обработка Protocol Buffers extensions
+  - [ ] AdvancedInterop - продвинутые функции интеграции
+  - [ ] PerformanceOptimizer - оптимизация производительности
 
 ## Компоненты
 
-### WellKnownTypes ✅
+### WellKnownTypes
 Специализированная поддержка для стандартных типов Protocol Buffers:
 - ✅ `google.protobuf.Timestamp` - временные метки (TimestampHandler)
 - ✅ `google.protobuf.Duration` - интервалы времени (DurationHandler)
 - ✅ `google.protobuf.Empty` - пустые сообщения (EmptyHandler)
-- [ ] `google.protobuf.FieldMask` - маски полей
-- [ ] `google.protobuf.Struct` - произвольные структуры
-- [ ] `google.protobuf.Value` - произвольные значения
+- ✅ `google.protobuf.FieldMask` - маски полей (FieldMaskHandler)
+- [ ] `google.protobuf.Struct` - произвольные структуры (StructHandler)
+- [ ] `google.protobuf.Value` - произвольные значения (ValueHandler)
 - [ ] `google.protobuf.Any` - типизированные значения
 
 ### ExtensionSupport
@@ -62,13 +68,13 @@
 
 ## Well-Known Types Priority
 
-**Phase 1 (Критические) - ЗАВЕРШЕНО:**
+**Phase 1 (Критические) - ЗАВЕРШЕНО ✅:**
 1. ✅ `google.protobuf.Timestamp` - наиболее часто используемый (**ЗАВЕРШЕНО**)
 2. ✅ `google.protobuf.Duration` - критичен для временных операций (**ЗАВЕРШЕНО**)
 3. ✅ `google.protobuf.Empty` - простой, но часто используемый (**ЗАВЕРШЕНО**)
+4. ✅ `google.protobuf.FieldMask` - для partial updates (**ЗАВЕРШЕНО**)
 
-**Phase 2 (Важные):**
-4. `google.protobuf.FieldMask` - для partial updates
+**Phase 2 (Важные) - В РАЗРАБОТКЕ 🚧:**
 5. `google.protobuf.Struct` - для динамических структур
 6. `google.protobuf.Value` - основа для Struct
 
@@ -97,6 +103,24 @@
 - **Production Ready** - 29 тестов покрывают все edge cases и сценарии
 - **Покрытие тестами: 95.19%**
 
+### ✅ EmptyHandler (google.protobuf.Empty)
+- **EmptyValue** - типизированное представление с singleton pattern
+- **Unit Type Integration** - seamless интеграция с Swift Void как аналогом Empty
+- **Round-trip Compatibility** - полная совместимость конвертации туда-обратно
+- **Minimal Overhead** - максимально эффективная реализация для пустых сообщений
+- **Production Ready** - 15 тестов покрывают все edge cases и сценарии
+- **Покрытие тестами: 100%**
+
+### ✅ FieldMaskHandler (google.protobuf.FieldMask)
+- **FieldMaskValue** - типизированное представление с полной валидацией путей
+- **Path Operations** - union, intersection, covers, adding, removing
+- **Конвертация между DynamicMessage и FieldMaskValue** - seamless интеграция
+- **Convenience Extensions** - для Array<String> и DynamicMessage
+- **Path Validation** - строгая валидация путей согласно Protocol Buffers спецификации
+- **Round-trip Compatibility** - полная совместимость конвертации туда-обратно
+- **Production Ready** - 30 тестов покрывают все edge cases и сценарии
+- **Покрытие тестами: 96.52%**
+
 ### ✅ WellKnownTypes Foundation
 - **WellKnownTypeNames** - полный набор констант для 9 стандартных типов Protocol Buffers
 - **WellKnownTypeDetector** - утилиты для определения типов и фаз поддержки
@@ -105,11 +129,3 @@
 - **Comprehensive Error Handling** - 5 типов специализированных ошибок
 - **Thread Safety** - полная поддержка concurrent доступа к registry
 - **Покрытие тестами: 99.04%**
-
-### ✅ EmptyHandler (google.protobuf.Empty)
-- **EmptyValue** - типизированное представление с singleton pattern
-- **Unit Type Integration** - seamless интеграция с Swift Void как аналогом Empty
-- **Round-trip Compatibility** - полная совместимость конвертации туда-обратно
-- **Minimal Overhead** - максимально эффективная реализация для пустых сообщений
-- **Production Ready** - 25 тестов покрывают все edge cases и сценарии
-- **Покрытие тестами: высокое**

@@ -103,10 +103,40 @@
 
 **Общее покрытие тестами: 94.37%** (745 тестов проходят)
 
-**ТЕКУЩИЙ ПРИОРИТЕТ:** Integration Phase - Phase 2 Well-Known Types
-- [ ] **Struct Handler** - google.protobuf.Struct поддержка
-- [ ] **Value Handler** - google.protobuf.Value поддержка  
-- [ ] Advanced Well-Known Types support
+**🎯 Текущие приоритеты разработки**
+
+### ✅ Недавно завершено
+
+**StructHandler (google.protobuf.Struct) - ЗАВЕРШЕНО ✅**
+- Полная поддержка динамических JSON-like структур
+- Конвертация между Dictionary<String, Any> и StructValue
+- Поддержка вложенных структур и массивов
+- 21 тест с покрытием 83% регионов, 88.24% строк
+- Интеграция с WellKnownTypesRegistry
+
+### 🔄 Текущий фокус
+
+**Phase 2 Well-Known Types (продолжение):**
+
+1. **ValueHandler (google.protobuf.Value) - ПРИОРИТЕТ**
+   - Основа для google.protobuf.Struct
+   - Поддержка всех типов значений (null, number, string, bool, struct, list)
+   - Тесная интеграция с StructHandler
+
+2. **ListValueHandler (google.protobuf.ListValue)**
+   - Для массивов в Struct
+   - Поддержка гетерогенных массивов
+
+### 📋 План следующих этапов
+
+**Phase 3 - Advanced Well-Known Types:**
+- `google.protobuf.Any` - для type erasure
+- `google.protobuf.NullValue` - enum для null значений
+
+**Phase 4 - Extensions & Advanced Features:**
+- Protocol Buffers extensions
+- Custom options
+- Reflection API improvements
 
 Подробную схему фаз см. в разделе "Предстоящие фазы разработки" в PROJECT_STATE.md
 

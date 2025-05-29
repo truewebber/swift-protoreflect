@@ -301,6 +301,7 @@ public final class WellKnownTypesRegistry {
 
     // Important types (Phase 2)
     register(FieldMaskHandler.self)
+    register(StructHandler.self)
 
     // TODO: Добавить остальные обработчики
   }
