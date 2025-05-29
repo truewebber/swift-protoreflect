@@ -33,6 +33,7 @@ let package = Package(
         "Descriptor/_README.md",
         "Serialization/_README.md",
         "Registry/_README.md",
+        "Integration/_README.md",
       ]
     ),
     .testTarget(
