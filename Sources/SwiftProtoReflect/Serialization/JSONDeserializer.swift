@@ -9,84 +9,91 @@ import Foundation
 
 /// JSONDeserializer.
 ///
-/// Предоставляет функциональность для десериализации JSON данных в динамические Protocol Buffers сообщения
+/// Предоставляет функциональность для десериализации JSON данных в динамические Protocol Buffers сообщения.
 /// согласно официальной спецификации Protocol Buffers JSON mapping.
 /// Обеспечивает полную совместимость с JSONSerializer для round-trip операций.
 public struct JSONDeserializer {
-  
+
   // MARK: - Properties
-  
-  /// Опции JSON десериализации
+
+  /// Опции JSON десериализации.
   public let options: JSONDeserializationOptions
-  
+
   // MARK: - Initialization
-  
-  /// Создает новый экземпляр JSONDeserializer
+
+  /// Создает новый экземпляр JSONDeserializer.
   ///
-  /// - Parameter options: Опции JSON десериализации
+  /// - Parameter options: Опции JSON десериализации.
   public init(options: JSONDeserializationOptions = JSONDeserializationOptions()) {
     self.options = options
   }
-  
+
   // MARK: - Deserialization Methods
-  
-  /// Десериализует JSON данные в динамическое сообщение
+
+  /// Десериализует JSON данные в динамическое сообщение.
   ///
-  /// - Parameters:
-  ///   - data: JSON данные для десериализации
-  ///   - descriptor: Дескриптор сообщения для определения структуры
-  /// - Returns: Десериализованное динамическое сообщение
-  /// - Throws: JSONDeserializationError если десериализация не удалась
+  /// - Parameters:.
+  ///   - data: JSON данные для десериализации.
+  ///   - descriptor: Дескриптор сообщения для определения структуры.
+  /// - Returns: Десериализованное динамическое сообщение.
+  /// - Throws: JSONDeserializationError если десериализация не удалась.
   public func deserialize(_ data: Data, using descriptor: MessageDescriptor) throws -> DynamicMessage {
     // Парсим JSON в объект
     let jsonObject: Any
     do {
       jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
-    } catch {
+    }
+    catch {
       throw JSONDeserializationError.invalidJSON(underlyingError: error)
     }
-    
+
     // JSON объект должен быть словарем для сообщения
     guard let jsonDictionary = jsonObject as? [String: Any] else {
-      throw JSONDeserializationError.invalidJSONStructure(expected: "Object", actual: String(describing: type(of: jsonObject)))
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "Object",
+        actual: String(describing: type(of: jsonObject))
+      )
     }
-    
+
     return try deserializeFromJSONObject(jsonDictionary, using: descriptor)
   }
-  
-  /// Десериализует JSON объект в динамическое сообщение
+
+  /// Десериализует JSON объект в динамическое сообщение.
   ///
-  /// - Parameters:
-  ///   - jsonObject: JSON объект (Dictionary) для десериализации
-  ///   - descriptor: Дескриптор сообщения для определения структуры
-  /// - Returns: Десериализованное динамическое сообщение
-  /// - Throws: JSONDeserializationError если десериализация не удалась
-  public func deserializeFromJSONObject(_ jsonObject: [String: Any], using descriptor: MessageDescriptor) throws -> DynamicMessage {
+  /// - Parameters:.
+  ///   - jsonObject: JSON объект (Dictionary) для десериализации.
+  ///   - descriptor: Дескриптор сообщения для определения структуры.
+  /// - Returns: Десериализованное динамическое сообщение.
+  /// - Throws: JSONDeserializationError если десериализация не удалась.
+  public func deserializeFromJSONObject(_ jsonObject: [String: Any], using descriptor: MessageDescriptor) throws
+    -> DynamicMessage
+  {
     let factory = MessageFactory()
     var message = factory.createMessage(from: descriptor)
-    
+
     // Обрабатываем каждое поле из JSON
     for (jsonFieldName, jsonValue) in jsonObject {
       // Находим поле по имени (поддерживаем как оригинальные, так и camelCase имена)
       guard let field = findField(byJSONName: jsonFieldName, in: descriptor) else {
         if options.ignoreUnknownFields {
-          continue // Пропускаем неизвестные поля
-        } else {
+          continue  // Пропускаем неизвестные поля
+        }
+        else {
           throw JSONDeserializationError.unknownField(fieldName: jsonFieldName, messageName: descriptor.name)
         }
       }
-      
+
       // Десериализуем значение поля
       let fieldValue = try deserializeFieldValue(jsonValue, for: field)
       try message.set(fieldValue, forField: field.name)
     }
-    
+
     return message
   }
-  
+
   // MARK: - Private Methods
-  
-  /// Находит поле по JSON имени (поддерживает оригинальные имена и camelCase)
+
+  /// Находит поле по JSON имени (поддерживает оригинальные имена и camelCase).
   private func findField(byJSONName jsonName: String, in descriptor: MessageDescriptor) -> FieldDescriptor? {
     for field in descriptor.allFields() {
       // Проверяем оригинальное имя
@@ -100,24 +107,26 @@ public struct JSONDeserializer {
     }
     return nil
   }
-  
-  /// Десериализует значение поля из JSON
+
+  /// Десериализует значение поля из JSON.
   private func deserializeFieldValue(_ jsonValue: Any, for field: FieldDescriptor) throws -> Any {
     if field.isMap {
       return try deserializeMapField(jsonValue, for: field)
-    } else if field.isRepeated {
+    }
+    else if field.isRepeated {
       return try deserializeRepeatedField(jsonValue, for: field)
-    } else {
+    }
+    else {
       return try deserializeSingleField(jsonValue, for: field)
     }
   }
-  
-  /// Десериализует одиночное поле
+
+  /// Десериализует одиночное поле.
   private func deserializeSingleField(_ jsonValue: Any, for field: FieldDescriptor) throws -> Any {
     return try convertJSONValueToFieldType(jsonValue, type: field.type, typeName: field.typeName, fieldName: field.name)
   }
-  
-  /// Десериализует repeated поле
+
+  /// Десериализует repeated поле.
   private func deserializeRepeatedField(_ jsonValue: Any, for field: FieldDescriptor) throws -> Any {
     guard let jsonArray = jsonValue as? [Any] else {
       throw JSONDeserializationError.invalidFieldType(
@@ -126,9 +135,9 @@ public struct JSONDeserializer {
         actualType: String(describing: type(of: jsonValue))
       )
     }
-    
+
     var resultArray: [Any] = []
-    
+
     for (index, arrayElement) in jsonArray.enumerated() {
       do {
         let convertedValue = try convertJSONValueToFieldType(
@@ -138,7 +147,8 @@ public struct JSONDeserializer {
           fieldName: "\(field.name)[\(index)]"
         )
         resultArray.append(convertedValue)
-      } catch {
+      }
+      catch {
         throw JSONDeserializationError.invalidArrayElement(
           fieldName: field.name,
           index: index,
@@ -146,11 +156,11 @@ public struct JSONDeserializer {
         )
       }
     }
-    
+
     return resultArray
   }
-  
-  /// Десериализует map поле
+
+  /// Десериализует map поле.
   private func deserializeMapField(_ jsonValue: Any, for field: FieldDescriptor) throws -> Any {
     guard let jsonObject = jsonValue as? [String: Any] else {
       throw JSONDeserializationError.invalidFieldType(
@@ -159,13 +169,13 @@ public struct JSONDeserializer {
         actualType: String(describing: type(of: jsonValue))
       )
     }
-    
+
     guard let mapEntryInfo = field.mapEntryInfo else {
       throw JSONDeserializationError.missingMapEntryInfo(fieldName: field.name)
     }
-    
+
     var resultMap: [AnyHashable: Any] = [:]
-    
+
     for (jsonKey, jsonMapValue) in jsonObject {
       // Конвертируем JSON ключ (всегда строка) обратно в нужный тип
       let mapKey = try convertJSONStringToMapKey(
@@ -173,7 +183,7 @@ public struct JSONDeserializer {
         keyType: mapEntryInfo.keyFieldInfo.type,
         fieldName: field.name
       )
-      
+
       // Конвертируем значение
       let mapValue = try convertJSONValueToFieldType(
         jsonMapValue,
@@ -181,74 +191,75 @@ public struct JSONDeserializer {
         typeName: mapEntryInfo.valueFieldInfo.typeName,
         fieldName: "\(field.name)[\(jsonKey)]"
       )
-      
+
       guard let hashableKey = mapKey as? AnyHashable else {
         throw JSONDeserializationError.invalidMapKey(
           fieldName: field.name,
           key: String(describing: mapKey)
         )
       }
-      
+
       resultMap[hashableKey] = mapValue
     }
-    
+
     return resultMap
   }
-  
-  /// Конвертирует JSON значение в соответствующий тип поля
+
+  /// Конвертирует JSON значение в соответствующий тип поля.
   private func convertJSONValueToFieldType(
     _ jsonValue: Any,
     type: FieldType,
     typeName: String?,
     fieldName: String
   ) throws -> Any {
-    
+
     switch type {
     case .double:
       return try convertJSONToDouble(jsonValue, fieldName: fieldName)
-      
+
     case .float:
       return try convertJSONToFloat(jsonValue, fieldName: fieldName)
-      
+
     case .int32, .sint32, .sfixed32:
       return try convertJSONToInt32(jsonValue, fieldName: fieldName)
-      
+
     case .int64, .sint64, .sfixed64:
       return try convertJSONToInt64(jsonValue, fieldName: fieldName)
-      
+
     case .uint32, .fixed32:
       return try convertJSONToUInt32(jsonValue, fieldName: fieldName)
-      
+
     case .uint64, .fixed64:
       return try convertJSONToUInt64(jsonValue, fieldName: fieldName)
-      
+
     case .bool:
       return try convertJSONToBool(jsonValue, fieldName: fieldName)
-      
+
     case .string:
       return try convertJSONToString(jsonValue, fieldName: fieldName)
-      
+
     case .bytes:
       return try convertJSONToBytes(jsonValue, fieldName: fieldName)
-      
+
     case .message:
       return try convertJSONToMessage(jsonValue, typeName: typeName, fieldName: fieldName)
-      
+
     case .enum:
       return try convertJSONToEnum(jsonValue, fieldName: fieldName)
-      
+
     case .group:
       throw JSONDeserializationError.unsupportedFieldType(type: "group")
     }
   }
-  
+
   // MARK: - JSON Value Conversion Methods
-  
-  /// Конвертирует JSON значение в Double
+
+  /// Конвертирует JSON значение в Double.
   private func convertJSONToDouble(_ jsonValue: Any, fieldName: String) throws -> Double {
     if let numberValue = jsonValue as? NSNumber {
       return numberValue.doubleValue
-    } else if let stringValue = jsonValue as? String {
+    }
+    else if let stringValue = jsonValue as? String {
       // Обрабатываем специальные значения
       switch stringValue {
       case "Infinity":
@@ -263,7 +274,8 @@ public struct JSONDeserializer {
         }
         return doubleValue
       }
-    } else {
+    }
+    else {
       throw JSONDeserializationError.valueTypeMismatch(
         fieldName: fieldName,
         expected: "Number or String",
@@ -271,12 +283,13 @@ public struct JSONDeserializer {
       )
     }
   }
-  
-  /// Конвертирует JSON значение в Float
+
+  /// Конвертирует JSON значение в Float.
   private func convertJSONToFloat(_ jsonValue: Any, fieldName: String) throws -> Float {
     if let numberValue = jsonValue as? NSNumber {
       return numberValue.floatValue
-    } else if let stringValue = jsonValue as? String {
+    }
+    else if let stringValue = jsonValue as? String {
       // Обрабатываем специальные значения
       switch stringValue {
       case "Infinity":
@@ -291,7 +304,8 @@ public struct JSONDeserializer {
         }
         return floatValue
       }
-    } else {
+    }
+    else {
       throw JSONDeserializationError.valueTypeMismatch(
         fieldName: fieldName,
         expected: "Number or String",
@@ -299,8 +313,8 @@ public struct JSONDeserializer {
       )
     }
   }
-  
-  /// Конвертирует JSON значение в Int32
+
+  /// Конвертирует JSON значение в Int32.
   private func convertJSONToInt32(_ jsonValue: Any, fieldName: String) throws -> Int32 {
     if let numberValue = jsonValue as? NSNumber {
       let int64Value = numberValue.int64Value
@@ -312,12 +326,14 @@ public struct JSONDeserializer {
         )
       }
       return Int32(int64Value)
-    } else if let stringValue = jsonValue as? String {
+    }
+    else if let stringValue = jsonValue as? String {
       guard let int32Value = Int32(stringValue) else {
         throw JSONDeserializationError.invalidNumberFormat(fieldName: fieldName, value: stringValue)
       }
       return int32Value
-    } else {
+    }
+    else {
       throw JSONDeserializationError.valueTypeMismatch(
         fieldName: fieldName,
         expected: "Number or String",
@@ -325,17 +341,19 @@ public struct JSONDeserializer {
       )
     }
   }
-  
-  /// Конвертирует JSON значение в Int64
+
+  /// Конвертирует JSON значение в Int64.
   private func convertJSONToInt64(_ jsonValue: Any, fieldName: String) throws -> Int64 {
     if let numberValue = jsonValue as? NSNumber {
       return numberValue.int64Value
-    } else if let stringValue = jsonValue as? String {
+    }
+    else if let stringValue = jsonValue as? String {
       guard let int64Value = Int64(stringValue) else {
         throw JSONDeserializationError.invalidNumberFormat(fieldName: fieldName, value: stringValue)
       }
       return int64Value
-    } else {
+    }
+    else {
       throw JSONDeserializationError.valueTypeMismatch(
         fieldName: fieldName,
         expected: "Number or String",
@@ -343,8 +361,8 @@ public struct JSONDeserializer {
       )
     }
   }
-  
-  /// Конвертирует JSON значение в UInt32
+
+  /// Конвертирует JSON значение в UInt32.
   private func convertJSONToUInt32(_ jsonValue: Any, fieldName: String) throws -> UInt32 {
     if let numberValue = jsonValue as? NSNumber {
       let uint64Value = numberValue.uint64Value
@@ -356,12 +374,14 @@ public struct JSONDeserializer {
         )
       }
       return UInt32(uint64Value)
-    } else if let stringValue = jsonValue as? String {
+    }
+    else if let stringValue = jsonValue as? String {
       guard let uint32Value = UInt32(stringValue) else {
         throw JSONDeserializationError.invalidNumberFormat(fieldName: fieldName, value: stringValue)
       }
       return uint32Value
-    } else {
+    }
+    else {
       throw JSONDeserializationError.valueTypeMismatch(
         fieldName: fieldName,
         expected: "Number or String",
@@ -369,17 +389,19 @@ public struct JSONDeserializer {
       )
     }
   }
-  
-  /// Конвертирует JSON значение в UInt64
+
+  /// Конвертирует JSON значение в UInt64.
   private func convertJSONToUInt64(_ jsonValue: Any, fieldName: String) throws -> UInt64 {
     if let numberValue = jsonValue as? NSNumber {
       return numberValue.uint64Value
-    } else if let stringValue = jsonValue as? String {
+    }
+    else if let stringValue = jsonValue as? String {
       guard let uint64Value = UInt64(stringValue) else {
         throw JSONDeserializationError.invalidNumberFormat(fieldName: fieldName, value: stringValue)
       }
       return uint64Value
-    } else {
+    }
+    else {
       throw JSONDeserializationError.valueTypeMismatch(
         fieldName: fieldName,
         expected: "Number or String",
@@ -387,12 +409,13 @@ public struct JSONDeserializer {
       )
     }
   }
-  
-  /// Конвертирует JSON значение в Bool
+
+  /// Конвертирует JSON значение в Bool.
   private func convertJSONToBool(_ jsonValue: Any, fieldName: String) throws -> Bool {
     if let boolValue = jsonValue as? Bool {
       return boolValue
-    } else {
+    }
+    else {
       throw JSONDeserializationError.valueTypeMismatch(
         fieldName: fieldName,
         expected: "Boolean",
@@ -400,12 +423,13 @@ public struct JSONDeserializer {
       )
     }
   }
-  
-  /// Конвертирует JSON значение в String
+
+  /// Конвертирует JSON значение в String.
   private func convertJSONToString(_ jsonValue: Any, fieldName: String) throws -> String {
     if let stringValue = jsonValue as? String {
       return stringValue
-    } else {
+    }
+    else {
       throw JSONDeserializationError.valueTypeMismatch(
         fieldName: fieldName,
         expected: "String",
@@ -413,8 +437,8 @@ public struct JSONDeserializer {
       )
     }
   }
-  
-  /// Конвертирует JSON значение в Data (из base64)
+
+  /// Конвертирует JSON значение в Data (из base64).
   private func convertJSONToBytes(_ jsonValue: Any, fieldName: String) throws -> Data {
     guard let base64String = jsonValue as? String else {
       throw JSONDeserializationError.valueTypeMismatch(
@@ -423,15 +447,15 @@ public struct JSONDeserializer {
         actual: String(describing: type(of: jsonValue))
       )
     }
-    
+
     guard let data = Data(base64Encoded: base64String) else {
       throw JSONDeserializationError.invalidBase64(fieldName: fieldName, value: base64String)
     }
-    
+
     return data
   }
-  
-  /// Конвертирует JSON значение в DynamicMessage
+
+  /// Конвертирует JSON значение в DynamicMessage.
   private func convertJSONToMessage(_ jsonValue: Any, typeName: String?, fieldName: String) throws -> DynamicMessage {
     guard jsonValue is [String: Any] else {
       throw JSONDeserializationError.valueTypeMismatch(
@@ -440,11 +464,11 @@ public struct JSONDeserializer {
         actual: String(describing: type(of: jsonValue))
       )
     }
-    
+
     guard let typeName = typeName else {
       throw JSONDeserializationError.missingTypeName(fieldName: fieldName)
     }
-    
+
     // Для десериализации вложенного сообщения нужен его дескриптор
     // В реальной реализации это должно быть получено из TypeRegistry
     // Пока используем заглушку
@@ -453,18 +477,20 @@ public struct JSONDeserializer {
       typeName: typeName
     )
   }
-  
-  /// Конвертирует JSON значение в enum
+
+  /// Конвертирует JSON значение в enum.
   private func convertJSONToEnum(_ jsonValue: Any, fieldName: String) throws -> Int32 {
     if let numberValue = jsonValue as? NSNumber {
       return numberValue.int32Value
-    } else if let stringValue = jsonValue as? String {
+    }
+    else if let stringValue = jsonValue as? String {
       // В будущем можно добавить поддержку enum имен
       guard let enumValue = Int32(stringValue) else {
         throw JSONDeserializationError.invalidEnumValue(fieldName: fieldName, value: stringValue)
       }
       return enumValue
-    } else {
+    }
+    else {
       throw JSONDeserializationError.valueTypeMismatch(
         fieldName: fieldName,
         expected: "Number or String",
@@ -472,13 +498,13 @@ public struct JSONDeserializer {
       )
     }
   }
-  
-  /// Конвертирует JSON строку в ключ map
+
+  /// Конвертирует JSON строку в ключ map.
   private func convertJSONStringToMapKey(_ jsonKey: String, keyType: FieldType, fieldName: String) throws -> Any {
     switch keyType {
     case .string:
       return jsonKey
-      
+
     case .int32, .sint32, .sfixed32:
       guard let int32Value = Int32(jsonKey) else {
         throw JSONDeserializationError.invalidMapKeyFormat(
@@ -488,7 +514,7 @@ public struct JSONDeserializer {
         )
       }
       return int32Value
-      
+
     case .int64, .sint64, .sfixed64:
       guard let int64Value = Int64(jsonKey) else {
         throw JSONDeserializationError.invalidMapKeyFormat(
@@ -498,7 +524,7 @@ public struct JSONDeserializer {
         )
       }
       return int64Value
-      
+
     case .uint32, .fixed32:
       guard let uint32Value = UInt32(jsonKey) else {
         throw JSONDeserializationError.invalidMapKeyFormat(
@@ -508,7 +534,7 @@ public struct JSONDeserializer {
         )
       }
       return uint32Value
-      
+
     case .uint64, .fixed64:
       guard let uint64Value = UInt64(jsonKey) else {
         throw JSONDeserializationError.invalidMapKeyFormat(
@@ -518,7 +544,7 @@ public struct JSONDeserializer {
         )
       }
       return uint64Value
-      
+
     case .bool:
       switch jsonKey {
       case "true":
@@ -532,7 +558,7 @@ public struct JSONDeserializer {
           value: jsonKey
         )
       }
-      
+
     default:
       throw JSONDeserializationError.invalidMapKeyType(
         fieldName: fieldName,
@@ -544,15 +570,15 @@ public struct JSONDeserializer {
 
 // MARK: - JSON Deserialization Options
 
-/// Опции для JSON десериализации
+/// Опции для JSON десериализации.
 public struct JSONDeserializationOptions {
-  /// Игнорировать неизвестные поля в JSON
+  /// Игнорировать неизвестные поля в JSON.
   public let ignoreUnknownFields: Bool
-  
-  /// Строгая валидация типов
+
+  /// Строгая валидация типов.
   public let strictTypeValidation: Bool
-  
-  /// Создает опции JSON десериализации
+
+  /// Создает опции JSON десериализации.
   public init(
     ignoreUnknownFields: Bool = true,
     strictTypeValidation: Bool = true
@@ -564,7 +590,7 @@ public struct JSONDeserializationOptions {
 
 // MARK: - JSON Deserialization Errors
 
-/// Ошибки JSON десериализации
+/// Ошибки JSON десериализации.
 public enum JSONDeserializationError: Error, Equatable {
   case invalidJSON(underlyingError: Error)
   case invalidJSONStructure(expected: String, actual: String)
@@ -583,7 +609,7 @@ public enum JSONDeserializationError: Error, Equatable {
   case missingTypeName(fieldName: String)
   case unsupportedNestedMessage(fieldName: String, typeName: String)
   case unsupportedFieldType(type: String)
-  
+
   public var description: String {
     switch self {
     case .invalidJSON(let underlyingError):
@@ -622,53 +648,79 @@ public enum JSONDeserializationError: Error, Equatable {
       return "Unsupported field type: \(type)"
     }
   }
-  
+
   public static func == (lhs: JSONDeserializationError, rhs: JSONDeserializationError) -> Bool {
     switch (lhs, rhs) {
     case (.invalidJSON(_), .invalidJSON(_)):
-      return true // Трудно сравнивать underlying errors
-    case (.invalidJSONStructure(let lExpected, let lActual), 
-          .invalidJSONStructure(let rExpected, let rActual)):
+      return true  // Трудно сравнивать underlying errors
+    case (
+      .invalidJSONStructure(let lExpected, let lActual),
+      .invalidJSONStructure(let rExpected, let rActual)
+    ):
       return lExpected == rExpected && lActual == rActual
-    case (.unknownField(let lField, let lMessage), 
-          .unknownField(let rField, let rMessage)):
+    case (
+      .unknownField(let lField, let lMessage),
+      .unknownField(let rField, let rMessage)
+    ):
       return lField == rField && lMessage == rMessage
-    case (.invalidFieldType(let lField, let lExpected, let lActual), 
-          .invalidFieldType(let rField, let rExpected, let rActual)):
+    case (
+      .invalidFieldType(let lField, let lExpected, let lActual),
+      .invalidFieldType(let rField, let rExpected, let rActual)
+    ):
       return lField == rField && lExpected == rExpected && lActual == rActual
-    case (.valueTypeMismatch(let lField, let lExpected, let lActual), 
-          .valueTypeMismatch(let rField, let rExpected, let rActual)):
+    case (
+      .valueTypeMismatch(let lField, let lExpected, let lActual),
+      .valueTypeMismatch(let rField, let rExpected, let rActual)
+    ):
       return lField == rField && lExpected == rExpected && lActual == rActual
-    case (.invalidNumberFormat(let lField, let lValue), 
-          .invalidNumberFormat(let rField, let rValue)):
+    case (
+      .invalidNumberFormat(let lField, let lValue),
+      .invalidNumberFormat(let rField, let rValue)
+    ):
       return lField == rField && lValue == rValue
-    case (.numberOutOfRange(let lField, let lValue, let lRange), 
-          .numberOutOfRange(let rField, let rValue, let rRange)):
+    case (
+      .numberOutOfRange(let lField, let lValue, let lRange),
+      .numberOutOfRange(let rField, let rValue, let rRange)
+    ):
       return lField == rField && lValue == rValue && lRange == rRange
-    case (.invalidBase64(let lField, let lValue), 
-          .invalidBase64(let rField, let rValue)):
+    case (
+      .invalidBase64(let lField, let lValue),
+      .invalidBase64(let rField, let rValue)
+    ):
       return lField == rField && lValue == rValue
-    case (.invalidEnumValue(let lField, let lValue), 
-          .invalidEnumValue(let rField, let rValue)):
+    case (
+      .invalidEnumValue(let lField, let lValue),
+      .invalidEnumValue(let rField, let rValue)
+    ):
       return lField == rField && lValue == rValue
-    case (.invalidMapKeyFormat(let lField, let lType, let lValue), 
-          .invalidMapKeyFormat(let rField, let rType, let rValue)):
+    case (
+      .invalidMapKeyFormat(let lField, let lType, let lValue),
+      .invalidMapKeyFormat(let rField, let rType, let rValue)
+    ):
       return lField == rField && lType == rType && lValue == rValue
-    case (.invalidMapKeyType(let lField, let lType), 
-          .invalidMapKeyType(let rField, let rType)):
+    case (
+      .invalidMapKeyType(let lField, let lType),
+      .invalidMapKeyType(let rField, let rType)
+    ):
       return lField == rField && lType == rType
-    case (.invalidMapKey(let lField, let lKey), 
-          .invalidMapKey(let rField, let rKey)):
+    case (
+      .invalidMapKey(let lField, let lKey),
+      .invalidMapKey(let rField, let rKey)
+    ):
       return lField == rField && lKey == rKey
-    case (.invalidArrayElement(let lField, let lIndex, _), 
-          .invalidArrayElement(let rField, let rIndex, _)):
-      return lField == rField && lIndex == rIndex // Не сравниваем underlying errors
+    case (
+      .invalidArrayElement(let lField, let lIndex, _),
+      .invalidArrayElement(let rField, let rIndex, _)
+    ):
+      return lField == rField && lIndex == rIndex  // Не сравниваем underlying errors
     case (.missingMapEntryInfo(let lField), .missingMapEntryInfo(let rField)):
       return lField == rField
     case (.missingTypeName(let lField), .missingTypeName(let rField)):
       return lField == rField
-    case (.unsupportedNestedMessage(let lField, let lType), 
-          .unsupportedNestedMessage(let rField, let rType)):
+    case (
+      .unsupportedNestedMessage(let lField, let lType),
+      .unsupportedNestedMessage(let rField, let rType)
+    ):
       return lField == rField && lType == rType
     case (.unsupportedFieldType(let lType), .unsupportedFieldType(let rType)):
       return lType == rType

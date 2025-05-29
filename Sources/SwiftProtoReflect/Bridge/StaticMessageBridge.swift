@@ -8,25 +8,25 @@
 import Foundation
 import SwiftProtobuf
 
-/// StaticMessageBridge обеспечивает конвертацию между статическими Swift Protobuf сообщениями
+/// StaticMessageBridge обеспечивает конвертацию между статическими Swift Protobuf сообщениями.
 /// и динамическими DynamicMessage объектами.
 ///
-/// Этот компонент позволяет:
-/// - Конвертировать статические сообщения в динамические для рефлексии
-/// - Создавать статические сообщения из динамических для интеграции с существующим кодом
-/// - Обеспечивать совместимость между статическим и динамическим подходами
+/// Этот компонент позволяет:.
+/// - Конвертировать статические сообщения в динамические для рефлексии.
+/// - Создавать статические сообщения из динамических для интеграции с существующим кодом.
+/// - Обеспечивать совместимость между статическим и динамическим подходами.
 public struct StaticMessageBridge {
-  
+
   // MARK: - Initialization
-  
+
   /// Создает новый экземпляр StaticMessageBridge.
   public init() {}
-  
+
   // MARK: - Static to Dynamic Conversion
-  
+
   /// Конвертирует статическое Swift Protobuf сообщение в динамическое DynamicMessage.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - staticMessage: Статическое сообщение для конвертации.
   ///   - descriptor: Дескриптор для создания динамического сообщения.
   /// - Returns: Динамическое сообщение с данными из статического.
@@ -37,13 +37,13 @@ public struct StaticMessageBridge {
   ) throws -> DynamicMessage {
     // Сериализуем статическое сообщение в бинарный формат
     let binaryData = try staticMessage.serializedData()
-    
+
     // Десериализуем в динамическое сообщение
     let deserializer = BinaryDeserializer()
     return try deserializer.deserialize(binaryData, using: descriptor)
   }
-  
-  /// Конвертирует статическое Swift Protobuf сообщение в динамическое DynamicMessage
+
+  /// Конвертирует статическое Swift Protobuf сообщение в динамическое DynamicMessage.
   /// с автоматическим созданием дескриптора.
   ///
   /// - Parameter staticMessage: Статическое сообщение для конвертации.
@@ -54,16 +54,16 @@ public struct StaticMessageBridge {
   ) throws -> DynamicMessage {
     // Создаем дескриптор из статического сообщения
     let descriptor = try createDescriptor(from: staticMessage)
-    
+
     // Конвертируем с использованием созданного дескриптора
     return try toDynamicMessage(from: staticMessage, using: descriptor)
   }
-  
+
   // MARK: - Dynamic to Static Conversion
-  
+
   /// Конвертирует динамическое DynamicMessage в статическое Swift Protobuf сообщение.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - dynamicMessage: Динамическое сообщение для конвертации.
   ///   - messageType: Тип статического сообщения для создания.
   /// - Returns: Статическое сообщение с данными из динамического.
@@ -75,16 +75,16 @@ public struct StaticMessageBridge {
     // Сериализуем динамическое сообщение в бинарный формат
     let serializer = BinarySerializer()
     let binaryData = try serializer.serialize(dynamicMessage)
-    
+
     // Десериализуем в статическое сообщение
     return try T(serializedBytes: binaryData)
   }
-  
+
   // MARK: - Batch Conversion Methods
-  
+
   /// Конвертирует массив статических сообщений в массив динамических.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - staticMessages: Массив статических сообщений.
   ///   - descriptor: Дескриптор для создания динамических сообщений.
   /// - Returns: Массив динамических сообщений.
@@ -97,10 +97,10 @@ public struct StaticMessageBridge {
       try toDynamicMessage(from: staticMessage, using: descriptor)
     }
   }
-  
+
   /// Конвертирует массив динамических сообщений в массив статических.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - dynamicMessages: Массив динамических сообщений.
   ///   - messageType: Тип статических сообщений для создания.
   /// - Returns: Массив статических сообщений.
@@ -113,12 +113,12 @@ public struct StaticMessageBridge {
       try toStaticMessage(from: dynamicMessage, as: messageType)
     }
   }
-  
+
   // MARK: - Validation Methods
-  
+
   /// Проверяет совместимость статического сообщения с дескриптором.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - staticMessage: Статическое сообщение для проверки.
   ///   - descriptor: Дескриптор для сравнения.
   /// - Returns: true, если сообщение совместимо с дескриптором.
@@ -130,14 +130,15 @@ public struct StaticMessageBridge {
       // Пытаемся конвертировать и проверяем, что не возникает ошибок
       _ = try toDynamicMessage(from: staticMessage, using: descriptor)
       return true
-    } catch {
+    }
+    catch {
       return false
     }
   }
-  
+
   /// Проверяет совместимость динамического сообщения с типом статического сообщения.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - dynamicMessage: Динамическое сообщение для проверки.
   ///   - messageType: Тип статического сообщения для сравнения.
   /// - Returns: true, если сообщение совместимо с типом.
@@ -149,13 +150,14 @@ public struct StaticMessageBridge {
       // Пытаемся конвертировать и проверяем, что не возникает ошибок
       _ = try toStaticMessage(from: dynamicMessage, as: messageType)
       return true
-    } catch {
+    }
+    catch {
       return false
     }
   }
-  
+
   // MARK: - Helper Methods
-  
+
   /// Создает MessageDescriptor из статического Swift Protobuf сообщения.
   ///
   /// - Parameter staticMessage: Статическое сообщение.
@@ -166,15 +168,15 @@ public struct StaticMessageBridge {
   ) throws -> MessageDescriptor {
     // Получаем имя типа сообщения
     let typeName = String(describing: T.self)
-    
+
     // Создаем базовый дескриптор
     // В реальной реализации здесь должна быть логика извлечения
     // метаданных из статического сообщения через рефлексию
     let descriptor = MessageDescriptor(name: typeName)
-    
+
     // TODO: Реализовать извлечение полей из статического сообщения
     // Это требует более глубокой интеграции с Swift Protobuf
-    
+
     return descriptor
   }
 }
@@ -186,7 +188,7 @@ public enum StaticMessageBridgeError: Error, LocalizedError {
   case deserializationFailed(underlying: Error)
   case descriptorCreationFailed(messageType: String)
   case unsupportedMessageType(String)
-  
+
   public var errorDescription: String? {
     switch self {
     case .incompatibleTypes(let staticType, let descriptorType):
@@ -207,7 +209,7 @@ public enum StaticMessageBridgeError: Error, LocalizedError {
 
 /// Расширение DynamicMessage для удобной конвертации в статические сообщения.
 extension DynamicMessage {
-  
+
   /// Конвертирует это динамическое сообщение в статическое Swift Protobuf сообщение.
   ///
   /// - Parameter messageType: Тип статического сообщения для создания.
@@ -221,7 +223,7 @@ extension DynamicMessage {
 
 /// Расширение для Swift Protobuf Message для удобной конвертации в динамические сообщения.
 extension SwiftProtobuf.Message {
-  
+
   /// Конвертирует это статическое сообщение в динамическое DynamicMessage.
   ///
   /// - Parameter descriptor: Дескриптор для создания динамического сообщения.
@@ -231,8 +233,8 @@ extension SwiftProtobuf.Message {
     let bridge = StaticMessageBridge()
     return try bridge.toDynamicMessage(from: self, using: descriptor)
   }
-  
-  /// Конвертирует это статическое сообщение в динамическое DynamicMessage
+
+  /// Конвертирует это статическое сообщение в динамическое DynamicMessage.
   /// с автоматическим созданием дескриптора.
   ///
   /// - Returns: Динамическое сообщение с данными из этого статического.
@@ -242,4 +244,3 @@ extension SwiftProtobuf.Message {
     return try bridge.toDynamicMessage(from: self)
   }
 }
- 

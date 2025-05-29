@@ -8,28 +8,28 @@
 import Foundation
 import SwiftProtobuf
 
-/// FieldAccessor
+/// FieldAccessor.
 ///
-/// Предоставляет типобезопасный и удобный интерфейс для доступа к полям
+/// Предоставляет типобезопасный и удобный интерфейс для доступа к полям.
 /// динамических Protocol Buffers сообщений. Упрощает получение и установку
 /// значений полей с минимальной обработкой ошибок и максимальной типобезопасностью.
 public struct FieldAccessor {
   // MARK: - Properties
-  
+
   /// Целевое сообщение для доступа к полям.
   private let message: DynamicMessage
-  
+
   // MARK: - Initialization
-  
+
   /// Создает новый экземпляр FieldAccessor для заданного сообщения.
   ///
   /// - Parameter message: Динамическое сообщение для доступа к полям.
   public init(_ message: DynamicMessage) {
     self.message = message
   }
-  
+
   // MARK: - Typed Field Access Methods
-  
+
   /// Безопасно получает строковое значение поля.
   ///
   /// - Parameter fieldName: Имя поля.
@@ -37,7 +37,7 @@ public struct FieldAccessor {
   public func getString(_ fieldName: String) -> String? {
     return getValue(fieldName, as: String.self)
   }
-  
+
   /// Безопасно получает строковое значение поля по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -45,7 +45,7 @@ public struct FieldAccessor {
   public func getString(_ fieldNumber: Int) -> String? {
     return getValue(fieldNumber, as: String.self)
   }
-  
+
   /// Безопасно получает целочисленное значение поля (Int32).
   ///
   /// - Parameter fieldName: Имя поля.
@@ -53,7 +53,7 @@ public struct FieldAccessor {
   public func getInt32(_ fieldName: String) -> Int32? {
     return getValue(fieldName, as: Int32.self)
   }
-  
+
   /// Безопасно получает целочисленное значение поля (Int32) по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -61,7 +61,7 @@ public struct FieldAccessor {
   public func getInt32(_ fieldNumber: Int) -> Int32? {
     return getValue(fieldNumber, as: Int32.self)
   }
-  
+
   /// Безопасно получает целочисленное значение поля (Int64).
   ///
   /// - Parameter fieldName: Имя поля.
@@ -69,7 +69,7 @@ public struct FieldAccessor {
   public func getInt64(_ fieldName: String) -> Int64? {
     return getValue(fieldName, as: Int64.self)
   }
-  
+
   /// Безопасно получает целочисленное значение поля (Int64) по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -77,7 +77,7 @@ public struct FieldAccessor {
   public func getInt64(_ fieldNumber: Int) -> Int64? {
     return getValue(fieldNumber, as: Int64.self)
   }
-  
+
   /// Безопасно получает беззнаковое целочисленное значение поля (UInt32).
   ///
   /// - Parameter fieldName: Имя поля.
@@ -85,7 +85,7 @@ public struct FieldAccessor {
   public func getUInt32(_ fieldName: String) -> UInt32? {
     return getValue(fieldName, as: UInt32.self)
   }
-  
+
   /// Безопасно получает беззнаковое целочисленное значение поля (UInt32) по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -93,7 +93,7 @@ public struct FieldAccessor {
   public func getUInt32(_ fieldNumber: Int) -> UInt32? {
     return getValue(fieldNumber, as: UInt32.self)
   }
-  
+
   /// Безопасно получает беззнаковое целочисленное значение поля (UInt64).
   ///
   /// - Parameter fieldName: Имя поля.
@@ -101,7 +101,7 @@ public struct FieldAccessor {
   public func getUInt64(_ fieldName: String) -> UInt64? {
     return getValue(fieldName, as: UInt64.self)
   }
-  
+
   /// Безопасно получает беззнаковое целочисленное значение поля (UInt64) по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -109,7 +109,7 @@ public struct FieldAccessor {
   public func getUInt64(_ fieldNumber: Int) -> UInt64? {
     return getValue(fieldNumber, as: UInt64.self)
   }
-  
+
   /// Безопасно получает значение с плавающей точкой поля (Float).
   ///
   /// - Parameter fieldName: Имя поля.
@@ -117,7 +117,7 @@ public struct FieldAccessor {
   public func getFloat(_ fieldName: String) -> Float? {
     return getValue(fieldName, as: Float.self)
   }
-  
+
   /// Безопасно получает значение с плавающей точкой поля (Float) по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -125,7 +125,7 @@ public struct FieldAccessor {
   public func getFloat(_ fieldNumber: Int) -> Float? {
     return getValue(fieldNumber, as: Float.self)
   }
-  
+
   /// Безопасно получает значение с плавающей точкой поля (Double).
   ///
   /// - Parameter fieldName: Имя поля.
@@ -133,7 +133,7 @@ public struct FieldAccessor {
   public func getDouble(_ fieldName: String) -> Double? {
     return getValue(fieldName, as: Double.self)
   }
-  
+
   /// Безопасно получает значение с плавающей точкой поля (Double) по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -141,7 +141,7 @@ public struct FieldAccessor {
   public func getDouble(_ fieldNumber: Int) -> Double? {
     return getValue(fieldNumber, as: Double.self)
   }
-  
+
   /// Безопасно получает булево значение поля.
   ///
   /// - Parameter fieldName: Имя поля.
@@ -149,7 +149,7 @@ public struct FieldAccessor {
   public func getBool(_ fieldName: String) -> Bool? {
     return getValue(fieldName, as: Bool.self)
   }
-  
+
   /// Безопасно получает булево значение поля по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -157,7 +157,7 @@ public struct FieldAccessor {
   public func getBool(_ fieldNumber: Int) -> Bool? {
     return getValue(fieldNumber, as: Bool.self)
   }
-  
+
   /// Безопасно получает данные поля.
   ///
   /// - Parameter fieldName: Имя поля.
@@ -165,7 +165,7 @@ public struct FieldAccessor {
   public func getData(_ fieldName: String) -> Data? {
     return getValue(fieldName, as: Data.self)
   }
-  
+
   /// Безопасно получает данные поля по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -173,7 +173,7 @@ public struct FieldAccessor {
   public func getData(_ fieldNumber: Int) -> Data? {
     return getValue(fieldNumber, as: Data.self)
   }
-  
+
   /// Безопасно получает вложенное сообщение поля.
   ///
   /// - Parameter fieldName: Имя поля.
@@ -181,7 +181,7 @@ public struct FieldAccessor {
   public func getMessage(_ fieldName: String) -> DynamicMessage? {
     return getValue(fieldName, as: DynamicMessage.self)
   }
-  
+
   /// Безопасно получает вложенное сообщение поля по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -189,9 +189,9 @@ public struct FieldAccessor {
   public func getMessage(_ fieldNumber: Int) -> DynamicMessage? {
     return getValue(fieldNumber, as: DynamicMessage.self)
   }
-  
+
   // MARK: - Repeated Field Access Methods
-  
+
   /// Безопасно получает repeated строковое поле.
   ///
   /// - Parameter fieldName: Имя поля.
@@ -199,7 +199,7 @@ public struct FieldAccessor {
   public func getStringArray(_ fieldName: String) -> [String]? {
     return getRepeatedValue(fieldName, as: String.self)
   }
-  
+
   /// Безопасно получает repeated строковое поле по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -207,7 +207,7 @@ public struct FieldAccessor {
   public func getStringArray(_ fieldNumber: Int) -> [String]? {
     return getRepeatedValue(fieldNumber, as: String.self)
   }
-  
+
   /// Безопасно получает repeated поле целых чисел (Int32).
   ///
   /// - Parameter fieldName: Имя поля.
@@ -215,7 +215,7 @@ public struct FieldAccessor {
   public func getInt32Array(_ fieldName: String) -> [Int32]? {
     return getRepeatedValue(fieldName, as: Int32.self)
   }
-  
+
   /// Безопасно получает repeated поле целых чисел (Int32) по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -223,7 +223,7 @@ public struct FieldAccessor {
   public func getInt32Array(_ fieldNumber: Int) -> [Int32]? {
     return getRepeatedValue(fieldNumber, as: Int32.self)
   }
-  
+
   /// Безопасно получает repeated поле целых чисел (Int64).
   ///
   /// - Parameter fieldName: Имя поля.
@@ -231,7 +231,7 @@ public struct FieldAccessor {
   public func getInt64Array(_ fieldName: String) -> [Int64]? {
     return getRepeatedValue(fieldName, as: Int64.self)
   }
-  
+
   /// Безопасно получает repeated поле целых чисел (Int64) по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -239,7 +239,7 @@ public struct FieldAccessor {
   public func getInt64Array(_ fieldNumber: Int) -> [Int64]? {
     return getRepeatedValue(fieldNumber, as: Int64.self)
   }
-  
+
   /// Безопасно получает repeated поле вложенных сообщений.
   ///
   /// - Parameter fieldName: Имя поля.
@@ -247,7 +247,7 @@ public struct FieldAccessor {
   public func getMessageArray(_ fieldName: String) -> [DynamicMessage]? {
     return getRepeatedValue(fieldName, as: DynamicMessage.self)
   }
-  
+
   /// Безопасно получает repeated поле вложенных сообщений по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -255,9 +255,9 @@ public struct FieldAccessor {
   public func getMessageArray(_ fieldNumber: Int) -> [DynamicMessage]? {
     return getRepeatedValue(fieldNumber, as: DynamicMessage.self)
   }
-  
+
   // MARK: - Map Field Access Methods
-  
+
   /// Безопасно получает map поле с строковыми ключами и значениями.
   ///
   /// - Parameter fieldName: Имя поля.
@@ -265,7 +265,7 @@ public struct FieldAccessor {
   public func getStringMap(_ fieldName: String) -> [String: String]? {
     return getMapValue(fieldName, keyType: String.self, valueType: String.self)
   }
-  
+
   /// Безопасно получает map поле с строковыми ключами и значениями по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -273,7 +273,7 @@ public struct FieldAccessor {
   public func getStringMap(_ fieldNumber: Int) -> [String: String]? {
     return getMapValue(fieldNumber, keyType: String.self, valueType: String.self)
   }
-  
+
   /// Безопасно получает map поле с строковыми ключами и числовыми значениями (Int32).
   ///
   /// - Parameter fieldName: Имя поля.
@@ -281,7 +281,7 @@ public struct FieldAccessor {
   public func getStringToInt32Map(_ fieldName: String) -> [String: Int32]? {
     return getMapValue(fieldName, keyType: String.self, valueType: Int32.self)
   }
-  
+
   /// Безопасно получает map поле с строковыми ключами и числовыми значениями (Int32) по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -289,7 +289,7 @@ public struct FieldAccessor {
   public func getStringToInt32Map(_ fieldNumber: Int) -> [String: Int32]? {
     return getMapValue(fieldNumber, keyType: String.self, valueType: Int32.self)
   }
-  
+
   /// Безопасно получает map поле с строковыми ключами и сообщениями в качестве значений.
   ///
   /// - Parameter fieldName: Имя поля.
@@ -297,7 +297,7 @@ public struct FieldAccessor {
   public func getStringToMessageMap(_ fieldName: String) -> [String: DynamicMessage]? {
     return getMapValue(fieldName, keyType: String.self, valueType: DynamicMessage.self)
   }
-  
+
   /// Безопасно получает map поле с строковыми ключами и сообщениями в качестве значений по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -305,9 +305,9 @@ public struct FieldAccessor {
   public func getStringToMessageMap(_ fieldNumber: Int) -> [String: DynamicMessage]? {
     return getMapValue(fieldNumber, keyType: String.self, valueType: DynamicMessage.self)
   }
-  
+
   // MARK: - Field Existence and Safety Methods
-  
+
   /// Проверяет, существует ли поле и установлено ли для него значение.
   ///
   /// - Parameter fieldName: Имя поля.
@@ -315,11 +315,12 @@ public struct FieldAccessor {
   public func hasValue(_ fieldName: String) -> Bool {
     do {
       return try message.hasValue(forField: fieldName)
-    } catch {
+    }
+    catch {
       return false
     }
   }
-  
+
   /// Проверяет, существует ли поле и установлено ли для него значение по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -327,11 +328,12 @@ public struct FieldAccessor {
   public func hasValue(_ fieldNumber: Int) -> Bool {
     do {
       return try message.hasValue(forField: fieldNumber)
-    } catch {
+    }
+    catch {
       return false
     }
   }
-  
+
   /// Проверяет, существует ли поле в дескрипторе сообщения.
   ///
   /// - Parameter fieldName: Имя поля.
@@ -339,7 +341,7 @@ public struct FieldAccessor {
   public func fieldExists(_ fieldName: String) -> Bool {
     return message.descriptor.field(named: fieldName) != nil
   }
-  
+
   /// Проверяет, существует ли поле в дескрипторе сообщения по номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -347,7 +349,7 @@ public struct FieldAccessor {
   public func fieldExists(_ fieldNumber: Int) -> Bool {
     return message.descriptor.field(number: fieldNumber) != nil
   }
-  
+
   /// Получает тип поля по его имени.
   ///
   /// - Parameter fieldName: Имя поля.
@@ -355,7 +357,7 @@ public struct FieldAccessor {
   public func getFieldType(_ fieldName: String) -> FieldType? {
     return message.descriptor.field(named: fieldName)?.type
   }
-  
+
   /// Получает тип поля по его номеру.
   ///
   /// - Parameter fieldNumber: Номер поля.
@@ -363,12 +365,12 @@ public struct FieldAccessor {
   public func getFieldType(_ fieldNumber: Int) -> FieldType? {
     return message.descriptor.field(number: fieldNumber)?.type
   }
-  
+
   // MARK: - Generic Field Access Methods
-  
+
   /// Универсальный метод для безопасного получения значения поля с приведением к указанному типу.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - fieldName: Имя поля.
   ///   - type: Тип, к которому нужно привести значение.
   /// - Returns: Значение указанного типа или nil, если поле не установлено или имеет другой тип.
@@ -378,14 +380,15 @@ public struct FieldAccessor {
         return nil
       }
       return value as? T
-    } catch {
+    }
+    catch {
       return nil
     }
   }
-  
+
   /// Универсальный метод для безопасного получения значения поля с приведением к указанному типу по номеру.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - fieldNumber: Номер поля.
   ///   - type: Тип, к которому нужно привести значение.
   /// - Returns: Значение указанного типа или nil, если поле не установлено или имеет другой тип.
@@ -395,16 +398,17 @@ public struct FieldAccessor {
         return nil
       }
       return value as? T
-    } catch {
+    }
+    catch {
       return nil
     }
   }
-  
+
   // MARK: - Private Helper Methods
-  
+
   /// Безопасно получает repeated поле с элементами указанного типа.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - fieldName: Имя поля.
   ///   - type: Тип элементов массива.
   /// - Returns: Массив элементов указанного типа или nil.
@@ -416,7 +420,7 @@ public struct FieldAccessor {
       guard let array = value as? [Any] else {
         return nil
       }
-      
+
       // Проверяем, что все элементы имеют правильный тип
       var result: [T] = []
       for item in array {
@@ -425,16 +429,17 @@ public struct FieldAccessor {
         }
         result.append(typedItem)
       }
-      
+
       return result
-    } catch {
+    }
+    catch {
       return nil
     }
   }
-  
+
   /// Безопасно получает repeated поле с элементами указанного типа по номеру.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - fieldNumber: Номер поля.
   ///   - type: Тип элементов массива.
   /// - Returns: Массив элементов указанного типа или nil.
@@ -446,7 +451,7 @@ public struct FieldAccessor {
       guard let array = value as? [Any] else {
         return nil
       }
-      
+
       // Проверяем, что все элементы имеют правильный тип
       var result: [T] = []
       for item in array {
@@ -455,16 +460,17 @@ public struct FieldAccessor {
         }
         result.append(typedItem)
       }
-      
+
       return result
-    } catch {
+    }
+    catch {
       return nil
     }
   }
-  
+
   /// Безопасно получает map поле с ключами и значениями указанных типов.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - fieldName: Имя поля.
   ///   - keyType: Тип ключей.
   ///   - valueType: Тип значений.
@@ -477,7 +483,7 @@ public struct FieldAccessor {
       guard let map = value as? [AnyHashable: Any] else {
         return nil
       }
-      
+
       // Проверяем и конвертируем ключи и значения
       var result: [K: V] = [:]
       for (key, mapValue) in map {
@@ -489,16 +495,17 @@ public struct FieldAccessor {
         }
         result[typedKey] = typedValue
       }
-      
+
       return result
-    } catch {
+    }
+    catch {
       return nil
     }
   }
-  
+
   /// Безопасно получает map поле с ключами и значениями указанных типов по номеру.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - fieldNumber: Номер поля.
   ///   - keyType: Тип ключей.
   ///   - valueType: Тип значений.
@@ -511,7 +518,7 @@ public struct FieldAccessor {
       guard let map = value as? [AnyHashable: Any] else {
         return nil
       }
-      
+
       // Проверяем и конвертируем ключи и значения
       var result: [K: V] = [:]
       for (key, mapValue) in map {
@@ -523,9 +530,10 @@ public struct FieldAccessor {
         }
         result[typedKey] = typedValue
       }
-      
+
       return result
-    } catch {
+    }
+    catch {
       return nil
     }
   }
@@ -533,30 +541,30 @@ public struct FieldAccessor {
 
 // MARK: - Mutable Field Access
 
-/// MutableFieldAccessor
+/// MutableFieldAccessor.
 ///
 /// Расширение FieldAccessor для изменяемого доступа к полям динамических сообщений.
 /// Позволяет безопасно устанавливать значения полей с минимальной обработкой ошибок.
 public struct MutableFieldAccessor {
   // MARK: - Properties
-  
+
   /// Целевое сообщение для изменения полей.
   private var message: DynamicMessage
-  
+
   // MARK: - Initialization
-  
+
   /// Создает новый экземпляр MutableFieldAccessor для заданного сообщения.
   ///
   /// - Parameter message: Динамическое сообщение для изменения полей.
   public init(_ message: inout DynamicMessage) {
     self.message = message
   }
-  
+
   // MARK: - Field Setting Methods
-  
+
   /// Безопасно устанавливает строковое значение поля.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - value: Строковое значение для установки.
   ///   - fieldName: Имя поля.
   /// - Returns: true, если значение было успешно установлено, false в противном случае.
@@ -565,14 +573,15 @@ public struct MutableFieldAccessor {
     do {
       try message.set(value, forField: fieldName)
       return true
-    } catch {
+    }
+    catch {
       return false
     }
   }
-  
+
   /// Безопасно устанавливает строковое значение поля по номеру.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - value: Строковое значение для установки.
   ///   - fieldNumber: Номер поля.
   /// - Returns: true, если значение было успешно установлено, false в противном случае.
@@ -581,14 +590,15 @@ public struct MutableFieldAccessor {
     do {
       try message.set(value, forField: fieldNumber)
       return true
-    } catch {
+    }
+    catch {
       return false
     }
   }
-  
+
   /// Безопасно устанавливает целочисленное значение поля (Int32).
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - value: Целочисленное значение для установки.
   ///   - fieldName: Имя поля.
   /// - Returns: true, если значение было успешно установлено, false в противном случае.
@@ -597,14 +607,15 @@ public struct MutableFieldAccessor {
     do {
       try message.set(value, forField: fieldName)
       return true
-    } catch {
+    }
+    catch {
       return false
     }
   }
-  
+
   /// Безопасно устанавливает целочисленное значение поля (Int32) по номеру.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - value: Целочисленное значение для установки.
   ///   - fieldNumber: Номер поля.
   /// - Returns: true, если значение было успешно установлено, false в противном случае.
@@ -613,14 +624,15 @@ public struct MutableFieldAccessor {
     do {
       try message.set(value, forField: fieldNumber)
       return true
-    } catch {
+    }
+    catch {
       return false
     }
   }
-  
+
   /// Безопасно устанавливает булево значение поля.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - value: Булево значение для установки.
   ///   - fieldName: Имя поля.
   /// - Returns: true, если значение было успешно установлено, false в противном случае.
@@ -629,14 +641,15 @@ public struct MutableFieldAccessor {
     do {
       try message.set(value, forField: fieldName)
       return true
-    } catch {
+    }
+    catch {
       return false
     }
   }
-  
+
   /// Безопасно устанавливает булево значение поля по номеру.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - value: Булево значение для установки.
   ///   - fieldNumber: Номер поля.
   /// - Returns: true, если значение было успешно установлено, false в противном случае.
@@ -645,14 +658,15 @@ public struct MutableFieldAccessor {
     do {
       try message.set(value, forField: fieldNumber)
       return true
-    } catch {
+    }
+    catch {
       return false
     }
   }
-  
+
   /// Безопасно устанавливает вложенное сообщение поля.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - value: Динамическое сообщение для установки.
   ///   - fieldName: Имя поля.
   /// - Returns: true, если значение было успешно установлено, false в противном случае.
@@ -661,14 +675,15 @@ public struct MutableFieldAccessor {
     do {
       try message.set(value, forField: fieldName)
       return true
-    } catch {
+    }
+    catch {
       return false
     }
   }
-  
+
   /// Безопасно устанавливает вложенное сообщение поля по номеру.
   ///
-  /// - Parameters:
+  /// - Parameters:.
   ///   - value: Динамическое сообщение для установки.
   ///   - fieldNumber: Номер поля.
   /// - Returns: true, если значение было успешно установлено, false в противном случае.
@@ -677,11 +692,12 @@ public struct MutableFieldAccessor {
     do {
       try message.set(value, forField: fieldNumber)
       return true
-    } catch {
+    }
+    catch {
       return false
     }
   }
-  
+
   /// Возвращает обновленное сообщение.
   ///
   /// - Returns: Обновленное динамическое сообщение.
@@ -699,11 +715,11 @@ extension DynamicMessage {
   public var fieldAccessor: FieldAccessor {
     return FieldAccessor(self)
   }
-  
+
   /// Создает MutableFieldAccessor для изменения полей этого сообщения.
   ///
   /// - Returns: MutableFieldAccessor для безопасного изменения полей.
   public mutating func mutableFieldAccessor() -> MutableFieldAccessor {
     return MutableFieldAccessor(&self)
   }
-} 
+}

@@ -389,6 +389,7 @@ public struct DynamicMessage: Equatable {
   // MARK: - Private Helper Methods
 
   /// Очищает значение oneof поля по его номеру.
+  ///
   /// Используется для правильной очистки всех типов полей при переключении oneof.
   ///
   /// - Parameter fieldNumber: Номер поля для очистки.
@@ -401,12 +402,15 @@ public struct DynamicMessage: Equatable {
     if field.isRepeated {
       if field.isMap {
         mapValues.removeValue(forKey: fieldNumber)
-      } else {
+      }
+      else {
         repeatedValues.removeValue(forKey: fieldNumber)
       }
-    } else if case .message = field.type {
+    }
+    else if case .message = field.type {
       nestedMessages.removeValue(forKey: fieldNumber)
-    } else {
+    }
+    else {
       values.removeValue(forKey: fieldNumber)
     }
   }

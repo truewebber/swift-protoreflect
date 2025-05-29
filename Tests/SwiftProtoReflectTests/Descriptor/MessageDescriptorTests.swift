@@ -218,7 +218,7 @@ final class MessageDescriptorTests: XCTestCase {
   func testNestedOneOfFields() {
     // Создаем вложенное сообщение с OneOf полями
     var addressMessage = MessageDescriptor(name: "Address", parent: messageDescriptor)
-    
+
     // Добавляем OneOf поля в вложенное сообщение
     let streetField = FieldDescriptor(
       name: "street",
@@ -226,39 +226,39 @@ final class MessageDescriptorTests: XCTestCase {
       type: .string,
       oneofIndex: 0
     )
-    
+
     let buildingField = FieldDescriptor(
       name: "building",
       number: 2,
       type: .string,
       oneofIndex: 0
     )
-    
+
     let poBoxField = FieldDescriptor(
       name: "po_box",
       number: 3,
       type: .string,
       oneofIndex: 1
     )
-    
+
     addressMessage.addField(streetField)
     addressMessage.addField(buildingField)
     addressMessage.addField(poBoxField)
-    
+
     messageDescriptor.addNestedMessage(addressMessage)
-    
+
     // Проверяем, что OneOf поля корректно добавлены
     let nestedAddress = messageDescriptor.nestedMessage(named: "Address")
     XCTAssertNotNil(nestedAddress)
-    
+
     let retrievedStreetField = nestedAddress?.field(number: 1)
     let retrievedBuildingField = nestedAddress?.field(number: 2)
     let retrievedPoBoxField = nestedAddress?.field(number: 3)
-    
+
     XCTAssertEqual(retrievedStreetField?.oneofIndex, 0)
     XCTAssertEqual(retrievedBuildingField?.oneofIndex, 0)
     XCTAssertEqual(retrievedPoBoxField?.oneofIndex, 1)
-    
+
     // Проверяем, что поля street и building в одной OneOf группе
     XCTAssertEqual(retrievedStreetField?.oneofIndex, retrievedBuildingField?.oneofIndex)
     XCTAssertNotEqual(retrievedStreetField?.oneofIndex, retrievedPoBoxField?.oneofIndex)
@@ -273,7 +273,7 @@ final class MessageDescriptorTests: XCTestCase {
       type: .message,
       typeName: "example.person.Address"
     )
-    
+
     // Создаем поле с типом перечисления
     let statusField = FieldDescriptor(
       name: "status",
@@ -281,12 +281,12 @@ final class MessageDescriptorTests: XCTestCase {
       type: .enum,
       typeName: "example.person.Status"
     )
-    
+
     // Создаем Map поле с типом сообщения в значении
     let mapKeyInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let mapValueInfo = ValueFieldInfo(name: "value", number: 2, type: .message, typeName: "example.person.ContactInfo")
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: mapKeyInfo, valueFieldInfo: mapValueInfo)
-    
+
     let contactsMapField = FieldDescriptor(
       name: "contacts",
       number: 3,
@@ -295,7 +295,7 @@ final class MessageDescriptorTests: XCTestCase {
       isMap: true,
       mapEntryInfo: mapEntryInfo
     )
-    
+
     // Создаем Repeated поле с типом перечисления
     let tagsField = FieldDescriptor(
       name: "tags",
@@ -304,54 +304,54 @@ final class MessageDescriptorTests: XCTestCase {
       typeName: "example.person.Tag",
       isRepeated: true
     )
-    
+
     messageDescriptor.addField(addressField)
     messageDescriptor.addField(statusField)
     messageDescriptor.addField(contactsMapField)
     messageDescriptor.addField(tagsField)
-    
+
     // Проверяем типы и имена типов
     guard let retrievedAddressField = messageDescriptor.field(number: 1) else {
       XCTFail("Address field not found")
       return
     }
-    
+
     XCTAssertEqual(retrievedAddressField.type, .message)
     XCTAssertEqual(retrievedAddressField.typeName, "example.person.Address")
     XCTAssertEqual(retrievedAddressField.getFullTypeName(), "example.person.Address")
     XCTAssertFalse(retrievedAddressField.isScalarType())
-    
+
     guard let retrievedStatusField = messageDescriptor.field(number: 2) else {
       XCTFail("Status field not found")
       return
     }
-    
+
     XCTAssertEqual(retrievedStatusField.type, .enum)
     XCTAssertEqual(retrievedStatusField.typeName, "example.person.Status")
     XCTAssertFalse(retrievedStatusField.isScalarType())
-    
+
     // Проверяем Map поле
     guard let retrievedContactsField = messageDescriptor.field(number: 3) else {
       XCTFail("Contacts map field not found")
       return
     }
-    
+
     XCTAssertTrue(retrievedContactsField.isMap)
-    XCTAssertTrue(retrievedContactsField.isRepeated) // Map поля автоматически repeated
+    XCTAssertTrue(retrievedContactsField.isRepeated)  // Map поля автоматически repeated
     XCTAssertEqual(retrievedContactsField.type, .message)
-    
+
     let mapInfo = retrievedContactsField.getMapKeyValueInfo()
     XCTAssertNotNil(mapInfo)
     XCTAssertEqual(mapInfo?.keyFieldInfo.type, .string)
     XCTAssertEqual(mapInfo?.valueFieldInfo.type, .message)
     XCTAssertEqual(mapInfo?.valueFieldInfo.typeName, "example.person.ContactInfo")
-    
+
     // Проверяем Repeated enum поле
     guard let retrievedTagsField = messageDescriptor.field(number: 4) else {
       XCTFail("Tags repeated field not found")
       return
     }
-    
+
     XCTAssertTrue(retrievedTagsField.isRepeated)
     XCTAssertEqual(retrievedTagsField.type, .enum)
     XCTAssertEqual(retrievedTagsField.typeName, "example.person.Tag")
@@ -361,72 +361,72 @@ final class MessageDescriptorTests: XCTestCase {
   func testCyclicDependencies() {
     // Создаем сообщение Node, которое может ссылаться само на себя
     var nodeMessage = MessageDescriptor(name: "Node", parent: fileDescriptor)
-    
+
     // Добавляем поле, которое ссылается на то же сообщение (циклическая зависимость)
     let parentField = FieldDescriptor(
       name: "parent",
       number: 1,
       type: .message,
-      typeName: "example.person.Node", // Ссылка на себя
+      typeName: "example.person.Node",  // Ссылка на себя
       isOptional: true
     )
-    
+
     let childrenField = FieldDescriptor(
       name: "children",
       number: 2,
       type: .message,
-      typeName: "example.person.Node", // Ссылка на себя
+      typeName: "example.person.Node",  // Ссылка на себя
       isRepeated: true
     )
-    
+
     nodeMessage.addField(parentField)
     nodeMessage.addField(childrenField)
-    
+
     fileDescriptor.addMessage(nodeMessage)
-    
+
     // Проверяем, что циклические ссылки обрабатываются корректно
     let retrievedNode = fileDescriptor.messages["Node"]
     XCTAssertNotNil(retrievedNode)
-    
+
     let retrievedParentField = retrievedNode?.field(number: 1)
     let retrievedChildrenField = retrievedNode?.field(number: 2)
-    
+
     XCTAssertEqual(retrievedParentField?.typeName, "example.person.Node")
     XCTAssertEqual(retrievedChildrenField?.typeName, "example.person.Node")
     XCTAssertTrue(retrievedParentField?.isOptional ?? false)
     XCTAssertTrue(retrievedChildrenField?.isRepeated ?? false)
-    
+
     // Создаем взаимно ссылающиеся сообщения
     var aMessage = MessageDescriptor(name: "A", parent: fileDescriptor)
     var bMessage = MessageDescriptor(name: "B", parent: fileDescriptor)
-    
+
     let fieldAtoB = FieldDescriptor(
       name: "b_ref",
       number: 1,
       type: .message,
       typeName: "example.person.B"
     )
-    
+
     let fieldBtoA = FieldDescriptor(
       name: "a_ref",
       number: 1,
       type: .message,
       typeName: "example.person.A"
     )
-    
+
     aMessage.addField(fieldAtoB)
     bMessage.addField(fieldBtoA)
-    
+
     fileDescriptor.addMessage(aMessage)
     fileDescriptor.addMessage(bMessage)
-    
+
     // Проверяем взаимные ссылки
     let retrievedA = fileDescriptor.messages["A"]
     let retrievedB = fileDescriptor.messages["B"]
-    
+
     XCTAssertNotNil(retrievedA)
     XCTAssertNotNil(retrievedB)
-    
+
     XCTAssertEqual(retrievedA?.field(number: 1)?.typeName, "example.person.B")
     XCTAssertEqual(retrievedB?.field(number: 1)?.typeName, "example.person.A")
   }
@@ -440,12 +440,12 @@ final class MessageDescriptorTests: XCTestCase {
       dependencies: [
         "google/protobuf/timestamp.proto",
         "example/common/address.proto",
-        "example/common/types.proto"
+        "example/common/types.proto",
       ]
     )
-    
+
     var userMessage = MessageDescriptor(name: "User", parent: fileWithImports)
-    
+
     // Добавляем поля с импортированными типами
     let timestampField = FieldDescriptor(
       name: "created_at",
@@ -453,68 +453,68 @@ final class MessageDescriptorTests: XCTestCase {
       type: .message,
       typeName: "google.protobuf.Timestamp"
     )
-    
+
     let addressField = FieldDescriptor(
       name: "address",
       number: 2,
       type: .message,
       typeName: "example.common.Address"
     )
-    
+
     let statusField = FieldDescriptor(
       name: "status",
       number: 3,
       type: .enum,
       typeName: "example.common.UserStatus"
     )
-    
+
     userMessage.addField(timestampField)
     userMessage.addField(addressField)
     userMessage.addField(statusField)
-    
+
     fileWithImports.addMessage(userMessage)
-    
+
     // Проверяем зависимости файла
     XCTAssertEqual(fileWithImports.dependencies.count, 3)
     XCTAssertTrue(fileWithImports.dependencies.contains("google/protobuf/timestamp.proto"))
     XCTAssertTrue(fileWithImports.dependencies.contains("example/common/address.proto"))
     XCTAssertTrue(fileWithImports.dependencies.contains("example/common/types.proto"))
-    
+
     // Проверяем импортированные типы в полях
     let retrievedUser = fileWithImports.messages["User"]
     XCTAssertNotNil(retrievedUser)
-    
+
     let retrievedTimestampField = retrievedUser?.field(number: 1)
     XCTAssertEqual(retrievedTimestampField?.typeName, "google.protobuf.Timestamp")
     XCTAssertEqual(retrievedTimestampField?.type, .message)
-    
+
     let retrievedAddressField = retrievedUser?.field(number: 2)
     XCTAssertEqual(retrievedAddressField?.typeName, "example.common.Address")
     XCTAssertEqual(retrievedAddressField?.type, .message)
-    
+
     let retrievedStatusField = retrievedUser?.field(number: 3)
     XCTAssertEqual(retrievedStatusField?.typeName, "example.common.UserStatus")
     XCTAssertEqual(retrievedStatusField?.type, .enum)
-    
+
     // Проверяем, что полные имена генерируются корректно для локальных типов
     XCTAssertEqual(fileWithImports.getFullName(for: "LocalType"), "example.user.LocalType")
-    
+
     // Проверяем работу с вложенными сообщениями и импортированными типами
     var profileMessage = MessageDescriptor(name: "Profile", parent: retrievedUser!)
-    
+
     let avatarField = FieldDescriptor(
       name: "avatar",
       number: 1,
       type: .message,
       typeName: "example.common.Image"
     )
-    
+
     profileMessage.addField(avatarField)
     userMessage.addNestedMessage(profileMessage)
-    
+
     // Обновляем сообщение в файле
     fileWithImports.addMessage(userMessage)
-    
+
     // Получаем обновленное сообщение
     let updatedUser = fileWithImports.messages["User"]
     let nestedProfile = updatedUser?.nestedMessage(named: "Profile")

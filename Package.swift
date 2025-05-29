@@ -16,14 +16,14 @@ let package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.29.0"),
-    .package(url: "https://github.com/grpc/grpc-swift.git", from: "1.23.0")
+    .package(url: "https://github.com/grpc/grpc-swift.git", from: "1.23.0"),
   ],
   targets: [
     .target(
       name: "SwiftProtoReflect",
       dependencies: [
         .product(name: "SwiftProtobuf", package: "swift-protobuf"),
-        .product(name: "GRPC", package: "grpc-swift")
+        .product(name: "GRPC", package: "grpc-swift"),
       ],
       exclude: [
         "Service/_README.md",
@@ -41,7 +41,7 @@ let package = Package(
       dependencies: [
         "SwiftProtoReflect",
         .product(name: "SwiftProtobuf", package: "swift-protobuf"),
-        .product(name: "GRPC", package: "grpc-swift")
+        .product(name: "GRPC", package: "grpc-swift"),
       ],
       exclude: [
         "PROTOCOL_CONFORMANCE_TEST_PLAN.md",
