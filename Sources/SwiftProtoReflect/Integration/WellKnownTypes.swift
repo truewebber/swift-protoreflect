@@ -297,8 +297,8 @@ public final class WellKnownTypesRegistry {
     // Critical types (Phase 1)
     register(TimestampHandler.self)
     register(DurationHandler.self)
+    register(EmptyHandler.self)
 
     // TODO: Добавить остальные обработчики
-    // register(EmptyHandler.self)
   }
 }
