@@ -39,12 +39,14 @@ public struct ValueHandler: WellKnownTypeHandler {
           let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
           // Извлекаем значение из wrapper объекта
           if let wrappedValue = jsonObject as? [String: Any],
-             let actualValue = wrappedValue["value"] {
+            let actualValue = wrappedValue["value"]
+          {
             return try ValueValue(from: actualValue)
           }
         }
       }
-    } catch {
+    }
+    catch {
       throw WellKnownTypeError.conversionFailed(
         from: "DynamicMessage",
         to: "ValueValue",
@@ -80,7 +82,8 @@ public struct ValueHandler: WellKnownTypeHandler {
       let wrappedValue = ["value": anyValue]
       let jsonData = try JSONSerialization.data(withJSONObject: wrappedValue, options: [])
       try message.set(jsonData, forField: "value_data")
-    } catch {
+    }
+    catch {
       throw WellKnownTypeError.conversionFailed(
         from: "ValueValue",
         to: "DynamicMessage",

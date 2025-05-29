@@ -6,6 +6,7 @@
  */
 
 import XCTest
+
 @testable import SwiftProtoReflect
 
 final class ValueHandlerTests: XCTestCase {
@@ -66,7 +67,8 @@ final class ValueHandlerTests: XCTestCase {
     if case .structValue(let structValue) = dictValue {
       XCTAssertEqual(structValue.fields.count, 1)
       XCTAssertEqual(structValue.fields["key"], .stringValue("value"))
-    } else {
+    }
+    else {
       XCTFail("Expected structValue")
     }
 
@@ -77,7 +79,8 @@ final class ValueHandlerTests: XCTestCase {
       XCTAssertEqual(listValues[0], .numberValue(1.0))
       XCTAssertEqual(listValues[1], .stringValue("two"))
       XCTAssertEqual(listValues[2], .boolValue(true))
-    } else {
+    }
+    else {
       XCTFail("Expected listValue")
     }
   }
@@ -89,7 +92,8 @@ final class ValueHandlerTests: XCTestCase {
 
     XCTAssertThrowsError(try ValueHandler.ValueValue(from: customObject)) { error in
       guard let wellKnownError = error as? WellKnownTypeError,
-            case .invalidData(let typeName, _) = wellKnownError else {
+        case .invalidData(let typeName, _) = wellKnownError
+      else {
         XCTFail("Expected WellKnownTypeError.invalidData")
         return
       }
@@ -166,7 +170,8 @@ final class ValueHandlerTests: XCTestCase {
   func testCreateDynamicFromInvalidSpecialized() {
     XCTAssertThrowsError(try ValueHandler.createDynamic(from: "invalid")) { error in
       guard let wellKnownError = error as? WellKnownTypeError,
-            case .conversionFailed(_, _, _) = wellKnownError else {
+        case .conversionFailed(_, _, _) = wellKnownError
+      else {
         XCTFail("Expected WellKnownTypeError.conversionFailed")
         return
       }
@@ -246,7 +251,7 @@ final class ValueHandlerTests: XCTestCase {
       .stringValue(""),
       .stringValue("unicode: 🚀"),
       .boolValue(true),
-      .boolValue(false)
+      .boolValue(false),
     ]
 
     for originalValue in testValues {
@@ -269,16 +274,163 @@ final class ValueHandlerTests: XCTestCase {
 
   func testHandlerPerformance() {
     let values = (0..<100).map { ValueHandler.ValueValue.numberValue(Double($0)) }
-    
+
     measure {
       for value in values {
         do {
           let message = try ValueHandler.createDynamic(from: value)
           let _ = try ValueHandler.createSpecialized(from: message)
-        } catch {
+        }
+        catch {
           XCTFail("Unexpected error: \(error)")
         }
       }
     }
+  }
+
+  // MARK: - Error Handling Tests
+
+  func testCreateSpecializedWithWrongMessageType() throws {
+    // Create a message with different type name
+    var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
+    var messageDescriptor = MessageDescriptor(name: "WrongType", parent: fileDescriptor)
+    
+    let valueDataField = FieldDescriptor(
+      name: "value_data",
+      number: 1,
+      type: .bytes
+    )
+    messageDescriptor.addField(valueDataField)
+    fileDescriptor.addMessage(messageDescriptor)
+    
+    let factory = MessageFactory()
+    let message = factory.createMessage(from: messageDescriptor)
+    
+    // This should throw invalidData error
+    XCTAssertThrowsError(try ValueHandler.createSpecialized(from: message)) { error in
+      guard let wellKnownError = error as? WellKnownTypeError,
+        case .invalidData(let typeName, let reason) = wellKnownError
+      else {
+        XCTFail("Expected WellKnownTypeError.invalidData")
+        return
+      }
+      XCTAssertEqual(typeName, WellKnownTypeNames.value)
+      XCTAssertTrue(reason.contains("Expected"))
+      XCTAssertTrue(reason.contains("got"))
+    }
+  }
+
+  func testCreateSpecializedWithEmptyValueData() throws {
+    // Create a Value message with empty value_data
+    let valueDescriptor = try createTestValueDescriptor()
+    let factory = MessageFactory()
+    var message = factory.createMessage(from: valueDescriptor)
+    
+    // Set empty data
+    try message.set(Data(), forField: "value_data")
+    
+    // This should return nullValue
+    let result = try ValueHandler.createSpecialized(from: message)
+    let valueValue = result as! ValueHandler.ValueValue
+    XCTAssertEqual(valueValue, .nullValue)
+  }
+
+  func testCreateSpecializedWithMissingValueData() throws {
+    // Create a Value message without setting value_data
+    let valueDescriptor = try createTestValueDescriptor()
+    let factory = MessageFactory()
+    let message = factory.createMessage(from: valueDescriptor)
+    
+    // Don't set value_data field - it should return nullValue
+    let result = try ValueHandler.createSpecialized(from: message)
+    let valueValue = result as! ValueHandler.ValueValue
+    XCTAssertEqual(valueValue, .nullValue)
+  }
+
+  func testCreateSpecializedWithInvalidJSON() throws {
+    // Create a Value message with invalid JSON data
+    let valueDescriptor = try createTestValueDescriptor()
+    let factory = MessageFactory()
+    var message = factory.createMessage(from: valueDescriptor)
+    
+    // Set invalid JSON data
+    let invalidJSONData = "invalid json".data(using: .utf8)!
+    try message.set(invalidJSONData, forField: "value_data")
+    
+    // This should throw conversionFailed error
+    XCTAssertThrowsError(try ValueHandler.createSpecialized(from: message)) { error in
+      guard let wellKnownError = error as? WellKnownTypeError,
+        case .conversionFailed(let from, let to, let reason) = wellKnownError
+      else {
+        XCTFail("Expected WellKnownTypeError.conversionFailed")
+        return
+      }
+      XCTAssertEqual(from, "DynamicMessage")
+      XCTAssertEqual(to, "ValueValue")
+      XCTAssertTrue(reason.contains("Failed to extract value_data"))
+    }
+  }
+
+  func testCreateSpecializedWithMalformedJSONStructure() throws {
+    // Create a Value message with valid JSON but wrong structure
+    let valueDescriptor = try createTestValueDescriptor()
+    let factory = MessageFactory()
+    var message = factory.createMessage(from: valueDescriptor)
+    
+    // Set JSON data without the expected "value" wrapper
+    let malformedJSON = ["not_value": "test"]
+    let jsonData = try JSONSerialization.data(withJSONObject: malformedJSON, options: [])
+    try message.set(jsonData, forField: "value_data")
+    
+    // This should return nullValue since the wrapper structure is not found
+    let result = try ValueHandler.createSpecialized(from: message)
+    let valueValue = result as! ValueHandler.ValueValue
+    XCTAssertEqual(valueValue, .nullValue)
+  }
+
+  func testToAnyValueWithWrongMessageType() throws {
+    // Create a message with different type name
+    var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
+    let messageDescriptor = MessageDescriptor(name: "WrongType", parent: fileDescriptor)
+    fileDescriptor.addMessage(messageDescriptor)
+    
+    let factory = MessageFactory()
+    let message = factory.createMessage(from: messageDescriptor)
+    
+    // This should throw invalidData error
+    XCTAssertThrowsError(try message.toAnyValue()) { error in
+      guard let wellKnownError = error as? WellKnownTypeError,
+        case .invalidData(let typeName, let reason) = wellKnownError
+      else {
+        XCTFail("Expected WellKnownTypeError.invalidData")
+        return
+      }
+      XCTAssertEqual(typeName, "test.WrongType")
+      XCTAssertEqual(reason, "Message is not a Value")
+    }
+  }
+
+  // MARK: - Helper Methods
+
+  private func createTestValueDescriptor() throws -> MessageDescriptor {
+    var fileDescriptor = FileDescriptor(
+      name: "google/protobuf/struct.proto",
+      package: "google.protobuf"
+    )
+
+    var messageDescriptor = MessageDescriptor(
+      name: "Value",
+      parent: fileDescriptor
+    )
+
+    let valueDataField = FieldDescriptor(
+      name: "value_data",
+      number: 1,
+      type: .bytes
+    )
+    messageDescriptor.addField(valueDataField)
+    fileDescriptor.addMessage(messageDescriptor)
+
+    return messageDescriptor
   }
 }
