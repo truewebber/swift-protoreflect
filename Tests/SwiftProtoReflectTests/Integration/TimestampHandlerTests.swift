@@ -144,7 +144,7 @@ final class TimestampHandlerTests: XCTestCase {
     func testCreateSpecializedFromInvalidMessage() throws {
         // Создаем сообщение неправильного типа
         var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
-        var messageDescriptor = MessageDescriptor(name: "NotTimestamp", parent: fileDescriptor)
+        let messageDescriptor = MessageDescriptor(name: "NotTimestamp", parent: fileDescriptor)
         fileDescriptor.addMessage(messageDescriptor)
         
         let factory = MessageFactory()
@@ -234,7 +234,7 @@ final class TimestampHandlerTests: XCTestCase {
     
     func testDynamicMessageToDateWithInvalidMessage() throws {
         var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
-        var messageDescriptor = MessageDescriptor(name: "NotTimestamp", parent: fileDescriptor)
+        let messageDescriptor = MessageDescriptor(name: "NotTimestamp", parent: fileDescriptor)
         fileDescriptor.addMessage(messageDescriptor)
         
         let factory = MessageFactory()
