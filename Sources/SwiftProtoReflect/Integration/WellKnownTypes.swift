@@ -299,6 +299,9 @@ public final class WellKnownTypesRegistry {
     register(DurationHandler.self)
     register(EmptyHandler.self)
 
+    // Important types (Phase 2)
+    register(FieldMaskHandler.self)
+
     // TODO: Добавить остальные обработчики
   }
 }

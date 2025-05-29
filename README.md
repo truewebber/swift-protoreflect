@@ -10,6 +10,7 @@
 - Сериализация и десериализация в бинарный формат и JSON
 - Динамическое обнаружение и использование gRPC сервисов
 - Полная интеграция с библиотекой Swift Protobuf
+- Поддержка Well-Known Types (Timestamp, Duration, Empty, FieldMask)
 - Высокая производительность и соответствие стандарту Protocol Buffers
 
 ## Статус проекта
@@ -74,9 +75,47 @@
   - ✅ GRPCPayloadWrapper для сериализации/десериализации
   - ✅ CallOptions с поддержкой таймаутов и метаданных
 
-### Общее покрытие кода тестами: 94.46% (690 тестов)
+### Integration Phase - В РАЗРАБОТКЕ 🚧
 
-**Следующий этап**: Integration Phase - Complete Protocol Buffers ecosystem 🚧 В РАЗРАБОТКЕ
+- ✅ **Critical Phase 1** (ЗАВЕРШЕНО)
+  - ✅ **WellKnownTypes Foundation** - базовая инфраструктура
+    - ✅ WellKnownTypeNames - константы для всех стандартных типов
+    - ✅ WellKnownTypeDetector - утилиты определения well-known types
+    - ✅ WellKnownTypesRegistry - реестр обработчиков с thread-safety
+    - ✅ WellKnownTypeHandler протокол для обработчиков
+  - ✅ **TimestampHandler** - google.protobuf.Timestamp поддержка
+    - ✅ Конвертация между DynamicMessage и Date
+    - ✅ Валидация и round-trip совместимость
+    - ✅ Comprehensive testing (23 теста)
+  - ✅ **DurationHandler** - google.protobuf.Duration поддержка
+    - ✅ Конвертация между DynamicMessage и TimeInterval
+    - ✅ Поддержка отрицательных интервалов времени
+    - ✅ Валидация знаков seconds/nanos полей
+    - ✅ Utility методы: abs(), negated(), zero()
+    - ✅ Comprehensive testing (29 тестов)
+  - ✅ **EmptyHandler** - google.protobuf.Empty поддержка
+    - ✅ Конвертация между DynamicMessage и пустыми значениями
+    - ✅ Валидация и round-trip совместимость
+    - ✅ Comprehensive testing (15 тестов)
+  - ✅ **FieldMaskHandler** - google.protobuf.FieldMask поддержка
+    - ✅ FieldMaskValue с полной валидацией путей
+    - ✅ Операции: union, intersection, covers, adding, removing
+    - ✅ Конвертация между DynamicMessage и FieldMaskValue
+    - ✅ Convenience extensions для Array<String> и DynamicMessage
+    - ✅ Comprehensive testing (30 тестов, 96.52% покрытие)
+
+- 🚧 **Phase 2 Well-Known Types** (В РАЗРАБОТКЕ)
+  - [ ] **Struct Handler** - google.protobuf.Struct поддержка
+  - [ ] **Value Handler** - google.protobuf.Value поддержка
+  - [ ] Advanced Well-Known Types support
+
+- [ ] **Phase 3** (ПЛАНИРУЕТСЯ)
+  - [ ] **Extensions Support** - Protocol Buffers extensions
+  - [ ] **Advanced Interoperability** - продвинутые функции интеграции
+
+### Общее покрытие кода тестами: 94.37% (745 тестов)
+
+**Следующий этап**: Phase 2 Well-Known Types - Struct и Value поддержка
 
 ## Примеры использования
 
@@ -171,6 +210,17 @@ let absoluteDuration = durationValue.abs()  // Абсолютное значен
 let negatedDuration = durationValue.negated()  // Отрицательная длительность
 let zeroDuration = DurationHandler.DurationValue.zero()  // Нулевая длительность
 
+// Работа с google.protobuf.FieldMask
+let fieldMaskHandler = FieldMaskHandler.self
+let paths = ["name", "email", "profile.age"]
+let fieldMaskValue = FieldMaskHandler.FieldMaskValue(paths: paths)
+let fieldMaskMessage = try fieldMaskHandler.createDynamic(from: fieldMaskValue)
+
+// FieldMask операции
+let union = fieldMaskValue.union(with: otherFieldMask)
+let intersection = fieldMaskValue.intersection(with: otherFieldMask)
+let coversField = fieldMaskValue.covers(path: "name")
+
 // Registry интеграция
 let registry = WellKnownTypesRegistry.shared
 let specializedTimestamp = try registry.createSpecialized(
@@ -214,27 +264,3 @@ make coverage
 ## Документация
 
 Исчерпывающая документация компонентов находится в директории [Sources/](Sources/) в каждом модуле.
-
-5. **Integration Phase**: Complete Protocol Buffers ecosystem 🚧 В РАЗРАБОТКЕ
-   - [x] **WellKnownTypes Foundation** (ЗАВЕРШЕНО)
-     - [x] WellKnownTypeNames - константы для всех стандартных типов
-     - [x] WellKnownTypeDetector - утилиты определения well-known types
-     - [x] WellKnownTypesRegistry - реестр обработчиков с thread-safety
-     - [x] WellKnownTypeHandler протокол для обработчиков
-   - [x] **TimestampHandler** (ЗАВЕРШЕНО)
-     - [x] google.protobuf.Timestamp поддержка
-     - [x] Конвертация между DynamicMessage и Date
-     - [x] Валидация и round-trip совместимость
-     - [x] Comprehensive testing (23 теста проходят)
-   - [x] **DurationHandler** (ЗАВЕРШЕНО) 🎉 НОВОЕ!
-     - [x] google.protobuf.Duration поддержка
-     - [x] Конвертация между DynamicMessage и TimeInterval
-     - [x] Поддержка отрицательных интервалов времени
-     - [x] Валидация знаков seconds/nanos полей
-     - [x] Utility методы: abs(), negated(), zero()
-     - [x] Comprehensive testing (29 тестов проходят)
-   - [ ] **EmptyHandler** - google.protobuf.Empty поддержка
-   - [ ] **Advanced Well-Known Types** (Phase 2)
-     - [ ] FieldMask, Struct, Value поддержка
-   - [ ] **Extensions Support** - Protocol Buffers extensions
-   - [ ] **Advanced Interoperability** - продвинутые функции интеграции
