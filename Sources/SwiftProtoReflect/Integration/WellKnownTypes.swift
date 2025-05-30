@@ -304,6 +304,7 @@ public final class WellKnownTypesRegistry {
     register(StructHandler.self)
     register(ValueHandler.self)
 
-    // TODO: Добавить остальные обработчики
+    // Advanced types (Phase 3)
+    register(AnyHandler.self)
   }
 }
