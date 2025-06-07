@@ -28,7 +28,7 @@ help:
 	@echo "$(YELLOW)📚 Examples by Category:$(NC)"
 	@echo "  $(BLUE)make run-basic$(NC)      - 🔰 Basic usage examples (4 examples)"
 	@echo "  $(BLUE)make run-dynamic$(NC)    - 🔧 Dynamic messages examples (5 examples)"
-	@echo "  $(BLUE)make run-serialization$(NC) - 💾 Serialization examples (6 examples)"
+	@echo "  $(BLUE)make run-serialization$(NC) - 💾 Serialization examples (5 examples)"
 	@echo "  $(BLUE)make run-registry$(NC)   - 🗂 Registry examples (4 examples)"
 	@echo "  $(BLUE)make run-wellknown$(NC)  - ⭐ Well-known types examples (8 examples)"
 	@echo "  $(BLUE)make run-grpc$(NC)       - 🌐 gRPC examples (5 examples)"
@@ -87,13 +87,21 @@ run-serialization: setup
 	@echo "$(GREEN)💾 Running serialization examples...$(NC)"
 	@echo "$(BLUE)Binary and JSON serialization/deserialization$(NC)"
 	@echo ""
-	@for example in 03-serialization/*.swift; do \
-		if [ -f "$$example" ]; then \
-			echo "$(YELLOW)▶ Running $$(basename $$example .swift)...$(NC)"; \
-			swift $(SWIFT_FLAGS) "$$example" || exit 1; \
-			echo ""; \
-		fi; \
-	done
+	@echo "$(YELLOW)▶ Running ProtobufSerialization...$(NC)"
+	@swift run ProtobufSerialization || exit 1
+	@echo ""
+	@echo "$(YELLOW)▶ Running JsonConversion...$(NC)"
+	@swift run JsonConversion || exit 1
+	@echo ""
+	@echo "$(YELLOW)▶ Running BinaryData...$(NC)"
+	@swift run BinaryData || exit 1
+	@echo ""
+	@echo "$(YELLOW)▶ Running Streaming...$(NC)"
+	@swift run Streaming || exit 1
+	@echo ""
+	@echo "$(YELLOW)▶ Running Compression...$(NC)"
+	@swift run Compression || exit 1
+	@echo ""
 	@echo "$(GREEN)✅ Serialization examples completed!$(NC)"
 
 run-registry: setup

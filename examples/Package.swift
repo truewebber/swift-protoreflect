@@ -76,7 +76,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "02-dynamic-messages",
-            exclude: ["nested-operations.swift"],
+            exclude: ["nested-operations.swift", "field-manipulation.swift", "message-cloning.swift", "conditional-logic.swift", "performance-optimization.swift"],
             sources: ["complex-messages.swift"]
         ),
         
@@ -87,8 +87,152 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "02-dynamic-messages",
-            exclude: ["complex-messages.swift"],
+            exclude: ["complex-messages.swift", "field-manipulation.swift", "message-cloning.swift", "conditional-logic.swift", "performance-optimization.swift"],
             sources: ["nested-operations.swift"]
+        ),
+        
+        .executableTarget(
+            name: "FieldManipulation", 
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "02-dynamic-messages",
+            exclude: ["complex-messages.swift", "nested-operations.swift", "message-cloning.swift", "conditional-logic.swift", "performance-optimization.swift"],
+            sources: ["field-manipulation.swift"]
+        ),
+        
+        .executableTarget(
+            name: "MessageCloning", 
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "02-dynamic-messages",
+            exclude: ["complex-messages.swift", "nested-operations.swift", "field-manipulation.swift", "conditional-logic.swift", "performance-optimization.swift"],
+            sources: ["message-cloning.swift"]
+        ),
+        
+        .executableTarget(
+            name: "ConditionalLogic",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "02-dynamic-messages",
+            exclude: ["complex-messages.swift", "nested-operations.swift", "field-manipulation.swift", "message-cloning.swift", "performance-optimization.swift"],
+            sources: ["conditional-logic.swift"]
+        ),
+        
+        .executableTarget(
+            name: "PerformanceOptimization",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "02-dynamic-messages",
+            exclude: ["complex-messages.swift", "nested-operations.swift", "field-manipulation.swift", "message-cloning.swift", "conditional-logic.swift"],
+            sources: ["performance-optimization.swift"]
+        ),
+        
+        // 03-serialization examples
+        .executableTarget(
+            name: "ProtobufSerialization",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "03-serialization",
+            exclude: ["json-conversion.swift", "binary-data.swift", "streaming.swift", "compression.swift"],
+            sources: ["protobuf-serialization.swift"]
+        ),
+        
+        .executableTarget(
+            name: "JsonConversion",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "03-serialization",
+            exclude: ["protobuf-serialization.swift", "binary-data.swift", "streaming.swift", "compression.swift"],
+            sources: ["json-conversion.swift"]
+        ),
+        
+        .executableTarget(
+            name: "BinaryData",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "03-serialization",
+            exclude: ["protobuf-serialization.swift", "json-conversion.swift", "streaming.swift", "compression.swift"],
+            sources: ["binary-data.swift"]
+        ),
+        
+        .executableTarget(
+            name: "Streaming",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "03-serialization",
+            exclude: ["protobuf-serialization.swift", "json-conversion.swift", "binary-data.swift", "compression.swift"],
+            sources: ["streaming.swift"]
+        ),
+        
+        .executableTarget(
+            name: "Compression",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "03-serialization",
+            exclude: ["protobuf-serialization.swift", "json-conversion.swift", "binary-data.swift", "streaming.swift"],
+            sources: ["compression.swift"]
+        ),
+        
+        .executableTarget(
+            name: "TypeRegistry",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "04-registry",
+            exclude: ["file-loading.swift", "dependency-resolution.swift", "schema-validation.swift"],
+            sources: ["type-registry.swift"]
+        ),
+        
+        .executableTarget(
+            name: "FileLoading",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "04-registry",
+            exclude: ["type-registry.swift", "dependency-resolution.swift"],
+            sources: ["file-loading.swift"]
+        ),
+        
+        .executableTarget(
+            name: "DependencyResolution",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "04-registry",
+            exclude: ["type-registry.swift", "file-loading.swift", "schema-validation.swift"],
+            sources: ["dependency-resolution.swift"]
+        ),
+        
+        .executableTarget(
+            name: "SchemaValidation",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "04-registry",
+            exclude: ["type-registry.swift", "file-loading.swift", "dependency-resolution.swift"],
+            sources: ["schema-validation.swift"]
         ),
     ]
 )
