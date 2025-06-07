@@ -67,5 +67,28 @@ let package = Package(
             exclude: ["hello-world.swift", "field-types.swift", "simple-message.swift", "README.md"],
             sources: ["basic-descriptors.swift"]
         ),
+        
+        // 02-dynamic-messages examples
+        .executableTarget(
+            name: "ComplexMessages", 
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "02-dynamic-messages",
+            exclude: ["nested-operations.swift"],
+            sources: ["complex-messages.swift"]
+        ),
+        
+        .executableTarget(
+            name: "NestedOperations", 
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "02-dynamic-messages",
+            exclude: ["complex-messages.swift"],
+            sources: ["nested-operations.swift"]
+        ),
     ]
 )
