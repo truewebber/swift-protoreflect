@@ -20,7 +20,8 @@
  */
 
 import Foundation
-import SwiftProtoReflect
+import OSLog
+@preconcurrency import SwiftProtoReflect
 import ExampleUtils
 
 @main
@@ -266,11 +267,9 @@ struct StreamingExample {
         let consumerCount = 3
         let recordsPerProducer = 100
         
-        // Statistics
-        var producedCount = 0
-        var consumedCount = 0
-        let producedCountLock = NSLock()
-        let consumedCountLock = NSLock()
+        // Statistics - using thread-safe counters
+        let producedCounter = ThreadSafeCounter()
+        let consumedCounter = ThreadSafeCounter()
         
         print("  🏭 Starting producers (\(producerCount)) и consumers (\(consumerCount))...")
         
@@ -280,7 +279,7 @@ struct StreamingExample {
             
             for producerId in 0..<producerCount {
                 producerGroup.enter()
-                DispatchQueue.global(qos: .userInitiated).async {
+                DispatchQueue.global(qos: .userInitiated).async { [queue, factory, recordDescriptor, producedCounter] in
                     defer { producerGroup.leave() }
                     
                     for i in 0..<recordsPerProducer {
@@ -299,10 +298,7 @@ struct StreamingExample {
                             )
                             
                             queue.enqueue(processedRecord)
-                            
-                            producedCountLock.lock()
-                            producedCount += 1
-                            producedCountLock.unlock()
+                            producedCounter.increment()
                             
                             // Simulate production time
                             Thread.sleep(forTimeInterval: 0.001)
@@ -320,7 +316,7 @@ struct StreamingExample {
             
             for consumerId in 0..<consumerCount {
                 consumerGroup.enter()
-                DispatchQueue.global(qos: .userInitiated).async {
+                DispatchQueue.global(qos: .userInitiated).async { [queue, consumedCounter, producedCounter] in
                     defer { consumerGroup.leave() }
                     
                     var localConsumedCount = 0
@@ -331,10 +327,7 @@ struct StreamingExample {
                             do {
                                 _ = try processStreamingRecord(record.data)
                                 localConsumedCount += 1
-                                
-                                consumedCountLock.lock()
-                                consumedCount += 1
-                                consumedCountLock.unlock()
+                                consumedCounter.increment()
                                 
                                 // Simulate processing time
                                 Thread.sleep(forTimeInterval: 0.002)
@@ -343,9 +336,7 @@ struct StreamingExample {
                             }
                         } else {
                             // Check if all producers are done and queue is empty
-                            producedCountLock.lock()
-                            let currentProducedCount = producedCount
-                            producedCountLock.unlock()
+                            let currentProducedCount = producedCounter.value
                             
                             if queue.isEmpty && currentProducedCount >= producerCount * recordsPerProducer {
                                 break
@@ -370,10 +361,10 @@ struct StreamingExample {
         ExampleUtils.printTiming("Producer-Consumer pattern", time: patternTime)
         
         print("  📊 Producer-Consumer результаты:")
-        print("    Produced records: \(producedCount)")
-        print("    Consumed records: \(consumedCount)")
-        print("    Queue efficiency: \(consumedCount == producedCount ? "✅ Perfect" : "❌ Loss detected")")
-        print("    Processing rate: \(String(format: "%.1f", Double(consumedCount) / patternTime)) records/sec")
+        print("    Produced records: \(producedCounter.value)")
+        print("    Consumed records: \(consumedCounter.value)")
+        print("    Queue efficiency: \(consumedCounter.value == producedCounter.value ? "✅ Perfect" : "❌ Loss detected")")
+        print("    Processing rate: \(String(format: "%.1f", Double(consumedCounter.value) / patternTime)) records/sec")
     }
     
     private static func step5_memoryOptimizationTechniques() throws {
@@ -506,13 +497,13 @@ struct StreamingExample {
 
 // MARK: - Supporting Classes
 
-struct ProcessedRecord {
+struct ProcessedRecord: Sendable {
     let id: String
     let data: DynamicMessage
     let processingMetadata: [String: String]
 }
 
-struct ProcessingResult {
+struct ProcessingResult: Sendable {
     let recordId: String
     let processedScore: Double
     let processingTime: Date
@@ -544,7 +535,7 @@ class StreamingStatistics {
     }
 }
 
-class StreamingQueue<T> {
+final class StreamingQueue<T: Sendable>: @unchecked Sendable {
     private var queue: [T] = []
     private let lock = NSLock()
     private let condition = NSCondition()
@@ -710,5 +701,25 @@ class MemoryMonitor {
         let currentMemory = getCurrentMemoryUsage()
         let threshold = 100 * 1024 * 1024 // 100MB threshold for demo
         return currentMemory > threshold
+    }
+}
+
+final class ThreadSafeCounter: Sendable {
+    private let _value = OSAllocatedUnfairLock(initialState: 0)
+    
+    var value: Int {
+        return _value.withLock { $0 }
+    }
+    
+    func increment() {
+        _value.withLock { $0 += 1 }
+    }
+    
+    func decrement() {
+        _value.withLock { $0 -= 1 }
+    }
+    
+    func reset() {
+        _value.withLock { $0 = 0 }
     }
 }

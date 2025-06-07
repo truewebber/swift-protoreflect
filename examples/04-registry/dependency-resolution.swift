@@ -348,11 +348,11 @@ class TopologicalSorter {
 
 class ConditionalDependencyResolver {
     func resolve(_ graph: ConditionalDependencyGraph, with config: [String: Bool]) -> ConditionalResolutionResult {
-        var requiredFiles = Array(graph.baseGraph.nodes)
+        let requiredFiles = Array(graph.baseGraph.nodes)
         var optionalFiles: [String] = []
         
         // Evaluate conditional dependencies
-        for (fileName, conditions) in graph.conditionalDependencies {
+        for (_, conditions) in graph.conditionalDependencies {
             for condition in conditions {
                 if evaluateCondition(condition.condition, with: config) {
                     if !requiredFiles.contains(condition.target) {

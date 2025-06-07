@@ -92,12 +92,6 @@ struct ComplexMessagesExample {
         try bob.set([alice], forField: "friends")
         try charlie.set([alice], forField: "friends")
         
-        // Create posts with author references
-        let alicePost = try createPost(factory: factory, fileDescriptor: fileDescriptor,
-                                     author: alice, content: "Exploring new tech trends!")
-        let bobPost = try createPost(factory: factory, fileDescriptor: fileDescriptor,
-                                   author: bob, content: "Great game last night!")
-        
         print("  👥 Создан граф социальной сети:")
         print("    Alice friends: \(try getArrayCount(alice, field: "friends"))")
         print("    Bob friends: \(try getArrayCount(bob, field: "friends"))")
@@ -114,28 +108,45 @@ struct ComplexMessagesExample {
         let fileDescriptor = try createEcommerceStructure()
         let factory = MessageFactory()
         
-        // Create nested product categories
-        let electronics = try createCategory(factory: factory, fileDescriptor: fileDescriptor,
+        // Create nested product categories with proper hierarchy
+        var electronics = try createCategory(factory: factory, fileDescriptor: fileDescriptor,
                                            name: "Electronics", level: 1)
-        _ = try createCategory(factory: factory, fileDescriptor: fileDescriptor,
-                             name: "Computers", level: 2)
-        _ = try createCategory(factory: factory, fileDescriptor: fileDescriptor,
-                             name: "Laptops", level: 3)
+        var computers = try createCategory(factory: factory, fileDescriptor: fileDescriptor,
+                                         name: "Computers", level: 2)
+        var laptops = try createCategory(factory: factory, fileDescriptor: fileDescriptor,
+                                       name: "Laptops", level: 3)
         
-        // Create product with complex attributes
-        _ = try createProduct(factory: factory, fileDescriptor: fileDescriptor,
-                            name: "MacBook Pro", price: 2499.99)
+        // Build category hierarchy (parent-child relationships)
+        try computers.set(electronics, forField: "parent_category")
+        try laptops.set(computers, forField: "parent_category")
         
-        // Customer with multiple addresses
-        _ = try createCustomer(factory: factory, fileDescriptor: fileDescriptor,
-                             name: "John Doe", email: "john@example.com")
+        // Set subcategories (children)
+        try electronics.set([computers], forField: "subcategories")
+        try computers.set([laptops], forField: "subcategories")
+        try laptops.set([], forField: "subcategories") // No subcategories for laptops
         
-        // Order with multiple products and complex pricing
-        let order = try createOrder(factory: factory, fileDescriptor: fileDescriptor,
+        // Create product linked to category
+        var macbook = try createProduct(factory: factory, fileDescriptor: fileDescriptor,
+                                      name: "MacBook Pro", price: 2499.99)
+        try macbook.set(laptops, forField: "category")
+        
+        // Create customer with proper data
+        let customer = try createCustomer(factory: factory, fileDescriptor: fileDescriptor,
+                                        name: "John Doe", email: "john@example.com")
+        
+        // Create order with real relationships
+        var order = try createOrder(factory: factory, fileDescriptor: fileDescriptor,
                                   customerId: "CUST-001", total: 2499.99)
+        try order.set(customer, forField: "customer")
+        try order.set([macbook], forField: "products")
         
-        print("  🛒 Создана e-commerce система:")
+        print("  🛒 Создана e-commerce система с реальными связями:")
         try printCategoryHierarchy(electronics, level: 0)
+        
+        // Demonstrate relationships
+        print("  📱 MacBook Pro категория: \(try getCategoryName(macbook))")
+        print("  👤 Заказчик: \(try getCustomerName(order))")
+        print("  📦 Товаров в заказе: \(try getOrderProductCount(order))")
         
         let orderSummary = try analyzeOrder(order)
         ExampleUtils.printTable(orderSummary, title: "Order Analysis")
@@ -305,10 +316,29 @@ struct ComplexMessagesExample {
         var categoryDesc = MessageDescriptor(name: "Category", parent: fileDescriptor)
         categoryDesc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
         categoryDesc.addField(FieldDescriptor(name: "level", number: 2, type: .int32))
+        categoryDesc.addField(FieldDescriptor(
+            name: "parent_category",
+            number: 3,
+            type: .message,
+            typeName: "example.Category"
+        ))
+        categoryDesc.addField(FieldDescriptor(
+            name: "subcategories",
+            number: 4,
+            type: .message,
+            typeName: "example.Category",
+            isRepeated: true
+        ))
         
         var productDesc = MessageDescriptor(name: "Product", parent: fileDescriptor)
         productDesc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
         productDesc.addField(FieldDescriptor(name: "price", number: 2, type: .double))
+        productDesc.addField(FieldDescriptor(
+            name: "category",
+            number: 3,
+            type: .message,
+            typeName: "example.Category"
+        ))
         
         var customerDesc = MessageDescriptor(name: "Customer", parent: fileDescriptor)
         customerDesc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
@@ -317,6 +347,19 @@ struct ComplexMessagesExample {
         var orderDesc = MessageDescriptor(name: "Order", parent: fileDescriptor)
         orderDesc.addField(FieldDescriptor(name: "customer_id", number: 1, type: .string))
         orderDesc.addField(FieldDescriptor(name: "total", number: 2, type: .double))
+        orderDesc.addField(FieldDescriptor(
+            name: "customer",
+            number: 3,
+            type: .message,
+            typeName: "example.Customer"
+        ))
+        orderDesc.addField(FieldDescriptor(
+            name: "products",
+            number: 4,
+            type: .message,
+            typeName: "example.Product",
+            isRepeated: true
+        ))
         
         fileDescriptor.addMessage(categoryDesc)
         fileDescriptor.addMessage(productDesc)
@@ -403,6 +446,7 @@ struct ComplexMessagesExample {
         var category = factory.createMessage(from: categoryDesc)
         try category.set(name, forField: "name")
         try category.set(Int32(level), forField: "level")
+        try category.set([], forField: "subcategories")
         return category
     }
     
@@ -474,7 +518,36 @@ struct ComplexMessagesExample {
     private static func printCategoryHierarchy(_ category: DynamicMessage, level: Int) throws {
         let indent = String(repeating: "  ", count: level)
         let name = try category.get(forField: "name") as? String ?? "Unknown"
-        print("    \(indent)• \(name)")
+        let categoryLevel = try category.get(forField: "level") as? Int32 ?? 0
+        print("    \(indent)• \(name) (Level \(categoryLevel))")
+        
+        // Print subcategories recursively
+        if let subcategories = try category.get(forField: "subcategories") as? [DynamicMessage] {
+            for subcategory in subcategories {
+                try printCategoryHierarchy(subcategory, level: level + 1)
+            }
+        }
+    }
+    
+    private static func getCategoryName(_ product: DynamicMessage) throws -> String {
+        if let category = try product.get(forField: "category") as? DynamicMessage {
+            return try category.get(forField: "name") as? String ?? "Unknown"
+        }
+        return "No Category"
+    }
+    
+    private static func getCustomerName(_ order: DynamicMessage) throws -> String {
+        if let customer = try order.get(forField: "customer") as? DynamicMessage {
+            return try customer.get(forField: "name") as? String ?? "Unknown"
+        }
+        return "No Customer"
+    }
+    
+    private static func getOrderProductCount(_ order: DynamicMessage) throws -> Int {
+        if let products = try order.get(forField: "products") as? [DynamicMessage] {
+            return products.count
+        }
+        return 0
     }
     
     private static func analyzeOrder(_ order: DynamicMessage) throws -> [String: String] {

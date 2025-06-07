@@ -76,7 +76,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "02-dynamic-messages",
-            exclude: ["nested-operations.swift", "field-manipulation.swift", "message-cloning.swift", "conditional-logic.swift", "performance-optimization.swift"],
+            exclude: ["nested-operations.swift", "field-manipulation.swift", "message-cloning.swift", "conditional-logic.swift", "performance-optimization.swift", "nested-types.swift"],
             sources: ["complex-messages.swift"]
         ),
         
@@ -87,8 +87,19 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "02-dynamic-messages",
-            exclude: ["complex-messages.swift", "field-manipulation.swift", "message-cloning.swift", "conditional-logic.swift", "performance-optimization.swift"],
+            exclude: ["complex-messages.swift", "field-manipulation.swift", "message-cloning.swift", "conditional-logic.swift", "performance-optimization.swift", "nested-types.swift"],
             sources: ["nested-operations.swift"]
+        ),
+        
+        .executableTarget(
+            name: "NestedTypes", 
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "02-dynamic-messages",
+            exclude: ["complex-messages.swift", "nested-operations.swift", "field-manipulation.swift", "message-cloning.swift", "conditional-logic.swift", "performance-optimization.swift"],
+            sources: ["nested-types.swift"]
         ),
         
         .executableTarget(
@@ -98,7 +109,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "02-dynamic-messages",
-            exclude: ["complex-messages.swift", "nested-operations.swift", "message-cloning.swift", "conditional-logic.swift", "performance-optimization.swift"],
+            exclude: ["complex-messages.swift", "nested-operations.swift", "message-cloning.swift", "conditional-logic.swift", "performance-optimization.swift", "nested-types.swift"],
             sources: ["field-manipulation.swift"]
         ),
         
@@ -109,7 +120,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "02-dynamic-messages",
-            exclude: ["complex-messages.swift", "nested-operations.swift", "field-manipulation.swift", "conditional-logic.swift", "performance-optimization.swift"],
+            exclude: ["complex-messages.swift", "nested-operations.swift", "field-manipulation.swift", "conditional-logic.swift", "performance-optimization.swift", "nested-types.swift"],
             sources: ["message-cloning.swift"]
         ),
         
@@ -120,7 +131,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "02-dynamic-messages",
-            exclude: ["complex-messages.swift", "nested-operations.swift", "field-manipulation.swift", "message-cloning.swift", "performance-optimization.swift"],
+            exclude: ["complex-messages.swift", "nested-operations.swift", "field-manipulation.swift", "message-cloning.swift", "performance-optimization.swift", "nested-types.swift"],
             sources: ["conditional-logic.swift"]
         ),
         
@@ -131,7 +142,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "02-dynamic-messages",
-            exclude: ["complex-messages.swift", "nested-operations.swift", "field-manipulation.swift", "message-cloning.swift", "conditional-logic.swift"],
+            exclude: ["complex-messages.swift", "nested-operations.swift", "field-manipulation.swift", "message-cloning.swift", "conditional-logic.swift", "nested-types.swift"],
             sources: ["performance-optimization.swift"]
         ),
         
@@ -191,6 +202,7 @@ let package = Package(
             sources: ["compression.swift"]
         ),
         
+        // 04-registry examples
         .executableTarget(
             name: "TypeRegistry",
             dependencies: [
@@ -209,7 +221,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "04-registry",
-            exclude: ["type-registry.swift", "dependency-resolution.swift"],
+            exclude: ["type-registry.swift", "dependency-resolution.swift", "schema-validation.swift"],
             sources: ["file-loading.swift"]
         ),
         

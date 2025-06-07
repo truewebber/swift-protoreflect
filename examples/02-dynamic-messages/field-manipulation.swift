@@ -349,13 +349,109 @@ struct FieldManipulationExample {
             let hasValue = try message.hasValue(forField: field.name)
             if hasValue {
                 let value = try message.get(forField: field.name)
-                fieldStates[field.name] = "Set (\(type(of: value)))"
+                let actualType = getActualFieldType(value: value, field: field)
+                fieldStates[field.name] = "Set (\(actualType))"
             } else {
-                fieldStates[field.name] = "Not set"
+                fieldStates[field.name] = "Not set (\(field.type))"
             }
         }
         
         ExampleUtils.printTable(fieldStates, title: "Field States")
+    }
+    
+    private static func getActualFieldType(value: Any?, field: FieldDescriptor) -> String {
+        guard let value = value else {
+            return "nil"
+        }
+        
+        // Попытаемся определить реальный тип на основе типа поля
+        switch field.type {
+        case .string:
+            if field.isRepeated {
+                if value is [String] {
+                    return "Array<String>"
+                }
+            } else {
+                if value is String {
+                    return "String"
+                }
+            }
+        case .int32:
+            if field.isRepeated {
+                if value is [Int32] {
+                    return "Array<Int32>"
+                }
+            } else {
+                if value is Int32 {
+                    return "Int32"
+                }
+            }
+        case .int64:
+            if field.isRepeated {
+                if value is [Int64] {
+                    return "Array<Int64>"
+                }
+            } else {
+                if value is Int64 {
+                    return "Int64"
+                }
+            }
+        case .double:
+            if field.isRepeated {
+                if value is [Double] {
+                    return "Array<Double>"
+                }
+            } else {
+                if value is Double {
+                    return "Double"
+                }
+            }
+        case .float:
+            if field.isRepeated {
+                if value is [Float] {
+                    return "Array<Float>"
+                }
+            } else {
+                if value is Float {
+                    return "Float"
+                }
+            }
+        case .bool:
+            if field.isRepeated {
+                if value is [Bool] {
+                    return "Array<Bool>"
+                }
+            } else {
+                if value is Bool {
+                    return "Bool"
+                }
+            }
+        case .bytes:
+            if field.isRepeated {
+                if value is [Data] {
+                    return "Array<Data>"
+                }
+            } else {
+                if value is Data {
+                    return "Data"
+                }
+            }
+        case .message:
+            if field.isRepeated {
+                if let array = value as? [Any], !array.isEmpty {
+                    return "Array<DynamicMessage>"
+                }
+            } else {
+                if value is DynamicMessage {
+                    return "DynamicMessage"
+                }
+            }
+        default:
+            break
+        }
+        
+        // Fallback to actual type if we can't determine from field type
+        return String(describing: type(of: value))
     }
     
     private static func printFieldMetadata(_ descriptor: MessageDescriptor) throws {
@@ -790,7 +886,8 @@ struct FieldManipulationExample {
         for field in config.descriptor.fields.values {
             if try config.hasValue(forField: field.name) {
                 let value = try config.get(forField: field.name)
-                print("         📝 Field access logged: \(field.name) = \(type(of: value))")
+                let actualType = getActualFieldType(value: value, field: field)
+                print("         📝 Field access logged: \(field.name) = \(actualType)")
             }
         }
         

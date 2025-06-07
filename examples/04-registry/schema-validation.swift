@@ -407,7 +407,7 @@ class StructuralValidator {
         
         // Check naming conventions
         for message in schema.messages.values {
-            if !message.name.first?.isUppercase ?? false {
+            if !(message.name.first?.isUppercase ?? false) {
                 warnings.append("Message \(message.name) should start with uppercase")
                 score -= 0.1
             }

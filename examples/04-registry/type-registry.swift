@@ -321,6 +321,14 @@ struct TypeRegistryExample {
         print("    ✅ Builder pattern message created")
         print("    Fields set: \(builder.getSetFieldsCount())")
         
+        // Validate the built message was created successfully
+        do {
+            let hasName = try builtMessage.hasValue(forField: "name")
+            print("    Message validation: \(hasName ? "✅ Valid" : "❌ Invalid")")
+        } catch {
+            print("    Message validation: ❌ Error - \(error)")
+        }
+        
         // Pattern 3: Cloning and modification
         print("  🔄 Cloning and modification:")
         
@@ -332,8 +340,9 @@ struct TypeRegistryExample {
         for field in testMessage.fields.values {
             do {
                 if try originalMessage.hasValue(forField: field.name) {
-                    let value = try originalMessage.get(forField: field.name)
-                    try cloned.set(value, forField: field.name)
+                    if let value = try originalMessage.get(forField: field.name) {
+                        try cloned.set(value, forField: field.name)
+                    }
                 }
             } catch {
                 // Skip fields that can't be cloned

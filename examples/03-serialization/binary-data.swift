@@ -309,13 +309,44 @@ struct BinaryDataExample {
         let algorithm: compression_algorithm = bestCompression.0 == "LZFSE" ? COMPRESSION_LZFSE : 
                                              bestCompression.0 == "LZ4" ? COMPRESSION_LZ4 : COMPRESSION_ZLIB
         
-        if let decompressedData = try? decompressData(bestCompression.1, algorithm: algorithm),
-           let decompressedText = String(data: decompressedData, encoding: .utf8) {
-            
+        do {
+            let decompressedData = try decompressData(bestCompression.1, algorithm: algorithm, originalSize: originalData.count)
             let integrity = originalData == decompressedData
+            
             print("    Decompression: \(integrity ? "✅ SUCCESS" : "❌ FAILED")")
-            print("    Size match: \(decompressedData.count) bytes")
-            print("    Text preview: \(String(decompressedText.prefix(100)))...")
+            print("    Size match: \(decompressedData.count) bytes (expected: \(originalData.count))")
+            
+            if let decompressedText = String(data: decompressedData, encoding: .utf8) {
+                print("    Text preview: \(String(decompressedText.prefix(100)))...")
+            } else {
+                print("    Text preview: Unable to decode as UTF-8")
+            }
+            
+            // Additional integrity checks
+            if !integrity {
+                print("    🔍 Integrity analysis:")
+                print("      Original size: \(originalData.count) bytes")
+                print("      Decompressed size: \(decompressedData.count) bytes")
+                
+                if decompressedData.count == originalData.count {
+                    // Same size but different content - check where they differ
+                    var differences = 0
+                    for i in 0..<min(originalData.count, decompressedData.count) {
+                        if originalData[i] != decompressedData[i] {
+                            differences += 1
+                            if differences <= 5 { // Show first 5 differences
+                                print("      Diff at byte \(i): \(originalData[i]) → \(decompressedData[i])")
+                            }
+                        }
+                    }
+                    print("      Total differences: \(differences) bytes")
+                } else {
+                    print("      Size mismatch - truncated or corrupted data")
+                }
+            }
+            
+        } catch {
+            print("    Decompression: ❌ ERROR - \(error.localizedDescription)")
         }
         
         // Protocol Buffers + Compression benchmark
@@ -617,23 +648,35 @@ struct BinaryDataExample {
         }
     }
     
-    private static func decompressData(_ data: Data, algorithm: compression_algorithm) throws -> Data {
+    private static func decompressData(_ data: Data, algorithm: compression_algorithm, originalSize: Int) throws -> Data {
         return try data.withUnsafeBytes { bytes in
-            let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: data.count * 4) // Assume 4x expansion
+            // Use original size + some buffer for safety
+            let bufferSize = max(originalSize * 2, data.count * 8) // Generous buffer
+            let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
             defer { buffer.deallocate() }
             
             let decompressedSize = compression_decode_buffer(
-                buffer, data.count * 4,
+                buffer, bufferSize,
                 bytes.bindMemory(to: UInt8.self).baseAddress!, data.count,
                 nil, algorithm
             )
             
             guard decompressedSize > 0 else {
-                throw NSError(domain: "Decompression", code: 1, userInfo: [NSLocalizedDescriptionKey: "Decompression failed"])
+                throw NSError(domain: "Decompression", code: 1, userInfo: [
+                    NSLocalizedDescriptionKey: "Decompression failed",
+                    "CompressedSize": data.count,
+                    "BufferSize": bufferSize,
+                    "Algorithm": String(describing: algorithm)
+                ])
             }
             
             return Data(bytes: buffer, count: decompressedSize)
         }
+    }
+    
+    // Legacy method for backward compatibility
+    private static func decompressData(_ data: Data, algorithm: compression_algorithm) throws -> Data {
+        return try decompressData(data, algorithm: algorithm, originalSize: data.count * 4)
     }
 }
 
