@@ -246,5 +246,39 @@ let package = Package(
             exclude: ["type-registry.swift", "file-loading.swift", "dependency-resolution.swift"],
             sources: ["schema-validation.swift"]
         ),
+        
+        // 05-well-known-types examples
+        .executableTarget(
+            name: "TimestampDemo",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "05-well-known-types",
+            exclude: ["duration-demo.swift", "empty-demo.swift"],
+            sources: ["timestamp-demo.swift"]
+        ),
+        
+        .executableTarget(
+            name: "DurationDemo",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "05-well-known-types",
+            exclude: ["timestamp-demo.swift", "empty-demo.swift"],
+            sources: ["duration-demo.swift"]
+        ),
+        
+        .executableTarget(
+            name: "EmptyDemo",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "05-well-known-types",
+            exclude: ["timestamp-demo.swift", "duration-demo.swift"],
+            sources: ["empty-demo.swift"]
+        ),
     ]
 )

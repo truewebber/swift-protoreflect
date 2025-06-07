@@ -193,6 +193,51 @@ public enum ExampleUtils {
         }
     }
     
+    /// Создает таблицу из массива словарей (для табличных данных)
+    public static func printDataTable(_ data: [[String: String]], title: String? = nil) {
+        guard !data.isEmpty else {
+            if let title = title {
+                print("\n\u{001B}[37m📋 \(title): (empty)\u{001B}[0m")
+            }
+            return
+        }
+        
+        if let title = title {
+            print("\n\u{001B}[37m📋 \(title):\u{001B}[0m")
+        }
+        
+        // Найти все уникальные ключи и их максимальные длины
+        let allKeys = Set(data.flatMap { $0.keys })
+        let sortedKeys = allKeys.sorted()
+        
+        var columnWidths: [String: Int] = [:]
+        for key in sortedKeys {
+            let maxValueLength = data.compactMap { $0[key]?.count }.max() ?? 0
+            columnWidths[key] = max(key.count, maxValueLength, 5) // минимум 5 символов
+        }
+        
+        // Печать заголовка
+        let headerLine = sortedKeys.map { key in
+            key.padding(toLength: columnWidths[key]!, withPad: " ", startingAt: 0)
+        }.joined(separator: " │ ")
+        print("  \u{001B}[1;36m\(headerLine)\u{001B}[0m")
+        
+        // Печать разделителя
+        let separatorLine = sortedKeys.map { key in
+            String(repeating: "─", count: columnWidths[key]!)
+        }.joined(separator: "─┼─")
+        print("  \u{001B}[36m\(separatorLine)\u{001B}[0m")
+        
+        // Печать данных
+        for row in data {
+            let dataLine = sortedKeys.map { key in
+                let value = row[key] ?? ""
+                return value.padding(toLength: columnWidths[key]!, withPad: " ", startingAt: 0)
+            }.joined(separator: " │ ")
+            print("  \(dataLine)")
+        }
+    }
+    
     // MARK: - Validation Helpers
     
     /// Проверяет равенство двух значений с подробным выводом
