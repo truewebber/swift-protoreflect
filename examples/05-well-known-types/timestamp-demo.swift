@@ -14,9 +14,7 @@
  * - Round-trip совместимость
  * 
  * Запуск: 
- *   make run-wellknown
  *   swift run TimestampDemo
- *   swift -I ../.build/release -L ../.build/release -lSwiftProtoReflect timestamp-demo.swift
  */
 
 import Foundation

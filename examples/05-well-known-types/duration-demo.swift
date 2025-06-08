@@ -15,9 +15,7 @@
  * - Валидация seconds/nanos полей
  * 
  * Запуск: 
- *   make run-wellknown
  *   swift run DurationDemo
- *   swift -I ../.build/release -L ../.build/release -lSwiftProtoReflect duration-demo.swift
  */
 
 import Foundation

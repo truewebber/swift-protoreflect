@@ -16,7 +16,6 @@
  * 
  * Запуск: 
  *   swift run FieldManipulation
- *   make run-dynamic
  */
 
 import Foundation

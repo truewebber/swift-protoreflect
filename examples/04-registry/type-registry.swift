@@ -1,5 +1,3 @@
-#!/usr/bin/env swift
-
 /**
  * SwiftProtoReflect Type Registry Example
  * 

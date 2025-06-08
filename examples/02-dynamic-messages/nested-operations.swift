@@ -15,7 +15,6 @@
  * 
  * Запуск: 
  *   swift run NestedOperations
- *   make run-dynamic
  */
 
 import Foundation

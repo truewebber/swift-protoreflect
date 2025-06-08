@@ -16,7 +16,6 @@
  * 
  * Запуск: 
  *   swift run BinaryData
- *   make run-serialization
  */
 
 import Foundation

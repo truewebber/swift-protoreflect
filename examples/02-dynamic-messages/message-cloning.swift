@@ -16,7 +16,6 @@
  * 
  * Запуск: 
  *   swift run MessageCloning
- *   make run-dynamic
  */
 
 import Foundation

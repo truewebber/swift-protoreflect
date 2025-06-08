@@ -16,7 +16,6 @@
  * 
  * Запуск: 
  *   swift run ConditionalLogic
- *   make run-dynamic
  */
 
 import Foundation

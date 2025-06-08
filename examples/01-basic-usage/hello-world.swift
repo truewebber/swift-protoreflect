@@ -15,7 +15,6 @@
  * 
  * Запуск: 
  *   swift run HelloWorld
- *   make run-basic
  */
 
 import Foundation

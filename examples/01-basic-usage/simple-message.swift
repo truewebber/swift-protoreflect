@@ -15,7 +15,6 @@
  * 
  * Запуск: 
  *   swift run SimpleMessage
- *   make run-basic
  */
 
 import Foundation

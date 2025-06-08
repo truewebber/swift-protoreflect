@@ -1,5 +1,3 @@
-#!/usr/bin/env swift
-
 /**
  * performance-optimization.swift
  * 

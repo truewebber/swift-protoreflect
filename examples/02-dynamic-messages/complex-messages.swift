@@ -15,7 +15,6 @@
  * 
  * Запуск: 
  *   swift run ComplexMessages
- *   make run-dynamic
  */
 
 import Foundation

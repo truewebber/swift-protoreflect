@@ -16,7 +16,6 @@
  * 
  * Запуск: 
  *   swift run JsonConversion
- *   make run-serialization
  */
 
 import Foundation

@@ -16,7 +16,6 @@
  * 
  * Запуск: 
  *   swift run Streaming
- *   make run-serialization
  */
 
 import Foundation

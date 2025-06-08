@@ -15,9 +15,7 @@
  * - Unit type семантика
  * 
  * Запуск: 
- *   make run-wellknown
  *   swift run EmptyDemo
- *   swift -I ../.build/release -L ../.build/release -lSwiftProtoReflect empty-demo.swift
  */
 
 import Foundation

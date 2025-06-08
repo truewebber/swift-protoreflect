@@ -15,7 +15,6 @@
  * 
  * Запуск: 
  *   swift run NestedTypes
- *   make run-dynamic
  */
 
 import Foundation

@@ -15,7 +15,6 @@
  * 
  * Запуск: 
  *   swift run BasicDescriptors
- *   make run-basic
  */
 
 import Foundation

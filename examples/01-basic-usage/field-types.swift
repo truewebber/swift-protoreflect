@@ -15,7 +15,6 @@
  * 
  * Запуск: 
  *   swift run FieldTypes
- *   make run-basic
  */
 
 import Foundation

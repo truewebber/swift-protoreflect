@@ -15,9 +15,7 @@
  * - Real-world сценарии использования FieldMask
  * 
  * Запуск: 
- *   make run-wellknown
  *   swift run FieldMaskDemo
- *   swift -I ../.build/release -L ../.build/release -lSwiftProtoReflect field-mask-demo.swift
  */
 
 import Foundation

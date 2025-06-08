@@ -16,7 +16,6 @@
  * 
  * Запуск: 
  *   swift run ProtobufSerialization
- *   make run-serialization
  */
 
 import Foundation
