@@ -216,7 +216,7 @@
   - Performance анализ (590K+ round-trips/sec)
   - Успешно запускается: `swift run EmptyDemo`
 
-- ✅ **field-mask-demo.swift** - ПОЛНОСТЬЮ РАБОТАЕТ ✨ (05-well-known-types) (НОВОЕ!)
+- ✅ **field-mask-demo.swift** - ПОЛНОСТЬЮ РАБОТАЕТ ✨ (05-well-known-types)
   - Работа с google.protobuf.FieldMask для partial updates и field filtering
   - Set операции с масками (union, intersection, covers, adding, removing)
   - Валидация путей полей с comprehensive path notation тестированием
@@ -226,6 +226,44 @@
   - Performance analysis с benchmarks для различных размеров масок (до 500+ путей)
   - Comprehensive демонстрация всех техник FieldMask (827 строк кода)
   - Успешно запускается: `swift run FieldMaskDemo`
+
+- ✅ **struct-demo.swift** - ПОЛНОСТЬЮ РАБОТАЕТ ✨ (05-well-known-types)
+  - Работа с google.protobuf.Struct для динамических JSON-like структур
+  - Конвертация между Dictionary<String, Any> и StructValue с seamless интеграцией
+  - Поддержка всех типов ValueValue (null, number, string, bool, struct, list)
+  - Сложные вложенные структуры и deep navigation через multiple levels
+  - Struct операции: adding, removing, merging с immutable semantics
+  - Round-trip compatibility testing с comprehensive integrity проверками
+  - Performance benchmarking (2001 operations/sec, < 1ms для типичных размеров)
+  - Real-world сценарии и edge cases handling
+  - Comprehensive демонстрация всех техник Struct (424 строки кода)
+  - Успешно запускается: `swift run StructDemo`
+
+- ✅ **value-demo.swift** - ПОЛНОСТЬЮ РАБОТАЕТ ✨ (05-well-known-types)
+  - Работа с google.protobuf.Value для универсальных динамических значений
+  - Конвертация между произвольными Swift типами и ValueValue enum
+  - Type switching и pattern matching для различных типов значений (null, number, string, bool, list, struct)
+  - Comprehensive numeric type conversions (Int8-UInt64, Float, Double)
+  - Edge cases handling и JSON serialization challenges 
+  - DynamicMessage integration через valueMessage() и toAnyValue() extensions
+  - Round-trip compatibility testing (10/10 tests passed, ✅ EXCELLENT)
+  - Performance benchmarking (82K+ ops/sec для простых значений, < 30μs average)
+  - Conditional processing и batch operations примеры
+  - Comprehensive демонстрация всех техник Value (330 строк кода)
+  - Успешно запускается: `swift run ValueDemo`
+
+- ✅ **any-demo.swift** - ПОЛНОСТЬЮ РАБОТАЕТ ✨ (05-well-known-types) 🎉 НОВОЕ!
+  - Работа с google.protobuf.Any для type erasure и упаковки произвольных сообщений
+  - Упаковка и распаковка произвольных сообщений в универсальный контейнер
+  - Type URL management и создание корректных URL для типов
+  - Type erasure patterns и dynamic type handling
+  - TypeRegistry integration для автоматического разрешения типов
+  - Convenience extensions для DynamicMessage (packIntoAny, unpackFromAny, isAnyOf, getAnyTypeName)
+  - Error handling и type safety валидация в runtime
+  - Real-world сценарии: API Gateway routing, Event sourcing, microservices
+  - Performance benchmarking (64K+ pack ops/sec, 172K+ unpack ops/sec)
+  - Comprehensive демонстрация всех техник Any (796 строк кода)
+  - Успешно запускается: `swift run AnyDemo`
 
 ## 🚧 Исправленные технические проблемы
 
@@ -288,6 +326,29 @@
     // явное приведение типов для избежания warnings
     ```
 
+    11. ✅ **JSON Serialization edge cases**
+    ```swift
+    // NSJSONSerialization требует top-level объект должен быть Array или Dictionary
+    let jsonObject: Any
+    if anyValue is NSNull || anyValue is String || anyValue is NSNumber || anyValue is Bool {
+        jsonObject = [anyValue] // Оборачиваем примитивы в массив
+    } else {
+        jsonObject = anyValue
+    }
+    ```
+
+    12. ✅ **Type URL validation в AnyHandler**
+    ```swift
+    // БЫЛО: слишком либеральная валидация, принимало '/just.TypeName'
+    guard typeUrl.contains("/") else { return false }
+
+    // СТАЛО: требует proper domain формат
+    guard let slashIndex = typeUrl.lastIndex(of: "/") else { return false }
+    guard slashIndex != typeUrl.startIndex else { return false } // не может начинаться с "/"
+    let domain = String(typeUrl[..<slashIndex])
+    guard !domain.isEmpty && domain.contains(".") else { return false } // домен должен содержать точку
+    ```
+
 ## 📊 Прогресс
 
 ### По категориям
@@ -318,21 +379,21 @@
   - ✅ dependency-resolution.swift ✨ (Разрешение зависимостей)
   - ✅ schema-validation.swift ✨ (Валидация схем)
 
-- ⭐ **05-well-known-types**: 4/8 готово (50%) 🔄 В РАЗРАБОТКЕ
+- ⭐ **05-well-known-types**: 7/8 готово (87.5%) 🔄 В РАЗРАБОТКЕ
   - ✅ timestamp-demo.swift ✨ (google.protobuf.Timestamp)
   - ✅ duration-demo.swift ✨ (google.protobuf.Duration)
   - ✅ empty-demo.swift ✨ (google.protobuf.Empty)
   - ✅ field-mask-demo.swift ✨ (google.protobuf.FieldMask)
-  - ⏭ struct-demo.swift (google.protobuf.Struct)
-  - ⏭ value-demo.swift (google.protobuf.Value)
-  - ⏭ any-demo.swift (google.protobuf.Any)
+  - ✅ struct-demo.swift ✨ (google.protobuf.Struct)
+  - ✅ value-demo.swift ✨ (google.protobuf.Value)
+  - ✅ any-demo.swift ✨ (google.protobuf.Any) 🎉 НОВОЕ!
   - ⏭ well-known-registry.swift (Integration demo)
 
 - 🌐 **06-grpc**: 0/5 готово (0%) 📋 ПЛАНИРУЕТСЯ
 - 🚀 **07-advanced**: 0/6 готово (0%) 📋 ПЛАНИРУЕТСЯ  
 - 🏢 **08-real-world**: 0/5 готово (0%) 📋 ПЛАНИРУЕТСЯ
 
-### Общий прогресс: 53.5% (23/43 готово) ⬆️ 🚀
+### Общий прогресс: 60.5% (26/43 готово) ⬆️ 🚀
 
 ## 🛠 Технические решения
 
@@ -410,15 +471,15 @@ ExampleUtils.printTable(data, title: "Table")
 - ✅ **dependency-resolution.swift** - разрешение зависимостей ✨
 - ✅ **schema-validation.swift** - валидация схем ✨
 
-### 🔄 В РАЗРАБОТКЕ: Категория 05-well-known-types (4/8 примеров готово!)
+### 🔄 В РАЗРАБОТКЕ: Категория 05-well-known-types (7/8 примеров готово!)
 - ✅ **timestamp-demo.swift** - google.protobuf.Timestamp с наносекундной точностью ✨
 - ✅ **duration-demo.swift** - google.protobuf.Duration с отрицательными интервалами ✨
 - ✅ **empty-demo.swift** - google.protobuf.Empty с singleton pattern ✨
-- ✅ **field-mask-demo.swift** - google.protobuf.FieldMask для partial updates ✨ (ЗАВЕРШЕНО!)
-- 🚧 **struct-demo.swift** - google.protobuf.Struct для JSON-like структур (СЛЕДУЮЩИЙ)
-- ⏭ **value-demo.swift** - google.protobuf.Value для dynamic values
-- ⏭ **any-demo.swift** - google.protobuf.Any для type erasure
-- ⏭ **well-known-registry.swift** - comprehensive integration demo
+- ✅ **field-mask-demo.swift** - google.protobuf.FieldMask для partial updates ✨
+- ✅ **struct-demo.swift** - google.protobuf.Struct для JSON-like структур ✨
+- ✅ **value-demo.swift** - google.protobuf.Value для dynamic values ✨
+- ✅ **any-demo.swift** - google.protobuf.Any для type erasure ✨ (ЗАВЕРШЕНО!)
+- 🚧 **well-known-registry.swift** - comprehensive integration demo (СЛЕДУЮЩИЙ)
 
 ### Приоритет 3: gRPC интеграция (06-grpc, 5 примеров)
 - **grpc-integration.swift** - интеграция с gRPC сервисами
@@ -496,7 +557,7 @@ swift run SchemaValidation          # Валидация схем ✨
 
 ```
 
-**🔄 КАТЕГОРИЯ 05-WELL-KNOWN-TYPES В РАЗРАБОТКЕ! 4/8 примеров готово:**
+**🔄 КАТЕГОРИЯ 05-WELL-KNOWN-TYPES В РАЗРАБОТКЕ! 7/8 примеров готово:**
 
 ```bash
 cd examples
@@ -505,16 +566,16 @@ cd examples
 swift run TimestampDemo             # google.protobuf.Timestamp ✨
 swift run DurationDemo              # google.protobuf.Duration ✨
 swift run EmptyDemo                 # google.protobuf.Empty ✨
-swift run FieldMaskDemo             # google.protobuf.FieldMask ✨ (НОВОЕ!)
-# swift run StructDemo              # google.protobuf.Struct (следующий)
-# swift run ValueDemo               # google.protobuf.Value (планируется)
-# swift run AnyDemo                 # google.protobuf.Any (планируется)
-# swift run WellKnownRegistry       # Integration demo (планируется)
+swift run FieldMaskDemo             # google.protobuf.FieldMask ✨
+swift run StructDemo                # google.protobuf.Struct ✨
+swift run ValueDemo                 # google.protobuf.Value ✨
+swift run AnyDemo                   # google.protobuf.Any ✨ (НОВОЕ!)
+# swift run WellKnownRegistry       # Integration demo (следующий)
 
 
 ```
 
-Результат: 23 красивых интерактивных примеров с пошаговым выполнением и цветным выводом! ✨
+Результат: 26 красивых интерактивных примеров с пошаговым выполнением и цветным выводом! ✨
 
 **Каждый пример демонстрирует:**
 - 📚 Теоретические концепции с практикой
@@ -525,22 +586,23 @@ swift run FieldMaskDemo             # google.protobuf.FieldMask ✨ (НОВОЕ!
 
 ---
 
-**Время реализации**: ~32 часа  
+**Время реализации**: ~38 часов  
 **Статус**: 🏆 ЧЕТЫРЕ КАТЕГОРИИ ПОЛНОСТЬЮ ЗАВЕРШЕНЫ + ПЯТАЯ В РАЗРАБОТКЕ!  
-**Следующая сессия**: Продолжить 05-well-known-types - struct-demo.swift
+**Следующая сессия**: Продолжить 05-well-known-types - any-demo.swift
 
 **🎖 Достижения:**
 - ✅ 100% завершение категории 01-basic-usage (4/4 примера)
 - ✅ 100% завершение категории 02-dynamic-messages (6/6 примеров) 🎉
 - ✅ 100% завершение категории 03-serialization (5/5 примеров) 🎉
 - ✅ 100% завершение категории 04-registry (4/4 примера) 🎉
-- 🔄 50% завершение категории 05-well-known-types (4/8 примеров) ⚡ (УЛУЧШЕНО!)
+- 🔄 87.5% завершение категории 05-well-known-types (7/8 примеров) ⚡ (НОВОЕ УЛУЧШЕНИЕ!)
 - ✅ Comprehensive покрытие API SwiftProtoReflect 
 - ✅ Красивый UI/UX для всех примеров
 - ✅ Reliable инфраструктура для масштабирования
-- ✅ Google Well-Known Types интеграция (Timestamp, Duration, Empty, FieldMask)
+- ✅ Google Well-Known Types интеграция (Timestamp, Duration, Empty, FieldMask, Struct, Value, Any)
 - ✅ Performance benchmarking во всех примеров
 - ✅ Real-world use cases и practical демонстрации
 - ✅ Подробная документация и статусы
 - ✅ Исправлены все compiler issues и warnings
-- ✅ 53.5% общего прогресса проекта! 🚀 (НОВОЕ ДОСТИЖЕНИЕ!)
+- ✅ Type URL validation fix в AnyHandler для Protocol Buffers compliance
+- ✅ 60.5% общего прогресса проекта! 🚀 (НОВОЕ ДОСТИЖЕНИЕ!)

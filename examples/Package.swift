@@ -255,7 +255,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "05-well-known-types",
-            exclude: ["duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift"],
+            exclude: ["duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift", "any-demo.swift"],
             sources: ["timestamp-demo.swift"]
         ),
         
@@ -266,7 +266,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "05-well-known-types",
-            exclude: ["timestamp-demo.swift", "empty-demo.swift", "field-mask-demo.swift"],
+            exclude: ["timestamp-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift", "any-demo.swift"],
             sources: ["duration-demo.swift"]
         ),
         
@@ -277,7 +277,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "05-well-known-types",
-            exclude: ["timestamp-demo.swift", "duration-demo.swift", "field-mask-demo.swift"],
+            exclude: ["timestamp-demo.swift", "duration-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift", "any-demo.swift"],
             sources: ["empty-demo.swift"]
         ),
         
@@ -288,8 +288,41 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "05-well-known-types",
-            exclude: ["timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift"],
+            exclude: ["timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "struct-demo.swift", "value-demo.swift", "any-demo.swift"],
             sources: ["field-mask-demo.swift"]
+        ),
+        
+        .executableTarget(
+            name: "StructDemo",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "05-well-known-types",
+            exclude: ["timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "value-demo.swift", "any-demo.swift"],
+            sources: ["struct-demo.swift"]
+        ),
+        
+        .executableTarget(
+            name: "ValueDemo",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "05-well-known-types",
+            exclude: ["timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "any-demo.swift"],
+            sources: ["value-demo.swift"]
+        ),
+        
+        .executableTarget(
+            name: "AnyDemo",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "05-well-known-types",
+            exclude: ["timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift"],
+            sources: ["any-demo.swift"]
         ),
     ]
 )
