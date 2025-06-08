@@ -255,7 +255,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "05-well-known-types",
-            exclude: ["duration-demo.swift", "empty-demo.swift"],
+            exclude: ["duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift"],
             sources: ["timestamp-demo.swift"]
         ),
         
@@ -266,7 +266,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "05-well-known-types",
-            exclude: ["timestamp-demo.swift", "empty-demo.swift"],
+            exclude: ["timestamp-demo.swift", "empty-demo.swift", "field-mask-demo.swift"],
             sources: ["duration-demo.swift"]
         ),
         
@@ -277,8 +277,19 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "05-well-known-types",
-            exclude: ["timestamp-demo.swift", "duration-demo.swift"],
+            exclude: ["timestamp-demo.swift", "duration-demo.swift", "field-mask-demo.swift"],
             sources: ["empty-demo.swift"]
+        ),
+        
+        .executableTarget(
+            name: "FieldMaskDemo",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "05-well-known-types",
+            exclude: ["timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift"],
+            sources: ["field-mask-demo.swift"]
         ),
     ]
 )

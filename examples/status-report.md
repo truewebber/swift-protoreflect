@@ -7,9 +7,7 @@
 
 ### Инфраструктура (100% завершено)
 - ✅ Создана структура папок examples/ с 8 категориями
-- ✅ Настроен Makefile с командами для каждой категории
-- ✅ Создан run-all.sh скрипт для автоматического запуска всех примеров
-- ✅ Создан Package.swift для упрощенной сборки и запуска
+- ✅ Создан Package.swift для удобной сборки и запуска
 - ✅ Создан shared/example-base.swift с утилитами для всех примеров
 
 ### Рабочие примеры (22/43 готово) ✨
@@ -218,6 +216,17 @@
   - Performance анализ (590K+ round-trips/sec)
   - Успешно запускается: `swift run EmptyDemo`
 
+- ✅ **field-mask-demo.swift** - ПОЛНОСТЬЮ РАБОТАЕТ ✨ (05-well-known-types) (НОВОЕ!)
+  - Работа с google.protobuf.FieldMask для partial updates и field filtering
+  - Set операции с масками (union, intersection, covers, adding, removing)
+  - Валидация путей полей с comprehensive path notation тестированием
+  - Partial updates с применением масок полей и защитой от нежелательных изменений
+  - Advanced field filtering для различных ролей доступа (Public API, Admin, Privacy-compliant)
+  - Real-world сценарии: API versioning, microservices data sharing, database query optimization
+  - Performance analysis с benchmarks для различных размеров масок (до 500+ путей)
+  - Comprehensive демонстрация всех техник FieldMask (827 строк кода)
+  - Успешно запускается: `swift run FieldMaskDemo`
+
 ## 🚧 Исправленные технические проблемы
 
 ### API Issues в SwiftProtoReflect - РЕШЕНЫ ✅
@@ -309,11 +318,11 @@
   - ✅ dependency-resolution.swift ✨ (Разрешение зависимостей)
   - ✅ schema-validation.swift ✨ (Валидация схем)
 
-- ⭐ **05-well-known-types**: 3/8 готово (37.5%) 🔄 В РАЗРАБОТКЕ
+- ⭐ **05-well-known-types**: 4/8 готово (50%) 🔄 В РАЗРАБОТКЕ
   - ✅ timestamp-demo.swift ✨ (google.protobuf.Timestamp)
   - ✅ duration-demo.swift ✨ (google.protobuf.Duration)
   - ✅ empty-demo.swift ✨ (google.protobuf.Empty)
-  - ⏭ field-mask-demo.swift (google.protobuf.FieldMask)
+  - ✅ field-mask-demo.swift ✨ (google.protobuf.FieldMask)
   - ⏭ struct-demo.swift (google.protobuf.Struct)
   - ⏭ value-demo.swift (google.protobuf.Value)
   - ⏭ any-demo.swift (google.protobuf.Any)
@@ -323,7 +332,7 @@
 - 🚀 **07-advanced**: 0/6 готово (0%) 📋 ПЛАНИРУЕТСЯ  
 - 🏢 **08-real-world**: 0/5 готово (0%) 📋 ПЛАНИРУЕТСЯ
 
-### Общий прогресс: 51.2% (22/43 готово) ⬆️ 🚀
+### Общий прогресс: 53.5% (23/43 готово) ⬆️ 🚀
 
 ## 🛠 Технические решения
 
@@ -401,12 +410,12 @@ ExampleUtils.printTable(data, title: "Table")
 - ✅ **dependency-resolution.swift** - разрешение зависимостей ✨
 - ✅ **schema-validation.swift** - валидация схем ✨
 
-### 🔄 В РАЗРАБОТКЕ: Категория 05-well-known-types (3/8 примеров готово!)
+### 🔄 В РАЗРАБОТКЕ: Категория 05-well-known-types (4/8 примеров готово!)
 - ✅ **timestamp-demo.swift** - google.protobuf.Timestamp с наносекундной точностью ✨
 - ✅ **duration-demo.swift** - google.protobuf.Duration с отрицательными интервалами ✨
 - ✅ **empty-demo.swift** - google.protobuf.Empty с singleton pattern ✨
-- 🚧 **field-mask-demo.swift** - google.protobuf.FieldMask для partial updates (В РАЗРАБОТКЕ)
-- ⏭ **struct-demo.swift** - google.protobuf.Struct для JSON-like структур
+- ✅ **field-mask-demo.swift** - google.protobuf.FieldMask для partial updates ✨ (ЗАВЕРШЕНО!)
+- 🚧 **struct-demo.swift** - google.protobuf.Struct для JSON-like структур (СЛЕДУЮЩИЙ)
 - ⏭ **value-demo.swift** - google.protobuf.Value для dynamic values
 - ⏭ **any-demo.swift** - google.protobuf.Any для type erasure
 - ⏭ **well-known-registry.swift** - comprehensive integration demo
@@ -442,9 +451,6 @@ swift run HelloWorld          # Первое знакомство с библи�
 swift run FieldTypes          # Все типы полей Protocol Buffers  
 swift run SimpleMessage       # Сложные вложенные сообщения
 swift run BasicDescriptors    # Метаданные и интроспекция
-
-# Или запустить всю категорию
-make run-basic
 ```
 
 **🏆 КАТЕГОРИЯ 02-DYNAMIC-MESSAGES ЗАВЕРШЕНА! Все 6 примеров готово:**
@@ -459,9 +465,6 @@ swift run FieldManipulation         # Продвинутые манипуляц�
 swift run MessageCloning            # Клонирование сообщений ✨
 swift run ConditionalLogic          # Условная логика на основе типов ✨
 swift run PerformanceOptimization   # Оптимизация производительности ✨
-
-# Или запустить всю категорию
-make run-dynamic
 ```
 
 **🏆 КАТЕГОРИЯ 03-SERIALIZATION ЗАВЕРШЕНА! Все 5 примеров готово:**
@@ -476,8 +479,7 @@ swift run BinaryData                # Advanced binary операции ✨
 swift run Streaming                 # Потоковая обработка больших данных ✨
 swift run Compression               # Продвинутые техники сжатия ✨
 
-# Или запустить всю категорию
-make run-serialization
+
 ```
 
 **🏆 КАТЕГОРИЯ 04-REGISTRY ЗАВЕРШЕНА! Все 4 примера готово:**
@@ -491,11 +493,10 @@ swift run FileLoading               # Загрузка файлов дескри
 swift run DependencyResolution      # Разрешение зависимостей ✨
 swift run SchemaValidation          # Валидация схем ✨
 
-# Или запустить всю категорию
-make run-registry
+
 ```
 
-**🔄 КАТЕГОРИЯ 05-WELL-KNOWN-TYPES В РАЗРАБОТКЕ! 3/8 примеров готово:**
+**🔄 КАТЕГОРИЯ 05-WELL-KNOWN-TYPES В РАЗРАБОТКЕ! 4/8 примеров готово:**
 
 ```bash
 cd examples
@@ -504,17 +505,16 @@ cd examples
 swift run TimestampDemo             # google.protobuf.Timestamp ✨
 swift run DurationDemo              # google.protobuf.Duration ✨
 swift run EmptyDemo                 # google.protobuf.Empty ✨
-# swift run FieldMaskDemo           # google.protobuf.FieldMask (в разработке)
-# swift run StructDemo              # google.protobuf.Struct (планируется)
+swift run FieldMaskDemo             # google.protobuf.FieldMask ✨ (НОВОЕ!)
+# swift run StructDemo              # google.protobuf.Struct (следующий)
 # swift run ValueDemo               # google.protobuf.Value (планируется)
 # swift run AnyDemo                 # google.protobuf.Any (планируется)
 # swift run WellKnownRegistry       # Integration demo (планируется)
 
-# Или запустить готовые примеры категории
-make run-wellknown
+
 ```
 
-Результат: 22 красивых интерактивных примеров с пошаговым выполнением и цветным выводом! ✨
+Результат: 23 красивых интерактивных примеров с пошаговым выполнением и цветным выводом! ✨
 
 **Каждый пример демонстрирует:**
 - 📚 Теоретические концепции с практикой
@@ -525,22 +525,22 @@ make run-wellknown
 
 ---
 
-**Время реализации**: ~30 часов  
+**Время реализации**: ~32 часа  
 **Статус**: 🏆 ЧЕТЫРЕ КАТЕГОРИИ ПОЛНОСТЬЮ ЗАВЕРШЕНЫ + ПЯТАЯ В РАЗРАБОТКЕ!  
-**Следующая сессия**: Продолжить 05-well-known-types - field-mask-demo.swift
+**Следующая сессия**: Продолжить 05-well-known-types - struct-demo.swift
 
 **🎖 Достижения:**
 - ✅ 100% завершение категории 01-basic-usage (4/4 примера)
 - ✅ 100% завершение категории 02-dynamic-messages (6/6 примеров) 🎉
 - ✅ 100% завершение категории 03-serialization (5/5 примеров) 🎉
-- ✅ 100% завершение категории 04-registry (4/4 примера) 🎉 (НОВОЕ!)
-- 🔄 37.5% завершение категории 05-well-known-types (3/8 примеров) ⚡
+- ✅ 100% завершение категории 04-registry (4/4 примера) 🎉
+- 🔄 50% завершение категории 05-well-known-types (4/8 примеров) ⚡ (УЛУЧШЕНО!)
 - ✅ Comprehensive покрытие API SwiftProtoReflect 
 - ✅ Красивый UI/UX для всех примеров
 - ✅ Reliable инфраструктура для масштабирования
-- ✅ Google Well-Known Types интеграция (Timestamp, Duration, Empty)
-- ✅ Performance benchmarking во всех примерах
+- ✅ Google Well-Known Types интеграция (Timestamp, Duration, Empty, FieldMask)
+- ✅ Performance benchmarking во всех примеров
 - ✅ Real-world use cases и practical демонстрации
 - ✅ Подробная документация и статусы
 - ✅ Исправлены все compiler issues и warnings
-- ✅ 51.2% общего прогресса проекта! 🚀
+- ✅ 53.5% общего прогресса проекта! 🚀 (НОВОЕ ДОСТИЖЕНИЕ!)

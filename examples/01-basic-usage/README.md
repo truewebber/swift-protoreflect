@@ -18,11 +18,11 @@
 - Основы работы с TypeRegistry
 
 ```bash
-# Запуск
-make run-basic
-# или
-./hello-world.swift
-# или
+# Запуск через Package.swift (рекомендуемый)
+cd examples
+swift run HelloWorld
+
+# Или прямой запуск скрипта (если нужна отладка)
 swift -I ../.build/release -L ../.build/release -lSwiftProtoReflect hello-world.swift
 ```
 
@@ -38,7 +38,11 @@ Comprehensive демонстрация всех типов полей Protocol B
 - Валидация типов полей
 
 ```bash
-# Запуск
+# Запуск через Package.swift (рекомендуемый)
+cd examples
+swift run FieldTypes
+
+# Или прямой запуск скрипта (если нужна отладка)
 swift -I ../.build/release -L ../.build/release -lSwiftProtoReflect field-types.swift
 ```
 
@@ -64,29 +68,31 @@ swift -I ../.build/release -L ../.build/release -lSwiftProtoReflect field-types.
 
 ## 🚀 Быстрый запуск
 
-### Автоматический запуск всех примеров категории
+### Запуск примеров через Package.swift (рекомендуемый)
 ```bash
-make run-basic
+cd examples
+
+# Первый пример
+swift run HelloWorld
+
+# Типы полей
+swift run FieldTypes
 ```
 
-### Запуск конкретного примера
+### Прямой запуск скрипта (для отладки)
 ```bash
-make check-example EXAMPLE=01-basic-usage/hello-world.swift
-```
-
-### Прямой запуск
-```bash
-# Сначала соберите библиотеку (если еще не собрана)
-make setup
+# Сначала соберите основную библиотеку (если еще не собрана)
+cd ../.. && swift build -c release
 
 # Затем запустите пример
+cd examples
 swift -I ../.build/release -L ../.build/release -lSwiftProtoReflect 01-basic-usage/hello-world.swift
 ```
 
 ## 📋 Требования
 
 - Swift 6.0+
-- SwiftProtoReflect библиотека (собирается автоматически через `make setup`)
+- SwiftProtoReflect библиотека (собирается автоматически через Swift Package Manager)
 - macOS 14.0+ или Linux с Swift runtime
 
 ## 🎯 Рекомендуемый порядок изучения
@@ -107,21 +113,22 @@ swift -I ../.build/release -L ../.build/release -lSwiftProtoReflect 01-basic-usa
 
 ```bash
 # Посмотреть все доступные примеры
-make list-examples
+find . -name "*.swift" -path "./01-basic-usage/*" | sort
 
-# Проверить статистику примеров
-make stats
+# Очистить build кеш
+swift package clean
 
-# Получить справку
-make help
+# Проверить версию Swift
+swift --version
 ```
 
 ## 🐛 Troubleshooting
 
 ### Ошибка: "Library not found"
 ```bash
-# Решение: соберите библиотеку
-make setup
+# Решение: убедитесь что вы в папке examples/
+cd examples
+swift build
 ```
 
 ### Ошибка: "Swift not found"
@@ -130,10 +137,11 @@ make setup
 swift --version
 ```
 
-### Ошибка: "Permission denied"
+### Ошибка: "No such target 'HelloWorld'"
 ```bash
-# Сделайте файл исполняемым
-chmod +x 01-basic-usage/hello-world.swift
+# Убедитесь что вы в папке examples/ и Package.swift существует
+ls -la Package.swift
+swift package describe
 ```
 
 ## 📚 Дополнительные ресурсы
