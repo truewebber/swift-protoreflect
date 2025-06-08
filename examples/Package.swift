@@ -255,7 +255,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "05-well-known-types",
-            exclude: ["duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift", "any-demo.swift"],
+            exclude: ["well-known-registry.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift", "any-demo.swift"],
             sources: ["timestamp-demo.swift"]
         ),
         
@@ -266,7 +266,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "05-well-known-types",
-            exclude: ["timestamp-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift", "any-demo.swift"],
+            exclude: ["well-known-registry.swift", "timestamp-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift", "any-demo.swift"],
             sources: ["duration-demo.swift"]
         ),
         
@@ -277,7 +277,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "05-well-known-types",
-            exclude: ["timestamp-demo.swift", "duration-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift", "any-demo.swift"],
+            exclude: ["well-known-registry.swift", "timestamp-demo.swift", "duration-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift", "any-demo.swift"],
             sources: ["empty-demo.swift"]
         ),
         
@@ -288,7 +288,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "05-well-known-types",
-            exclude: ["timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "struct-demo.swift", "value-demo.swift", "any-demo.swift"],
+            exclude: ["well-known-registry.swift", "timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "struct-demo.swift", "value-demo.swift", "any-demo.swift"],
             sources: ["field-mask-demo.swift"]
         ),
         
@@ -299,7 +299,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "05-well-known-types",
-            exclude: ["timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "value-demo.swift", "any-demo.swift"],
+            exclude: ["well-known-registry.swift", "timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "value-demo.swift", "any-demo.swift"],
             sources: ["struct-demo.swift"]
         ),
         
@@ -310,7 +310,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "05-well-known-types",
-            exclude: ["timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "any-demo.swift"],
+            exclude: ["well-known-registry.swift", "timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "any-demo.swift"],
             sources: ["value-demo.swift"]
         ),
         
@@ -321,8 +321,75 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "05-well-known-types",
-            exclude: ["timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift"],
+            exclude: ["well-known-registry.swift", "timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift", "well-known-registry.swift"],
             sources: ["any-demo.swift"]
+        ),
+        
+        .executableTarget(
+            name: "WellKnownRegistry",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "05-well-known-types",
+            exclude: ["timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift", "any-demo.swift"],
+            sources: ["well-known-registry.swift"]
+        ),
+        
+        // 06-grpc examples
+        .executableTarget(
+            name: "DynamicClient",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "06-grpc",
+            exclude: ["service-discovery.swift", "unary-calls.swift", "error-handling.swift", "metadata-options.swift"],
+            sources: ["dynamic-client.swift"]
+        ),
+        
+        .executableTarget(
+            name: "ServiceDiscovery",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "06-grpc",
+            exclude: ["dynamic-client.swift", "unary-calls.swift", "error-handling.swift", "metadata-options.swift"],
+            sources: ["service-discovery.swift"]
+        ),
+        
+        .executableTarget(
+            name: "UnaryCalls",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "06-grpc",
+            exclude: ["dynamic-client.swift", "service-discovery.swift", "error-handling.swift", "metadata-options.swift"],
+            sources: ["unary-calls.swift"]
+        ),
+        
+        .executableTarget(
+            name: "ErrorHandling",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "06-grpc",
+            exclude: ["dynamic-client.swift", "service-discovery.swift", "unary-calls.swift", "metadata-options.swift"],
+            sources: ["error-handling.swift"]
+        ),
+        
+        .executableTarget(
+            name: "MetadataOptions",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "06-grpc",
+            exclude: ["dynamic-client.swift", "service-discovery.swift", "unary-calls.swift", "error-handling.swift"],
+            sources: ["metadata-options.swift"]
         ),
     ]
 )
