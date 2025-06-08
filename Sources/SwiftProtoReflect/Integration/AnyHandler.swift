@@ -125,14 +125,22 @@ public struct AnyHandler: WellKnownTypeHandler {
       guard !typeUrl.isEmpty else { return false }
       
       // Проверяем что есть хотя бы одна косая черта
-      guard typeUrl.contains("/") else { return false }
+      guard let slashIndex = typeUrl.lastIndex(of: "/") else { return false }
       
-      // Извлекаем имя типа
-      let typeName = extractTypeName(from: typeUrl)
-      guard !typeName.isEmpty else { return false }
+      // Проверяем что есть домен перед косой чертой (не может начинаться с "/")
+      guard slashIndex != typeUrl.startIndex else { return false }
       
-      // Базовая проверка имени типа (должно содержать точку для package.Type)
-      return typeName.contains(".")
+      // Извлекаем домен и имя типа
+      let domain = String(typeUrl[..<slashIndex])
+      let typeName = String(typeUrl[typeUrl.index(after: slashIndex)...])
+      
+      // Домен не должен быть пустым и должен содержать хотя бы одну точку
+      guard !domain.isEmpty && domain.contains(".") else { return false }
+      
+      // Имя типа не должно быть пустым и должно содержать точку для package.Type
+      guard !typeName.isEmpty && typeName.contains(".") else { return false }
+      
+      return true
     }
 
     // MARK: - Equatable

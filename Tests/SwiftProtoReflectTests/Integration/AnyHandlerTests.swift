@@ -77,7 +77,7 @@ final class AnyHandlerTests: XCTestCase {
     let validUrls = [
       "type.googleapis.com/google.protobuf.Duration",
       "custom.domain.com/my.package.Message",
-      "simple/package.Type",
+      "simple.example.com/package.Type",
     ]
 
     for url in validUrls {
@@ -90,6 +90,8 @@ final class AnyHandlerTests: XCTestCase {
       "no-slash", // без косой черты
       "http://example.com/", // пустое имя типа
       "type.googleapis.com/InvalidType", // без точки в имени типа
+      "simple/package.Type", // домен без точки
+      "/just.TypeName", // нет домена (начинается с "/")
     ]
 
     for url in invalidUrls {
