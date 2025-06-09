@@ -469,9 +469,15 @@ final class AnyHandlerTests: XCTestCase {
   func testPackUnpackPerformance() throws {
     let originalMessage = try createTestMessage()
 
+    // Разогрев для стабилизации производительности
+    for _ in 0..<10 {
+      let anyValue = try AnyHandler.AnyValue.pack(originalMessage)
+      _ = try anyValue.unpack(to: originalMessage.descriptor)
+    }
+
     measure {
       do {
-        for _ in 0..<100 {
+        for _ in 0..<200 {  // Увеличиваем количество итераций для стабильности
           let anyValue = try AnyHandler.AnyValue.pack(originalMessage)
           _ = try anyValue.unpack(to: originalMessage.descriptor)
         }

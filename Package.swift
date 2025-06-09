@@ -43,7 +43,6 @@ let package = Package(
         .product(name: "GRPC", package: "grpc-swift"),
       ],
       exclude: [
-        "PROTOCOL_CONFORMANCE_TEST_PLAN.md",
         "Fixtures/README.md",
         "Mocks/README.md",
         "TestUtils/README.md",
