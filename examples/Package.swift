@@ -391,5 +391,128 @@ let package = Package(
             exclude: ["dynamic-client.swift", "service-discovery.swift", "unary-calls.swift", "error-handling.swift"],
             sources: ["metadata-options.swift"]
         ),
+        
+        // 07-advanced examples
+        .executableTarget(
+            name: "DescriptorBridge",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "07-advanced",
+            exclude: ["static-message-bridge.swift", "batch-operations.swift", "memory-optimization.swift", "thread-safety.swift", "custom-extensions.swift"],
+            sources: ["descriptor-bridge.swift"]
+        ),
+        
+        .executableTarget(
+            name: "StaticMessageBridge",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "07-advanced",
+            exclude: ["descriptor-bridge.swift", "batch-operations.swift", "memory-optimization.swift", "thread-safety.swift", "custom-extensions.swift"],
+            sources: ["static-message-bridge.swift"]
+        ),
+        
+        .executableTarget(
+            name: "BatchOperations",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "07-advanced",
+            exclude: ["descriptor-bridge.swift", "static-message-bridge.swift", "memory-optimization.swift", "thread-safety.swift", "custom-extensions.swift"],
+            sources: ["batch-operations.swift"]
+        ),
+        
+        .executableTarget(
+            name: "MemoryOptimization",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "07-advanced",
+            exclude: ["descriptor-bridge.swift", "static-message-bridge.swift", "batch-operations.swift", "thread-safety.swift", "custom-extensions.swift"],
+            sources: ["memory-optimization.swift"]
+        ),
+        
+        .executableTarget(
+            name: "ThreadSafety",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "07-advanced",
+            exclude: ["descriptor-bridge.swift", "static-message-bridge.swift", "batch-operations.swift", "memory-optimization.swift", "custom-extensions.swift"],
+            sources: ["thread-safety.swift"]
+        ),
+        
+        .executableTarget(
+            name: "CustomExtensions",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "07-advanced",
+            exclude: ["descriptor-bridge.swift", "static-message-bridge.swift", "batch-operations.swift", "memory-optimization.swift", "thread-safety.swift"],
+            sources: ["custom-extensions.swift"]
+        ),
+        
+        // 08-real-world examples
+        .executableTarget(
+            name: "ConfigurationSystem",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "08-real-world",
+            // exclude: ["api-gateway.swift", "message-transformation.swift", "validation-framework.swift", "proto-repl.swift"],
+            sources: ["configuration-system.swift"]
+        ),
+        
+        // .executableTarget(
+        //     name: "ApiGateway",
+        //     dependencies: [
+        //         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+        //         "ExampleUtils"
+        //     ],
+        //     path: "08-real-world",
+        //     exclude: ["configuration-system.swift", "message-transformation.swift", "validation-framework.swift", "proto-repl.swift"],
+        //     sources: ["api-gateway.swift"]
+        // ),
+        
+        // .executableTarget(
+        //     name: "MessageTransformation",
+        //     dependencies: [
+        //         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+        //         "ExampleUtils"
+        //     ],
+        //     path: "08-real-world",
+        //     exclude: ["configuration-system.swift", "api-gateway.swift", "validation-framework.swift", "proto-repl.swift"],
+        //     sources: ["message-transformation.swift"]
+        // ),
+        
+        // .executableTarget(
+        //     name: "ValidationFramework",
+        //     dependencies: [
+        //         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+        //         "ExampleUtils"
+        //     ],
+        //     path: "08-real-world",
+        //     exclude: ["configuration-system.swift", "api-gateway.swift", "message-transformation.swift", "proto-repl.swift"],
+        //     sources: ["validation-framework.swift"]
+        // ),
+        
+        // .executableTarget(
+        //     name: "ProtoREPL",
+        //     dependencies: [
+        //         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+        //         "ExampleUtils"
+        //     ],
+        //     path: "08-real-world",
+        //     exclude: ["configuration-system.swift", "api-gateway.swift", "message-transformation.swift", "validation-framework.swift"],
+        //     sources: ["proto-repl.swift"]
+        // ),
     ]
 )
