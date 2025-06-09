@@ -2,7 +2,7 @@
 
 ## 1. Introduction
 
-SwiftProtoReflect is a Swift library providing dynamic reflection capabilities for Protocol Buffers. This document outlines the architectural decisions, project structure, and implementation approach that will guide development.
+SwiftProtoReflect is a Swift library providing dynamic reflection capabilities for Protocol Buffers. This document outlines the architectural decisions, project structure, and implementation approach that guides development.
 
 ## 2. High-Level Architecture
 
@@ -30,38 +30,44 @@ SwiftProtoReflect utilizes a layered architecture with the following components:
 
 ## 3. Key Technologies and Dependencies
 
-- **Swift 6**: Utilizing the latest language features for performance and safety
-- **SwiftProtobuf**: Apple's Swift Protobuf library for wire format compatibility and low-level operations
-- **Swift Concurrency**: Leveraging async/await for efficient asynchronous operations
-- **Swift Macros**: For compile-time optimization where appropriate
-- **No Runtime Dependencies**: Self-contained operation without external runtime requirements
+- **Swift 5.9+**: Utilizing mature language features for performance and safety
+- **SwiftProtobuf 1.29.0+**: Apple's Swift Protobuf library for wire format compatibility and low-level operations
+- **GRPC-Swift 1.23.0+**: For dynamic gRPC service integration capabilities
+- **Platforms**: macOS 12.0+, iOS 15.0+
+- **No Additional Runtime Dependencies**: Self-contained operation with minimal external requirements
 
 ## 4. Core Modules
 
 ### 4.1 Descriptor System
 - **FileDescriptor**: Manages proto file metadata and symbols
-- **MessageDescriptor**: Describes message structure and fields
-- **FieldDescriptor**: Contains field metadata (type, name, number, options)
+- **MessageDescriptor**: Describes message structure and fields with nested type support
+- **FieldDescriptor**: Contains field metadata (type, name, number, options, map entry info)
 - **EnumDescriptor**: Defines enum types and values
-- **ServiceDescriptor**: Describes gRPC service definitions
+- **ServiceDescriptor**: Describes gRPC service definitions with method introspection
 
 ### 4.2 Dynamic Message
-- **DynamicMessage**: Runtime representation of a protobuf message
-- **MessageFactory**: Creates message instances from descriptors
-- **FieldAccessor**: Type-safe field access and modification
+- **DynamicMessage**: Runtime representation of a protobuf message with field validation
+- **MessageFactory**: Creates message instances from descriptors with comprehensive validation
+- **FieldAccessor**: Type-safe field access and modification with error handling
 
 ### 4.3 Serialization
-- **BinarySerializer**: Binary format serialization (wire format)
-- **BinaryDeserializer**: Binary format deserialization
-- **JSONAdapter**: JSON format conversion
+- **BinarySerializer**: Binary format serialization (wire format) with ZigZag encoding
+- **BinaryDeserializer**: Binary format deserialization with wire type validation
+- **JSONSerializer**: JSON format conversion with Protocol Buffers semantics
+- **JSONDeserializer**: JSON format parsing with type validation and error recovery
 
 ### 4.4 Reflection Registry
-- **TypeRegistry**: Central registry for all known types
-- **DescriptorPool**: Manages descriptor dependencies and resolution
+- **TypeRegistry**: Central registry for all known types with concurrent access support
+- **DescriptorPool**: Manages descriptor dependencies and resolution with caching
 
 ### 4.5 Service Layer
-- **DynamicServiceClient**: Client for dynamically calling gRPC methods
-- **MethodInvoker**: Handles method invocation with dynamic messages
+- **ServiceClient**: Client for dynamically calling gRPC methods with call options
+- **Method Discovery**: Runtime service method resolution and validation
+
+### 4.6 Integration Layer
+- **Bridge System**: Bidirectional conversion between static and dynamic messages
+- **Well-Known Types**: Support for Google's standard Protocol Buffer types
+- **Static Interoperability**: Seamless integration with existing Swift Protobuf code
 
 ## 5. Swift Protobuf Integration
 
@@ -85,15 +91,14 @@ SwiftProtoReflect leverages Swift Protobuf's mature implementation while providi
 
 ### 5.3 Integration Points
 
-The library will use several specific integration mechanisms:
+The library uses several specific integration mechanisms:
 
 1. **Binary Format Delegation**
    ```swift
-   // Our DynamicMessage will delegate to Swift Protobuf for binary encoding
-   func serializedData() throws -> Data {
-     // Convert to compatible format and use Swift Protobuf's serialization
-     let protoMessage = createSwiftProtobufMessage()
-     return try protoMessage.serializedData()
+   // Our serializers delegate to Swift Protobuf for wire format compatibility
+   func serialize(message: DynamicMessage) throws -> Data {
+     // Use optimized binary encoding with full wire format support
+     return try BinarySerializer().serialize(message: message)
    }
    ```
 
@@ -102,127 +107,145 @@ The library will use several specific integration mechanisms:
    // Converting between our descriptors and Swift Protobuf's descriptors
    extension MessageDescriptor {
      // Convert from Swift Protobuf descriptor to our dynamic descriptor
-     init(swiftProtobufDescriptor: Google_Protobuf_DescriptorProto) {
-       // Conversion logic
-     }
-     
-     // Convert to Swift Protobuf descriptor when needed
-     func toSwiftProtobufDescriptor() -> Google_Protobuf_DescriptorProto {
-       // Conversion logic
+     static func fromSwiftProtobuf(_ descriptor: Descriptor) throws -> MessageDescriptor {
+       return try DescriptorBridge.convert(descriptor)
      }
    }
    ```
 
-3. **Field Value Handling**
+3. **Bridge Operations**
    ```swift
-   // Use Swift Protobuf's WireFormat for encoding field values
-   func encodeField(number: Int, value: Any, to buffer: inout [UInt8]) throws {
-     // Delegate to Swift Protobuf's encoding logic for the appropriate type
+   // Bidirectional conversion between static and dynamic messages
+   extension DynamicMessage {
+     func toStaticMessage<T: SwiftProtobuf.Message>() throws -> T {
+       return try StaticMessageBridge.convertToStatic(self)
+     }
    }
    ```
 
 ### 5.4 Bridging Static and Dynamic Types
 
-For interoperability with existing Swift Protobuf code, we'll provide conversion mechanisms:
+For interoperability with existing Swift Protobuf code, we provide conversion mechanisms:
 
 ```swift
 // Convert from dynamic message to static Swift Protobuf message
 extension DynamicMessage {
   func toStaticMessage<T: SwiftProtobuf.Message>() throws -> T {
-    // Conversion logic
+    // Conversion logic with type validation
   }
   
   // Create dynamic message from static Swift Protobuf message
   static func fromStaticMessage<T: SwiftProtobuf.Message>(_ message: T) throws -> DynamicMessage {
-    // Conversion logic
+    // Conversion logic with schema generation
   }
 }
 ```
 
 ## 6. Public API Design
 
-The primary API interfaces will include:
+The primary API interfaces include:
 
 ```swift
 // Creating a dynamic message
-let message = DynamicMessage(descriptor: personDescriptor)
+let message = try MessageFactory().createMessage(from: personDescriptor)
 
-// Setting field values
-try message.set(fieldName: "name", value: "John Doe")
-try message.set(fieldNumber: 1, value: "John Doe")
+// Setting field values with type safety
+try message.set("name", value: "John Doe")
+try message.set("age", value: Int32(30))
 
-// Getting field values
-let name: String = try message.get(fieldName: "name")
+// Getting field values with explicit typing
+let name: String = try message.get("name")
+let age: Int32 = try message.get("age")
 
 // Serialization
-let binaryData = try message.serializedData()
-let jsonString = try message.jsonString()
+let binaryData = try BinarySerializer().serialize(message: message)
+let jsonString = try JSONSerializer().serialize(message: message)
 
 // Deserialization
-let message = try DynamicMessage.parse(data: binaryData, descriptor: personDescriptor)
+let parsedMessage = try BinaryDeserializer().deserialize(data: binaryData, descriptor: personDescriptor)
 
 // Converting between static and dynamic
 let staticMessage: Person = try message.toStaticMessage()
-let dynamicFromStatic = try DynamicMessage.fromStaticMessage(staticPerson)
+let dynamicFromStatic = try DynamicMessage.fromStatic(staticPerson)
 ```
 
 ## 7. Performance Considerations
 
-- **Descriptor Caching**: Optimize descriptor lookup and resolution
+- **Descriptor Caching**: Optimize descriptor lookup and resolution with LRU caching
 - **Binary Encoding/Decoding**: Leverage Swift Protobuf's optimized implementation
-- **Memory Management**: Careful management of reference cycles and memory usage
-- **Type-Specialized Paths**: Generate specialized code paths for common field types
-- **Minimal Conversion**: Reduce conversions between our types and Swift Protobuf types when possible
+- **Memory Management**: Careful management of reference cycles and memory usage patterns
+- **Type-Specialized Paths**: Optimized code paths for common field types and operations
+- **Minimal Conversion**: Reduce conversions between our types and Swift Protobuf types
+- **Concurrent Access**: Thread-safe operations for high-throughput scenarios
 
 ## 8. Project Structure
 
 ```
-Sources/
-  ├── SwiftProtoReflect/
-  │   ├── Descriptor/
-  │   │   ├── FileDescriptor.swift
-  │   │   ├── MessageDescriptor.swift
-  │   │   ├── FieldDescriptor.swift
-  │   │   ├── EnumDescriptor.swift
-  │   │   └── ServiceDescriptor.swift
-  │   ├── Dynamic/
-  │   │   ├── DynamicMessage.swift
-  │   │   ├── MessageFactory.swift
-  │   │   └── FieldAccessor.swift
-  │   ├── Serialization/
-  │   │   ├── BinarySerializer.swift
-  │   │   ├── BinaryDeserializer.swift
-  │   │   └── JSONAdapter.swift
-  │   ├── Registry/
-  │   │   ├── TypeRegistry.swift
-  │   │   └── DescriptorPool.swift
-  │   ├── Service/
-  │   │   ├── DynamicServiceClient.swift
-  │   │   └── MethodInvoker.swift
-  │   ├── Bridge/
-  │   │   ├── StaticMessageBridge.swift
-  │   │   └── DescriptorBridge.swift
-  │   └── Errors/
-  │       └── ReflectionError.swift
-  └── Examples/
-      └── BasicUsage.swift
-Tests/
-  └── SwiftProtoReflectTests/
-      ├── DescriptorTests/
-      ├── DynamicMessageTests/
-      ├── SerializationTests/
-      ├── BridgeTests/
-      └── ServiceTests/
+Sources/SwiftProtoReflect/
+├── Core/                           # Foundation components
+│   ├── MessageDescriptor.swift     # Message schema definitions
+│   ├── FieldDescriptor.swift       # Field metadata and validation
+│   ├── EnumDescriptor.swift        # Enumeration type support
+│   ├── FileDescriptor.swift        # File-level schema management
+│   ├── ServiceDescriptor.swift     # gRPC service definitions
+│   ├── DynamicMessage.swift        # Runtime message representation
+│   ├── MessageFactory.swift        # Message creation and validation
+│   └── FieldAccessor.swift         # Type-safe field operations
+├── Serialization/                  # Binary and JSON serialization
+│   ├── BinarySerializer.swift      # Binary format encoding
+│   ├── BinaryDeserializer.swift    # Binary format decoding
+│   ├── JSONSerializer.swift        # JSON format encoding
+│   └── JSONDeserializer.swift      # JSON format decoding
+├── Registry/                       # Type management
+│   ├── TypeRegistry.swift          # Central type registry
+│   └── DescriptorPool.swift        # Descriptor dependency resolution
+├── Bridge/                         # Static/Dynamic interoperability
+│   ├── StaticMessageBridge.swift   # Message conversion
+│   └── DescriptorBridge.swift      # Descriptor conversion
+├── Service/                        # gRPC integration
+│   └── ServiceClient.swift         # Dynamic service calls
+├── Integration/                    # Well-Known Types support
+│   ├── WellKnownTypesRegistry.swift # Registry for standard types
+│   ├── TimestampHandler.swift      # google.protobuf.Timestamp
+│   ├── DurationHandler.swift       # google.protobuf.Duration
+│   ├── EmptyHandler.swift          # google.protobuf.Empty
+│   ├── FieldMaskHandler.swift      # google.protobuf.FieldMask
+│   ├── StructHandler.swift         # google.protobuf.Struct
+│   ├── ValueHandler.swift          # google.protobuf.Value
+│   └── AnyHandler.swift            # google.protobuf.Any
+└── SwiftProtoReflect.swift         # Main library interface
+
+examples/                           # Comprehensive examples
+├── 01-basic-usage/                 # Foundation examples
+├── 02-dynamic-messages/            # Message manipulation
+├── 03-serialization/               # Encoding/decoding
+├── 04-registry/                    # Type management
+├── 05-well-known-types/            # Google standard types
+├── 06-grpc/                        # gRPC integration
+├── 07-advanced/                    # Complex patterns
+├── 08-real-world/                  # Production scenarios
+└── shared/                         # Common utilities
+
+Tests/SwiftProtoReflectTests/       # Comprehensive test suite
+├── Core/                           # Foundation tests
+├── Serialization/                  # Serialization tests
+├── Registry/                       # Registry tests
+├── Bridge/                         # Bridge tests
+├── Service/                        # Service tests
+├── Integration/                    # Integration tests
+└── Performance/                    # Performance benchmarks
 ```
 
 ## 9. Development Phases
 
 1. **Foundation Phase**: Core descriptor and message implementations
 2. **Serialization Phase**: Binary and JSON serialization/deserialization integration with Swift Protobuf
-3. **Bridge Phase**: Develop static/dynamic message conversion capabilities
-4. **Service Phase**: Dynamic service client implementation
-5. **Integration Phase**: Integration with existing Swift Protobuf ecosystem
-6. **Performance Optimization**: Benchmarking and optimization
+3. **Registry Phase**: Type management and descriptor pool implementation
+4. **Bridge Phase**: Develop static/dynamic message conversion capabilities
+5. **Service Phase**: Dynamic service client implementation
+6. **Integration Phase**: Well-Known Types support and ecosystem integration
+7. **Performance Phase**: Benchmarking and optimization
+8. **Examples Phase**: Comprehensive examples and documentation
 
 ## 10. Design Decisions
 
@@ -234,11 +257,81 @@ Swift Protobuf provides a mature, well-tested implementation of Protocol Buffers
 4. Focus our development on reflection capabilities rather than reinventing serialization
 
 ### Internal Type Registry vs. On-Demand Resolution
-The library will utilize a central type registry to manage descriptor dependencies efficiently, with on-demand resolution for improved performance when handling large descriptor sets.
+The library utilizes a central type registry to manage descriptor dependencies efficiently, with on-demand resolution for improved performance when handling large descriptor sets.
 
 ### Error Handling Strategy
-API will use Swift's throw/catch mechanism for error handling, with specific error types for better diagnostics.
+API uses Swift's throw/catch mechanism for error handling, with specific error types for better diagnostics and debugging.
 
-## 11. Conclusion
+### Well-Known Types Integration
+Google's Well-Known Types are supported through a handler pattern that allows for:
+- Type-safe conversions between Swift native types and Protocol Buffer representations
+- Automatic registry integration for seamless usage
+- Extensibility for custom well-known type implementations
 
-This architecture provides a foundation for implementing the Protocol Buffers reflection capabilities outlined in the requirements. By clearly delineating responsibilities between our reflection layer and Swift Protobuf's serialization capabilities, we create a library that balances performance, usability, and maintainability while adhering to Swift's idioms and best practices.
+### Concurrency and Thread Safety
+The library design considers Swift's concurrency model:
+- Immutable descriptors for thread-safe sharing
+- Actor-isolated mutable state where necessary
+- Concurrent access patterns for performance-critical operations
+
+## 11. Memory Management
+
+### Reference Cycles Prevention
+- Weak references for parent-child relationships in descriptor hierarchies
+- Careful management of closure captures in dynamic operations
+- Explicit break cycles in factory and registry patterns
+
+### Caching Strategy
+- Intelligent caching of frequently accessed descriptors
+- LRU eviction for large descriptor sets
+- Memory pressure handling with automatic cleanup
+
+## 12. Error Handling Architecture
+
+### Error Categories
+- **Descriptor Errors**: Schema definition and validation errors
+- **Type Errors**: Field type mismatches and conversion errors  
+- **Serialization Errors**: Binary and JSON format errors
+- **Registry Errors**: Type registration and lookup errors
+- **Service Errors**: gRPC and service discovery errors
+- **Well-Known Type Errors**: Standard type conversion and validation errors
+
+### Error Context
+Rich error context with:
+- Specific error locations (field names, numbers)
+- Type information for debugging
+- Suggested fixes where possible
+- Chain of error causes for complex operations
+
+## 13. Testing Strategy
+
+### Unit Testing
+- Comprehensive coverage of all public APIs
+- Edge case testing for error conditions
+- Performance regression testing
+
+### Integration Testing
+- Round-trip compatibility with Swift Protobuf
+- Cross-platform compatibility verification
+- Real-world usage pattern validation
+
+### Performance Testing
+- Benchmarking against static Swift Protobuf
+- Memory usage profiling
+- Concurrent access performance validation
+
+### Error Path Testing
+- Comprehensive error condition coverage
+- Type mismatch scenario validation
+- Malformed data handling verification
+
+## 14. Conclusion
+
+This architecture provides a foundation for implementing comprehensive Protocol Buffers reflection capabilities. By clearly delineating responsibilities between our reflection layer and Swift Protobuf's serialization capabilities, we create a library that balances performance, usability, and maintainability while adhering to Swift's idioms and best practices.
+
+The design emphasizes:
+- **Flexibility**: Runtime schema handling and dynamic message manipulation
+- **Performance**: Leveraging optimized Swift Protobuf foundations
+- **Interoperability**: Seamless integration with existing Swift Protobuf codebases
+- **Extensibility**: Well-defined patterns for future enhancements
+- **Reliability**: Comprehensive error handling and testing strategies
