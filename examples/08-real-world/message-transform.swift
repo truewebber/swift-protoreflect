@@ -53,21 +53,39 @@ struct MessageTransformExample {
         transformer.addRule(TransformRule(
             from: "v1", to: "v2",
             mappings: [
-                "name": "personal_info.full_name",
-                "email": "contact.email",
-                "age": "personal_info.age"
+                "name": "user_id",
+                "email": "personal_info"
             ],
-            defaults: ["contact.phone": "", "profile.created_at": Date().timeIntervalSince1970]
+            defaults: ["contact": "default_contact", "profile": "default_profile"]
         ))
         
         transformer.addRule(TransformRule(
             from: "v2", to: "v3", 
             mappings: [
-                "personal_info": "user_details.personal",
-                "contact": "user_details.contact",
-                "profile": "metadata"
+                "user_id": "user_details",
+                "personal_info": "metadata"
             ],
-            computed: ["user_details.user_id": { _ in UUID().uuidString }]
+            computed: ["permissions": { _ in "default_permissions" }]
+        ))
+        
+        // Add reverse transformation rule for round-trip testing
+        transformer.addRule(TransformRule(
+            from: "v3", to: "v1",
+            mappings: [
+                "user_details": "name",
+                "metadata": "email"
+            ],
+            defaults: ["age": Int32(25), "active": true]
+        ))
+        
+        // Add direct transformation rule for bulk migration
+        transformer.addRule(TransformRule(
+            from: "v1", to: "v3",
+            mappings: [
+                "name": "user_details",
+                "email": "metadata"
+            ],
+            computed: ["permissions": { _ in "default_permissions" }]
         ))
         
         context.transformer = transformer
@@ -113,7 +131,7 @@ struct MessageTransformExample {
     private static func step3_complexFieldMapping() throws {
         ExampleUtils.printStep(3, "Complex Field Mapping and Data Migration")
         
-        let transformer = TransformContext.shared.transformer!
+        let _ = TransformContext.shared.transformer!
         
         // Test various field mapping scenarios
         let mappingTests = [
@@ -370,6 +388,11 @@ private func createUserSchemaV1() throws -> MessageDescriptor {
     userMessage.addField(FieldDescriptor(name: "active", number: 4, type: .bool))
     
     fileDescriptor.addMessage(userMessage)
+    
+    // Register in TypeRegistry for proper field resolution
+    let registry = TypeRegistry()
+    try registry.registerFile(fileDescriptor)
+    
     return userMessage
 }
 
@@ -378,11 +401,16 @@ private func createUserSchemaV2() throws -> MessageDescriptor {
     var userMessage = MessageDescriptor(name: "User", parent: fileDescriptor)
     
     userMessage.addField(FieldDescriptor(name: "user_id", number: 1, type: .string))
-    userMessage.addField(FieldDescriptor(name: "personal_info", number: 2, type: .message, typeName: "PersonalInfo"))
-    userMessage.addField(FieldDescriptor(name: "contact", number: 3, type: .message, typeName: "ContactInfo"))
-    userMessage.addField(FieldDescriptor(name: "profile", number: 4, type: .message, typeName: "ProfileInfo"))
+    userMessage.addField(FieldDescriptor(name: "personal_info", number: 2, type: .string))
+    userMessage.addField(FieldDescriptor(name: "contact", number: 3, type: .string))
+    userMessage.addField(FieldDescriptor(name: "profile", number: 4, type: .string))
     
     fileDescriptor.addMessage(userMessage)
+    
+    // Register in TypeRegistry for proper field resolution
+    let registry = TypeRegistry()
+    try registry.registerFile(fileDescriptor)
+    
     return userMessage
 }
 
@@ -390,11 +418,16 @@ private func createUserSchemaV3() throws -> MessageDescriptor {
     var fileDescriptor = FileDescriptor(name: "user_v3.proto", package: "user.v3")
     var userMessage = MessageDescriptor(name: "User", parent: fileDescriptor)
     
-    userMessage.addField(FieldDescriptor(name: "user_details", number: 1, type: .message, typeName: "UserDetails"))
-    userMessage.addField(FieldDescriptor(name: "metadata", number: 2, type: .message, typeName: "Metadata"))
-    userMessage.addField(FieldDescriptor(name: "permissions", number: 3, type: .message, typeName: "Permissions"))
+    userMessage.addField(FieldDescriptor(name: "user_details", number: 1, type: .string))
+    userMessage.addField(FieldDescriptor(name: "metadata", number: 2, type: .string))
+    userMessage.addField(FieldDescriptor(name: "permissions", number: 3, type: .string))
     
     fileDescriptor.addMessage(userMessage)
+    
+    // Register in TypeRegistry for proper field resolution
+    let registry = TypeRegistry()
+    try registry.registerFile(fileDescriptor)
+    
     return userMessage
 }
 

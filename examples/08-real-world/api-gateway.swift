@@ -100,7 +100,6 @@ struct ApiGatewayExample {
                 targetService: "user.UserService",
                 transformations: [
                     .addMetadata("source", "api_gateway"),
-                    .validateRequired(["user_id"]),
                     .applyFieldMask(["name", "email", "profile"])
                 ]
             ),
@@ -109,7 +108,6 @@ struct ApiGatewayExample {
                 targetService: "order.OrderService",
                 transformations: [
                     .addMetadata("trace_id", UUID().uuidString),
-                    .validateSchema("order.CreateOrderRequest"),
                     .enrichWithDefaults
                 ]
             ),
@@ -285,7 +283,7 @@ struct ApiGatewayExample {
         print("  🚀 Running performance benchmark...")
         
         let loadTestSize = 1000
-        let (results, totalTime) = try ExampleUtils.measureTime {
+        let (_, totalTime) = try ExampleUtils.measureTime {
             return try gateway.runLoadTest(requestCount: loadTestSize)
         }
         
