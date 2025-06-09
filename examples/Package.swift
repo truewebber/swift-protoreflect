@@ -31,7 +31,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "01-basic-usage",
-            exclude: ["field-types.swift", "simple-message.swift", "basic-descriptors.swift", "README.md"],
+            exclude: ["field-types.swift", "simple-message.swift", "basic-descriptors.swift"],
             sources: ["hello-world.swift"]
         ),
         
@@ -42,7 +42,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "01-basic-usage",
-            exclude: ["hello-world.swift", "simple-message.swift", "basic-descriptors.swift", "README.md"],
+            exclude: ["hello-world.swift", "simple-message.swift", "basic-descriptors.swift"],
             sources: ["field-types.swift"]
         ),
         
@@ -53,7 +53,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "01-basic-usage",
-            exclude: ["hello-world.swift", "field-types.swift", "basic-descriptors.swift", "README.md"],
+            exclude: ["hello-world.swift", "field-types.swift", "basic-descriptors.swift"],
             sources: ["simple-message.swift"]
         ),
         
@@ -64,7 +64,7 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "01-basic-usage",
-            exclude: ["hello-world.swift", "field-types.swift", "simple-message.swift", "README.md"],
+            exclude: ["hello-world.swift", "field-types.swift", "simple-message.swift"],
             sources: ["basic-descriptors.swift"]
         ),
         
