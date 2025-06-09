@@ -27,7 +27,7 @@ swift run TimestampDemo
 ```swift
 // Package.swift
 dependencies: [
-    .package(url: "https://github.com/truewebber/swift-protoreflect.git", from: "1.0.0")
+    .package(url: "https://github.com/truewebber/swift-protoreflect.git", from: "2.0.0")
 ]
 ```
 
@@ -321,7 +321,7 @@ let finalStatic: Person = try processedMessage.toStaticMessage()
 2. **Add to your project**:
    ```swift
    dependencies: [
-       .package(url: "https://github.com/truewebber/swift-protoreflect.git", from: "1.0.0")
+       .package(url: "https://github.com/truewebber/swift-protoreflect.git", from: "2.0.0")
    ]
    ```
 
