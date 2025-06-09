@@ -9,7 +9,7 @@
 
 import ExampleUtils
 import Foundation
-import SwiftProtoReflect
+@preconcurrency import SwiftProtoReflect
 
 @main
 struct ThreadSafetyExample {
@@ -38,7 +38,7 @@ struct ThreadSafetyExample {
     print("  🔐 Testing thread-safe read/write patterns...")
 
     // Thread-safe message wrapper
-    class ThreadSafeMessage {
+    final class ThreadSafeMessage: @unchecked Sendable {
       private var message: DynamicMessage
       private let queue = DispatchQueue(label: "message.queue", attributes: .concurrent)
 
@@ -96,7 +96,7 @@ struct ThreadSafetyExample {
       for threadId in 0..<threadCount {
         group.enter()
         concurrentQueue.async {
-          for i in 0..<(operationCount / threadCount) {
+          for _ in 0..<(operationCount / threadCount) {
             do {
               // Читаем текущее значение
               let currentValue: Int64 = try threadSafeMessage.read(field: "value") ?? 0
@@ -151,7 +151,7 @@ struct ThreadSafetyExample {
     print("  🏗  Testing concurrent message factory usage...")
 
     // Thread-safe message factory
-    class ThreadSafeMessageFactory {
+    final class ThreadSafeMessageFactory: @unchecked Sendable {
       private let factory = MessageFactory()
       private let queue = DispatchQueue(label: "factory.queue")
       private var createdCount = 0
@@ -185,8 +185,25 @@ struct ThreadSafetyExample {
 
     print("  📊 Creating \(messageCount) messages across \(threadCount) threads...")
 
-    var allMessages: [DynamicMessage] = []
-    let messagesLock = NSLock()
+    // Create thread-safe container for messages
+    final class MessageContainer: @unchecked Sendable {
+      private var allMessages: [DynamicMessage] = []
+      private let messagesLock = NSLock()
+      
+      func append(contentsOf messages: [DynamicMessage]) {
+        messagesLock.lock()
+        allMessages.append(contentsOf: messages)
+        messagesLock.unlock()
+      }
+      
+      var messages: [DynamicMessage] {
+        messagesLock.lock()
+        defer { messagesLock.unlock() }
+        return allMessages
+      }
+    }
+    
+    let messageContainer = MessageContainer()
 
     let creationTime = ExampleUtils.measureTime {
       let group = DispatchGroup()
@@ -194,7 +211,7 @@ struct ThreadSafetyExample {
 
       for threadId in 0..<threadCount {
         group.enter()
-        concurrentQueue.async {
+        concurrentQueue.async { [userDescriptor] in
           var threadMessages: [DynamicMessage] = []
 
           for i in 0..<(messageCount / threadCount) {
@@ -214,9 +231,7 @@ struct ThreadSafetyExample {
           }
 
           // Thread-safe добавление в общий массив
-          messagesLock.lock()
-          allMessages.append(contentsOf: threadMessages)
-          messagesLock.unlock()
+          messageContainer.append(contentsOf: threadMessages)
 
           group.leave()
         }
@@ -224,6 +239,8 @@ struct ThreadSafetyExample {
 
       group.wait()
     }
+    
+    let allMessages = messageContainer.messages
 
     ExampleUtils.printTiming("Concurrent message creation (\(messageCount) messages)", time: creationTime.time)
 
@@ -259,7 +276,7 @@ struct ThreadSafetyExample {
     print("  🗂  Testing concurrent registry operations...")
 
     // Thread-safe type registry wrapper
-    class ConcurrentTypeRegistry {
+    final class ConcurrentTypeRegistry: @unchecked Sendable {
       private let registry = TypeRegistry()
       private let readerWriterQueue = DispatchQueue(label: "registry.queue", attributes: .concurrent)
 
@@ -335,8 +352,26 @@ struct ThreadSafetyExample {
     print("\n  🔍 Testing concurrent lookups...")
 
     let lookupCount = 1000
-    var successfulLookups = 0
-    let lookupLock = NSLock()
+    
+    // Create thread-safe counter for successful lookups
+    final class LookupCounter: @unchecked Sendable {
+      private var successfulLookups = 0
+      private let lookupLock = NSLock()
+      
+      func addSuccesses(_ count: Int) {
+        lookupLock.lock()
+        successfulLookups += count
+        lookupLock.unlock()
+      }
+      
+      var count: Int {
+        lookupLock.lock()
+        defer { lookupLock.unlock() }
+        return successfulLookups
+      }
+    }
+    
+    let lookupCounter = LookupCounter()
 
     let lookupTime = ExampleUtils.measureTime {
       let group = DispatchGroup()
@@ -356,9 +391,7 @@ struct ThreadSafetyExample {
             }
           }
 
-          lookupLock.lock()
-          successfulLookups += threadSuccesses
-          lookupLock.unlock()
+          lookupCounter.addSuccesses(threadSuccesses)
 
           group.leave()
         }
@@ -366,6 +399,8 @@ struct ThreadSafetyExample {
 
       group.wait()
     }
+    
+    let successfulLookups = lookupCounter.count
 
     ExampleUtils.printTiming("Concurrent lookups (\(lookupCount) operations)", time: lookupTime.time)
 
@@ -405,7 +440,7 @@ struct ThreadSafetyExample {
     let threadCount = 8
 
     // 1. NSLock strategy
-    class NSLockCounter {
+    final class NSLockCounter: @unchecked Sendable {
       private var value: Int64 = 0
       private let lock = NSLock()
 
@@ -423,7 +458,7 @@ struct ThreadSafetyExample {
     }
 
     // 2. DispatchQueue strategy
-    class DispatchQueueCounter {
+    final class DispatchQueueCounter: @unchecked Sendable {
       private var value: Int64 = 0
       private let queue = DispatchQueue(label: "counter.queue")
 
@@ -439,7 +474,7 @@ struct ThreadSafetyExample {
     }
 
     // 3. OSAtomic strategy (симуляция)
-    class AtomicCounter {
+    final class AtomicCounter: @unchecked Sendable {
       private var value: Int64 = 0
       private let lock = NSLock()  // Симуляция atomic operations
 
@@ -464,7 +499,7 @@ struct ThreadSafetyExample {
       let group = DispatchGroup()
       let concurrentQueue = DispatchQueue(label: "nslock.test", attributes: .concurrent)
 
-      for threadId in 0..<threadCount {
+      for _ in 0..<threadCount {
         group.enter()
         concurrentQueue.async {
           for _ in 0..<(operationCount / threadCount) {
@@ -485,7 +520,7 @@ struct ThreadSafetyExample {
       let group = DispatchGroup()
       let concurrentQueue = DispatchQueue(label: "dispatch.test", attributes: .concurrent)
 
-      for threadId in 0..<threadCount {
+      for _ in 0..<threadCount {
         group.enter()
         concurrentQueue.async {
           for _ in 0..<(operationCount / threadCount) {
@@ -506,7 +541,7 @@ struct ThreadSafetyExample {
       let group = DispatchGroup()
       let concurrentQueue = DispatchQueue(label: "atomic.test", attributes: .concurrent)
 
-      for threadId in 0..<threadCount {
+      for _ in 0..<threadCount {
         group.enter()
         concurrentQueue.async {
           for _ in 0..<(operationCount / threadCount) {
@@ -576,7 +611,7 @@ struct ThreadSafetyExample {
     }
 
     // Thread-safe statistics collector
-    class AtomicStatistics {
+    final class AtomicStatistics: @unchecked Sendable {
       @Atomic var messageCount: Int64 = 0
       @Atomic var errorCount: Int64 = 0
       @Atomic var totalProcessingTime: Double = 0.0
@@ -620,33 +655,32 @@ struct ThreadSafetyExample {
 
     print("  📊 Processing \(taskCount) tasks with atomic statistics...")
 
-    let factory = MessageFactory()
-
     let atomicTime = ExampleUtils.measureTime {
       let group = DispatchGroup()
       let concurrentQueue = DispatchQueue(label: "atomic.processing", attributes: .concurrent)
 
       for threadId in 0..<threadCount {
         group.enter()
-        concurrentQueue.async {
+        concurrentQueue.async { [taskDescriptor] in
+          // Create local factory for this thread to avoid Sendable issues
+          let localFactory = MessageFactory()
+          
           for i in 0..<(taskCount / threadCount) {
-            let taskStartTime = CFAbsoluteTimeGetCurrent()
-
-            var task = factory.createMessage(from: taskDescriptor)
-
+            let startTime = Date().timeIntervalSince1970
+            
             do {
+              var task = localFactory.createMessage(from: taskDescriptor)
+              
               try task.set(Int64(threadId * 1000 + i), forField: "id")
               try task.set(Int32.random(in: 1...10), forField: "priority")
               try task.set("Task data \(threadId).\(i)", forField: "data")
 
               // Симуляция обработки
               Thread.sleep(forTimeInterval: Double.random(in: 0.0001...0.0005))
-
-              let processingTime = CFAbsoluteTimeGetCurrent() - taskStartTime
+              
+              let processingTime = Date().timeIntervalSince1970 - startTime
               statistics.recordMessage(processingTime: processingTime)
-
-            }
-            catch {
+            } catch {
               statistics.recordError()
             }
           }
@@ -689,7 +723,7 @@ struct ThreadSafetyExample {
     print("  🏁 Demonstrating race condition prevention...")
 
     // Демонстрация потенциальной race condition
-    class UnsafeCounter {
+    final class UnsafeCounter: @unchecked Sendable {
       private var value: Int = 0
 
       func increment() {
@@ -703,7 +737,7 @@ struct ThreadSafetyExample {
     }
 
     // Безопасная версия
-    class SafeCounter {
+    final class SafeCounter: @unchecked Sendable {
       private var value: Int = 0
       private let lock = NSLock()
 
@@ -733,7 +767,7 @@ struct ThreadSafetyExample {
       let group = DispatchGroup()
       let concurrentQueue = DispatchQueue(label: "unsafe.test", attributes: .concurrent)
 
-      for threadId in 0..<testThreads {
+      for _ in 0..<testThreads {
         group.enter()
         concurrentQueue.async {
           for _ in 0..<(testOperations / testThreads) {
@@ -754,7 +788,7 @@ struct ThreadSafetyExample {
       let group = DispatchGroup()
       let concurrentQueue = DispatchQueue(label: "safe.test", attributes: .concurrent)
 
-      for threadId in 0..<testThreads {
+      for _ in 0..<testThreads {
         group.enter()
         concurrentQueue.async {
           for _ in 0..<(testOperations / testThreads) {

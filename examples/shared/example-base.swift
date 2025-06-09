@@ -64,9 +64,16 @@ public enum ExampleUtils {
 
   /// Измеряет время выполнения операции и возвращает результат с временем.
   public static func measureTime<T>(_ operation: () throws -> T) rethrows -> (result: T, time: TimeInterval) {
+    #if canImport(CoreFoundation) && !os(Linux)
     let startTime = CFAbsoluteTimeGetCurrent()
     let result = try operation()
     let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
+    #else
+    // Cross-platform compatible timing using Date
+    let startTime = Date().timeIntervalSince1970
+    let result = try operation()
+    let timeElapsed = Date().timeIntervalSince1970 - startTime
+    #endif
     return (result, timeElapsed)
   }
 
@@ -143,7 +150,12 @@ public enum ExampleUtils {
 
   /// Записывает содержимое во временный файл.
   public static func writeToTempFile(_ content: String, filename: String) -> String? {
+    #if canImport(Foundation) && !os(Linux)
     let tempDir = NSTemporaryDirectory()
+    #else
+    // Cross-platform compatible temporary directory
+    let tempDir = FileManager.default.temporaryDirectory.path + "/"
+    #endif
     let outputPath = "\(tempDir)\(filename)"
 
     do {

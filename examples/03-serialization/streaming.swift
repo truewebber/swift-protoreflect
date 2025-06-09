@@ -20,7 +20,9 @@
 
 import ExampleUtils
 import Foundation
+#if canImport(OSLog)
 import OSLog
+#endif
 @preconcurrency import SwiftProtoReflect
 
 @main
@@ -58,7 +60,11 @@ struct StreamingExample {
     let serializer = BinarySerializer()
 
     // Streaming file for output
+    #if canImport(Foundation) && !os(Linux)
     let tempDir = NSTemporaryDirectory()
+    #else
+    let tempDir = FileManager.default.temporaryDirectory.path + "/"
+    #endif
     let streamingFile = "\(tempDir)streaming_records.bin"
     let outputStream = OutputStream(toFileAtPath: streamingFile, append: false)!
     outputStream.open()
@@ -136,7 +142,11 @@ struct StreamingExample {
     ExampleUtils.printStep(2, "Batch processing и deserialization")
 
     // Read back the streaming file we created
+    #if canImport(Foundation) && !os(Linux)
     let tempDir = NSTemporaryDirectory()
+    #else
+    let tempDir = FileManager.default.temporaryDirectory.path + "/"
+    #endif
     let streamingFile = "\(tempDir)streaming_records.bin"
 
     guard FileManager.default.fileExists(atPath: streamingFile) else {

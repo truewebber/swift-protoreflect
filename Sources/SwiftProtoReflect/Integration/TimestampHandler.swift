@@ -74,9 +74,20 @@ public struct TimestampHandler: WellKnownTypeHandler {
 
     public var description: String {
       let date = toDate()
+      
+      // Use cross-platform compatible date formatting
+      #if canImport(Foundation) && !os(Linux)
       let formatter = ISO8601DateFormatter()
       formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
       return formatter.string(from: date)
+      #else
+      // Fallback for Linux and other platforms
+      let formatter = DateFormatter()
+      formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+      formatter.timeZone = TimeZone(identifier: "UTC")
+      formatter.locale = Locale(identifier: "en_US_POSIX")
+      return formatter.string(from: date)
+      #endif
     }
 
     // MARK: - Validation

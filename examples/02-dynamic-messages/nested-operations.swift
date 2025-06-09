@@ -265,15 +265,15 @@ struct NestedOperationsExample {
     print("\n  🚀 Техники оптимизации производительности:")
 
     // 1. Lazy traversal vs eager traversal
-    let startTime1 = CFAbsoluteTimeGetCurrent()
-    let lazyResult = try performLazyTraversal(tree)
-    let lazyTime = CFAbsoluteTimeGetCurrent() - startTime1
+    let (lazyResult, lazyTime) = try ExampleUtils.measureTime {
+      return try performLazyTraversal(tree)
+    }
     print("    🐌 Ленивый обход: \(lazyResult) узлов за \(String(format: "%.4f", lazyTime))с")
 
     // 2. Batch operations vs individual operations
-    let startTime2 = CFAbsoluteTimeGetCurrent()
-    let batchResult = try performBatchUpdates(tree)
-    let batchTime = CFAbsoluteTimeGetCurrent() - startTime2
+    let (batchResult, batchTime) = try ExampleUtils.measureTime {
+      return try performBatchUpdates(tree)
+    }
     print("    📦 Batch обновления: \(batchResult) изменений за \(String(format: "%.4f", batchTime))с")
 
     // 3. Memory-efficient operations

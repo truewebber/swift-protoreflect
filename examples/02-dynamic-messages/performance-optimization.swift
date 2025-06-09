@@ -841,14 +841,12 @@ extension PerformanceOptimization {
 
 // Performance measurement helper
 func measureMemoryAndTime<T>(_ operation: () throws -> T) throws -> (T, TimeInterval, Int) {
-  let startTime = CFAbsoluteTimeGetCurrent()
-  let result = try operation()
-  let endTime = CFAbsoluteTimeGetCurrent()
+  let (result, timeElapsed) = try ExampleUtils.measureTime(operation)
 
   // Simulate memory measurement (in real app, use proper profiling tools)
   let simulatedMemoryUsage = Int.random(in: 10...50)
 
-  return (result, endTime - startTime, simulatedMemoryUsage)
+  return (result, timeElapsed, simulatedMemoryUsage)
 }
 
 // MARK: - Supporting Classes

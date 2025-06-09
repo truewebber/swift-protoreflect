@@ -351,34 +351,36 @@ class ApiGateway {
   }
 
   func processRequest(_ request: ApiRequest) throws -> ApiResponse {
-    let startTime = CFAbsoluteTimeGetCurrent()
+    let (finalResponse, processingTime) = try ExampleUtils.measureTime {
+      // Apply middleware pipeline
+      var processedRequest = try middlewarePipeline.processRequest(request)
 
-    // Apply middleware pipeline
-    var processedRequest = try middlewarePipeline.processRequest(request)
+      // Route request to appropriate service
+      guard let route = requestRouter.findRoute(for: processedRequest) else {
+        return ApiResponse(statusCode: 404, body: ["error": "Route not found"], metadata: [:])
+      }
 
-    // Route request to appropriate service
-    guard let route = requestRouter.findRoute(for: processedRequest) else {
-      return ApiResponse(statusCode: 404, body: ["error": "Route not found"], metadata: [:])
+      // Apply transformations
+      for transformation in route.transformations {
+        processedRequest = try transformation.apply(to: processedRequest, using: schemaRegistry)
+      }
+
+      // Simulate service call and response
+      let serviceResponse = try simulateServiceCall(processedRequest, route: route)
+
+      // Transform response
+      return try responseTransformer.transform(serviceResponse, using: route)
     }
 
-    // Apply transformations
-    for transformation in route.transformations {
-      processedRequest = try transformation.apply(to: processedRequest, using: schemaRegistry)
+    // Record performance metrics (note: route access outside closure requires refactoring)
+    let processedRequest = try middlewarePipeline.processRequest(request)
+    if let route = requestRouter.findRoute(for: processedRequest) {
+      performanceMonitor.recordRequest(
+        route.targetService,
+        duration: processingTime,
+        success: finalResponse.statusCode == 200
+      )
     }
-
-    // Simulate service call and response
-    let serviceResponse = try simulateServiceCall(processedRequest, route: route)
-
-    // Transform response
-    let finalResponse = try responseTransformer.transform(serviceResponse, using: route)
-
-    // Record performance metrics
-    let processingTime = CFAbsoluteTimeGetCurrent() - startTime
-    performanceMonitor.recordRequest(
-      route.targetService,
-      duration: processingTime,
-      success: finalResponse.statusCode == 200
-    )
 
     return finalResponse
   }
