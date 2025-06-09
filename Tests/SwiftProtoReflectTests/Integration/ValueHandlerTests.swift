@@ -294,7 +294,7 @@ final class ValueHandlerTests: XCTestCase {
     // Create a message with different type name
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     var messageDescriptor = MessageDescriptor(name: "WrongType", parent: fileDescriptor)
-    
+
     let valueDataField = FieldDescriptor(
       name: "value_data",
       number: 1,
@@ -302,10 +302,10 @@ final class ValueHandlerTests: XCTestCase {
     )
     messageDescriptor.addField(valueDataField)
     fileDescriptor.addMessage(messageDescriptor)
-    
+
     let factory = MessageFactory()
     let message = factory.createMessage(from: messageDescriptor)
-    
+
     // This should throw invalidData error
     XCTAssertThrowsError(try ValueHandler.createSpecialized(from: message)) { error in
       guard let wellKnownError = error as? WellKnownTypeError,
@@ -325,10 +325,10 @@ final class ValueHandlerTests: XCTestCase {
     let valueDescriptor = try createTestValueDescriptor()
     let factory = MessageFactory()
     var message = factory.createMessage(from: valueDescriptor)
-    
+
     // Set empty data
     try message.set(Data(), forField: "value_data")
-    
+
     // This should return nullValue
     let result = try ValueHandler.createSpecialized(from: message)
     let valueValue = result as! ValueHandler.ValueValue
@@ -340,7 +340,7 @@ final class ValueHandlerTests: XCTestCase {
     let valueDescriptor = try createTestValueDescriptor()
     let factory = MessageFactory()
     let message = factory.createMessage(from: valueDescriptor)
-    
+
     // Don't set value_data field - it should return nullValue
     let result = try ValueHandler.createSpecialized(from: message)
     let valueValue = result as! ValueHandler.ValueValue
@@ -352,11 +352,11 @@ final class ValueHandlerTests: XCTestCase {
     let valueDescriptor = try createTestValueDescriptor()
     let factory = MessageFactory()
     var message = factory.createMessage(from: valueDescriptor)
-    
+
     // Set invalid JSON data
     let invalidJSONData = "invalid json".data(using: .utf8)!
     try message.set(invalidJSONData, forField: "value_data")
-    
+
     // This should throw conversionFailed error
     XCTAssertThrowsError(try ValueHandler.createSpecialized(from: message)) { error in
       guard let wellKnownError = error as? WellKnownTypeError,
@@ -376,12 +376,12 @@ final class ValueHandlerTests: XCTestCase {
     let valueDescriptor = try createTestValueDescriptor()
     let factory = MessageFactory()
     var message = factory.createMessage(from: valueDescriptor)
-    
+
     // Set JSON data without the expected "value" wrapper
     let malformedJSON = ["not_value": "test"]
     let jsonData = try JSONSerialization.data(withJSONObject: malformedJSON, options: [])
     try message.set(jsonData, forField: "value_data")
-    
+
     // This should return nullValue since the wrapper structure is not found
     let result = try ValueHandler.createSpecialized(from: message)
     let valueValue = result as! ValueHandler.ValueValue
@@ -393,10 +393,10 @@ final class ValueHandlerTests: XCTestCase {
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "WrongType", parent: fileDescriptor)
     fileDescriptor.addMessage(messageDescriptor)
-    
+
     let factory = MessageFactory()
     let message = factory.createMessage(from: messageDescriptor)
-    
+
     // This should throw invalidData error
     XCTAssertThrowsError(try message.toAnyValue()) { error in
       guard let wellKnownError = error as? WellKnownTypeError,

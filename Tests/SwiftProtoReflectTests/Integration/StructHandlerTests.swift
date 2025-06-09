@@ -508,7 +508,7 @@ final class StructHandlerTests: XCTestCase {
     let structValue = StructHandler.StructValue(fields: [
       "name": .stringValue("test"),
       "age": .numberValue(25),
-      "active": .boolValue(true)
+      "active": .boolValue(true),
     ])
     let description = structValue.description
     XCTAssertTrue(description.contains("Struct"))
@@ -529,39 +529,39 @@ final class StructHandlerTests: XCTestCase {
 
   func testValueValueFromNumericTypes() throws {
     // Test all numeric type conversions that are currently uncovered
-    
+
     // Bool
     let boolValue = try StructHandler.ValueValue(from: true)
     XCTAssertEqual(boolValue, .boolValue(true))
-    
+
     // Int
     let intValue = try StructHandler.ValueValue(from: Int(42))
     XCTAssertEqual(intValue, .numberValue(42.0))
-    
+
     // Int32
     let int32Value = try StructHandler.ValueValue(from: Int32(32))
     XCTAssertEqual(int32Value, .numberValue(32.0))
-    
+
     // Int64
     let int64Value = try StructHandler.ValueValue(from: Int64(64))
     XCTAssertEqual(int64Value, .numberValue(64.0))
-    
+
     // UInt
     let uintValue = try StructHandler.ValueValue(from: UInt(100))
     XCTAssertEqual(uintValue, .numberValue(100.0))
-    
+
     // UInt32
     let uint32Value = try StructHandler.ValueValue(from: UInt32(132))
     XCTAssertEqual(uint32Value, .numberValue(132.0))
-    
+
     // UInt64
     let uint64Value = try StructHandler.ValueValue(from: UInt64(164))
     XCTAssertEqual(uint64Value, .numberValue(164.0))
-    
+
     // Float
     let floatValue = try StructHandler.ValueValue(from: Float(3.14))
     XCTAssertEqual(floatValue, .numberValue(Double(Float(3.14))))
-    
+
     // Double
     let doubleValue = try StructHandler.ValueValue(from: Double(2.718))
     XCTAssertEqual(doubleValue, .numberValue(2.718))
@@ -572,11 +572,11 @@ final class StructHandlerTests: XCTestCase {
     let structDescriptor = try createTestStructDescriptor()
     let factory = MessageFactory()
     var message = factory.createMessage(from: structDescriptor)
-    
+
     // Set invalid JSON data
     let invalidJSONData = "invalid json".data(using: .utf8)!
     try message.set(invalidJSONData, forField: "fields")
-    
+
     // This should throw conversionFailed error
     XCTAssertThrowsError(try StructHandler.createSpecialized(from: message)) { error in
       guard let wellKnownError = error as? WellKnownTypeError,
@@ -596,10 +596,10 @@ final class StructHandlerTests: XCTestCase {
     let structDescriptor = try createTestStructDescriptor()
     let factory = MessageFactory()
     var message = factory.createMessage(from: structDescriptor)
-    
+
     // Set empty data - this should cause a JSON parsing error
     try message.set(Data(), forField: "fields")
-    
+
     // This should throw conversionFailed error due to invalid JSON
     XCTAssertThrowsError(try StructHandler.createSpecialized(from: message)) { error in
       guard let wellKnownError = error as? WellKnownTypeError,
@@ -619,7 +619,7 @@ final class StructHandlerTests: XCTestCase {
     let structDescriptor = try createTestStructDescriptor()
     let factory = MessageFactory()
     let message = factory.createMessage(from: structDescriptor)
-    
+
     // Don't set fields field - it should return empty struct
     let result = try StructHandler.createSpecialized(from: message)
     let structValue = result as! StructHandler.StructValue
@@ -629,12 +629,12 @@ final class StructHandlerTests: XCTestCase {
   func testCreateDynamicWithSerializationError() {
     // This test is tricky since JSONSerialization.data rarely fails with valid Swift objects
     // We'll test with a struct that contains a problematic value
-    
+
     // Create a struct with a complex nested structure that might cause issues
     let complexStruct = StructHandler.StructValue(fields: [
       "valid": .stringValue("test")
     ])
-    
+
     // This should work fine - JSONSerialization handles most Swift types well
     XCTAssertNoThrow(try StructHandler.createDynamic(from: complexStruct))
   }

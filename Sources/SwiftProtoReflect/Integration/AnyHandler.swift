@@ -56,11 +56,11 @@ public struct AnyHandler: WellKnownTypeHandler {
     public static func pack(_ message: DynamicMessage) throws -> AnyValue {
       // Создаем type URL из дескриптора сообщения
       let typeUrl = Self.createTypeUrl(for: message.descriptor.fullName)
-      
+
       // Сериализуем сообщение в бинарный формат
       let serializer = BinarySerializer()
       let serializedData = try serializer.serialize(message)
-      
+
       return try AnyValue(typeUrl: typeUrl, value: serializedData)
     }
 
@@ -72,7 +72,7 @@ public struct AnyHandler: WellKnownTypeHandler {
       // Проверяем что type_url соответствует ожидаемому типу
       let expectedTypeName = targetDescriptor.fullName
       let actualTypeName = getTypeName()
-      
+
       guard actualTypeName == expectedTypeName else {
         throw WellKnownTypeError.conversionFailed(
           from: "AnyValue[\(typeUrl)]",
@@ -80,13 +80,14 @@ public struct AnyHandler: WellKnownTypeHandler {
           reason: "Type URL mismatch. Expected: \(expectedTypeName), got: \(actualTypeName)"
         )
       }
-      
+
       // Десериализуем данные в сообщение
       if value.isEmpty {
         // Возвращаем пустое сообщение для пустых данных
         let factory = MessageFactory()
         return factory.createMessage(from: targetDescriptor)
-      } else {
+      }
+      else {
         let deserializer = BinaryDeserializer()
         return try deserializer.deserialize(value, using: targetDescriptor)
       }
@@ -123,23 +124,23 @@ public struct AnyHandler: WellKnownTypeHandler {
     internal static func isValidTypeUrl(_ typeUrl: String) -> Bool {
       // Проверяем базовый формат
       guard !typeUrl.isEmpty else { return false }
-      
+
       // Проверяем что есть хотя бы одна косая черта
       guard let slashIndex = typeUrl.lastIndex(of: "/") else { return false }
-      
+
       // Проверяем что есть домен перед косой чертой (не может начинаться с "/")
       guard slashIndex != typeUrl.startIndex else { return false }
-      
+
       // Извлекаем домен и имя типа
       let domain = String(typeUrl[..<slashIndex])
       let typeName = String(typeUrl[typeUrl.index(after: slashIndex)...])
-      
+
       // Домен не должен быть пустым и должен содержать хотя бы одну точку
       guard !domain.isEmpty && domain.contains(".") else { return false }
-      
+
       // Имя типа не должно быть пустым и должно содержать точку для package.Type
       guard !typeName.isEmpty && typeName.contains(".") else { return false }
-      
+
       return true
     }
 
@@ -210,7 +211,7 @@ public struct AnyHandler: WellKnownTypeHandler {
 
   public static func validate(_ specialized: Any) -> Bool {
     guard let anyValue = specialized as? AnyValue else { return false }
-    
+
     // Проверяем валидность type URL
     return AnyValue.isValidTypeUrl(anyValue.typeUrl)
   }
@@ -325,7 +326,7 @@ extension AnyHandler.AnyValue {
   /// - Throws: WellKnownTypeError если тип не найден или десериализация неуспешна
   public func unpack(using registry: TypeRegistry) throws -> DynamicMessage {
     let typeName = getTypeName()
-    
+
     guard let messageDescriptor = registry.findMessage(named: typeName) else {
       throw WellKnownTypeError.conversionFailed(
         from: "AnyValue",
