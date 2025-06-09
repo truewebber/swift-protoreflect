@@ -59,7 +59,7 @@ public struct EmptyHandler: WellKnownTypeHandler {
     }
 
     // Создаем дескриптор для Empty
-    let emptyDescriptor = try createEmptyDescriptor()
+    let emptyDescriptor = createEmptyDescriptor()
 
     // Создаем пустое сообщение
     let factory = MessageFactory()
@@ -78,8 +78,7 @@ public struct EmptyHandler: WellKnownTypeHandler {
 
   /// Создает дескриптор для google.protobuf.Empty.
   /// - Returns: MessageDescriptor для Empty.
-  /// - Throws: ReflectionError если создание неудачно.
-  private static func createEmptyDescriptor() throws -> MessageDescriptor {
+  private static func createEmptyDescriptor() -> MessageDescriptor {
     // Создаем файл дескриптор
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/empty.proto",

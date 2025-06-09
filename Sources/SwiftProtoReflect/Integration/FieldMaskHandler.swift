@@ -211,7 +211,7 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
     }
 
     // Создаем дескриптор для FieldMask
-    let fieldMaskDescriptor = try createFieldMaskDescriptor()
+    let fieldMaskDescriptor = createFieldMaskDescriptor()
 
     // Создаем сообщение
     let factory = MessageFactory()
@@ -236,8 +236,7 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
 
   /// Создает дескриптор для google.protobuf.FieldMask.
   /// - Returns: MessageDescriptor для FieldMask.
-  /// - Throws: ReflectionError если создание неудачно.
-  private static func createFieldMaskDescriptor() throws -> MessageDescriptor {
+  private static func createFieldMaskDescriptor() -> MessageDescriptor {
     // Создаем файл дескриптор
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/field_mask.proto",

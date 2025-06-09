@@ -270,7 +270,7 @@ public struct StructHandler: WellKnownTypeHandler {
     }
 
     // Создаем дескриптор для Struct
-    let structDescriptor = try createStructDescriptor()
+    let structDescriptor = createStructDescriptor()
 
     // Создаем сообщение
     let factory = MessageFactory()
@@ -302,8 +302,7 @@ public struct StructHandler: WellKnownTypeHandler {
 
   /// Создает дескриптор для google.protobuf.Struct.
   /// - Returns: MessageDescriptor для Struct.
-  /// - Throws: ReflectionError если создание неудачно.
-  private static func createStructDescriptor() throws -> MessageDescriptor {
+  private static func createStructDescriptor() -> MessageDescriptor {
     // Создаем файл дескриптор
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/struct.proto",

@@ -197,7 +197,7 @@ public struct DurationHandler: WellKnownTypeHandler {
     }
 
     // Создаем дескриптор для Duration
-    let durationDescriptor = try createDurationDescriptor()
+    let durationDescriptor = createDurationDescriptor()
 
     // Создаем сообщение
     let factory = MessageFactory()
@@ -223,8 +223,7 @@ public struct DurationHandler: WellKnownTypeHandler {
 
   /// Создает дескриптор для google.protobuf.Duration.
   /// - Returns: MessageDescriptor для Duration.
-  /// - Throws: ReflectionError если создание неудачно.
-  private static func createDurationDescriptor() throws -> MessageDescriptor {
+  private static func createDurationDescriptor() -> MessageDescriptor {
     // Создаем файл дескриптор
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/duration.proto",

@@ -195,7 +195,7 @@ public struct AnyHandler: WellKnownTypeHandler {
     }
 
     // Создаем дескриптор для Any
-    let anyDescriptor = try createAnyDescriptor()
+    let anyDescriptor = createAnyDescriptor()
 
     // Создаем сообщение
     let factory = MessageFactory()
@@ -219,8 +219,7 @@ public struct AnyHandler: WellKnownTypeHandler {
 
   /// Создает дескриптор для google.protobuf.Any.
   /// - Returns: MessageDescriptor для Any.
-  /// - Throws: ReflectionError если создание неудачно.
-  private static func createAnyDescriptor() throws -> MessageDescriptor {
+  private static func createAnyDescriptor() -> MessageDescriptor {
     // Создаем файл дескриптор
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/any.proto",

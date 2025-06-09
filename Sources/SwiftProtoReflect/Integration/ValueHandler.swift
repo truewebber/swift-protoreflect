@@ -68,7 +68,7 @@ public struct ValueHandler: WellKnownTypeHandler {
     }
 
     // Создаем дескриптор для Value
-    let valueDescriptor = try createValueDescriptor()
+    let valueDescriptor = createValueDescriptor()
 
     // Создаем сообщение
     let factory = MessageFactory()
@@ -102,8 +102,7 @@ public struct ValueHandler: WellKnownTypeHandler {
 
   /// Создает дескриптор для google.protobuf.Value.
   /// - Returns: MessageDescriptor для Value.
-  /// - Throws: ReflectionError если создание неудачно.
-  private static func createValueDescriptor() throws -> MessageDescriptor {
+  private static func createValueDescriptor() -> MessageDescriptor {
     // Создаем файл дескриптор
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/struct.proto",

@@ -160,7 +160,7 @@ public struct TimestampHandler: WellKnownTypeHandler {
     }
 
     // Создаем дескриптор для Timestamp
-    let timestampDescriptor = try createTimestampDescriptor()
+    let timestampDescriptor = createTimestampDescriptor()
 
     // Создаем сообщение
     let factory = MessageFactory()
@@ -185,8 +185,7 @@ public struct TimestampHandler: WellKnownTypeHandler {
 
   /// Создает дескриптор для google.protobuf.Timestamp.
   /// - Returns: MessageDescriptor для Timestamp.
-  /// - Throws: ReflectionError если создание неудачно.
-  private static func createTimestampDescriptor() throws -> MessageDescriptor {
+  private static func createTimestampDescriptor() -> MessageDescriptor {
     // Создаем файл дескриптор
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/timestamp.proto",

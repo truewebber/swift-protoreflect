@@ -27,7 +27,6 @@ let package = Package(
       ],
       exclude: [
         "Service/_README.md",
-        "Errors/_README.md",
         "Dynamic/_README.md",
         "Bridge/_README.md",
         "Descriptor/_README.md",

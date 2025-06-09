@@ -68,7 +68,6 @@
   - **Service/** - взаимодействие с gRPC
   - **Bridge/** - интеграция с Swift Protobuf
   - **Integration/** - Well-Known Types поддержка и расширенная интеграция
-  - **Errors/** - обработка ошибок
 
 - **Tests/SwiftProtoReflectTests/** - тесты, структура соответствует модулям
   - **Descriptor/** - тесты для системы дескрипторов
@@ -78,7 +77,6 @@
   - **Service/** - тесты сервисных клиентов
   - **Bridge/** - тесты интеграции
   - **Integration/** - тесты Well-Known Types и продвинутой интеграции
-  - **Error/** - тесты обработки ошибок
   - **Performance/** - тесты производительности
   - **Compatibility/** - тесты совместимости с Swift Protobuf
   - **TestUtils/** - вспомогательные инструменты для тестирования
