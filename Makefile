@@ -28,7 +28,7 @@ help:
 	@echo "  make format                   - Format the Swift code in-place."
 	@echo "  make test                     - Run unit tests."
 	@echo "  make coverage                 - Generate a code coverage report."
-	@echo "  make coverage-detailed        - Generate a detailed code coverage report."
+	@echo "  make test-examples            - Run all 43 working examples to verify they work correctly."
 	@echo "  make list-toolchains          - List available Swift toolchains."
 	@echo ""
 	@echo "Environment variables:"
@@ -66,16 +66,55 @@ coverage:
 		-ignore-filename-regex=".build|Tests|checkouts" \
 		-use-color
 
-## Generate a detailed code coverage report showing uncovered lines
-coverage-detailed:
-	@echo "Generating detailed code coverage report..."
-	xcrun llvm-profdata merge -sparse .build/arm64-apple-macosx/debug/codecov/*.profraw -o .build/arm64-apple-macosx/debug/codecov/merged.profdata
-	xcrun llvm-cov show \
-		.build/arm64-apple-macosx/debug/SwiftProtoReflectPackageTests.xctest/Contents/MacOS/SwiftProtoReflectPackageTests \
-		-instr-profile=.build/arm64-apple-macosx/debug/codecov/merged.profdata \
-		-name-regex="^Sources/SwiftProtoReflect/" \
-		-ignore-filename-regex=".build|Tests|checkouts" \
-		-use-color
+
+## Run all 43 working examples to verify they work correctly
+test-examples:
+	@echo "Running all 43 working examples to verify they work correctly..."
+	@echo "(Excluding ProtoREPL - interactive example that requires user input)"
+	@cd examples && \
+	examples=( \
+		"HelloWorld" "FieldTypes" "SimpleMessage" "BasicDescriptors" \
+		"ComplexMessages" "NestedOperations" "NestedTypes" "FieldManipulation" "MessageCloning" "ConditionalLogic" "PerformanceOptimization" \
+		"ProtobufSerialization" "JsonConversion" "BinaryData" "Streaming" "Compression" \
+		"TypeRegistry" "FileLoading" "DependencyResolution" "SchemaValidation" \
+		"TimestampDemo" "DurationDemo" "EmptyDemo" "FieldMaskDemo" "StructDemo" "ValueDemo" "AnyDemo" "WellKnownRegistry" \
+		"DynamicClient" "ServiceDiscovery" "UnaryCalls" "ErrorHandling" "MetadataOptions" \
+		"DescriptorBridge" "StaticMessageBridge" "BatchOperations" "MemoryOptimization" "ThreadSafety" "CustomExtensions" \
+		"ConfigurationSystem" "ApiGateway" "MessageTransform" "ValidationFramework" \
+	); \
+	failed=(); \
+	passed=0; \
+	total=$${#examples[@]}; \
+	echo "Found $$total examples to test..."; \
+	echo ""; \
+	for example in "$${examples[@]}"; do \
+		printf "%-25s" "$$example"; \
+		if swift run $$example >/dev/null 2>&1; then \
+			echo "✅ PASSED"; \
+			((passed++)); \
+		else \
+			echo "❌ FAILED"; \
+			failed+=("$$example"); \
+		fi; \
+	done; \
+	echo ""; \
+	echo "Summary: $$passed/$$total examples passed"; \
+	if [ $${#failed[@]} -eq 0 ]; then \
+		echo "🎉 All working examples are passing!"; \
+		echo ""; \
+		echo "Note: Interactive examples are excluded from automated testing:"; \
+		echo "  ProtoREPL - Interactive example (requires user input):"; \
+		echo "    cd examples && swift run ProtoREPL"; \
+	else \
+		echo "❌ Failed examples:"; \
+		for fail in "$${failed[@]}"; do \
+			echo "  - $$fail"; \
+		done; \
+		echo ""; \
+		echo "To debug a specific example, run:"; \
+		echo "  cd examples && swift run <example_name>"; \
+		exit 1; \
+	fi
 
 ## List available Swift toolchains
 list-toolchains:
