@@ -467,52 +467,52 @@ let package = Package(
                 "ExampleUtils"
             ],
             path: "08-real-world",
-            // exclude: ["api-gateway.swift", "message-transformation.swift", "validation-framework.swift", "proto-repl.swift"],
+            exclude: ["api-gateway.swift", "message-transform.swift", "validation-framework.swift", "proto-repl.swift"],
             sources: ["configuration-system.swift"]
         ),
         
-        // .executableTarget(
-        //     name: "ApiGateway",
-        //     dependencies: [
-        //         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
-        //         "ExampleUtils"
-        //     ],
-        //     path: "08-real-world",
-        //     exclude: ["configuration-system.swift", "message-transformation.swift", "validation-framework.swift", "proto-repl.swift"],
-        //     sources: ["api-gateway.swift"]
-        // ),
+        .executableTarget(
+            name: "ApiGateway",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "08-real-world",
+            exclude: ["configuration-system.swift", "message-transform.swift", "validation-framework.swift", "proto-repl.swift"],
+            sources: ["api-gateway.swift"]
+        ),
         
-        // .executableTarget(
-        //     name: "MessageTransformation",
-        //     dependencies: [
-        //         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
-        //         "ExampleUtils"
-        //     ],
-        //     path: "08-real-world",
-        //     exclude: ["configuration-system.swift", "api-gateway.swift", "validation-framework.swift", "proto-repl.swift"],
-        //     sources: ["message-transformation.swift"]
-        // ),
+        .executableTarget(
+            name: "MessageTransform",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "08-real-world",
+            exclude: ["configuration-system.swift", "api-gateway.swift", "validation-framework.swift", "proto-repl.swift"],
+            sources: ["message-transform.swift"]
+        ),
         
-        // .executableTarget(
-        //     name: "ValidationFramework",
-        //     dependencies: [
-        //         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
-        //         "ExampleUtils"
-        //     ],
-        //     path: "08-real-world",
-        //     exclude: ["configuration-system.swift", "api-gateway.swift", "message-transformation.swift", "proto-repl.swift"],
-        //     sources: ["validation-framework.swift"]
-        // ),
+        .executableTarget(
+            name: "ValidationFramework",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "08-real-world",
+            exclude: ["configuration-system.swift", "api-gateway.swift", "message-transform.swift", "proto-repl.swift"],
+            sources: ["validation-framework.swift"]
+        ),
         
-        // .executableTarget(
-        //     name: "ProtoREPL",
-        //     dependencies: [
-        //         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
-        //         "ExampleUtils"
-        //     ],
-        //     path: "08-real-world",
-        //     exclude: ["configuration-system.swift", "api-gateway.swift", "message-transformation.swift", "validation-framework.swift"],
-        //     sources: ["proto-repl.swift"]
-        // ),
+        .executableTarget(
+            name: "ProtoREPL",
+            dependencies: [
+                .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+                "ExampleUtils"
+            ],
+            path: "08-real-world",
+            exclude: ["configuration-system.swift", "api-gateway.swift", "message-transform.swift", "validation-framework.swift"],
+            sources: ["proto-repl.swift"]
+        ),
     ]
 )
