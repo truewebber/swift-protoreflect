@@ -7,11 +7,11 @@
  * Execution time: < 25 seconds
  *
  * What you'll learn:
- * - Выполнение unary RPC вызовов без статической генерации
- * - Request preparation и response handling
+ * - Executing unary RPC calls without static generation
+ * - Request preparation and response handling
  * - Call options (timeout, metadata, headers)
- * - Error handling для различных gRPC статусов
- * - Performance monitoring и metrics
+ * - Error handling for various gRPC statuses
+ * - Performance monitoring and metrics
  * - Batch RPC operations
  *
  * Run:

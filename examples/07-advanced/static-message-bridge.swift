@@ -7,13 +7,13 @@
  * Execution time: < 20 seconds
  *
  * What you'll learn:
- * - Конвертация статических сообщений в динамические
- * - Обратная конвертация динамических в статические
- * - Сохранение типов и метаданных при конвертации
- * - Batch конвертация множественных сообщений
- * - Валидация совместимости схем
- * - Performance анализ операций конвертации
- * - Error handling и edge cases
+ * - Converting static messages to dynamic messages
+ * - Reverse conversion from dynamic to static messages
+ * - Preserving types and metadata during conversion
+ * - Batch conversion of multiple messages
+ * - Schema compatibility validation
+ * - Performance analysis of conversion operations
+ * - Error handling and edge cases
  *
  * Run:
  *   cd examples && swift run StaticMessageBridge

@@ -7,12 +7,12 @@
  * Execution time: < 15 seconds
  *
  * What you'll learn:
- * - Конвертация FileDescriptor между библиотеками
- * - Преобразование MessageDescriptor и FieldDescriptor
- * - Bi-directional mapping и сохранение метаданных
- * - Валидация совместимости дескрипторов
- * - Round-trip testing для надежности
- * - Performance анализ операций конвертации
+ * - Converting FileDescriptor between libraries
+ * - Transforming MessageDescriptor and FieldDescriptor
+ * - Bi-directional mapping and metadata preservation
+ * - Descriptor compatibility validation
+ * - Round-trip testing for reliability
+ * - Performance analysis of conversion operations
  *
  * Run:
  *   cd examples && swift run DescriptorBridge

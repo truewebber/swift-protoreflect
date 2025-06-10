@@ -7,12 +7,12 @@
  * Execution time: < 20 seconds
  *
  * What you'll learn:
- * - Все типы gRPC статус кодов и их обработка
- * - Retry механизмы с экспоненциальным backoff
- * - Circuit breaker pattern для защиты от сбоев
- * - Error categorization и recovery стратегии
- * - Timeout handling и deadline management
- * - Error metrics и monitoring
+ * - All gRPC status code types and their handling
+ * - Retry mechanisms with exponential backoff
+ * - Circuit breaker pattern for failure protection
+ * - Error categorization and recovery strategies
+ * - Timeout handling and deadline management
+ * - Error metrics and monitoring
  *
  * Run:
  *   swift run ErrorHandling

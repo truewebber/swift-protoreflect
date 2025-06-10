@@ -7,12 +7,12 @@
  * Execution time: < 15 seconds
  *
  * What you'll learn:
- * - Управление gRPC метаданными и заголовками
- * - Authentication patterns через metadata
- * - Custom call options и их влияние на RPC
+ * - Managing gRPC metadata and headers
+ * - Authentication patterns through metadata
+ * - Custom call options and their impact on RPC
  * - Request/Response metadata handling
- * - Tracing и correlation IDs
- * - Security contexts и authorization
+ * - Tracing and correlation IDs
+ * - Security contexts and authorization
  *
  * Run:
  *   swift run MetadataOptions

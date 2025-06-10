@@ -7,12 +7,12 @@
  * Execution time: < 20 seconds
  *
  * What you'll learn:
- * - Deep copy vs shallow copy для динамических сообщений
- * - Клонирование сообщений с вложенными структурами и циклическими ссылками
- * - Partial copying (выборочное копирование полей)
- * - Performance оптимизации при массовом клонировании
- * - Сохранение и нарушение референтных связей между сообщениями
- * - Custom cloning strategies для различных use cases
+ * - Deep copy vs shallow copy for dynamic messages
+ * - Cloning messages with nested structures and circular references
+ * - Partial copying (selective field copying)
+ * - Performance optimizations for bulk cloning
+ * - Preserving and breaking reference relationships between messages
+ * - Custom cloning strategies for different use cases
  *
  * Run:
  *   swift run MessageCloning
@@ -37,9 +37,9 @@ struct MessageCloningExample {
     ExampleUtils.printSuccess("Вы освоили все техники клонирования сообщений!")
 
     ExampleUtils.printNext([
-      "Следующий: conditional-logic.swift - условная логика на основе типов",
-      "Оптимизация: performance-optimization.swift - производительность операций",
-      "Изучите: ../03-serialization/ - сериализация и форматы данных",
+      "Next: conditional-logic.swift - conditional logic based on types",
+      "Optimization: performance-optimization.swift - operation performance",
+      "Also explore: ../03-serialization/ - serialization and data formats",
     ])
   }
 

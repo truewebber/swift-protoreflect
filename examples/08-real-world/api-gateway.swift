@@ -7,12 +7,12 @@
  * Execution time: 15-20 seconds
  *
  * What you'll learn:
- * - Создание API Gateway с динамическими схемами
- * - Request/Response трансформация и валидация
- * - Schema-based routing и endpoint discovery
- * - Middleware pipeline и обработка ошибок
- * - Performance monitoring и caching strategies
- * - Multi-version API support и backward compatibility
+ * - Creating API Gateway with dynamic schemas
+ * - Request/Response transformation and validation
+ * - Schema-based routing and endpoint discovery
+ * - Middleware pipeline and error handling
+ * - Performance monitoring and caching strategies
+ * - Multi-version API support and backward compatibility
  *
  * Run:
  *   swift run ApiGateway

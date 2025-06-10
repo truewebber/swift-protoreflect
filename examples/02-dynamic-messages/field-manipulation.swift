@@ -7,12 +7,12 @@
  * Execution time: < 15 seconds
  *
  * What you'll learn:
- * - Массовые операции с полями (batch updates, batch validation)
- * - Динамическое исследование структуры полей и их метаданных
- * - Условные обновления на основе типов и значений полей
- * - Продвинутая валидация и constraints для полей
- * - Трансформация и конвертация типов полей
- * - Работа с полями разных типов через единый API
+ * - Batch field operations (batch updates, batch validation)
+ * - Dynamic exploration of field structure and metadata
+ * - Conditional updates based on field types and values
+ * - Advanced validation and constraints for fields
+ * - Field type transformation and conversion
+ * - Working with different field types through unified API
  *
  * Run:
  *   swift run FieldManipulation
@@ -37,9 +37,9 @@ struct FieldManipulationExample {
     ExampleUtils.printSuccess("Вы освоили продвинутые техники работы с полями!")
 
     ExampleUtils.printNext([
-      "Следующий: message-cloning.swift - клонирование и копирование сообщений",
-      "Продвинутые: conditional-logic.swift - условная логика на основе типов",
-      "Оптимизация: performance-optimization.swift - производительность операций",
+      "Next: message-cloning.swift - message cloning and copying",
+      "Advanced: conditional-logic.swift - conditional logic based on types",
+      "Optimization: performance-optimization.swift - operation performance",
     ])
   }
 
