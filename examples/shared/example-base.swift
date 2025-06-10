@@ -1,14 +1,14 @@
 import Foundation
 import SwiftProtoReflect
 
-/// Базовые утилиты для всех примеров SwiftProtoReflect.
+/// Base utilities for all SwiftProtoReflect examples.
 ///
-/// Предоставляет унифицированный интерфейс для вывода, измерения производительности и работы с данными.
+/// Provides unified interface for output, performance measurement and data handling.
 public enum ExampleUtils {
 
   // MARK: - Console Output with Colors
 
-  /// Печатает красивый заголовок для примера.
+  /// Prints beautiful header for example.
   public static func printHeader(_ title: String) {
     let maxWidth = 70
     let titleWidth = min(title.count, maxWidth - 4)
@@ -19,50 +19,50 @@ public enum ExampleUtils {
     print("\u{001B}[34m\(separator)\u{001B}[0m\n")
   }
 
-  /// Печатает номерованный шаг выполнения.
+  /// Prints numbered execution step.
   public static func printStep(_ number: Int, _ description: String) {
-    print("\n\u{001B}[33m📝 Шаг \(number): \(description)\u{001B}[0m")
+    print("\n\u{001B}[33m📝 Step \(number): \(description)\u{001B}[0m")
     let underline = String(repeating: "─", count: min(description.count + 10, 50))
     print("\u{001B}[36m\(underline)\u{001B}[0m")
   }
 
-  /// Печатает сообщение об успехе.
+  /// Prints success message.
   public static func printSuccess(_ message: String) {
     print("\n\u{001B}[32m🎉 \(message)\u{001B}[0m")
   }
 
-  /// Печатает сообщение об ошибке.
+  /// Prints error message.
   public static func printError(_ message: String) {
-    print("\n\u{001B}[31m❌ Ошибка: \(message)\u{001B}[0m")
+    print("\n\u{001B}[31m❌ Error: \(message)\u{001B}[0m")
   }
 
-  /// Печатает предупреждение.
+  /// Prints warning.
   public static func printWarning(_ message: String) {
-    print("\n\u{001B}[33m⚠️  Предупреждение: \(message)\u{001B}[0m")
+    print("\n\u{001B}[33m⚠️  Warning: \(message)\u{001B}[0m")
   }
 
-  /// Печатает информационное сообщение.
+  /// Prints informational message.
   public static func printInfo(_ message: String) {
     print("\n\u{001B}[36m💡 \(message)\u{001B}[0m")
   }
 
-  /// Печатает список предложений что делать дальше.
+  /// Prints list of suggestions what to do next.
   public static func printNext(_ suggestions: [String]) {
-    print("\n\u{001B}[36m🔍 Что попробовать дальше:\u{001B}[0m")
+    print("\n\u{001B}[36m🔍 What to try next:\u{001B}[0m")
     for suggestion in suggestions {
       print("\u{001B}[37m  • \(suggestion)\u{001B}[0m")
     }
     print()
   }
 
-  /// Печатает разделитель.
+  /// Prints separator.
   public static func printSeparator() {
     print("\u{001B}[34m" + String(repeating: "─", count: 50) + "\u{001B}[0m")
   }
 
   // MARK: - Performance Measurement
 
-  /// Измеряет время выполнения операции и возвращает результат с временем.
+  /// Measures operation execution time and returns result with time.
   public static func measureTime<T>(_ operation: () throws -> T) rethrows -> (result: T, time: TimeInterval) {
     #if canImport(CoreFoundation) && !os(Linux)
       let startTime = CFAbsoluteTimeGetCurrent()
@@ -77,7 +77,7 @@ public enum ExampleUtils {
     return (result, timeElapsed)
   }
 
-  /// Печатает информацию о времени выполнения.
+  /// Prints execution time information.
   public static func printTiming(_ description: String, time: TimeInterval) {
     let timeString: String
     if time < 0.001 {
@@ -94,13 +94,13 @@ public enum ExampleUtils {
 
   // MARK: - Data Generation Helpers
 
-  /// Генерирует случайную строку заданной длины.
+  /// Generates random string of specified length.
   public static func generateRandomString(length: Int = 10) -> String {
     let letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     return String((0..<length).map { _ in letters.randomElement()! })
   }
 
-  /// Генерирует тестовые данные для Person сообщения.
+  /// Generates test data for Person message.
   public static func generateTestPersonData() -> [String: Any] {
     let names = ["Alice", "Bob", "Charlie", "Diana", "Eve", "Frank", "Grace", "Henry"]
     let domains = ["example.com", "test.org", "demo.net", "sample.io"]
@@ -119,7 +119,7 @@ public enum ExampleUtils {
     ]
   }
 
-  /// Генерирует тестовые данные для Company сообщения.
+  /// Generates test data for Company message.
   public static func generateTestCompanyData() -> [String: Any] {
     let companies = ["TechCorp", "DataSys", "CloudWorks", "DevLabs", "CodeForge"]
     let cities = ["San Francisco", "New York", "London", "Tokyo", "Berlin"]
@@ -142,13 +142,13 @@ public enum ExampleUtils {
 
   // MARK: - File Helpers
 
-  /// Читает файл из папки resources/data/.
+  /// Reads file from resources/data/ folder.
   public static func readResourceFile(_ filename: String) -> String? {
     let resourcePath = "resources/data/\(filename)"
     return try? String(contentsOfFile: resourcePath, encoding: .utf8)
   }
 
-  /// Записывает содержимое во временный файл.
+  /// Writes content to temporary file.
   public static func writeToTempFile(_ content: String, filename: String) -> String? {
     #if canImport(Foundation) && !os(Linux)
       let tempDir = NSTemporaryDirectory()
@@ -160,18 +160,18 @@ public enum ExampleUtils {
 
     do {
       try content.write(toFile: outputPath, atomically: true, encoding: .utf8)
-      print("  \u{001B}[36m📄 Файл записан: \(outputPath)\u{001B}[0m")
+      print("  \u{001B}[36m📄 File written: \(outputPath)\u{001B}[0m")
       return outputPath
     }
     catch {
-      printError("Не удалось записать файл: \(error)")
+      printError("Failed to write file: \(error)")
       return nil
     }
   }
 
   // MARK: - Formatting Helpers
 
-  /// Форматирует размер данных в человекочитаемом виде.
+  /// Formats data size in human-readable form.
   public static func formatDataSize(_ bytes: Int) -> String {
     if bytes < 1024 {
       return "\(bytes) bytes"
@@ -184,7 +184,7 @@ public enum ExampleUtils {
     }
   }
 
-  /// Форматирует Data как hex строку для предварительного просмотра.
+  /// Formats Data as hex string for preview.
   public static func formatDataPreview(_ data: Data, maxBytes: Int = 20) -> String {
     let bytesToShow = min(data.count, maxBytes)
     let hexString = data.prefix(bytesToShow).map { String(format: "%02x", $0) }.joined(separator: " ")
@@ -197,7 +197,7 @@ public enum ExampleUtils {
     }
   }
 
-  /// Создает таблицу из данных key-value.
+  /// Creates table from key-value data.
   public static func printTable<T>(_ data: [String: T], title: String? = nil) {
     if let title = title {
       print("\n\u{001B}[37m📋 \(title):\u{001B}[0m")
@@ -214,7 +214,7 @@ public enum ExampleUtils {
     }
   }
 
-  /// Создает таблицу из массива словарей (для табличных данных).
+  /// Creates table from array of dictionaries (for tabular data).
   public static func printDataTable(_ data: [[String: String]], title: String? = nil) {
     guard !data.isEmpty else {
       if let title = title {
@@ -227,29 +227,29 @@ public enum ExampleUtils {
       print("\n\u{001B}[37m📋 \(title):\u{001B}[0m")
     }
 
-    // Найти все уникальные ключи и их максимальные длины
+    // Find all unique keys and their maximum lengths
     let allKeys = Set(data.flatMap { $0.keys })
     let sortedKeys = allKeys.sorted()
 
     var columnWidths: [String: Int] = [:]
     for key in sortedKeys {
       let maxValueLength = data.compactMap { $0[key]?.count }.max() ?? 0
-      columnWidths[key] = max(key.count, maxValueLength, 5)  // минимум 5 символов
+      columnWidths[key] = max(key.count, maxValueLength, 5)  // minimum 5 characters
     }
 
-    // Печать заголовка
+    // Print header
     let headerLine = sortedKeys.map { key in
       key.padding(toLength: columnWidths[key]!, withPad: " ", startingAt: 0)
     }.joined(separator: " │ ")
     print("  \u{001B}[1;36m\(headerLine)\u{001B}[0m")
 
-    // Печать разделителя
+    // Print separator
     let separatorLine = sortedKeys.map { key in
       String(repeating: "─", count: columnWidths[key]!)
     }.joined(separator: "─┼─")
     print("  \u{001B}[36m\(separatorLine)\u{001B}[0m")
 
-    // Печать данных
+    // Print data
     for row in data {
       let dataLine = sortedKeys.map { key in
         let value = row[key] ?? ""
@@ -261,7 +261,7 @@ public enum ExampleUtils {
 
   // MARK: - Validation Helpers
 
-  /// Проверяет равенство двух значений с подробным выводом.
+  /// Checks equality of two values with detailed output.
   public static func assertEqual<T: Equatable>(_ actual: T, _ expected: T, description: String) -> Bool {
     if actual == expected {
       print("  \u{001B}[32m✅ \(description): OK\u{001B}[0m")
@@ -273,7 +273,7 @@ public enum ExampleUtils {
     }
   }
 
-  /// Проверяет что значение не nil.
+  /// Checks that value is not nil.
   public static func assertNotNil<T>(_ value: T?, description: String) -> Bool {
     if value != nil {
       print("  \u{001B}[32m✅ \(description): Not nil\u{001B}[0m")
@@ -287,13 +287,13 @@ public enum ExampleUtils {
 
   // MARK: - Interactive Helpers
 
-  /// Ожидает нажатия Enter от пользователя.
-  public static func waitForEnter(message: String = "Нажмите Enter для продолжения...") {
+  /// Waits for Enter press from user.
+  public static func waitForEnter(message: String = "Press Enter to continue...") {
     print("\n\u{001B}[33m\(message)\u{001B}[0m")
     _ = readLine()
   }
 
-  /// Задает вопрос пользователю с вариантами ответов.
+  /// Asks user a question with answer options.
   public static func askUser(_ question: String, options: [String] = ["y", "n"]) -> String? {
     let optionsStr = options.joined(separator: "/")
     print("\n\u{001B}[33m❓ \(question) (\(optionsStr)): \u{001B}[0m", terminator: "")
@@ -308,7 +308,7 @@ public enum ExampleUtils {
 // MARK: - DynamicMessage Extensions
 
 extension DynamicMessage {
-  /// Печатает содержимое сообщения в удобочитаемом формате.
+  /// Prints message content in human-readable format.
   public func prettyPrint() {
     print("    \u{001B}[37m📋 \(descriptor.name):\u{001B}[0m")
 
@@ -338,7 +338,7 @@ extension DynamicMessage {
     }
   }
 
-  /// Форматирует значение поля для красивого отображения.
+  /// Formats field value for beautiful display.
   private func formatFieldValue(_ value: Any?, fieldType: FieldType) -> String {
     guard let value = value else { return "\u{001B}[90mnil\u{001B}[0m" }
 
@@ -366,7 +366,7 @@ extension DynamicMessage {
     }
   }
 
-  /// Форматирует элемент массива.
+  /// Formats array element.
   private func formatArrayElement(_ element: Any) -> String {
     switch element {
     case let string as String:

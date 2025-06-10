@@ -1,19 +1,19 @@
 /**
  * 🏗 SwiftProtoReflect Example: Simple Complex Messages
  *
- * Описание: Создание более сложных сообщений с вложенностью, oneof полями и message типами
- * Ключевые концепции: Nested Messages, OneOf Fields, Message Types, Default Values
- * Сложность: 🔧 Средний
- * Время выполнения: < 10 секунд
+ * Description: Creating more complex messages with nesting, oneof fields and message types
+ * Key concepts: Nested Messages, OneOf Fields, Message Types, Default Values
+ * Complexity: 🔧 Intermediate
+ * Execution time: < 10 seconds
  *
- * Что изучите:
- * - Создание вложенных сообщений (nested messages)
- * - Использование oneof полей для взаимоисключающих значений
- * - Работа с message типами и typeName
- * - Default значения для полей
- * - Сложные иерархии данных
+ * What you'll learn:
+ * - Creating nested messages
+ * - Using oneof fields for mutually exclusive values
+ * - Working with message types and typeName
+ * - Default values for fields
+ * - Complex data hierarchies
  *
- * Запуск:
+ * Run:
  *   swift run SimpleMessage
  */
 
@@ -24,7 +24,7 @@ import SwiftProtoReflect
 @main
 struct SimpleMessageExample {
   static func main() throws {
-    ExampleUtils.printHeader("Сложные сообщения - Вложенность и OneOf поля")
+    ExampleUtils.printHeader("Complex Messages - Nesting and OneOf Fields")
 
     try step1UcreateNestedMessages()
     try step2UuseOneOfFields()
@@ -32,115 +32,115 @@ struct SimpleMessageExample {
     try step4UdefaultValues()
     try step5UcomplexHierarchy()
 
-    ExampleUtils.printSuccess("Вы освоили создание сложных Protocol Buffers сообщений!")
+    ExampleUtils.printSuccess("You mastered creating complex Protocol Buffers messages!")
 
     ExampleUtils.printNext([
-      "Следующий: basic-descriptors.swift - метаданные и навигация дескрипторов",
-      "Продвинутые: complex-messages.swift - еще более сложные структуры",
-      "Изучите: nested-messages.swift - специализация на вложенных сообщениях",
+      "Next: basic-descriptors.swift - metadata and descriptor navigation",
+      "Advanced: complex-messages.swift - even more complex structures",
+      "Explore: nested-messages.swift - specialization in nested messages",
     ])
   }
 
   // MARK: - Implementation Steps
 
   private static func step1UcreateNestedMessages() throws {
-    ExampleUtils.printStep(1, "Создание вложенных сообщений")
+    ExampleUtils.printStep(1, "Creating nested messages")
 
     let (userDescriptor, addressDescriptor, _) = try createNestedMessageStructure()
     let factory = MessageFactory()
 
-    // Создаем сообщения
+    // Create messages
     var user = factory.createMessage(from: userDescriptor)
     var address = factory.createMessage(from: addressDescriptor)
 
-    // Заполняем вложенное сообщение Address
+    // Fill nested Address message
     try address.set("123 Main Street", forField: "street")
     try address.set("Springfield", forField: "city")
     try address.set("12345", forField: "postal_code")
 
-    print("  📍 Создан Address:")
+    print("  📍 Address created:")
     address.prettyPrint()
 
-    // Заполняем основное сообщение User
+    // Fill main User message
     try user.set("John Doe", forField: "name")
     try user.set("john.doe@example.com", forField: "email")
     try user.set(Int32(30), forField: "age")
     try user.set(address, forField: "address")
 
-    print("\n  👤 Создан User с вложенным Address:")
+    print("\n  👤 User created with nested Address:")
     user.prettyPrint()
 
-    // Проверяем доступ к вложенным данным
+    // Check access to nested data
     if let userAddress = try user.get(forField: "address") as? DynamicMessage {
       let street = try userAddress.get(forField: "street") as? String
-      print("  🏠 Улица пользователя: \(street ?? "не указана")")
+      print("  🏠 User's street: \(street ?? "not specified")")
     }
   }
 
   private static func step2UuseOneOfFields() throws {
-    ExampleUtils.printStep(2, "Использование OneOf полей")
+    ExampleUtils.printStep(2, "Using OneOf fields")
 
     let (messageDescriptor, _) = try createOneOfMessage()
     let factory = MessageFactory()
 
-    // Демонстрируем разные варианты oneof
-    print("  🔀 Тестирование OneOf полей:")
+    // Demonstrate different oneof variants
+    print("  🔀 Testing OneOf fields:")
 
-    // Вариант 1: contact_method = email
+    // Variant 1: contact_method = email
     var message1 = factory.createMessage(from: messageDescriptor)
     try message1.set("user@example.com", forField: "email")
 
     let hasEmail = try message1.hasValue(forField: "email")
     let hasPhone = try message1.hasValue(forField: "phone")
 
-    print("    📧 Установлен email:")
+    print("    📧 Email set:")
     print("      - hasEmail: \(hasEmail)")
     print("      - hasPhone: \(hasPhone)")
     print("      - email: \(try message1.get(forField: "email") as? String ?? "nil")")
 
-    // Вариант 2: contact_method = phone (перезапишет email)
+    // Variant 2: contact_method = phone (overwrites email)
     try message1.set("+1-555-123-4567", forField: "phone")
 
     let hasEmailAfter = try message1.hasValue(forField: "email")
     let hasPhoneAfter = try message1.hasValue(forField: "phone")
 
-    print("    📞 Установлен phone (должен сбросить email):")
+    print("    📞 Phone set (should clear email):")
     print("      - hasEmail: \(hasEmailAfter)")
     print("      - hasPhone: \(hasPhoneAfter)")
     print("      - phone: \(try message1.get(forField: "phone") as? String ?? "nil")")
 
-    // Вариант 3: другой oneof - notification_method
+    // Variant 3: another oneof - notification_method
     try message1.set(true, forField: "push_enabled")
     let hasPush = try message1.hasValue(forField: "push_enabled")
     print("    🔔 Notification method - push_enabled: \(hasPush)")
   }
 
   private static func step3UworkWithMessageTypes() throws {
-    ExampleUtils.printStep(3, "Работа с message типами")
+    ExampleUtils.printStep(3, "Working with message types")
 
     let (companyDescriptor, departmentDescriptor, _) = try createCompanyStructure()
     let factory = MessageFactory()
 
-    // Создаем department
+    // Create department
     var department = factory.createMessage(from: departmentDescriptor)
     try department.set("Engineering", forField: "name")
     try department.set(Int32(25), forField: "employee_count")
 
-    print("  🏢 Создан Department:")
+    print("  🏢 Department created:")
     department.prettyPrint()
 
-    // Создаем company с вложенным department
+    // Create company with nested department
     var company = factory.createMessage(from: companyDescriptor)
     try company.set("TechCorp", forField: "name")
     try company.set("A leading technology company", forField: "description")
 
-    // Устанавливаем department как message поле
+    // Set department as message field
     try company.set(department, forField: "main_department")
 
-    print("\n  🏭 Создана Company с вложенным Department:")
+    print("\n  🏭 Company created with nested Department:")
     company.prettyPrint()
 
-    // Проверяем доступ к message полю
+    // Check access to message field
     if let mainDept = try company.get(forField: "main_department") as? DynamicMessage {
       let deptName = try mainDept.get(forField: "name") as? String
       let employeeCount = try mainDept.get(forField: "employee_count") as? Int32
@@ -156,73 +156,73 @@ struct SimpleMessageExample {
   }
 
   private static func step4UdefaultValues() throws {
-    ExampleUtils.printStep(4, "Default значения полей")
+    ExampleUtils.printStep(4, "Default field values")
 
     let (messageDescriptor, _) = try createMessageWithDefaults()
     let factory = MessageFactory()
     var message = factory.createMessage(from: messageDescriptor)
 
-    print("  🎯 Тестирование default значений:")
+    print("  🎯 Testing default values:")
 
-    // Проверяем значения до установки (должны быть defaults или nil)
+    // Check values before setting (should be defaults or nil)
     let statusBefore = try message.get(forField: "status") as? String
     let priorityBefore = try message.get(forField: "priority") as? Int32
     let activeBefore = try message.get(forField: "is_active") as? Bool
 
-    print("    До установки значений:")
+    print("    Before setting values:")
     print("      - status: \(statusBefore ?? "nil")")
     print("      - priority: \(priorityBefore?.description ?? "nil")")
     print("      - is_active: \(activeBefore?.description ?? "nil")")
 
-    // Устанавливаем значения
+    // Set values
     try message.set("pending", forField: "status")
     try message.set(Int32(5), forField: "priority")
-    // is_active оставляем без установки
+    // Leave is_active unset
 
     let statusAfter = try message.get(forField: "status") as? String
     let priorityAfter = try message.get(forField: "priority") as? Int32
     let activeAfter = try message.get(forField: "is_active") as? Bool
 
-    print("    После установки:")
+    print("    After setting:")
     print("      - status: \(statusAfter ?? "nil")")
     print("      - priority: \(priorityAfter?.description ?? "nil")")
     print("      - is_active: \(activeAfter?.description ?? "nil") (default)")
   }
 
   private static func step5UcomplexHierarchy() throws {
-    ExampleUtils.printStep(5, "Сложная иерархия сообщений")
+    ExampleUtils.printStep(5, "Complex message hierarchy")
 
     let (blogDescriptor, postDescriptor, authorDescriptor, _) = try createBlogStructure()
     let factory = MessageFactory()
 
-    // Создаем автора
+    // Create author
     var author = factory.createMessage(from: authorDescriptor)
     try author.set("Jane Smith", forField: "name")
     try author.set("jane@example.com", forField: "email")
     try author.set("Senior Developer", forField: "bio")
 
-    // Создаем пост
+    // Create post
     var post = factory.createMessage(from: postDescriptor)
     try post.set("Introduction to SwiftProtoReflect", forField: "title")
     try post.set("This is a comprehensive guide...", forField: "content")
     try post.set(["swift", "protobuf", "ios"], forField: "tags")
     try post.set(author, forField: "author")
 
-    // Создаем блог с постом
+    // Create blog with post
     var blog = factory.createMessage(from: blogDescriptor)
     try blog.set("Tech Blog", forField: "name")
     try blog.set("A blog about technology", forField: "description")
     try blog.set([post], forField: "posts")
 
-    print("  📝 Создана сложная иерархия Blog -> Post -> Author")
+    print("  📝 Complex hierarchy created: Blog -> Post -> Author")
 
-    // Демонстрируем навигацию по иерархии
+    // Demonstrate hierarchy navigation
     if let posts = try blog.get(forField: "posts") as? [DynamicMessage],
       let firstPost = posts.first
     {
 
       let postTitle = try firstPost.get(forField: "title") as? String
-      print("  📰 Первый пост: \(postTitle ?? "Untitled")")
+      print("  📰 First post: \(postTitle ?? "Untitled")")
 
       if let postAuthor = try firstPost.get(forField: "author") as? DynamicMessage {
         let authorName = try postAuthor.get(forField: "name") as? String
@@ -239,12 +239,12 @@ struct SimpleMessageExample {
       }
 
       if let tags = try firstPost.get(forField: "tags") as? [String] {
-        print("  🏷  Теги: \(tags.joined(separator: ", "))")
+        print("  🏷  Tags: \(tags.joined(separator: ", "))")
       }
     }
 
     ExampleUtils.printInfo(
-      "Демонстрация показывает возможности создания сложных многоуровневых структур данных с помощью SwiftProtoReflect"
+      "This demonstration shows ability to create complex multi-level data structures using SwiftProtoReflect"
     )
   }
 
@@ -253,13 +253,13 @@ struct SimpleMessageExample {
   private static func createNestedMessageStructure() throws -> (MessageDescriptor, MessageDescriptor, FileDescriptor) {
     var fileDescriptor = FileDescriptor(name: "user.proto", package: "example")
 
-    // Создаем вложенное сообщение Address
+    // Create nested Address message
     var addressDescriptor = MessageDescriptor(name: "Address", parent: fileDescriptor)
     addressDescriptor.addField(FieldDescriptor(name: "street", number: 1, type: .string))
     addressDescriptor.addField(FieldDescriptor(name: "city", number: 2, type: .string))
     addressDescriptor.addField(FieldDescriptor(name: "postal_code", number: 3, type: .string))
 
-    // Создаем основное сообщение User
+    // Create main User message
     var userDescriptor = MessageDescriptor(name: "User", parent: fileDescriptor)
     userDescriptor.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     userDescriptor.addField(FieldDescriptor(name: "email", number: 2, type: .string))
@@ -283,14 +283,14 @@ struct SimpleMessageExample {
     var fileDescriptor = FileDescriptor(name: "contact.proto", package: "example")
     var messageDescriptor = MessageDescriptor(name: "Contact", parent: fileDescriptor)
 
-    // Обычные поля
+    // Regular fields
     messageDescriptor.addField(FieldDescriptor(name: "name", number: 1, type: .string))
 
-    // OneOf группа 1: contact_method (email ИЛИ phone)
+    // OneOf group 1: contact_method (email OR phone)
     messageDescriptor.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
     messageDescriptor.addField(FieldDescriptor(name: "phone", number: 3, type: .string, oneofIndex: 0))
 
-    // OneOf группа 2: notification_method (push_enabled ИЛИ sms_enabled)
+    // OneOf group 2: notification_method (push_enabled OR sms_enabled)
     messageDescriptor.addField(FieldDescriptor(name: "push_enabled", number: 4, type: .bool, oneofIndex: 1))
     messageDescriptor.addField(FieldDescriptor(name: "sms_enabled", number: 5, type: .bool, oneofIndex: 1))
 
@@ -302,12 +302,12 @@ struct SimpleMessageExample {
   private static func createCompanyStructure() throws -> (MessageDescriptor, MessageDescriptor, FileDescriptor) {
     var fileDescriptor = FileDescriptor(name: "company.proto", package: "example")
 
-    // Создаем Department сообщение
+    // Create Department message
     var departmentDescriptor = MessageDescriptor(name: "Department", parent: fileDescriptor)
     departmentDescriptor.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     departmentDescriptor.addField(FieldDescriptor(name: "employee_count", number: 2, type: .int32))
 
-    // Создаем Company сообщение с message полем
+    // Create Company message with message field
     var companyDescriptor = MessageDescriptor(name: "Company", parent: fileDescriptor)
     companyDescriptor.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     companyDescriptor.addField(FieldDescriptor(name: "description", number: 2, type: .string))
@@ -330,7 +330,7 @@ struct SimpleMessageExample {
     var fileDescriptor = FileDescriptor(name: "defaults.proto", package: "example")
     var messageDescriptor = MessageDescriptor(name: "TaskInfo", parent: fileDescriptor)
 
-    // Поля с potential default значениями
+    // Fields with potential default values
     messageDescriptor.addField(
       FieldDescriptor(
         name: "status",
@@ -366,13 +366,13 @@ struct SimpleMessageExample {
   ) {
     var fileDescriptor = FileDescriptor(name: "blog.proto", package: "example")
 
-    // Author сообщение
+    // Author message
     var authorDescriptor = MessageDescriptor(name: "Author", parent: fileDescriptor)
     authorDescriptor.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     authorDescriptor.addField(FieldDescriptor(name: "email", number: 2, type: .string))
     authorDescriptor.addField(FieldDescriptor(name: "bio", number: 3, type: .string))
 
-    // Post сообщение
+    // Post message
     var postDescriptor = MessageDescriptor(name: "Post", parent: fileDescriptor)
     postDescriptor.addField(FieldDescriptor(name: "title", number: 1, type: .string))
     postDescriptor.addField(FieldDescriptor(name: "content", number: 2, type: .string))
@@ -386,7 +386,7 @@ struct SimpleMessageExample {
       )
     )
 
-    // Blog сообщение
+    // Blog message
     var blogDescriptor = MessageDescriptor(name: "Blog", parent: fileDescriptor)
     blogDescriptor.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     blogDescriptor.addField(FieldDescriptor(name: "description", number: 2, type: .string))

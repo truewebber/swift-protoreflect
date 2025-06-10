@@ -1,19 +1,19 @@
 /**
  * 🎯 SwiftProtoReflect Example: Field Types Demo
  *
- * Описание: Демонстрация всех скалярных типов полей Protocol Buffers
- * Ключевые концепции: FieldType, скалярные типы, repeated поля, map поля
- * Сложность: 🔰 Начальный
- * Время выполнения: < 10 секунд
+ * Description: Demonstration of all Protocol Buffers scalar field types
+ * Key concepts: FieldType, scalar types, repeated fields, map fields
+ * Complexity: 🔰 Beginner
+ * Execution time: < 10 seconds
  *
- * Что изучите:
- * - Все скалярные типы Protocol Buffers
- * - Repeated поля (массивы)
- * - Map поля (key-value)
- * - Enum поля
- * - Валидация типов полей
+ * What you'll learn:
+ * - All Protocol Buffers scalar types
+ * - Repeated fields (arrays)
+ * - Map fields (key-value)
+ * - Enum fields
+ * - Field type validation
  *
- * Запуск:
+ * Run:
  *   swift run FieldTypes
  */
 
@@ -24,7 +24,7 @@ import SwiftProtoReflect
 @main
 struct FieldTypesExample {
   static func main() throws {
-    ExampleUtils.printHeader("Protocol Buffers Field Types - Все типы полей")
+    ExampleUtils.printHeader("Protocol Buffers Field Types - All field types")
 
     try step1UscalarTypes()
     try step2UrepeatedFields()
@@ -32,25 +32,25 @@ struct FieldTypesExample {
     try step4UenumFields()
     try step5UvalidationDemo()
 
-    ExampleUtils.printSuccess("Вы изучили все основные типы полей Protocol Buffers!")
+    ExampleUtils.printSuccess("You learned all basic Protocol Buffers field types!")
 
     ExampleUtils.printNext([
-      "Следующий: simple-message.swift - создание более сложных сообщений",
-      "Также изучите: basic-descriptors.swift - работа с метаданными",
-      "Продвинутые: nested-messages.swift - вложенные сообщения",
+      "Next: simple-message.swift - creating more complex messages",
+      "Also explore: basic-descriptors.swift - working with metadata",
+      "Advanced: nested-messages.swift - nested messages",
     ])
   }
 
   // MARK: - Implementation Steps
 
   private static func step1UscalarTypes() throws {
-    ExampleUtils.printStep(1, "Скалярные типы Protocol Buffers")
+    ExampleUtils.printStep(1, "Protocol Buffers scalar types")
 
     let (messageDescriptor, _) = try createAllTypesMessage()
     let factory = MessageFactory()
     var message = factory.createMessage(from: messageDescriptor)
 
-    // Установка значений для всех скалярных типов
+    // Set values for all scalar types
     try message.set(42.5, forField: "double_field")  // double
     try message.set(Float(3.14), forField: "float_field")  // float
     try message.set(Int32(100), forField: "int32_field")  // int32
@@ -67,9 +67,9 @@ struct FieldTypesExample {
     try message.set("Hello Protocol Buffers!", forField: "string_field")  // string
     try message.set(Data("Binary data".utf8), forField: "bytes_field")  // bytes
 
-    print("  ✅ Все скалярные значения установлены")
+    print("  ✅ All scalar values set")
 
-    // Читаем и проверяем значения - разбиваем сложное выражение для компилятора
+    // Read and check values - split complex expression for compiler
     let scalarData: [String: Any] = [
       "double": try message.get(forField: "double_field") as? Double ?? 0,
       "float": try message.get(forField: "float_field") as? Float ?? 0,
@@ -86,13 +86,13 @@ struct FieldTypesExample {
       "string": try message.get(forField: "string_field") as? String ?? "",
     ]
 
-    // Объединяем данные и показываем таблицу
+    // Combine data and show table
     var allScalarData = scalarData
     for (key, value) in moreScalarData {
       allScalarData[key] = value
     }
 
-    ExampleUtils.printTable(allScalarData, title: "Скалярные значения")
+    ExampleUtils.printTable(allScalarData, title: "Scalar values")
 
     if let bytesData = try message.get(forField: "bytes_field") as? Data {
       let bytesString = String(data: bytesData, encoding: .utf8) ?? "binary"
@@ -101,21 +101,21 @@ struct FieldTypesExample {
   }
 
   private static func step2UrepeatedFields() throws {
-    ExampleUtils.printStep(2, "Repeated поля (массивы)")
+    ExampleUtils.printStep(2, "Repeated fields (arrays)")
 
     let (messageDescriptor, _) = try createRepeatedFieldsMessage()
     let factory = MessageFactory()
     var message = factory.createMessage(from: messageDescriptor)
 
-    // Устанавливаем repeated поля
+    // Set repeated fields
     try message.set([Int32(1), Int32(2), Int32(3), Int32(4), Int32(5)], forField: "repeated_int32")
     try message.set(["apple", "banana", "cherry", "date"], forField: "repeated_string")
     try message.set([true, false, true, false], forField: "repeated_bool")
     try message.set([1.1, 2.2, 3.3], forField: "repeated_double")
 
-    print("  ✅ Repeated поля установлены")
+    print("  ✅ Repeated fields set")
 
-    // Читаем repeated поля
+    // Read repeated fields
     if let numbers = try message.get(forField: "repeated_int32") as? [Int32] {
       print("  🔢 repeated_int32: \(numbers)")
     }
@@ -133,25 +133,25 @@ struct FieldTypesExample {
     }
 
     let totalElements = (try? message.get(forField: "repeated_int32") as? [Int32])?.count ?? 0
-    print("  📊 Общее количество элементов в repeated_int32: \(totalElements)")
+    print("  📊 Total elements in repeated_int32: \(totalElements)")
   }
 
   private static func step3UmapFields() throws {
-    ExampleUtils.printStep(3, "Map поля (key-value) - упрощенная демонстрация")
+    ExampleUtils.printStep(3, "Map fields (key-value) - simplified demonstration")
 
     let (messageDescriptor, _) = try createMapFieldsMessage()
     let factory = MessageFactory()
     var message = factory.createMessage(from: messageDescriptor)
 
-    // Поскольку Map поля требуют сложной настройки в Protocol Buffers,
-    // покажем концепцию через обычные поля
+    // Since Map fields require complex setup in Protocol Buffers,
+    // show concept through regular fields
     try message.set("key1=value1,key2=value2,key3=value3", forField: "map_string_int32")
     try message.set("10=ten,20=twenty,30=thirty", forField: "map_int32_string")
     try message.set("enabled=true,disabled=false", forField: "map_string_bool")
 
-    print("  ✅ Map-like данные установлены (как строки для демонстрации)")
+    print("  ✅ Map-like data set (as strings for demonstration)")
 
-    // Читаем map-like поля
+    // Read map-like fields
     if let stringIntMap = try message.get(forField: "map_string_int32") as? String {
       print("  🗝  map_string_int32: \(stringIntMap)")
     }
@@ -164,23 +164,23 @@ struct FieldTypesExample {
       print("  ✅ map_string_bool: \(stringBoolMap)")
     }
 
-    ExampleUtils.printInfo("Примечание: Настоящие Map поля требуют специальной конфигурации дескрипторов")
+    ExampleUtils.printInfo("Note: Real Map fields require special descriptor configuration")
   }
 
   private static func step4UenumFields() throws {
-    ExampleUtils.printStep(4, "Enum поля")
+    ExampleUtils.printStep(4, "Enum fields")
 
     let (messageDescriptor, fileDescriptor) = try createEnumFieldsMessage()
     let factory = MessageFactory()
     var message = factory.createMessage(from: messageDescriptor)
 
-    // Enum в Protocol Buffers представляется как int32
+    // Enum in Protocol Buffers is represented as int32
     try message.set(Int32(1), forField: "status")  // ACTIVE = 1
     try message.set(Int32(2), forField: "priority")  // HIGH = 2
 
-    print("  ✅ Enum поля установлены")
+    print("  ✅ Enum fields set")
 
-    // Читаем enum поля
+    // Read enum fields
     if let status = try message.get(forField: "status") as? Int32 {
       let statusName = getStatusName(status)
       print("  📊 status: \(status) (\(statusName))")
@@ -191,9 +191,9 @@ struct FieldTypesExample {
       print("  ⚡ priority: \(priority) (\(priorityName))")
     }
 
-    // Покажем все доступные enum значения
+    // Show all available enum values
     if let statusEnum = fileDescriptor.enums.values.first(where: { $0.name == "Status" }) {
-      print("  📋 Доступные Status значения:")
+      print("  📋 Available Status values:")
       for value in statusEnum.allValues() {
         print("    \(value.name) = \(value.number)")
       }
@@ -201,43 +201,43 @@ struct FieldTypesExample {
   }
 
   private static func step5UvalidationDemo() throws {
-    ExampleUtils.printStep(5, "Валидация типов и демонстрация ошибок")
+    ExampleUtils.printStep(5, "Type validation and error demonstration")
 
     let (messageDescriptor, _) = try createAllTypesMessage()
     let factory = MessageFactory()
     var message = factory.createMessage(from: messageDescriptor)
 
-    print("  🧪 Тестирование валидации типов:")
+    print("  🧪 Testing type validation:")
 
-    // Правильные типы
+    // Correct types
     do {
       try message.set("Valid string", forField: "string_field")
-      print("  ✅ Правильный тип string: OK")
+      print("  ✅ Correct string type: OK")
     }
     catch {
-      print("  ❌ Ошибка с правильным типом: \(error)")
+      print("  ❌ Error with correct type: \(error)")
     }
 
-    // Неправильные типы (будут обработаны библиотекой)
+    // Wrong types (will be handled by library)
     do {
-      try message.set(123, forField: "string_field")  // int вместо string
-      print("  ⚠️  Попытка установить int в string поле: принято (возможна автоконвертация)")
+      try message.set(123, forField: "string_field")  // int instead of string
+      print("  ⚠️  Attempt to set int in string field: accepted (possible auto-conversion)")
     }
     catch {
-      print("  ✅ Правильно отклонен неверный тип: \(error)")
+      print("  ✅ Correctly rejected wrong type: \(error)")
     }
 
-    // Несуществующее поле
+    // Non-existent field
     do {
       try message.set("test", forField: "nonexistent_field")
-      print("  ❌ Неожиданно принято несуществующее поле")
+      print("  ❌ Unexpectedly accepted non-existent field")
     }
     catch {
-      print("  ✅ Правильно отклонено несуществующее поле")
+      print("  ✅ Correctly rejected non-existent field")
     }
 
-    // Проверим типы полей
-    print("\n  📋 Информация о типах полей:")
+    // Check field types
+    print("\n  📋 Field type information:")
     let fieldsToShow = Array(messageDescriptor.fields.values.prefix(5))
     for field in fieldsToShow {
       print("    \(field.name): \(field.type)")
@@ -250,7 +250,7 @@ struct FieldTypesExample {
     var fileDescriptor = FileDescriptor(name: "types.proto", package: "example")
     var messageDescriptor = MessageDescriptor(name: "AllTypes", parent: fileDescriptor)
 
-    // Добавляем все скалярные типы
+    // Add all scalar types
     messageDescriptor.addField(FieldDescriptor(name: "double_field", number: 1, type: .double))
     messageDescriptor.addField(FieldDescriptor(name: "float_field", number: 2, type: .float))
     messageDescriptor.addField(FieldDescriptor(name: "int32_field", number: 3, type: .int32))
@@ -288,7 +288,7 @@ struct FieldTypesExample {
     var fileDescriptor = FileDescriptor(name: "maps.proto", package: "example")
     var messageDescriptor = MessageDescriptor(name: "MapTypes", parent: fileDescriptor)
 
-    // Упрощенная демонстрация map концепции через обычные string поля
+    // Simplified demonstration of map concept through regular string fields
     messageDescriptor.addField(FieldDescriptor(name: "map_string_int32", number: 1, type: .string))
     messageDescriptor.addField(FieldDescriptor(name: "map_int32_string", number: 2, type: .string))
     messageDescriptor.addField(FieldDescriptor(name: "map_string_bool", number: 3, type: .string))
@@ -300,13 +300,13 @@ struct FieldTypesExample {
   private static func createEnumFieldsMessage() throws -> (MessageDescriptor, FileDescriptor) {
     var fileDescriptor = FileDescriptor(name: "enums.proto", package: "example")
 
-    // Создаем enum Status
+    // Create Status enum
     var statusEnum = EnumDescriptor(name: "Status", parent: fileDescriptor)
     statusEnum.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0))
     statusEnum.addValue(EnumDescriptor.EnumValue(name: "ACTIVE", number: 1))
     statusEnum.addValue(EnumDescriptor.EnumValue(name: "INACTIVE", number: 2))
 
-    // Создаем enum Priority
+    // Create Priority enum
     var priorityEnum = EnumDescriptor(name: "Priority", parent: fileDescriptor)
     priorityEnum.addValue(EnumDescriptor.EnumValue(name: "LOW", number: 0))
     priorityEnum.addValue(EnumDescriptor.EnumValue(name: "MEDIUM", number: 1))
@@ -315,10 +315,10 @@ struct FieldTypesExample {
     fileDescriptor.addEnum(statusEnum)
     fileDescriptor.addEnum(priorityEnum)
 
-    // Создаем сообщение с enum полями
+    // Create message with enum fields
     var messageDescriptor = MessageDescriptor(name: "EnumMessage", parent: fileDescriptor)
-    messageDescriptor.addField(FieldDescriptor(name: "status", number: 1, type: .int32))  // enum как int32
-    messageDescriptor.addField(FieldDescriptor(name: "priority", number: 2, type: .int32))  // enum как int32
+    messageDescriptor.addField(FieldDescriptor(name: "status", number: 1, type: .int32))  // enum as int32
+    messageDescriptor.addField(FieldDescriptor(name: "priority", number: 2, type: .int32))  // enum as int32
 
     fileDescriptor.addMessage(messageDescriptor)
     return (messageDescriptor, fileDescriptor)

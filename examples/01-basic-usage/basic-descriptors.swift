@@ -1,19 +1,19 @@
 /**
  * 🔍 SwiftProtoReflect Example: Basic Descriptors and Metadata
  *
- * Описание: Детальная работа с дескрипторами для извлечения метаданных и навигации
- * Ключевые концепции: Descriptors, Metadata, Field Navigation, Type Introspection
- * Сложность: 🔧 Средний
- * Время выполнения: < 15 секунд
+ * Description: Detailed work with descriptors for metadata extraction and navigation
+ * Key concepts: Descriptors, Metadata, Field Navigation, Type Introspection
+ * Complexity: 🔧 Intermediate
+ * Execution time: < 15 seconds
  *
- * Что изучите:
- * - Навигация по иерархии FileDescriptor -> MessageDescriptor -> FieldDescriptor
- * - Извлечение детальной информации о полях и их типах
- * - Работа с EnumDescriptor и его значениями
- * - Интроспекция структуры сообщений
- * - Анализ зависимостей и связей между типами
+ * What you'll learn:
+ * - Navigation through FileDescriptor -> MessageDescriptor -> FieldDescriptor hierarchy
+ * - Extracting detailed information about fields and their types
+ * - Working with EnumDescriptor and its values
+ * - Message structure introspection
+ * - Analysis of dependencies and relationships between types
  *
- * Запуск:
+ * Run:
  *   swift run BasicDescriptors
  */
 
@@ -24,7 +24,7 @@ import SwiftProtoReflect
 @main
 struct BasicDescriptorsExample {
   static func main() throws {
-    ExampleUtils.printHeader("Дескрипторы и метаданные - детальная интроспекция")
+    ExampleUtils.printHeader("Descriptors and metadata - detailed introspection")
 
     try step1UfileDescriptorNavigation()
     try step2UmessageDescriptorDetails()
@@ -32,23 +32,23 @@ struct BasicDescriptorsExample {
     try step4UenumDescriptorExploration()
     try step5UtypeRelationships()
 
-    ExampleUtils.printSuccess("Вы освоили работу с дескрипторами и метаданными Protocol Buffers!")
+    ExampleUtils.printSuccess("You mastered working with Protocol Buffers descriptors and metadata!")
 
     ExampleUtils.printNext([
-      "Следующий: complex-messages.swift - продвинутые динамические сообщения",
-      "Категория 02: dynamic-messages.swift - сложные операции с сообщениями",
-      "Изучите: serialization-basics.swift - сериализация и десериализация",
+      "Next: complex-messages.swift - advanced dynamic messages",
+      "Category 02: dynamic-messages.swift - complex message operations",
+      "Explore: serialization-basics.swift - serialization and deserialization",
     ])
   }
 
   // MARK: - Implementation Steps
 
   private static func step1UfileDescriptorNavigation() throws {
-    ExampleUtils.printStep(1, "Навигация по FileDescriptor")
+    ExampleUtils.printStep(1, "FileDescriptor navigation")
 
     let fileDescriptor = try createComprehensiveFileStructure()
 
-    // Анализ основной информации о файле
+    // Analyze basic file information
     ExampleUtils.printTable(
       [
         "File Name": fileDescriptor.name,
@@ -60,30 +60,30 @@ struct BasicDescriptorsExample {
       title: "File Descriptor Info"
     )
 
-    print("\n  🏗  Структура файла:")
+    print("\n  🏗  File structure:")
 
-    // Навигация по сообщениям
+    // Navigate through messages
     print("    📋 Messages:")
     for message in fileDescriptor.messages.values {
       print("      • \(message.name) (\(message.fields.count) fields)")
     }
 
-    // Навигация по enums
+    // Navigate through enums
     print("    🏷  Enums:")
     for enumDesc in fileDescriptor.enums.values {
       print("      • \(enumDesc.name) (\(enumDesc.allValues().count) values)")
     }
 
-    // Демонстрация поиска по имени
+    // Demonstrate search by name
     if let userMessage = fileDescriptor.messages.values.first(where: { $0.name == "User" }) {
-      print("\n  🔍 Найдено сообщение User:")
+      print("\n  🔍 Found User message:")
       print("      Full name: \(userMessage.fullName)")
       print("      Parent file: \(fileDescriptor.name)")
     }
   }
 
   private static func step2UmessageDescriptorDetails() throws {
-    ExampleUtils.printStep(2, "Детальный анализ MessageDescriptor")
+    ExampleUtils.printStep(2, "Detailed MessageDescriptor analysis")
 
     let fileDescriptor = try createComprehensiveFileStructure()
 
@@ -91,9 +91,9 @@ struct BasicDescriptorsExample {
       throw NSError(domain: "Example", code: 1, userInfo: [NSLocalizedDescriptionKey: "User message not found"])
     }
 
-    print("  📋 Анализ сообщения User:")
+    print("  📋 User message analysis:")
 
-    // Основная информация
+    // Basic information
     ExampleUtils.printTable(
       [
         "Name": userMessage.name,
@@ -104,7 +104,7 @@ struct BasicDescriptorsExample {
       title: "Message Details"
     )
 
-    // Анализ полей по типам
+    // Analyze fields by types
     var fieldsByType: [String: [FieldDescriptor]] = [:]
     for field in userMessage.fields.values {
       let typeName = "\(field.type)"
@@ -114,12 +114,12 @@ struct BasicDescriptorsExample {
       fieldsByType[typeName]?.append(field)
     }
 
-    print("\n    📊 Поля по типам:")
+    print("\n    📊 Fields by type:")
     for (type, fields) in fieldsByType.sorted(by: { $0.key < $1.key }) {
       print("      \(type): \(fields.map { $0.name }.joined(separator: ", "))")
     }
 
-    // Поиск специальных полей
+    // Find special fields
     let repeatedFields = userMessage.fields.values.filter { $0.isRepeated }
     let oneofFields = userMessage.fields.values.filter { $0.oneofIndex != nil }
 
@@ -133,7 +133,7 @@ struct BasicDescriptorsExample {
   }
 
   private static func step3UfieldDescriptorAnalysis() throws {
-    ExampleUtils.printStep(3, "Анализ FieldDescriptor'ов")
+    ExampleUtils.printStep(3, "FieldDescriptor analysis")
 
     let fileDescriptor = try createComprehensiveFileStructure()
 
@@ -141,9 +141,9 @@ struct BasicDescriptorsExample {
       throw NSError(domain: "Example", code: 1, userInfo: [NSLocalizedDescriptionKey: "User message not found"])
     }
 
-    print("  🔍 Детальный анализ полей User:")
+    print("  🔍 Detailed User fields analysis:")
 
-    // Создаем таблицу с информацией о каждом поле
+    // Create table with information about each field
     var fieldData: [String: String] = [:]
 
     for field in userMessage.fields.values.sorted(by: { $0.number < $1.number }) {
@@ -173,12 +173,12 @@ struct BasicDescriptorsExample {
 
     ExampleUtils.printTable(fieldData, title: "Field Details")
 
-    // Демонстрация поиска поля по номеру
+    // Demonstrate field search by number
     if let fieldByNumber = userMessage.fields.values.first(where: { $0.number == 1 }) {
-      print("\n  🎯 Поле с номером 1: \(fieldByNumber.name) (\(fieldByNumber.type))")
+      print("\n  🎯 Field with number 1: \(fieldByNumber.name) (\(fieldByNumber.type))")
     }
 
-    // Анализ message полей
+    // Analyze message fields
     let messageFields = userMessage.fields.values.filter { $0.type == .message }
     if !messageFields.isEmpty {
       print("\n  🏗  Message fields:")
@@ -189,7 +189,7 @@ struct BasicDescriptorsExample {
   }
 
   private static func step4UenumDescriptorExploration() throws {
-    ExampleUtils.printStep(4, "Исследование EnumDescriptor")
+    ExampleUtils.printStep(4, "EnumDescriptor exploration")
 
     let fileDescriptor = try createComprehensiveFileStructure()
 
@@ -197,9 +197,9 @@ struct BasicDescriptorsExample {
       throw NSError(domain: "Example", code: 1, userInfo: [NSLocalizedDescriptionKey: "UserStatus enum not found"])
     }
 
-    print("  🏷  Анализ enum UserStatus:")
+    print("  🏷  UserStatus enum analysis:")
 
-    // Основная информация об enum
+    // Basic enum information
     ExampleUtils.printTable(
       [
         "Name": statusEnum.name,
@@ -210,41 +210,41 @@ struct BasicDescriptorsExample {
       title: "Enum Details"
     )
 
-    // Анализ значений enum
+    // Analyze enum values
     print("\n    📊 Enum Values:")
     for enumValue in statusEnum.allValues().sorted(by: { $0.number < $1.number }) {
       print("      \(enumValue.name) = \(enumValue.number)")
     }
 
-    // Поиск значения по номеру
+    // Find value by number
     if let valueByNumber = statusEnum.allValues().first(where: { $0.number == 1 }) {
-      print("\n  🎯 Значение с номером 1: \(valueByNumber.name)")
+      print("\n  🎯 Value with number 1: \(valueByNumber.name)")
     }
 
-    // Поиск значения по имени
+    // Find value by name
     if let valueByName = statusEnum.allValues().first(where: { $0.name == "ACTIVE" }) {
-      print("  🎯 Значение 'ACTIVE': номер \(valueByName.number)")
+      print("  🎯 Value 'ACTIVE': number \(valueByName.number)")
     }
 
-    // Демонстрация использования enum в поле
+    // Demonstrate enum usage in field
     guard let userMessage = fileDescriptor.messages.values.first(where: { $0.name == "User" }) else {
       return
     }
 
     let enumFields = userMessage.fields.values.filter { $0.type == .enum }
     if let statusField = enumFields.first(where: { $0.name == "status" }) {
-      print("\n  🔗 Поле status связано с enum: \(statusField.typeName ?? "unknown")")
+      print("\n  🔗 Status field linked to enum: \(statusField.typeName ?? "unknown")")
     }
   }
 
   private static func step5UtypeRelationships() throws {
-    ExampleUtils.printStep(5, "Анализ связей между типами")
+    ExampleUtils.printStep(5, "Type relationship analysis")
 
     let fileDescriptor = try createComprehensiveFileStructure()
 
-    print("  🕸  Граф зависимостей типов:")
+    print("  🕸  Type dependency graph:")
 
-    // Анализируем связи между сообщениями
+    // Analyze relationships between messages
     for message in fileDescriptor.messages.values {
       let messageFields = message.fields.values.filter { $0.type == .message }
 
@@ -257,7 +257,7 @@ struct BasicDescriptorsExample {
       }
     }
 
-    // Анализируем использование enums
+    // Analyze enum usage
     print("\n  🏷  Enum Usage:")
     for message in fileDescriptor.messages.values {
       let enumFields = message.fields.values.filter { $0.type == .enum }
@@ -271,7 +271,7 @@ struct BasicDescriptorsExample {
       }
     }
 
-    // Статистика типов
+    // Type usage statistics
     var typeUsage: [String: Int] = [:]
     for message in fileDescriptor.messages.values {
       for field in message.fields.values {
@@ -280,12 +280,12 @@ struct BasicDescriptorsExample {
       }
     }
 
-    print("\n  📊 Статистика использования типов:")
+    print("\n  📊 Type usage statistics:")
     for (type, count) in typeUsage.sorted(by: { $0.value > $1.value }) {
       print("      \(type): \(count) fields")
     }
 
-    ExampleUtils.printInfo("Анализ дескрипторов позволяет понять структуру данных без создания сообщений")
+    ExampleUtils.printInfo("Descriptor analysis allows understanding data structure without creating messages")
   }
 
   // MARK: - Helper Methods
@@ -293,34 +293,34 @@ struct BasicDescriptorsExample {
   private static func createComprehensiveFileStructure() throws -> FileDescriptor {
     var fileDescriptor = FileDescriptor(name: "comprehensive.proto", package: "example")
 
-    // Создаем enum UserStatus
+    // Create UserStatus enum
     var userStatusEnum = EnumDescriptor(name: "UserStatus", parent: fileDescriptor)
     userStatusEnum.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0))
     userStatusEnum.addValue(EnumDescriptor.EnumValue(name: "ACTIVE", number: 1))
     userStatusEnum.addValue(EnumDescriptor.EnumValue(name: "INACTIVE", number: 2))
     userStatusEnum.addValue(EnumDescriptor.EnumValue(name: "SUSPENDED", number: 3))
 
-    // Создаем enum Priority
+    // Create Priority enum
     var priorityEnum = EnumDescriptor(name: "Priority", parent: fileDescriptor)
     priorityEnum.addValue(EnumDescriptor.EnumValue(name: "LOW", number: 0))
     priorityEnum.addValue(EnumDescriptor.EnumValue(name: "NORMAL", number: 1))
     priorityEnum.addValue(EnumDescriptor.EnumValue(name: "HIGH", number: 2))
     priorityEnum.addValue(EnumDescriptor.EnumValue(name: "URGENT", number: 3))
 
-    // Создаем Address сообщение
+    // Create Address message
     var addressDescriptor = MessageDescriptor(name: "Address", parent: fileDescriptor)
     addressDescriptor.addField(FieldDescriptor(name: "street", number: 1, type: .string))
     addressDescriptor.addField(FieldDescriptor(name: "city", number: 2, type: .string))
     addressDescriptor.addField(FieldDescriptor(name: "postal_code", number: 3, type: .string))
     addressDescriptor.addField(FieldDescriptor(name: "country", number: 4, type: .string, defaultValue: "Unknown"))
 
-    // Создаем Contact сообщение с OneOf полями
+    // Create Contact message with OneOf fields
     var contactDescriptor = MessageDescriptor(name: "Contact", parent: fileDescriptor)
     contactDescriptor.addField(FieldDescriptor(name: "email", number: 1, type: .string, oneofIndex: 0))
     contactDescriptor.addField(FieldDescriptor(name: "phone", number: 2, type: .string, oneofIndex: 0))
     contactDescriptor.addField(FieldDescriptor(name: "social_media", number: 3, type: .string, oneofIndex: 0))
 
-    // Создаем главное User сообщение
+    // Create main User message
     var userDescriptor = MessageDescriptor(name: "User", parent: fileDescriptor)
     userDescriptor.addField(FieldDescriptor(name: "id", number: 1, type: .int64))
     userDescriptor.addField(FieldDescriptor(name: "name", number: 2, type: .string))
@@ -364,7 +364,7 @@ struct BasicDescriptorsExample {
     )
     userDescriptor.addField(FieldDescriptor(name: "is_verified", number: 10, type: .bool, defaultValue: false))
 
-    // Добавляем все типы в файл
+    // Add all types to file
     fileDescriptor.addEnum(userStatusEnum)
     fileDescriptor.addEnum(priorityEnum)
     fileDescriptor.addMessage(addressDescriptor)
