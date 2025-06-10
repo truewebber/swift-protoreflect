@@ -1,20 +1,20 @@
 /**
  * 🌐 SwiftProtoReflect Example: gRPC Service Discovery
  *
- * Описание: Динамическое обнаружение доступных gRPC сервисов и их методов в runtime
- * Ключевые концепции: Service introspection, Method discovery, Protocol reflection
- * Сложность: 🚀 Продвинутый
- * Время выполнения: < 15 секунд
+ * Description: Dynamic discovery of available gRPC services and their methods at runtime
+ * Key concepts: Service introspection, Method discovery, Protocol reflection
+ * Complexity: 🚀 Advanced
+ * Execution time: < 15 seconds
  *
- * Что изучите:
- * - Обнаружение доступных gRPC сервисов
- * - Анализ методов сервиса и их сигнатур
- * - Построение service registry динамически
+ * What you'll learn:
+ * - Discovery of available gRPC services
+ * - Analysis of service methods and their signatures
+ * - Dynamic service registry construction
  * - Service capability detection
  * - Reflection-based service exploration
  * - Service health checking и availability
  *
- * Запуск:
+ * Run:
  *   swift run ServiceDiscovery
  */
 
@@ -48,7 +48,7 @@ struct ServiceDiscoveryExample {
 
     let serviceRegistry = ServiceRegistry()
 
-    // Регистрируем множественные сервисы
+    // Register множественные сервисы
     let services = try createSampleServices()
 
     for service in services {
@@ -87,7 +87,7 @@ struct ServiceDiscoveryExample {
       print("    Method Count: \(analysis.methodCount)")
       print("    Message Types: \(analysis.messageTypes.count)")
 
-      // Анализ сложности сервиса
+      // Service complexity analysis
       print("    Complexity Score: \(analysis.complexityScore)/10")
       print("    RPC Patterns:")
       for pattern in analysis.rpcPatterns {
@@ -156,7 +156,7 @@ struct ServiceDiscoveryExample {
         "    \(serviceName) | \(crudSymbol)   | \(authSymbol)  | \(paginationSymbol)   | \(streamingSymbol)   | \(batchSymbol)"
       )
 
-      // Детальный анализ возможностей
+      // Detailed capabilities analysis
       if !capabilities.specialFeatures.isEmpty {
         print("      Special Features: \(capabilities.specialFeatures.joined(separator: ", "))")
       }

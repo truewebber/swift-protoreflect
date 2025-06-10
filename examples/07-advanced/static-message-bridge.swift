@@ -1,12 +1,12 @@
 /**
  * 🔗 SwiftProtoReflect Example: Static Message Bridge
  *
- * Описание: Демонстрация интеграции статических Swift Protobuf сообщений с динамическими
- * Ключевые концепции: StaticMessageBridge, Bidirectional conversion, Interoperability
- * Сложность: 🚀 Продвинутый
- * Время выполнения: < 20 секунд
+ * Description: Demonstration of integration between static Swift Protobuf and dynamic messages
+ * Key concepts: StaticMessageBridge, Bidirectional conversion, Interoperability
+ * Complexity: 🚀 Advanced
+ * Execution time: < 20 seconds
  *
- * Что изучите:
+ * What you'll learn:
  * - Конвертация статических сообщений в динамические
  * - Обратная конвертация динамических в статические
  * - Сохранение типов и метаданных при конвертации
@@ -15,7 +15,7 @@
  * - Performance анализ операций конвертации
  * - Error handling и edge cases
  *
- * Запуск:
+ * Run:
  *   cd examples && swift run StaticMessageBridge
  */
 
@@ -39,8 +39,8 @@ struct StaticMessageBridgeExample {
 
     ExampleUtils.printSuccess("Static message bridge demonstration completed successfully!")
     ExampleUtils.printNext([
-      "Следующий пример: batch-operations.swift - массовые операции с сообщениями",
-      "Изучите также: memory-optimization.swift - оптимизация памяти для больших данных",
+      "Next example: batch-operations.swift - batch message operations",
+      "Also explore: memory-optimization.swift - memory optimization for large data",
     ])
   }
 

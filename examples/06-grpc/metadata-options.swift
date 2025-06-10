@@ -1,12 +1,12 @@
 /**
  * 🌐 SwiftProtoReflect Example: gRPC Metadata and Call Options
  *
- * Описание: Работа с gRPC метаданными, заголовками и опциями вызовов
- * Ключевые концепции: Metadata management, Call options, Headers, Authentication
- * Сложность: 🚀 Продвинутый
- * Время выполнения: < 15 секунд
+ * Description: Working with gRPC metadata, headers and call options
+ * Key concepts: Metadata management, Call options, Headers, Authentication
+ * Complexity: 🚀 Advanced
+ * Execution time: < 15 seconds
  *
- * Что изучите:
+ * What you'll learn:
  * - Управление gRPC метаданными и заголовками
  * - Authentication patterns через metadata
  * - Custom call options и их влияние на RPC
@@ -14,7 +14,7 @@
  * - Tracing и correlation IDs
  * - Security contexts и authorization
  *
- * Запуск:
+ * Run:
  *   swift run MetadataOptions
  */
 

@@ -1,12 +1,12 @@
 /**
  * 🌐 SwiftProtoReflect Example: gRPC Error Handling
  *
- * Описание: Comprehensive обработка всех типов gRPC ошибок и recovery стратегий
- * Ключевые концепции: gRPC Status Codes, Error recovery, Retry policies, Circuit breaker
- * Сложность: 🚀 Продвинутый
- * Время выполнения: < 20 секунд
+ * Description: Comprehensive handling of all gRPC error types and recovery strategies
+ * Key concepts: gRPC Status Codes, Error recovery, Retry policies, Circuit breaker
+ * Complexity: 🚀 Advanced
+ * Execution time: < 20 seconds
  *
- * Что изучите:
+ * What you'll learn:
  * - Все типы gRPC статус кодов и их обработка
  * - Retry механизмы с экспоненциальным backoff
  * - Circuit breaker pattern для защиты от сбоев
@@ -14,7 +14,7 @@
  * - Timeout handling и deadline management
  * - Error metrics и monitoring
  *
- * Запуск:
+ * Run:
  *   swift run ErrorHandling
  */
 

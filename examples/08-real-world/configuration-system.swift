@@ -1,10 +1,10 @@
 /**
  * ⚙️ SwiftProtoReflect Example: Configuration System
  *
- * Описание: Система конфигурации приложения на основе Protocol Buffers
- * Ключевые концепции: Configuration management, Environment handling, Hot reload
- * Сложность: 🏢 Expert
- * Время выполнения: < 25 секунд
+ * Description: Application configuration system based on Protocol Buffers
+ * Key concepts: Configuration management, Environment handling, Hot reload
+ * Complexity: 🏢 Expert
+ * Execution time: < 25 seconds
  */
 
 import ExampleUtils
@@ -24,8 +24,8 @@ struct ConfigurationSystemExample {
 
     ExampleUtils.printSuccess("Configuration system demonstration completed!")
     ExampleUtils.printNext([
-      "Следующий пример: api-gateway.swift - API Gateway с динамическими схемами",
-      "Изучите также: validation-framework.swift - комплексная валидация",
+      "Next example: api-gateway.swift - API Gateway with dynamic schemas",
+      "Also explore: validation-framework.swift - comprehensive validation",
     ])
   }
 

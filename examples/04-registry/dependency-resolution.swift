@@ -1,13 +1,13 @@
 /**
  * SwiftProtoReflect Dependency Resolution Example
  *
- * Этот пример демонстрирует продвинутое разрешение зависимостей между типами:
+ * This example demonstrates advanced dependency resolution between types:
  *
- * 1. Анализ сложных dependency графов
- * 2. Circular dependency detection и resolution
- * 3. Топологическая сортировка для загрузки
- * 4. Conditional dependencies и optional imports
- * 5. Dependency optimization и performance
+ * 1. Complex dependency graph analysis
+ * 2. Circular dependency detection and resolution
+ * 3. Topological sorting for loading
+ * 4. Conditional dependencies and optional imports
+ * 5. Dependency optimization and performance
  */
 
 import ExampleUtils
@@ -24,12 +24,12 @@ struct DependencyResolutionExample {
     try step4UconditionalDependencies()
     try step5UperformanceOptimization()
 
-    print("\n🎉 Dependency resolution успешно изучена!")
+    print("\n🎉 Dependency resolution successfully explored!")
 
-    print("\n🔍 Что попробовать дальше:")
-    print("  • Далее изучите: schema-validation.swift - валидация схем")
-    print("  • Сравните: type-registry.swift - управление типами")
-    print("  • Вернитесь к: file-loading.swift - загрузка файлов")
+    print("\n🔍 What to try next:")
+    print("  • Next explore: schema-validation.swift - schema validation")
+    print("  • Compare: type-registry.swift - type management")
+    print("  • Return to: file-loading.swift - file loading")
   }
 
   private static func step1UcomplexDependencyGraphAnalysis() throws {

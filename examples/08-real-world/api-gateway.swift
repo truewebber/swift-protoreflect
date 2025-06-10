@@ -1,12 +1,12 @@
 /**
  * 🌐 SwiftProtoReflect Example: API Gateway with Dynamic Schemas
  *
- * Описание: Production-ready API Gateway с динамическими Protocol Buffers схемами
- * Ключевые концепции: API Gateway, Dynamic Schema Loading, Request/Response Transformation, Routing
- * Сложность: 🏢 Expert
- * Время выполнения: 15-20 секунд
+ * Description: Production-ready API Gateway with dynamic Protocol Buffers schemas
+ * Key concepts: API Gateway, Dynamic Schema Loading, Request/Response Transformation, Routing
+ * Complexity: 🏢 Expert
+ * Execution time: 15-20 seconds
  *
- * Что изучите:
+ * What you'll learn:
  * - Создание API Gateway с динамическими схемами
  * - Request/Response трансформация и валидация
  * - Schema-based routing и endpoint discovery
@@ -14,7 +14,7 @@
  * - Performance monitoring и caching strategies
  * - Multi-version API support и backward compatibility
  *
- * Запуск:
+ * Run:
  *   swift run ApiGateway
  */
 

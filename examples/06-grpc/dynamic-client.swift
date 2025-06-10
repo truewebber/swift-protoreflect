@@ -1,20 +1,20 @@
 /**
  * 🌐 SwiftProtoReflect Example: Dynamic gRPC Client
  *
- * Описание: Создание динамического gRPC клиента без предварительно скомпилированных stub'ов
- * Ключевые концепции: ServiceClient, DynamicMessage, gRPC integration, Runtime service calls
- * Сложность: 🚀 Продвинутый
- * Время выполнения: < 20 секунд
+ * Description: Creating dynamic gRPC client without pre-compiled stubs
+ * Key concepts: ServiceClient, DynamicMessage, gRPC integration, Runtime service calls
+ * Complexity: 🚀 Advanced
+ * Execution time: < 20 seconds
  *
- * Что изучите:
- * - Создание динамического gRPC клиента
- * - Загрузка .proto файлов сервисов в runtime
- * - Выполнение RPC вызовов без статической генерации
- * - Type-safe валидация запросов/ответов
- * - Работа с ServiceDescriptor и MethodDescriptor
- * - Mock gRPC server для демонстрации
+ * What you'll learn:
+ * - Creating dynamic gRPC client
+ * - Loading .proto service files at runtime
+ * - Executing RPC calls without static generation
+ * - Type-safe request/response validation
+ * - Working with ServiceDescriptor and MethodDescriptor
+ * - Mock gRPC server for demonstration
  *
- * Запуск:
+ * Run:
  *   swift run DynamicClient
  */
 
@@ -25,7 +25,7 @@ import SwiftProtoReflect
 @main
 struct DynamicClientExample {
   static func main() throws {
-    try ExampleUtils.printHeader("Dynamic gRPC Client")
+    ExampleUtils.printHeader("Dynamic gRPC Client")
 
     try demonstrateServiceDefinition()
     try demonstrateClientCreation()
@@ -46,10 +46,10 @@ struct DynamicClientExample {
   private static func demonstrateServiceDefinition() throws {
     ExampleUtils.printStep(1, "Service Definition - Creating gRPC Service Schema")
 
-    // Создаем файловый дескриптор для gRPC сервиса
+    // Create file descriptor for gRPC service
     var fileDescriptor = FileDescriptor(name: "user_service.proto", package: "example.grpc")
 
-    // Определяем сообщения
+    // Define messages
     var userMessage = MessageDescriptor(name: "User", parent: fileDescriptor)
     userMessage.addField(FieldDescriptor(name: "id", number: 1, type: .string))
     userMessage.addField(FieldDescriptor(name: "name", number: 2, type: .string))
@@ -72,17 +72,17 @@ struct DynamicClientExample {
     )
     listUsersResponse.addField(FieldDescriptor(name: "next_page_token", number: 2, type: .string))
 
-    // Регистрируем сообщения
+    // Register messages
     fileDescriptor.addMessage(userMessage)
     fileDescriptor.addMessage(getUserRequest)
     fileDescriptor.addMessage(createUserRequest)
     fileDescriptor.addMessage(listUsersRequest)
     fileDescriptor.addMessage(listUsersResponse)
 
-    // Создаем сервис
+    // Create service
     var userService = ServiceDescriptor(name: "UserService", parent: fileDescriptor)
 
-    // Добавляем методы
+    // Add methods
     userService.addMethod(
       ServiceDescriptor.MethodDescriptor(
         name: "GetUser",
@@ -124,15 +124,15 @@ struct DynamicClientExample {
   private static func demonstrateClientCreation() throws {
     ExampleUtils.printStep(2, "Client Creation - Dynamic gRPC Client Setup")
 
-    // Создаем TypeRegistry для управления типами
+    // Create TypeRegistry for type management
     let typeRegistry = TypeRegistry()
     let fileDescriptor = try createUserServiceDescriptor()
     try typeRegistry.registerFile(fileDescriptor)
 
-    // Создаем мок gRPC клиента (в реальном приложении это был бы настоящий gRPC channel)
+    // Create mock gRPC client (in real application this would be actual gRPC channel)
     let mockClient = MockGRPCClient()
 
-    // Создаем ServiceClient с dynamic capabilities
+    // Create ServiceClient with dynamic capabilities
     let serviceClient = try DynamicServiceClient(
       serviceName: "example.grpc.UserService",
       typeRegistry: typeRegistry,
@@ -148,7 +148,7 @@ struct DynamicClientExample {
       print("      • \(methodName)")
     }
 
-    // Проверяем готовность клиента
+    // Check client readiness
     let isReady = serviceClient.isReady()
     print("    Status: \(isReady ? "✅ Ready" : "❌ Not Ready")")
   }
@@ -162,7 +162,7 @@ struct DynamicClientExample {
     let fileDescriptor = try createUserServiceDescriptor()
     try typeRegistry.registerFile(fileDescriptor)
 
-    // Находим дескриптор для CreateUserRequest
+    // Find descriptor for CreateUserRequest
     guard let createUserRequestDescriptor = typeRegistry.findMessage(named: "example.grpc.CreateUserRequest") else {
       throw ExampleError.typeNotFound("CreateUserRequest")
     }
@@ -171,7 +171,7 @@ struct DynamicClientExample {
       throw ExampleError.typeNotFound("User")
     }
 
-    // Создаем User сообщение
+    // Create User message
     let factory = MessageFactory()
     var userMessage = factory.createMessage(from: userDescriptor)
     try userMessage.set("user_123", forField: "id")
@@ -179,7 +179,7 @@ struct DynamicClientExample {
     try userMessage.set("alice@example.com", forField: "email")
     try userMessage.set(Int32(28), forField: "age")
 
-    // Создаем CreateUserRequest
+    // Create CreateUserRequest
     var createRequest = factory.createMessage(from: createUserRequestDescriptor)
     try createRequest.set(userMessage, forField: "user")
 
@@ -187,11 +187,11 @@ struct DynamicClientExample {
     print("    Request Type: CreateUserRequest")
     print("    User ID: \(try createRequest.get(forField: "user") as? DynamicMessage != nil ? "✅ Set" : "❌ Missing")")
 
-    // Валидация запроса
+    // Request validation
     let isValid = try validateRequest(createRequest, for: "CreateUser")
     print("    Validation: \(isValid ? "✅ Valid" : "❌ Invalid")")
 
-    // Показываем структуру запроса
+    // Show request structure
     try printMessageStructure(createRequest, indent: "    ")
   }
 
@@ -204,13 +204,13 @@ struct DynamicClientExample {
     let fileDescriptor = try createUserServiceDescriptor()
     try typeRegistry.registerFile(fileDescriptor)
 
-    // Симулируем ответ от сервера
+    // Simulate server response
     let mockResponse = try createMockUserResponse(typeRegistry: typeRegistry)
 
     print("  📨 Response Received:")
     print("    Response Type: \(mockResponse.descriptor.name)")
 
-    // Извлекаем данные из ответа
+    // Extract data from response
     let userId: String? = try mockResponse.get(forField: "id") as? String
     let userName: String? = try mockResponse.get(forField: "name") as? String
     let userEmail: String? = try mockResponse.get(forField: "email") as? String
@@ -222,7 +222,7 @@ struct DynamicClientExample {
     print("      Email: \(userEmail ?? "N/A")")
     print("      Age: \(userAge?.description ?? "N/A")")
 
-    // Демонстрируем type-safe доступ
+    // Demonstrate type-safe access
     let typeSafeAccess = ResponseAccessor(response: mockResponse)
 
     print("\n  🔒 Type-Safe Access:")
@@ -244,7 +244,7 @@ struct DynamicClientExample {
 
     // Scenario 1: Invalid method name
     do {
-      let invalidClient = try DynamicServiceClient(
+      let _ = try DynamicServiceClient(
         serviceName: "example.grpc.NonExistentService",
         typeRegistry: TypeRegistry(),
         transport: MockGRPCClient()
@@ -268,7 +268,7 @@ struct DynamicClientExample {
       let factory = MessageFactory()
       var request = factory.createMessage(from: requestDescriptor)
 
-      // Намеренно устанавливаем неправильный тип
+      // Intentionally set wrong type
       try request.set(Int32(123), forField: "user_id")  // Should be String
       print("    ❌ Type mismatch should be caught")
     }
@@ -329,7 +329,7 @@ struct DynamicClientExample {
       let factory = MessageFactory()
       for i in 0..<requestPreparationIterations {
         var request = factory.createMessage(from: requestDescriptor)
-        try? request.set("user_\(i)", forField: "user_id")
+        let _ = try? request.set("user_\(i)", forField: "user_id")
       }
     }
 

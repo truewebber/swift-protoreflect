@@ -1,10 +1,10 @@
 /**
  * 🔄 SwiftProtoReflect Example: Message Transformation Between Versions
  *
- * Описание: Production-ready система трансформации между версиями Protocol Buffers сообщений
- * Ключевые концепции: Schema Evolution, Message Migration, Version Compatibility, Field Mapping
- * Сложность: 🏢 Expert
- * Время выполнения: 10-15 секунд
+ * Description: Production-ready message transformation system between Protocol Buffers versions
+ * Key concepts: Schema Evolution, Message Migration, Version Compatibility, Field Mapping
+ * Complexity: 🏢 Expert
+ * Execution time: 10-15 seconds
  */
 
 import ExampleUtils

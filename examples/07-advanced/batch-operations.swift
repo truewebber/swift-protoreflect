@@ -1,10 +1,10 @@
 /**
  * 📦 SwiftProtoReflect Example: Batch Operations
  *
- * Описание: Демонстрация массовых операций с динамическими сообщениями
- * Ключевые концепции: Batch processing, Mass operations, Performance optimization
- * Сложность: 🚀 Продвинутый
- * Время выполнения: < 25 секунд
+ * Description: Demonstration of batch operations with dynamic messages
+ * Key concepts: Batch processing, Mass operations, Performance optimization
+ * Complexity: 🚀 Advanced
+ * Execution time: < 25 seconds
  */
 
 import ExampleUtils
@@ -25,8 +25,8 @@ struct BatchOperationsExample {
 
     ExampleUtils.printSuccess("Batch operations demonstration completed!")
     ExampleUtils.printNext([
-      "Следующий пример: memory-optimization.swift - техники оптимизации памяти",
-      "Изучите также: thread-safety.swift - многопоточная безопасность",
+      "Next example: memory-optimization.swift - memory optimization techniques",
+      "Also explore: thread-safety.swift - thread safety",
     ])
   }
 
@@ -47,7 +47,7 @@ struct BatchOperationsExample {
 
     userFile.addMessage(userDescriptor)
 
-    // Batch создание сообщений
+    // Batch message creation
     let batchSize = 5000
     print("  📦 Creating \(batchSize) messages in batch...")
 
@@ -93,7 +93,7 @@ struct BatchOperationsExample {
 
     print("  📦 Preparing messages for serialization...")
 
-    // Создание набора сообщений
+    // Create message set
     var dataFile = FileDescriptor(name: "data.proto", package: "com.data")
     var dataDescriptor = MessageDescriptor(name: "DataRecord", parent: dataFile)
 
@@ -108,7 +108,7 @@ struct BatchOperationsExample {
     let factory = MessageFactory()
     var records: [DynamicMessage] = []
 
-    // Создание данных
+    // Create data
     for i in 1...recordCount {
       var record = factory.createMessage(from: dataDescriptor)
       try record.set(Int64(i), forField: "id")
@@ -119,7 +119,7 @@ struct BatchOperationsExample {
       records.append(record)
     }
 
-    // Batch binary сериализация
+    // Batch binary serialization
     print("\n  🔄 Batch binary serialization...")
 
     let binarySerializer = BinarySerializer()
@@ -131,7 +131,7 @@ struct BatchOperationsExample {
 
     ExampleUtils.printTiming("Binary serialization (\(recordCount) records)", time: binaryTime.time)
 
-    // Batch JSON сериализация
+    // Batch JSON serialization
     print("\n  🔄 Batch JSON serialization...")
 
     let jsonSerializer = JSONSerializer()
@@ -143,7 +143,7 @@ struct BatchOperationsExample {
 
     ExampleUtils.printTiming("JSON serialization (\(recordCount) records)", time: jsonTime.time)
 
-    // Анализ результатов
+    // Analyze results
     let totalBinarySize = binaryData.reduce(0) { $0 + $1.count }
     let totalJsonSize = jsonData.reduce(0) { $0 + $1.count }
     let _ = Double(totalJsonSize) / Double(totalBinarySize)  // compressionRatio
@@ -192,12 +192,12 @@ struct BatchOperationsExample {
     var products: [DynamicMessage] = []
     var validationResults: [String: Int] = [:]
 
-    // Создание смешанного набора данных (валидные и невалидные)
+    // Create mixed dataset (valid and invalid)
     for i in 1...1000 {
       var product = factory.createMessage(from: productDescriptor)
 
-      // Намеренно создаем некоторые невалидные записи
-      let isValid = i % 10 != 0  // 10% невалидных
+      // Intentionally create some invalid records
+      let isValid = i % 10 != 0  // 10% invalid
 
       if isValid {
         try product.set("PROD-\(String(format: "%04d", i))", forField: "id")
@@ -207,40 +207,40 @@ struct BatchOperationsExample {
         try product.set(Bool.random(), forField: "in_stock")
       }
       else {
-        // Невалидные данные
-        try product.set("", forField: "id")  // Пустой ID
+        // Invalid data
+        try product.set("", forField: "id")  // Empty ID
         try product.set("Invalid Product", forField: "name")
-        try product.set(-1.0, forField: "price")  // Отрицательная цена
-        try product.set("", forField: "category")  // Пустая категория
+        try product.set(-1.0, forField: "price")  // Negative price
+        try product.set("", forField: "category")  // Empty category
         try product.set(false, forField: "in_stock")
       }
 
       products.append(product)
     }
 
-    // Batch валидация
+    // Batch validation
     print("\n  🔍 Running batch validation...")
 
     let validationTime = ExampleUtils.measureTime {
       for (_, product) in products.enumerated() {
         var errors: [String] = []
 
-        // Валидация ID
+        // ID validation
         if let id = try? product.get(forField: "id") as? String, id.isEmpty {
           errors.append("Empty ID")
         }
 
-        // Валидация цены
+        // Price validation
         if let price = try? product.get(forField: "price") as? Double, price < 0 {
           errors.append("Negative price")
         }
 
-        // Валидация категории
+        // Category validation
         if let category = try? product.get(forField: "category") as? String, category.isEmpty {
           errors.append("Empty category")
         }
 
-        // Подсчет результатов
+        // Count results
         if errors.isEmpty {
           validationResults["valid", default: 0] += 1
         }
@@ -255,7 +255,7 @@ struct BatchOperationsExample {
 
     ExampleUtils.printTiming("Batch validation (\(products.count) products)", time: validationTime.time)
 
-    // Отчет о валидации
+    // Validation report
     print("\n  📊 Validation Results:")
     let validCount = validationResults["valid"] ?? 0
     let _ = validationResults["invalid"] ?? 0  // invalidCount
@@ -283,7 +283,7 @@ struct BatchOperationsExample {
 
     print("  🔄 Preparing data transformation pipeline...")
 
-    // Источник данных
+    // Source data
     var sourceFile = FileDescriptor(name: "source.proto", package: "com.transform")
     var sourceDescriptor = MessageDescriptor(name: "SourceRecord", parent: sourceFile)
 
@@ -291,7 +291,7 @@ struct BatchOperationsExample {
     sourceDescriptor.addField(FieldDescriptor(name: "raw_value", number: 2, type: .string))
     sourceDescriptor.addField(FieldDescriptor(name: "raw_timestamp", number: 3, type: .string))
 
-    // Целевой формат
+    // Target format
     var targetDescriptor = MessageDescriptor(name: "ProcessedRecord", parent: sourceFile)
     targetDescriptor.addField(FieldDescriptor(name: "id", number: 1, type: .int64))
     targetDescriptor.addField(FieldDescriptor(name: "value", number: 2, type: .double))
@@ -305,7 +305,7 @@ struct BatchOperationsExample {
     let factory = MessageFactory()
     var sourceRecords: [DynamicMessage] = []
 
-    // Создание исходных данных
+    // Create source data
     for i in 1...transformCount {
       var source = factory.createMessage(from: sourceDescriptor)
       try source.set("RAW_\(i)", forField: "raw_id")
@@ -317,7 +317,7 @@ struct BatchOperationsExample {
 
     print("  📊 Created \(transformCount) source records")
 
-    // Batch трансформация
+    // Batch transformation
     print("\n  🔄 Applying batch transformation...")
 
     var processedRecords: [DynamicMessage] = []
@@ -325,7 +325,7 @@ struct BatchOperationsExample {
     let transformTime = try ExampleUtils.measureTime {
       for source in sourceRecords {
         var processed = factory.createMessage(from: targetDescriptor)
-        // Парсинг и преобразование данных
+        // Parse and transform data
         if let rawId = try source.get(forField: "raw_id") as? String,
           let idNum = Int64(rawId.replacingOccurrences(of: "RAW_", with: ""))
         {
@@ -352,7 +352,7 @@ struct BatchOperationsExample {
 
     ExampleUtils.printTiming("Batch transformation (\(transformCount) records)", time: transformTime.time)
 
-    // Анализ трансформации
+    // Transformation analysis
     let _ = Double(transformCount) / transformTime.time  // transformThroughput
 
     print("\n  📊 Transformation Results:")
@@ -393,7 +393,7 @@ struct BatchOperationsExample {
     let factory = MessageFactory()
     var tasks: [DynamicMessage] = []
 
-    // Создание задач
+    // Create tasks
     for i in 1...taskCount {
       var task = factory.createMessage(from: taskDescriptor)
       try task.set(Int32(i), forField: "id")
@@ -401,20 +401,20 @@ struct BatchOperationsExample {
       let complexity = Int32.random(in: 1...1000)
       try task.set(complexity, forField: "complexity")
 
-      // Симуляция вычислений
+      // Simulation calculations
       let result = sqrt(Double(complexity)) * Double.random(in: 1...10)
       try task.set(result, forField: "result")
 
       tasks.append(task)
     }
 
-    // Последовательная обработка
+    // Sequential processing
     print("\n  📈 Sequential processing...")
 
     let sequentialTime = try ExampleUtils.measureTime {
       for var task in tasks {
         if let complexity = try? task.get(forField: "complexity") as? Int32 {
-          // Симуляция вычислений
+          // Simulation calculations
           let result = sqrt(Double(complexity)) * Double.random(in: 1...10)
           try task.set(result, forField: "result")
         }
@@ -423,18 +423,18 @@ struct BatchOperationsExample {
 
     ExampleUtils.printTiming("Sequential processing (\(taskCount) tasks)", time: sequentialTime.time)
 
-    // Симуляция параллельной обработки
+    // Parallel processing simulation
     print("\n  🔀 Simulated parallel processing...")
 
     let parallelTime = ExampleUtils.measureTime {
-      // В реальности здесь был бы DispatchQueue.concurrentPerform
-      // Симулируем ~4x ускорение от параллелизма
+      // In reality this would be DispatchQueue.concurrentPerform
+      // Simulate ~4x speedup from parallelism
       Thread.sleep(forTimeInterval: sequentialTime.time / 4.0)
     }
 
     ExampleUtils.printTiming("Parallel processing (\(taskCount) tasks)", time: parallelTime.time)
 
-    // Сравнение производительности
+    // Performance comparison
     let speedup = sequentialTime.time / parallelTime.time
 
     print("\n  📊 Parallel Processing Analysis:")
@@ -487,7 +487,7 @@ struct BatchOperationsExample {
 
     print("  📊 Processing \(batchSize) records with memory optimization...")
 
-    // Симуляция streaming/chunked обработки для экономии памяти
+    // Simulation of streaming/chunked processing for memory savings
     let chunkSize = 500
     let chunks = (batchSize + chunkSize - 1) / chunkSize
 
@@ -500,7 +500,7 @@ struct BatchOperationsExample {
       let currentChunkSize = endIndex - startIndex
 
       let chunkTime = try ExampleUtils.measureTime {
-        // Создание чанка
+        // Create chunk
         var chunkRecords: [DynamicMessage] = []
         for j in startIndex..<endIndex {
           var record = factory.createMessage(from: recordDescriptor)
@@ -510,8 +510,8 @@ struct BatchOperationsExample {
           chunkRecords.append(record)
         }
 
-        // Симуляция обработки чанка
-        Thread.sleep(forTimeInterval: 0.001)  // 1ms на чанк
+        // Simulate chunk processing
+        Thread.sleep(forTimeInterval: 0.001)  // 1ms per chunk
 
         processedCount += currentChunkSize
       }

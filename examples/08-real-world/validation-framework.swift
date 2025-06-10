@@ -1,10 +1,10 @@
 /**
  * ✅ SwiftProtoReflect Example: Comprehensive Validation Framework
  *
- * Описание: Production-ready система валидации для Protocol Buffers сообщений
- * Ключевые концепции: Validation Rules, Custom Validators, Error Reporting, Conditional Logic
- * Сложность: 🏢 Expert
- * Время выполнения: 12-18 секунд
+ * Description: Production-ready validation system for Protocol Buffers messages
+ * Key concepts: Validation Rules, Custom Validators, Error Reporting, Conditional Logic
+ * Complexity: 🏢 Expert
+ * Execution time: 12-18 seconds
  */
 
 import ExampleUtils

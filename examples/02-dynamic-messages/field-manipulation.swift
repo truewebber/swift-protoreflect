@@ -1,12 +1,12 @@
 /**
  * 🔧 SwiftProtoReflect Example: Advanced Field Manipulation
  *
- * Описание: Продвинутые манипуляции полей динамических сообщений
- * Ключевые концепции: Field introspection, Batch operations, Conditional updates, Field validation
- * Сложность: 🔧🔧 Продвинутый
- * Время выполнения: < 15 секунд
+ * Description: Advanced field manipulation of dynamic messages
+ * Key concepts: Field introspection, Batch operations, Conditional updates, Field validation
+ * Complexity: 🔧🔧 Advanced
+ * Execution time: < 15 seconds
  *
- * Что изучите:
+ * What you'll learn:
  * - Массовые операции с полями (batch updates, batch validation)
  * - Динамическое исследование структуры полей и их метаданных
  * - Условные обновления на основе типов и значений полей
@@ -14,7 +14,7 @@
  * - Трансформация и конвертация типов полей
  * - Работа с полями разных типов через единый API
  *
- * Запуск:
+ * Run:
  *   swift run FieldManipulation
  */
 

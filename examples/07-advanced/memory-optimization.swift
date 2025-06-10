@@ -1,10 +1,10 @@
 /**
  * 🧠 SwiftProtoReflect Example: Memory Optimization
  *
- * Описание: Техники оптимизации памяти для больших объемов данных
- * Ключевые концепции: Memory management, Object pooling, Lazy loading, Streaming
- * Сложность: 🚀 Продвинутый
- * Время выполнения: < 30 секунд
+ * Description: Memory optimization techniques for large data volumes
+ * Key concepts: Memory management, Object pooling, Lazy loading, Streaming
+ * Complexity: 🚀 Advanced
+ * Execution time: < 30 seconds
  */
 
 import ExampleUtils
@@ -25,8 +25,8 @@ struct MemoryOptimizationExample {
 
     ExampleUtils.printSuccess("Memory optimization demonstration completed!")
     ExampleUtils.printNext([
-      "Следующий пример: thread-safety.swift - многопоточная безопасность",
-      "Изучите также: custom-extensions.swift - создание собственных расширений",
+      "Next example: thread-safety.swift - thread safety",
+      "Also explore: custom-extensions.swift - creating custom extensions",
     ])
   }
 

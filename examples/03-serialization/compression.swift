@@ -1,20 +1,20 @@
 /**
  * SwiftProtoReflect Compression Example
  *
- * Этот пример демонстрирует продвинутые техники сжатия для Protocol Buffers данных:
+ * This example demonstrates advanced compression techniques for Protocol Buffers data:
  *
- * 1. Сравнение алгоритмов сжатия (GZIP, ZLIB, LZFSE, LZ4)
- * 2. Адаптивное сжатие в зависимости от типа данных
- * 3. Сжатие streaming данных
- * 4. Оптимизация сжатия для разных паттернов данных
- * 5. Производительность и качество сжатия
+ * 1. Compression algorithm comparison (GZIP, ZLIB, LZFSE, LZ4)
+ * 2. Adaptive compression based on data type
+ * 3. Streaming data compression
+ * 4. Compression optimization for different data patterns
+ * 5. Performance and compression quality
  *
- * Основные концепции:
- * - Выбор оптимального алгоритма сжатия
- * - Балансировка между размером и скоростью
- * - Специализированные техники для Protocol Buffers
- * - Batch сжатие для больших данных
- * - Monitoring эффективности сжатия
+ * Key concepts:
+ * - Optimal compression algorithm selection
+ * - Balance between size and speed
+ * - Specialized techniques for Protocol Buffers
+ * - Batch compression for large data
+ * - Compression efficiency monitoring
  */
 
 import ExampleUtils
@@ -38,18 +38,18 @@ struct CompressionExample {
     try step4UdataPatternOptimization()
     try step5UcompressionMonitoringAnalytics()
 
-    print("\n🎉 Compression обработка данных успешно изучена!")
+    print("\n🎉 Compression data processing successfully explored!")
 
-    print("\n🔍 Что попробовать дальше:")
-    print("  • Далее изучите: Category 04-validation - валидация данных")
-    print("  • Сравните: binary-data.swift - binary операции")
-    print("  • Повторите: streaming.swift - streaming обработка")
+    print("\n🔍 What to try next:")
+    print("  • Next explore: Category 04-validation - data validation")
+    print("  • Compare: binary-data.swift - binary operations")
+    print("  • Review: streaming.swift - streaming processing")
   }
 
   private static func step1UcompressionAlgorithmComparison() throws {
     ExampleUtils.printStep(1, "Comparison of compression algorithms")
 
-    print("  🔍 Сравнение различных алгоритмов сжатия...")
+    print("  🔍 Comparing different compression algorithms...")
 
     // Create test data with different characteristics
     let testDataSets = try createTestDataSets()
@@ -90,7 +90,7 @@ struct CompressionExample {
   private static func step2UadaptiveCompressionStrategy() throws {
     ExampleUtils.printStep(2, "Adaptive compression strategy")
 
-    print("  🎯 Адаптивное сжатие на основе характеристик данных...")
+    print("  🎯 Adaptive compression based on data characteristics...")
 
     let adaptiveCompressor = AdaptiveCompressor()
     let datasets = try createTestDataSets()
@@ -144,7 +144,7 @@ struct CompressionExample {
   private static func step3UstreamingCompression() throws {
     ExampleUtils.printStep(3, "Streaming compression")
 
-    print("  🌊 Streaming compression для больших данных...")
+    print("  🌊 Streaming compression for large data...")
 
     let streamingCompressor = StreamingCompressor(algorithm: .lzfse, bufferSize: 64 * 1024)
     let (recordDescriptor, _) = try createCompressionTestMessage()
@@ -203,7 +203,7 @@ struct CompressionExample {
     }
 
     let stats = streamingCompressor.getStatistics()
-    print("  📊 Streaming compression результаты:")
+    print("  📊 Streaming compression results:")
     print("    Records processed: \(recordCount)")
     print("    Batches: \(recordCount / batchSize)")
     print("    Original size: \(ExampleUtils.formatDataSize(stats.totalOriginalSize))")
@@ -220,7 +220,7 @@ struct CompressionExample {
   private static func step4UdataPatternOptimization() throws {
     ExampleUtils.printStep(4, "Data pattern optimization")
 
-    print("  🎨 Оптимизация сжатия для различных паттернов данных...")
+    print("  🎨 Compression optimization for different data patterns...")
 
     // Test different data patterns
     let patterns = [
@@ -231,7 +231,7 @@ struct CompressionExample {
       ("Numerical sequences", createNumericalData),
     ]
 
-    print("  📈 Pattern optimization результаты:")
+    print("  📈 Pattern optimization results:")
 
     for (patternName, dataGenerator) in patterns {
       print("    \(patternName):")
@@ -284,7 +284,7 @@ struct CompressionExample {
   private static func step5UcompressionMonitoringAnalytics() throws {
     ExampleUtils.printStep(5, "Compression monitoring and analytics")
 
-    print("  📊 Monitoring и analytics для compression performance...")
+    print("  📊 Monitoring and analytics for compression performance...")
 
     let monitor = CompressionMonitor()
     let testData = try createMixedDataSet()

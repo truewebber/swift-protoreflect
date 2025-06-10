@@ -1,10 +1,10 @@
 /**
  * 🔧 SwiftProtoReflect Example: Custom Extensions
  *
- * Описание: Создание собственных расширений для SwiftProtoReflect
- * Ключевые концепции: Protocol extensions, Custom operators, DSL, API design
- * Сложность: 🚀 Продвинутый
- * Время выполнения: < 15 секунд
+ * Description: Creating custom extensions for SwiftProtoReflect
+ * Key concepts: Protocol extensions, Custom operators, DSL, API design
+ * Complexity: 🚀 Advanced
+ * Execution time: < 15 seconds
  */
 
 import ExampleUtils
@@ -935,7 +935,7 @@ struct CustomExtensionsExample {
     print("\n  📦 Order instance created:")
     order.prettyPrint()
 
-    // Более сложный DSL пример
+    // More complex DSL example
     print("\n  🏗  Building complex message with conditional fields...")
 
     let includeOptionalFields = true

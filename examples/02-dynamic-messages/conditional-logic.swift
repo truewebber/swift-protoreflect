@@ -108,20 +108,20 @@ struct ConditionalLogicExample {
   }
 
   private static func step3_conditionalFieldProcessing() throws {
-    ExampleUtils.printStep(3, "Conditional field processing с type-specific logic")
+    ExampleUtils.printStep(3, "Conditional field processing with type-specific logic")
 
     let fileDescriptor = createUserDataStructure()
     let factory = MessageFactory()
 
-    // Создание пользовательских данных с различными типами полей
+    // Create user data with various field types
     let userData = try createUserDataSamples(factory: factory, fileDescriptor: fileDescriptor)
 
-    print("  👤 Созданы образцы пользовательских данных:")
+    print("  👤 Created user data samples:")
     for (index, user) in userData.enumerated() {
       print("    User \(index + 1): \(try getUserSummary(user))")
     }
 
-    print("\n  🔍 Условная обработка полей по типам:")
+    print("\n  🔍 Conditional field processing by types:")
 
     for (index, user) in userData.enumerated() {
       print("\n    👤 User \(index + 1) field processing:")
@@ -144,7 +144,7 @@ struct ConditionalLogicExample {
   }
 
   private static func step4_dynamicDispatch() throws {
-    ExampleUtils.printStep(4, "Dynamic dispatch patterns для типов")
+    ExampleUtils.printStep(4, "Dynamic dispatch patterns for types")
 
     let fileDescriptor = createEventSystemStructure()
     let factory = MessageFactory()

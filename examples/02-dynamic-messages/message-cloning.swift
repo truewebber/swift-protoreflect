@@ -1,12 +1,12 @@
 /**
  * 📋 SwiftProtoReflect Example: Message Cloning and Copying
  *
- * Описание: Клонирование и копирование динамических сообщений
- * Ключевые концепции: Deep copy, Shallow copy, Partial copying, Performance optimization
- * Сложность: 🔧🔧 Продвинутый
- * Время выполнения: < 20 секунд
+ * Description: Cloning and copying dynamic messages
+ * Key concepts: Deep copy, Shallow copy, Partial copying, Performance optimization
+ * Complexity: 🔧🔧 Advanced
+ * Execution time: < 20 seconds
  *
- * Что изучите:
+ * What you'll learn:
  * - Deep copy vs shallow copy для динамических сообщений
  * - Клонирование сообщений с вложенными структурами и циклическими ссылками
  * - Partial copying (выборочное копирование полей)
@@ -14,7 +14,7 @@
  * - Сохранение и нарушение референтных связей между сообщениями
  * - Custom cloning strategies для различных use cases
  *
- * Запуск:
+ * Run:
  *   swift run MessageCloning
  */
 

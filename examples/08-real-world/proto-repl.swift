@@ -1,10 +1,10 @@
 /**
  * 🖥️ SwiftProtoReflect Example: Interactive Protocol Buffers REPL
  *
- * Описание: Production-ready интерактивная REPL для исследования Protocol Buffers сообщений
- * Ключевые концепции: Interactive Shell, Command Processing, Dynamic Schema Exploration, Real-time Validation
- * Сложность: 🏢 Expert
- * Время выполнения: Интерактивный режим
+ * Description: Production-ready interactive REPL for exploring Protocol Buffers messages
+ * Key concepts: Interactive Shell, Command Processing, Dynamic Schema Exploration, Real-time Validation
+ * Complexity: 🏢 Expert
+ * Execution time: Interactive mode
  */
 
 import ExampleUtils

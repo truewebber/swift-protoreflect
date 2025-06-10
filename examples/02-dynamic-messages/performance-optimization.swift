@@ -33,29 +33,29 @@ struct PerformanceOptimization {
     try step5UlazyLoadingAndStreaming()
     try step6UadvancedOptimizationPatterns()
 
-    ExampleUtils.printSuccess("Вы освоили техники оптимизации производительности!")
-    ExampleUtils.printInfo("🎉 КАТЕГОРИЯ 02-DYNAMIC-MESSAGES ЗАВЕРШЕНА!")
-    print("\n🔍 Что попробовать дальше:")
-    print("  • Следующее: ../03-serialization/ - сериализация и форматы данных")
-    print("  • Изучить: Другие категории примеров")
-    print("  • Практика: Создать собственные оптимизированные решения")
+    ExampleUtils.printSuccess("You've mastered performance optimization techniques!")
+    ExampleUtils.printInfo("🎉 CATEGORY 02-DYNAMIC-MESSAGES COMPLETED!")
+    print("\n🔍 What to try next:")
+    print("  • Next: ../03-serialization/ - serialization and data formats")
+    print("  • Explore: Other example categories")
+    print("  • Practice: Create your own optimized solutions")
   }
 
   // MARK: - Step 1: Performance Benchmarking
 
   private static func step1UperformanceBenchmarking() throws {
-    ExampleUtils.printStep(1, "Performance benchmarking и измерение производительности")
+    ExampleUtils.printStep(1, "Performance benchmarking and performance measurement")
 
     let fileDescriptor = createLargeDataStructure()
     let factory = MessageFactory()
 
-    print("  📊 Создание тестовых данных:")
+    print("  📊 Creating test data:")
     let (testData, creationTime) = try ExampleUtils.measureTime {
       try createLargeTestDataset(factory: factory, fileDescriptor: fileDescriptor, count: 1000)
     }
     ExampleUtils.printTiming("Creation of 1000 records", time: creationTime)
 
-    print("\n  🔬 Benchmarking различных операций:")
+    print("\n  🔬 Benchmarking various operations:")
 
     // Field access benchmarks
     let (_, fieldAccessTime) = try ExampleUtils.measureTime {

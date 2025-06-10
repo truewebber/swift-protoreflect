@@ -1,10 +1,10 @@
 /**
  * 🧵 SwiftProtoReflect Example: Thread Safety
  *
- * Описание: Демонстрация многопоточной безопасности и concurrent access patterns
- * Ключевые концепции: Thread safety, Concurrent access, Synchronization, Race conditions
- * Сложность: 🚀 Продвинутый
- * Время выполнения: < 20 секунд
+ * Description: Demonstration of thread safety and concurrent access patterns
+ * Key concepts: Thread safety, Concurrent access, Synchronization, Race conditions
+ * Complexity: 🚀 Advanced
+ * Execution time: < 20 seconds
  */
 
 import ExampleUtils
@@ -25,8 +25,8 @@ struct ThreadSafetyExample {
 
     ExampleUtils.printSuccess("Thread safety demonstration completed!")
     ExampleUtils.printNext([
-      "Следующий пример: custom-extensions.swift - создание собственных расширений",
-      "Изучите также: batch-operations.swift - массовые операции",
+      "Next example: custom-extensions.swift - creating custom extensions",
+      "Also explore: batch-operations.swift - batch operations",
     ])
   }
 

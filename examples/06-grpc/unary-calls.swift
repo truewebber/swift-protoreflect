@@ -1,12 +1,12 @@
 /**
  * 🌐 SwiftProtoReflect Example: Unary gRPC Calls
  *
- * Описание: Выполнение unary RPC вызовов с использованием динамических сообщений
- * Ключевые концепции: Unary RPC, Request/Response patterns, Call options, Timeouts
- * Сложность: 🚀 Продвинутый
- * Время выполнения: < 25 секунд
+ * Description: Performing unary RPC calls using dynamic messages
+ * Key concepts: Unary RPC, Request/Response patterns, Call options, Timeouts
+ * Complexity: 🚀 Advanced
+ * Execution time: < 25 seconds
  *
- * Что изучите:
+ * What you'll learn:
  * - Выполнение unary RPC вызовов без статической генерации
  * - Request preparation и response handling
  * - Call options (timeout, metadata, headers)
@@ -14,7 +14,7 @@
  * - Performance monitoring и metrics
  * - Batch RPC operations
  *
- * Запуск:
+ * Run:
  *   swift run UnaryCalls
  */
 

@@ -1,12 +1,12 @@
 /**
  * 🔄 SwiftProtoReflect Example: Descriptor Bridge
  *
- * Описание: Демонстрация конвертации дескрипторов между SwiftProtoReflect и Swift Protobuf
- * Ключевые концепции: DescriptorBridge, Bi-directional mapping, Interoperability
- * Сложность: 🚀 Продвинутый
- * Время выполнения: < 15 секунд
+ * Description: Demonstration of descriptor conversion between SwiftProtoReflect and Swift Protobuf
+ * Key concepts: DescriptorBridge, Bi-directional mapping, Interoperability
+ * Complexity: 🚀 Advanced
+ * Execution time: < 15 seconds
  *
- * Что изучите:
+ * What you'll learn:
  * - Конвертация FileDescriptor между библиотеками
  * - Преобразование MessageDescriptor и FieldDescriptor
  * - Bi-directional mapping и сохранение метаданных
@@ -14,7 +14,7 @@
  * - Round-trip testing для надежности
  * - Performance анализ операций конвертации
  *
- * Запуск:
+ * Run:
  *   cd examples && swift run DescriptorBridge
  */
 
@@ -37,8 +37,8 @@ struct DescriptorBridgeExample {
 
     ExampleUtils.printSuccess("Descriptor bridge demonstration completed successfully!")
     ExampleUtils.printNext([
-      "Следующий пример: static-message-bridge.swift - интеграция статических сообщений",
-      "Изучите также: batch-operations.swift - массовые операции с дескрипторами",
+      "Next example: static-message-bridge.swift - static message integration",
+      "Also explore: batch-operations.swift - batch operations with descriptors",
     ])
   }
 
