@@ -2,7 +2,7 @@
 // FieldAccessor.swift
 // SwiftProtoReflect
 //
-// Создан: 2025-05-24
+// Created: 2025-05-24
 //
 
 import Foundation
@@ -10,308 +10,308 @@ import SwiftProtobuf
 
 /// FieldAccessor.
 ///
-/// Предоставляет типобезопасный и удобный интерфейс для доступа к полям.
-/// динамических Protocol Buffers сообщений. Упрощает получение и установку
-/// значений полей с минимальной обработкой ошибок и максимальной типобезопасностью.
+/// Provides type-safe and convenient interface for accessing fields
+/// of dynamic Protocol Buffers messages. Simplifies getting and setting
+/// field values with minimal error handling and maximum type safety.
 public struct FieldAccessor {
   // MARK: - Properties
 
-  /// Целевое сообщение для доступа к полям.
+  /// Target message for field access.
   private let message: DynamicMessage
 
   // MARK: - Initialization
 
-  /// Создает новый экземпляр FieldAccessor для заданного сообщения.
+  /// Creates a new FieldAccessor instance for the given message.
   ///
-  /// - Parameter message: Динамическое сообщение для доступа к полям.
+  /// - Parameter message: Dynamic message for field access.
   public init(_ message: DynamicMessage) {
     self.message = message
   }
 
   // MARK: - Typed Field Access Methods
 
-  /// Безопасно получает строковое значение поля.
+  /// Safely gets string field value.
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Строковое значение или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: String value or nil if field is not set or has different type.
   public func getString(_ fieldName: String) -> String? {
     return getValue(fieldName, as: String.self)
   }
 
-  /// Безопасно получает строковое значение поля по номеру.
+  /// Safely gets string field value by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Строковое значение или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: String value or nil if field is not set or has different type.
   public func getString(_ fieldNumber: Int) -> String? {
     return getValue(fieldNumber, as: String.self)
   }
 
-  /// Безопасно получает целочисленное значение поля (Int32).
+  /// Safely gets integer field value (Int32).
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Целочисленное значение или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Integer value or nil if field is not set or has different type.
   public func getInt32(_ fieldName: String) -> Int32? {
     return getValue(fieldName, as: Int32.self)
   }
 
-  /// Безопасно получает целочисленное значение поля (Int32) по номеру.
+  /// Safely gets integer field value (Int32) by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Целочисленное значение или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Integer value or nil if field is not set or has different type.
   public func getInt32(_ fieldNumber: Int) -> Int32? {
     return getValue(fieldNumber, as: Int32.self)
   }
 
-  /// Безопасно получает целочисленное значение поля (Int64).
+  /// Safely gets integer field value (Int64).
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Целочисленное значение или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Integer value or nil if field is not set or has different type.
   public func getInt64(_ fieldName: String) -> Int64? {
     return getValue(fieldName, as: Int64.self)
   }
 
-  /// Безопасно получает целочисленное значение поля (Int64) по номеру.
+  /// Safely gets integer field value (Int64) by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Целочисленное значение или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Integer value or nil if field is not set or has different type.
   public func getInt64(_ fieldNumber: Int) -> Int64? {
     return getValue(fieldNumber, as: Int64.self)
   }
 
-  /// Безопасно получает беззнаковое целочисленное значение поля (UInt32).
+  /// Safely gets unsigned integer field value (UInt32).
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Беззнаковое целочисленное значение или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Unsigned integer value or nil if field is not set or has different type.
   public func getUInt32(_ fieldName: String) -> UInt32? {
     return getValue(fieldName, as: UInt32.self)
   }
 
-  /// Безопасно получает беззнаковое целочисленное значение поля (UInt32) по номеру.
+  /// Safely gets unsigned integer field value (UInt32) by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Беззнаковое целочисленное значение или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Unsigned integer value or nil if field is not set or has different type.
   public func getUInt32(_ fieldNumber: Int) -> UInt32? {
     return getValue(fieldNumber, as: UInt32.self)
   }
 
-  /// Безопасно получает беззнаковое целочисленное значение поля (UInt64).
+  /// Safely gets unsigned integer field value (UInt64).
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Беззнаковое целочисленное значение или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Unsigned integer value or nil if field is not set or has different type.
   public func getUInt64(_ fieldName: String) -> UInt64? {
     return getValue(fieldName, as: UInt64.self)
   }
 
-  /// Безопасно получает беззнаковое целочисленное значение поля (UInt64) по номеру.
+  /// Safely gets unsigned integer field value (UInt64) by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Беззнаковое целочисленное значение или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Unsigned integer value or nil if field is not set or has different type.
   public func getUInt64(_ fieldNumber: Int) -> UInt64? {
     return getValue(fieldNumber, as: UInt64.self)
   }
 
-  /// Безопасно получает значение с плавающей точкой поля (Float).
+  /// Safely gets floating point field value (Float).
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Значение с плавающей точкой или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Floating point value or nil if field is not set or has different type.
   public func getFloat(_ fieldName: String) -> Float? {
     return getValue(fieldName, as: Float.self)
   }
 
-  /// Безопасно получает значение с плавающей точкой поля (Float) по номеру.
+  /// Safely gets floating point field value (Float) by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Значение с плавающей точкой или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Floating point value or nil if field is not set or has different type.
   public func getFloat(_ fieldNumber: Int) -> Float? {
     return getValue(fieldNumber, as: Float.self)
   }
 
-  /// Безопасно получает значение с плавающей точкой поля (Double).
+  /// Safely gets floating point field value (Double).
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Значение с плавающей точкой или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Floating point value or nil if field is not set or has different type.
   public func getDouble(_ fieldName: String) -> Double? {
     return getValue(fieldName, as: Double.self)
   }
 
-  /// Безопасно получает значение с плавающей точкой поля (Double) по номеру.
+  /// Safely gets floating point field value (Double) by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Значение с плавающей точкой или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Floating point value or nil if field is not set or has different type.
   public func getDouble(_ fieldNumber: Int) -> Double? {
     return getValue(fieldNumber, as: Double.self)
   }
 
-  /// Безопасно получает булево значение поля.
+  /// Safely gets boolean field value.
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Булево значение или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Boolean value or nil if field is not set or has different type.
   public func getBool(_ fieldName: String) -> Bool? {
     return getValue(fieldName, as: Bool.self)
   }
 
-  /// Безопасно получает булево значение поля по номеру.
+  /// Safely gets boolean field value by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Булево значение или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Boolean value or nil if field is not set or has different type.
   public func getBool(_ fieldNumber: Int) -> Bool? {
     return getValue(fieldNumber, as: Bool.self)
   }
 
-  /// Безопасно получает данные поля.
+  /// Safely gets data field value.
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Данные или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Data or nil if field is not set or has different type.
   public func getData(_ fieldName: String) -> Data? {
     return getValue(fieldName, as: Data.self)
   }
 
-  /// Безопасно получает данные поля по номеру.
+  /// Safely gets data field value by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Данные или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Data or nil if field is not set or has different type.
   public func getData(_ fieldNumber: Int) -> Data? {
     return getValue(fieldNumber, as: Data.self)
   }
 
-  /// Безопасно получает вложенное сообщение поля.
+  /// Safely gets nested message field value.
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Динамическое сообщение или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Dynamic message or nil if field is not set or has different type.
   public func getMessage(_ fieldName: String) -> DynamicMessage? {
     return getValue(fieldName, as: DynamicMessage.self)
   }
 
-  /// Безопасно получает вложенное сообщение поля по номеру.
+  /// Safely gets nested message field value by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Динамическое сообщение или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Dynamic message or nil if field is not set or has different type.
   public func getMessage(_ fieldNumber: Int) -> DynamicMessage? {
     return getValue(fieldNumber, as: DynamicMessage.self)
   }
 
   // MARK: - Repeated Field Access Methods
 
-  /// Безопасно получает repeated строковое поле.
+  /// Safely gets repeated string field.
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Массив строк или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Array of strings or nil if field is not set or has different type.
   public func getStringArray(_ fieldName: String) -> [String]? {
     return getRepeatedValue(fieldName, as: String.self)
   }
 
-  /// Безопасно получает repeated строковое поле по номеру.
+  /// Safely gets repeated string field by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Массив строк или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Array of strings or nil if field is not set or has different type.
   public func getStringArray(_ fieldNumber: Int) -> [String]? {
     return getRepeatedValue(fieldNumber, as: String.self)
   }
 
-  /// Безопасно получает repeated поле целых чисел (Int32).
+  /// Safely gets repeated integer field (Int32).
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Массив целых чисел или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Array of integers or nil if field is not set or has different type.
   public func getInt32Array(_ fieldName: String) -> [Int32]? {
     return getRepeatedValue(fieldName, as: Int32.self)
   }
 
-  /// Безопасно получает repeated поле целых чисел (Int32) по номеру.
+  /// Safely gets repeated integer field (Int32) by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Массив целых чисел или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Array of integers or nil if field is not set or has different type.
   public func getInt32Array(_ fieldNumber: Int) -> [Int32]? {
     return getRepeatedValue(fieldNumber, as: Int32.self)
   }
 
-  /// Безопасно получает repeated поле целых чисел (Int64).
+  /// Safely gets repeated integer field (Int64).
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Массив целых чисел или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Array of integers or nil if field is not set or has different type.
   public func getInt64Array(_ fieldName: String) -> [Int64]? {
     return getRepeatedValue(fieldName, as: Int64.self)
   }
 
-  /// Безопасно получает repeated поле целых чисел (Int64) по номеру.
+  /// Safely gets repeated integer field (Int64) by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Массив целых чисел или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Array of integers or nil if field is not set or has different type.
   public func getInt64Array(_ fieldNumber: Int) -> [Int64]? {
     return getRepeatedValue(fieldNumber, as: Int64.self)
   }
 
-  /// Безопасно получает repeated поле вложенных сообщений.
+  /// Safely gets repeated nested message field.
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Массив динамических сообщений или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Array of dynamic messages or nil if field is not set or has different type.
   public func getMessageArray(_ fieldName: String) -> [DynamicMessage]? {
     return getRepeatedValue(fieldName, as: DynamicMessage.self)
   }
 
-  /// Безопасно получает repeated поле вложенных сообщений по номеру.
+  /// Safely gets repeated nested message field by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Массив динамических сообщений или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Array of dynamic messages or nil if field is not set or has different type.
   public func getMessageArray(_ fieldNumber: Int) -> [DynamicMessage]? {
     return getRepeatedValue(fieldNumber, as: DynamicMessage.self)
   }
 
   // MARK: - Map Field Access Methods
 
-  /// Безопасно получает map поле с строковыми ключами и значениями.
+  /// Safely gets map field with string keys and values.
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Словарь строк или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Dictionary of strings or nil if field is not set or has different type.
   public func getStringMap(_ fieldName: String) -> [String: String]? {
     return getMapValue(fieldName, keyType: String.self, valueType: String.self)
   }
 
-  /// Безопасно получает map поле с строковыми ключами и значениями по номеру.
+  /// Safely gets map field with string keys and values by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Словарь строк или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Dictionary of strings or nil if field is not set or has different type.
   public func getStringMap(_ fieldNumber: Int) -> [String: String]? {
     return getMapValue(fieldNumber, keyType: String.self, valueType: String.self)
   }
 
-  /// Безопасно получает map поле с строковыми ключами и числовыми значениями (Int32).
+  /// Safely gets map field with string keys and integer values (Int32).
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Словарь с числовыми значениями или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Dictionary with integer values or nil if field is not set or has different type.
   public func getStringToInt32Map(_ fieldName: String) -> [String: Int32]? {
     return getMapValue(fieldName, keyType: String.self, valueType: Int32.self)
   }
 
-  /// Безопасно получает map поле с строковыми ключами и числовыми значениями (Int32) по номеру.
+  /// Safely gets map field with string keys and integer values (Int32) by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Словарь с числовыми значениями или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Dictionary with integer values or nil if field is not set or has different type.
   public func getStringToInt32Map(_ fieldNumber: Int) -> [String: Int32]? {
     return getMapValue(fieldNumber, keyType: String.self, valueType: Int32.self)
   }
 
-  /// Безопасно получает map поле с строковыми ключами и сообщениями в качестве значений.
+  /// Safely gets map field with string keys and messages as values.
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Словарь с сообщениями или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Dictionary with messages or nil if field is not set or has different type.
   public func getStringToMessageMap(_ fieldName: String) -> [String: DynamicMessage]? {
     return getMapValue(fieldName, keyType: String.self, valueType: DynamicMessage.self)
   }
 
-  /// Безопасно получает map поле с строковыми ключами и сообщениями в качестве значений по номеру.
+  /// Safely gets map field with string keys and messages as values by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Словарь с сообщениями или nil, если поле не установлено или имеет другой тип.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Dictionary with messages or nil if field is not set or has different type.
   public func getStringToMessageMap(_ fieldNumber: Int) -> [String: DynamicMessage]? {
     return getMapValue(fieldNumber, keyType: String.self, valueType: DynamicMessage.self)
   }
 
   // MARK: - Field Existence and Safety Methods
 
-  /// Проверяет, существует ли поле и установлено ли для него значение.
+  /// Checks if field exists and has a value set.
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: true, если поле существует и имеет значение, false в противном случае.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: true if field exists and has value, false otherwise.
   public func hasValue(_ fieldName: String) -> Bool {
     do {
       return try message.hasValue(forField: fieldName)
@@ -321,10 +321,10 @@ public struct FieldAccessor {
     }
   }
 
-  /// Проверяет, существует ли поле и установлено ли для него значение по номеру.
+  /// Checks if field exists and has a value set by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: true, если поле существует и имеет значение, false в противном случае.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: true if field exists and has value, false otherwise.
   public func hasValue(_ fieldNumber: Int) -> Bool {
     do {
       return try message.hasValue(forField: fieldNumber)
@@ -334,46 +334,46 @@ public struct FieldAccessor {
     }
   }
 
-  /// Проверяет, существует ли поле в дескрипторе сообщения.
+  /// Checks if field exists in message descriptor.
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: true, если поле существует в дескрипторе.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: true if field exists in descriptor.
   public func fieldExists(_ fieldName: String) -> Bool {
     return message.descriptor.field(named: fieldName) != nil
   }
 
-  /// Проверяет, существует ли поле в дескрипторе сообщения по номеру.
+  /// Checks if field exists in message descriptor by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: true, если поле существует в дескрипторе.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: true if field exists in descriptor.
   public func fieldExists(_ fieldNumber: Int) -> Bool {
     return message.descriptor.field(number: fieldNumber) != nil
   }
 
-  /// Получает тип поля по его имени.
+  /// Gets field type by name.
   ///
-  /// - Parameter fieldName: Имя поля.
-  /// - Returns: Тип поля или nil, если поле не существует.
+  /// - Parameter fieldName: Field name.
+  /// - Returns: Field type or nil if field doesn't exist.
   public func getFieldType(_ fieldName: String) -> FieldType? {
     return message.descriptor.field(named: fieldName)?.type
   }
 
-  /// Получает тип поля по его номеру.
+  /// Gets field type by number.
   ///
-  /// - Parameter fieldNumber: Номер поля.
-  /// - Returns: Тип поля или nil, если поле не существует.
+  /// - Parameter fieldNumber: Field number.
+  /// - Returns: Field type or nil if field doesn't exist.
   public func getFieldType(_ fieldNumber: Int) -> FieldType? {
     return message.descriptor.field(number: fieldNumber)?.type
   }
 
   // MARK: - Generic Field Access Methods
 
-  /// Универсальный метод для безопасного получения значения поля с приведением к указанному типу.
+  /// Generic method for safely getting field value with cast to specified type.
   ///
-  /// - Parameters:.
-  ///   - fieldName: Имя поля.
-  ///   - type: Тип, к которому нужно привести значение.
-  /// - Returns: Значение указанного типа или nil, если поле не установлено или имеет другой тип.
+  /// - Parameters:
+  ///   - fieldName: Field name.
+  ///   - type: Type to cast value to.
+  /// - Returns: Value of specified type or nil if field is not set or has different type.
   public func getValue<T>(_ fieldName: String, as type: T.Type) -> T? {
     do {
       guard let value = try message.get(forField: fieldName) else {
@@ -386,12 +386,12 @@ public struct FieldAccessor {
     }
   }
 
-  /// Универсальный метод для безопасного получения значения поля с приведением к указанному типу по номеру.
+  /// Generic method for safely getting field value with cast to specified type by number.
   ///
-  /// - Parameters:.
-  ///   - fieldNumber: Номер поля.
-  ///   - type: Тип, к которому нужно привести значение.
-  /// - Returns: Значение указанного типа или nil, если поле не установлено или имеет другой тип.
+  /// - Parameters:
+  ///   - fieldNumber: Field number.
+  ///   - type: Type to cast value to.
+  /// - Returns: Value of specified type or nil if field is not set or has different type.
   public func getValue<T>(_ fieldNumber: Int, as type: T.Type) -> T? {
     do {
       guard let value = try message.get(forField: fieldNumber) else {
@@ -406,12 +406,12 @@ public struct FieldAccessor {
 
   // MARK: - Private Helper Methods
 
-  /// Безопасно получает repeated поле с элементами указанного типа.
+  /// Safely gets repeated field with elements of specified type.
   ///
-  /// - Parameters:.
-  ///   - fieldName: Имя поля.
-  ///   - type: Тип элементов массива.
-  /// - Returns: Массив элементов указанного типа или nil.
+  /// - Parameters:
+  ///   - fieldName: Field name.
+  ///   - type: Type of array elements.
+  /// - Returns: Array of elements of specified type or nil.
   private func getRepeatedValue<T>(_ fieldName: String, as type: T.Type) -> [T]? {
     do {
       guard let value = try message.get(forField: fieldName) else {
@@ -421,11 +421,11 @@ public struct FieldAccessor {
         return nil
       }
 
-      // Проверяем, что все элементы имеют правильный тип
+      // Check that all elements have correct type
       var result: [T] = []
       for item in array {
         guard let typedItem = item as? T else {
-          return nil  // Если хотя бы один элемент не соответствует типу, возвращаем nil
+          return nil  // If at least one element doesn't match type, return nil
         }
         result.append(typedItem)
       }
@@ -437,12 +437,12 @@ public struct FieldAccessor {
     }
   }
 
-  /// Безопасно получает repeated поле с элементами указанного типа по номеру.
+  /// Safely gets repeated field with elements of specified type by number.
   ///
-  /// - Parameters:.
-  ///   - fieldNumber: Номер поля.
-  ///   - type: Тип элементов массива.
-  /// - Returns: Массив элементов указанного типа или nil.
+  /// - Parameters:
+  ///   - fieldNumber: Field number.
+  ///   - type: Type of array elements.
+  /// - Returns: Array of elements of specified type or nil.
   private func getRepeatedValue<T>(_ fieldNumber: Int, as type: T.Type) -> [T]? {
     do {
       guard let value = try message.get(forField: fieldNumber) else {
@@ -452,11 +452,11 @@ public struct FieldAccessor {
         return nil
       }
 
-      // Проверяем, что все элементы имеют правильный тип
+      // Check that all elements have correct type
       var result: [T] = []
       for item in array {
         guard let typedItem = item as? T else {
-          return nil  // Если хотя бы один элемент не соответствует типу, возвращаем nil
+          return nil  // If at least one element doesn't match type, return nil
         }
         result.append(typedItem)
       }
@@ -468,13 +468,13 @@ public struct FieldAccessor {
     }
   }
 
-  /// Безопасно получает map поле с ключами и значениями указанных типов.
+  /// Safely gets map field with keys and values of specified types.
   ///
-  /// - Parameters:.
-  ///   - fieldName: Имя поля.
-  ///   - keyType: Тип ключей.
-  ///   - valueType: Тип значений.
-  /// - Returns: Словарь с ключами и значениями указанных типов или nil.
+  /// - Parameters:
+  ///   - fieldName: Field name.
+  ///   - keyType: Type of keys.
+  ///   - valueType: Type of values.
+  /// - Returns: Dictionary with keys and values of specified types or nil.
   private func getMapValue<K: Hashable, V>(_ fieldName: String, keyType: K.Type, valueType: V.Type) -> [K: V]? {
     do {
       guard let value = try message.get(forField: fieldName) else {
@@ -484,14 +484,14 @@ public struct FieldAccessor {
         return nil
       }
 
-      // Проверяем и конвертируем ключи и значения
+      // Check and convert keys and values
       var result: [K: V] = [:]
       for (key, mapValue) in map {
         guard let typedKey = key as? K else {
-          return nil  // Если хотя бы один ключ не соответствует типу, возвращаем nil
+          return nil  // If at least one key doesn't match type, return nil
         }
         guard let typedValue = mapValue as? V else {
-          return nil  // Если хотя бы одно значение не соответствует типу, возвращаем nil
+          return nil  // If at least one value doesn't match type, return nil
         }
         result[typedKey] = typedValue
       }
@@ -503,13 +503,13 @@ public struct FieldAccessor {
     }
   }
 
-  /// Безопасно получает map поле с ключами и значениями указанных типов по номеру.
+  /// Safely gets map field with keys and values of specified types by number.
   ///
-  /// - Parameters:.
-  ///   - fieldNumber: Номер поля.
-  ///   - keyType: Тип ключей.
-  ///   - valueType: Тип значений.
-  /// - Returns: Словарь с ключами и значениями указанных типов или nil.
+  /// - Parameters:
+  ///   - fieldNumber: Field number.
+  ///   - keyType: Type of keys.
+  ///   - valueType: Type of values.
+  /// - Returns: Dictionary with keys and values of specified types or nil.
   private func getMapValue<K: Hashable, V>(_ fieldNumber: Int, keyType: K.Type, valueType: V.Type) -> [K: V]? {
     do {
       guard let value = try message.get(forField: fieldNumber) else {
@@ -519,14 +519,14 @@ public struct FieldAccessor {
         return nil
       }
 
-      // Проверяем и конвертируем ключи и значения
+      // Check and convert keys and values
       var result: [K: V] = [:]
       for (key, mapValue) in map {
         guard let typedKey = key as? K else {
-          return nil  // Если хотя бы один ключ не соответствует типу, возвращаем nil
+          return nil  // If at least one key doesn't match type, return nil
         }
         guard let typedValue = mapValue as? V else {
-          return nil  // Если хотя бы одно значение не соответствует типу, возвращаем nil
+          return nil  // If at least one value doesn't match type, return nil
         }
         result[typedKey] = typedValue
       }
@@ -543,31 +543,31 @@ public struct FieldAccessor {
 
 /// MutableFieldAccessor.
 ///
-/// Расширение FieldAccessor для изменяемого доступа к полям динамических сообщений.
-/// Позволяет безопасно устанавливать значения полей с минимальной обработкой ошибок.
+/// Extension of FieldAccessor for mutable access to dynamic message fields.
+/// Allows safely setting field values with minimal error handling.
 public struct MutableFieldAccessor {
   // MARK: - Properties
 
-  /// Целевое сообщение для изменения полей.
+  /// Target message for field modification.
   private var message: DynamicMessage
 
   // MARK: - Initialization
 
-  /// Создает новый экземпляр MutableFieldAccessor для заданного сообщения.
+  /// Creates a new MutableFieldAccessor instance for the given message.
   ///
-  /// - Parameter message: Динамическое сообщение для изменения полей.
+  /// - Parameter message: Dynamic message for field modification.
   public init(_ message: inout DynamicMessage) {
     self.message = message
   }
 
   // MARK: - Field Setting Methods
 
-  /// Безопасно устанавливает строковое значение поля.
+  /// Safely sets string field value.
   ///
-  /// - Parameters:.
-  ///   - value: Строковое значение для установки.
-  ///   - fieldName: Имя поля.
-  /// - Returns: true, если значение было успешно установлено, false в противном случае.
+  /// - Parameters:
+  ///   - value: String value to set.
+  ///   - fieldName: Field name.
+  /// - Returns: true if value was successfully set, false otherwise.
   @discardableResult
   public mutating func setString(_ value: String, forField fieldName: String) -> Bool {
     do {
@@ -579,12 +579,12 @@ public struct MutableFieldAccessor {
     }
   }
 
-  /// Безопасно устанавливает строковое значение поля по номеру.
+  /// Safely sets string field value by number.
   ///
-  /// - Parameters:.
-  ///   - value: Строковое значение для установки.
-  ///   - fieldNumber: Номер поля.
-  /// - Returns: true, если значение было успешно установлено, false в противном случае.
+  /// - Parameters:
+  ///   - value: String value to set.
+  ///   - fieldNumber: Field number.
+  /// - Returns: true if value was successfully set, false otherwise.
   @discardableResult
   public mutating func setString(_ value: String, forField fieldNumber: Int) -> Bool {
     do {
@@ -596,12 +596,12 @@ public struct MutableFieldAccessor {
     }
   }
 
-  /// Безопасно устанавливает целочисленное значение поля (Int32).
+  /// Safely sets integer field value (Int32).
   ///
-  /// - Parameters:.
-  ///   - value: Целочисленное значение для установки.
-  ///   - fieldName: Имя поля.
-  /// - Returns: true, если значение было успешно установлено, false в противном случае.
+  /// - Parameters:
+  ///   - value: Integer value to set.
+  ///   - fieldName: Field name.
+  /// - Returns: true if value was successfully set, false otherwise.
   @discardableResult
   public mutating func setInt32(_ value: Int32, forField fieldName: String) -> Bool {
     do {
@@ -613,12 +613,12 @@ public struct MutableFieldAccessor {
     }
   }
 
-  /// Безопасно устанавливает целочисленное значение поля (Int32) по номеру.
+  /// Safely sets integer field value (Int32) by number.
   ///
-  /// - Parameters:.
-  ///   - value: Целочисленное значение для установки.
-  ///   - fieldNumber: Номер поля.
-  /// - Returns: true, если значение было успешно установлено, false в противном случае.
+  /// - Parameters:
+  ///   - value: Integer value to set.
+  ///   - fieldNumber: Field number.
+  /// - Returns: true if value was successfully set, false otherwise.
   @discardableResult
   public mutating func setInt32(_ value: Int32, forField fieldNumber: Int) -> Bool {
     do {
@@ -630,12 +630,12 @@ public struct MutableFieldAccessor {
     }
   }
 
-  /// Безопасно устанавливает булево значение поля.
+  /// Safely sets boolean field value.
   ///
-  /// - Parameters:.
-  ///   - value: Булево значение для установки.
-  ///   - fieldName: Имя поля.
-  /// - Returns: true, если значение было успешно установлено, false в противном случае.
+  /// - Parameters:
+  ///   - value: Boolean value to set.
+  ///   - fieldName: Field name.
+  /// - Returns: true if value was successfully set, false otherwise.
   @discardableResult
   public mutating func setBool(_ value: Bool, forField fieldName: String) -> Bool {
     do {
@@ -647,12 +647,12 @@ public struct MutableFieldAccessor {
     }
   }
 
-  /// Безопасно устанавливает булево значение поля по номеру.
+  /// Safely sets boolean field value by number.
   ///
-  /// - Parameters:.
-  ///   - value: Булево значение для установки.
-  ///   - fieldNumber: Номер поля.
-  /// - Returns: true, если значение было успешно установлено, false в противном случае.
+  /// - Parameters:
+  ///   - value: Boolean value to set.
+  ///   - fieldNumber: Field number.
+  /// - Returns: true if value was successfully set, false otherwise.
   @discardableResult
   public mutating func setBool(_ value: Bool, forField fieldNumber: Int) -> Bool {
     do {
@@ -664,12 +664,12 @@ public struct MutableFieldAccessor {
     }
   }
 
-  /// Безопасно устанавливает вложенное сообщение поля.
+  /// Safely sets nested message field value.
   ///
-  /// - Parameters:.
-  ///   - value: Динамическое сообщение для установки.
-  ///   - fieldName: Имя поля.
-  /// - Returns: true, если значение было успешно установлено, false в противном случае.
+  /// - Parameters:
+  ///   - value: Dynamic message to set.
+  ///   - fieldName: Field name.
+  /// - Returns: true if value was successfully set, false otherwise.
   @discardableResult
   public mutating func setMessage(_ value: DynamicMessage, forField fieldName: String) -> Bool {
     do {
@@ -681,12 +681,12 @@ public struct MutableFieldAccessor {
     }
   }
 
-  /// Безопасно устанавливает вложенное сообщение поля по номеру.
+  /// Safely sets nested message field value by number.
   ///
-  /// - Parameters:.
-  ///   - value: Динамическое сообщение для установки.
-  ///   - fieldNumber: Номер поля.
-  /// - Returns: true, если значение было успешно установлено, false в противном случае.
+  /// - Parameters:
+  ///   - value: Dynamic message to set.
+  ///   - fieldNumber: Field number.
+  /// - Returns: true if value was successfully set, false otherwise.
   @discardableResult
   public mutating func setMessage(_ value: DynamicMessage, forField fieldNumber: Int) -> Bool {
     do {
@@ -698,9 +698,9 @@ public struct MutableFieldAccessor {
     }
   }
 
-  /// Возвращает обновленное сообщение.
+  /// Returns updated message.
   ///
-  /// - Returns: Обновленное динамическое сообщение.
+  /// - Returns: Updated dynamic message.
   public func updatedMessage() -> DynamicMessage {
     return message
   }
@@ -709,16 +709,16 @@ public struct MutableFieldAccessor {
 // MARK: - Convenience Extensions
 
 extension DynamicMessage {
-  /// Создает FieldAccessor для чтения полей этого сообщения.
+  /// Creates FieldAccessor for reading fields of this message.
   ///
-  /// - Returns: FieldAccessor для безопасного чтения полей.
+  /// - Returns: FieldAccessor for safe field reading.
   public var fieldAccessor: FieldAccessor {
     return FieldAccessor(self)
   }
 
-  /// Создает MutableFieldAccessor для изменения полей этого сообщения.
+  /// Creates MutableFieldAccessor for modifying fields of this message.
   ///
-  /// - Returns: MutableFieldAccessor для безопасного изменения полей.
+  /// - Returns: MutableFieldAccessor for safe field modification.
   public mutating func mutableFieldAccessor() -> MutableFieldAccessor {
     return MutableFieldAccessor(&self)
   }

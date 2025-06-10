@@ -2,7 +2,7 @@
 // MessageFactory.swift
 // SwiftProtoReflect
 //
-// Создан: 2025-05-24
+// Created: 2025-05-24
 //
 
 import Foundation
@@ -10,33 +10,33 @@ import SwiftProtobuf
 
 /// MessageFactory.
 ///
-/// Фабрика для создания и управления динамическими сообщениями Protocol Buffers.
-/// Предоставляет удобные методы для создания пустых сообщений, сообщений с предзаполненными.
-/// значениями, клонирования и валидации существующих сообщений.
+/// Factory for creating and managing dynamic Protocol Buffers messages.
+/// Provides convenient methods for creating empty messages, messages with pre-filled
+/// values, cloning and validation of existing messages.
 public struct MessageFactory {
   // MARK: - Initialization
 
-  /// Создает новый экземпляр MessageFactory.
+  /// Creates a new MessageFactory instance.
   public init() {
   }
 
   // MARK: - Message Creation Methods
 
-  /// Создает пустое динамическое сообщение на основе дескриптора.
+  /// Creates an empty dynamic message based on descriptor.
   ///
-  /// - Parameter descriptor: Дескриптор сообщения.
-  /// - Returns: Новое пустое динамическое сообщение.
+  /// - Parameter descriptor: Message descriptor.
+  /// - Returns: New empty dynamic message.
   public func createMessage(from descriptor: MessageDescriptor) -> DynamicMessage {
     return DynamicMessage(descriptor: descriptor)
   }
 
-  /// Создает динамическое сообщение с предзаполненными значениями.
+  /// Creates a dynamic message with pre-filled values.
   ///
-  /// - Parameters:.
-  ///   - descriptor: Дескриптор сообщения.
-  ///   - fieldValues: Словарь со значениями полей (ключ - имя поля, значение - значение поля).
-  /// - Returns: Новое динамическое сообщение с установленными значениями.
-  /// - Throws: Ошибку, если какое-либо поле не существует или значение имеет неправильный тип.
+  /// - Parameters:
+  ///   - descriptor: Message descriptor.
+  ///   - fieldValues: Dictionary with field values (key - field name, value - field value).
+  /// - Returns: New dynamic message with set values.
+  /// - Throws: Error if any field doesn't exist or value has wrong type.
   public func createMessage(from descriptor: MessageDescriptor, with fieldValues: [String: Any]) throws
     -> DynamicMessage
   {
@@ -49,13 +49,13 @@ public struct MessageFactory {
     return message
   }
 
-  /// Создает динамическое сообщение с предзаполненными значениями, используя номера полей.
+  /// Creates a dynamic message with pre-filled values, using field numbers.
   ///
-  /// - Parameters:.
-  ///   - descriptor: Дескриптор сообщения.
-  ///   - fieldValues: Словарь со значениями полей (ключ - номер поля, значение - значение поля).
-  /// - Returns: Новое динамическое сообщение с установленными значениями.
-  /// - Throws: Ошибку, если какое-либо поле не существует или значение имеет неправильный тип.
+  /// - Parameters:
+  ///   - descriptor: Message descriptor.
+  ///   - fieldValues: Dictionary with field values (key - field number, value - field value).
+  /// - Returns: New dynamic message with set values.
+  /// - Throws: Error if any field doesn't exist or value has wrong type.
   public func createMessage(from descriptor: MessageDescriptor, with fieldValues: [Int: Any]) throws -> DynamicMessage {
     var message = DynamicMessage(descriptor: descriptor)
 
@@ -68,20 +68,20 @@ public struct MessageFactory {
 
   // MARK: - Message Cloning Methods
 
-  /// Создает полную копию существующего динамического сообщения.
+  /// Creates a complete copy of existing dynamic message.
   ///
-  /// - Parameter message: Исходное сообщение для клонирования.
-  /// - Returns: Новое сообщение - точная копия исходного.
-  /// - Throws: Ошибку, если произошла ошибка при копировании полей.
+  /// - Parameter message: Source message to clone.
+  /// - Returns: New message - exact copy of the source.
+  /// - Throws: Error if an error occurred while copying fields.
   public func clone(_ message: DynamicMessage) throws -> DynamicMessage {
     var clonedMessage = DynamicMessage(descriptor: message.descriptor)
 
-    // Копируем все установленные поля
+    // Copy all set fields
     for field in message.descriptor.allFields() where try message.hasValue(forField: field.number) {
       let value = try message.get(forField: field.number)
 
-      // Обрабатываем значение, включая случаи когда оно может быть nil
-      // Для вложенных сообщений создаем глубокую копию
+      // Handle value, including cases when it might be nil
+      // For nested messages create deep copy
       if field.type == .message && !field.isRepeated && !field.isMap {
         if let nestedMessage = value as? DynamicMessage {
           let clonedNestedMessage = try clone(nestedMessage)
@@ -89,7 +89,7 @@ public struct MessageFactory {
         }
       }
       else if field.isRepeated && field.type == .message && !field.isMap {
-        // Для repeated полей с сообщениями создаем копии всех элементов
+        // For repeated fields with messages create copies of all elements
         if let array = value as? [Any] {
           var clonedArray: [Any] = []
           for item in array {
@@ -104,7 +104,7 @@ public struct MessageFactory {
         }
       }
       else if field.isMap {
-        // Для map полей - используем setMapEntry для каждой пары ключ-значение
+        // For map fields - use setMapEntry for each key-value pair
         if let map = value as? [AnyHashable: Any] {
           for (key, mapValue) in map {
             if field.mapEntryInfo?.valueFieldInfo.type == .message, let messageValue = mapValue as? DynamicMessage {
@@ -118,7 +118,7 @@ public struct MessageFactory {
         }
       }
       else if let actualValue = value {
-        // Для всех остальных типов просто копируем значение, если оно не nil
+        // For all other types just copy value if it's not nil
         try clonedMessage.set(actualValue, forField: field.number)
       }
     }
@@ -128,25 +128,25 @@ public struct MessageFactory {
 
   // MARK: - Message Validation Methods
 
-  /// Проверяет валидность динамического сообщения согласно его дескриптору.
+  /// Validates dynamic message according to its descriptor.
   ///
-  /// - Parameter message: Сообщение для проверки.
-  /// - Returns: Результат валидации с информацией об ошибках, если они есть.
+  /// - Parameter message: Message to validate.
+  /// - Returns: Validation result with error information if any.
   public func validate(_ message: DynamicMessage) -> ValidationResult {
     var errors: [ValidationError] = []
 
-    // Проверяем все поля в дескрипторе
+    // Check all fields in descriptor
     for field in message.descriptor.allFields() {
       do {
         let hasValue = try message.hasValue(forField: field.number)
 
-        // Проверка обязательных полей (для proto2)
+        // Check required fields (for proto2)
         if field.isRequired && !hasValue {
           errors.append(.missingRequiredField(fieldName: field.name))
           continue
         }
 
-        // Если значение установлено, проверяем его корректность
+        // If value is set, check its correctness
         if hasValue {
           let value = try message.get(forField: field.number)
           if let actualValue = value {
@@ -165,22 +165,22 @@ public struct MessageFactory {
 
   // MARK: - Private Helper Methods
 
-  /// Проверяет корректность значения конкретного поля.
+  /// Validates correctness of specific field value.
   ///
-  /// - Parameters:.
-  ///   - value: Значение для проверки.
-  ///   - field: Дескриптор поля.
-  ///   - message: Сообщение, содержащее значение.
-  /// - Returns: Массив ошибок валидации (пустой, если ошибок нет).
-  /// - Throws: Ошибку, если произошла неожиданная ошибка валидации.
+  /// - Parameters:
+  ///   - value: Value to validate.
+  ///   - field: Field descriptor.
+  ///   - message: Message containing the value.
+  /// - Returns: Array of validation errors (empty if no errors).
+  /// - Throws: Error if unexpected validation error occurred.
   private func validateFieldValue(_ value: Any, for field: FieldDescriptor, message: DynamicMessage) throws
     -> [ValidationError]
   {
     var errors: [ValidationError] = []
 
-    // Проверяем map поля ПЕРВЫМИ (поскольку они тоже имеют isRepeated = true)
+    // Check map fields FIRST (since they also have isRepeated = true)
     if field.isMap && field.mapEntryInfo?.valueFieldInfo.type == .message {
-      // Для map полей с сообщениями в качестве значений
+      // For map fields with messages as values
       if let map = value as? [AnyHashable: Any] {
         for (key, mapValue) in map {
           if let messageValue = mapValue as? DynamicMessage {
@@ -199,7 +199,7 @@ public struct MessageFactory {
       }
     }
     else if field.isRepeated && field.type == .message {
-      // Для repeated полей с сообщениями (НЕ map)
+      // For repeated fields with messages (NOT map)
       if let array = value as? [Any] {
         for (index, item) in array.enumerated() {
           if let messageItem = item as? DynamicMessage {
@@ -218,7 +218,7 @@ public struct MessageFactory {
       }
     }
     else if field.type == .message && !field.isRepeated && !field.isMap {
-      // Для простых вложенных сообщений
+      // For simple nested messages
       if let nestedMessage = value as? DynamicMessage {
         let nestedResult = validate(nestedMessage)
         if !nestedResult.isValid {
@@ -238,40 +238,40 @@ public struct MessageFactory {
 
 // MARK: - Validation Types
 
-/// Результат валидации сообщения.
+/// Message validation result.
 public struct ValidationResult {
-  /// Флаг, указывающий, является ли сообщение валидным.
+  /// Flag indicating if message is valid.
   public let isValid: Bool
 
-  /// Массив ошибок валидации (пустой для валидных сообщений).
+  /// Array of validation errors (empty for valid messages).
   public let errors: [ValidationError]
 
-  /// Создает новый результат валидации.
+  /// Creates a new validation result.
   ///
-  /// - Parameters:.
-  ///   - isValid: Флаг валидности.
-  ///   - errors: Массив ошибок.
+  /// - Parameters:
+  ///   - isValid: Validity flag.
+  ///   - errors: Array of errors.
   public init(isValid: Bool, errors: [ValidationError]) {
     self.isValid = isValid
     self.errors = errors
   }
 }
 
-/// Типы ошибок валидации сообщений.
+/// Message validation error types.
 public enum ValidationError: Error, Equatable {
-  /// Отсутствует обязательное поле.
+  /// Missing required field.
   case missingRequiredField(fieldName: String)
 
-  /// Ошибка валидации вложенного сообщения.
+  /// Nested message validation failed.
   case nestedMessageValidationFailed(fieldName: String, nestedErrors: [ValidationError])
 
-  /// Ошибка валидации элемента в repeated поле.
+  /// Repeated field element validation failed.
   case repeatedFieldValidationFailed(fieldName: String, index: Int, nestedErrors: [ValidationError])
 
-  /// Ошибка валидации значения в map поле.
+  /// Map field value validation failed.
   case mapFieldValidationFailed(fieldName: String, key: String, nestedErrors: [ValidationError])
 
-  /// Общая ошибка валидации поля.
+  /// General field validation error.
   case validationError(fieldName: String, error: Error)
 
   // MARK: - Equatable
@@ -296,7 +296,7 @@ public enum ValidationError: Error, Equatable {
     ):
       return lhsField == rhsField && lhsKey == rhsKey && lhsErrors == rhsErrors
     case (.validationError(let lhsField, _), .validationError(let rhsField, _)):
-      return lhsField == rhsField  // Не сравниваем Error, так как он не Equatable
+      return lhsField == rhsField  // Don't compare Error as it's not Equatable
     default:
       return false
     }
