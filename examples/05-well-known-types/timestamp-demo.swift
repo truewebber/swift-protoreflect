@@ -1,19 +1,19 @@
 /**
  * ⏰ SwiftProtoReflect Example: Timestamp Demo
  *
- * Описание: Работа с google.protobuf.Timestamp и конвертация с Foundation.Date
- * Ключевые концепции: TimestampHandler, WellKnownTypes, Date conversion
- * Сложность: 🔧 Средний
- * Время выполнения: < 10 секунд
+ * Description: Working with google.protobuf.Timestamp and conversion with Foundation.Date
+ * Key concepts: TimestampHandler, WellKnownTypes, Date conversion
+ * Complexity: 🔧 Intermediate
+ * Execution time: < 10 seconds
  *
- * Что изучите:
- * - Создание и конвертация google.protobuf.Timestamp
- * - Интеграция с Foundation.Date
- * - Временные метки с наносекундной точностью
- * - Валидация временных диапазонов
- * - Round-trip совместимость
+ * What you'll learn:
+ * - Creating and converting google.protobuf.Timestamp
+ * - Integration with Foundation.Date
+ * - Timestamps with nanosecond precision
+ * - Temporal range validation
+ * - Round-trip compatibility
  *
- * Запуск:
+ * Run with:
  *   swift run TimestampDemo
  */
 
@@ -32,12 +32,12 @@ struct TimestampDemo {
     try demonstrateEdgeCases()
     try demonstratePerformanceAndPrecision()
 
-    ExampleUtils.printSuccess("Timestamp demo завершена! Вы изучили все аспекты работы с google.protobuf.Timestamp.")
+    ExampleUtils.printSuccess("Timestamp demo completed! You've learned all aspects of working with google.protobuf.Timestamp.")
 
     ExampleUtils.printNext([
-      "Далее изучите: duration-demo.swift - временные интервалы",
-      "Сравните: empty-demo.swift - пустые сообщения",
-      "Продвинутое: field-mask-demo.swift - маски полей для updates",
+      "Next, explore: duration-demo.swift - time intervals",
+      "Compare with: empty-demo.swift - empty messages",
+      "Advanced: field-mask-demo.swift - field masks for updates",
     ])
   }
 
@@ -46,7 +46,7 @@ struct TimestampDemo {
   private static func demonstrateBasicUsage() throws {
     ExampleUtils.printStep(1, "Basic Timestamp Operations")
 
-    // Создание из текущей даты
+    // Create from current date
     let now = Date()
     let timestampValue = TimestampHandler.TimestampValue(from: now)
     let timestampMessage = try TimestampHandler.createDynamic(from: timestampValue)
@@ -55,7 +55,7 @@ struct TimestampDemo {
     print("  ⏰ Timestamp seconds: \(timestampValue.seconds)")
     print("  🔢 Timestamp nanos: \(timestampValue.nanos)")
 
-    // Конвертация обратно
+    // Convert back
     let extractedValue =
       try TimestampHandler.createSpecialized(from: timestampMessage) as! TimestampHandler.TimestampValue
     let reconstructedDate = extractedValue.toDate()
@@ -66,7 +66,7 @@ struct TimestampDemo {
     print("  ✅ Precision (time difference): \(String(format: "%.6f", timeDifference)) seconds")
     print("  ✅ High precision match: \(timeDifference < 0.001 ? "YES" : "NO")")
 
-    // Проверка структуры сообщения
+    // Check message structure
     print("  📋 Message structure:")
     print("    Message type: \(timestampMessage.descriptor.name)")
     print("    Fields count: \(timestampMessage.descriptor.fields.count)")
@@ -79,7 +79,7 @@ struct TimestampDemo {
   private static func demonstrateAdvancedOperations() throws {
     ExampleUtils.printStep(2, "Advanced Timestamp Operations")
 
-    // Работа с различными временными форматами
+    // Work with various time formats
     let significantTimestamps = [
       ("Unix epoch", Date(timeIntervalSince1970: 0)),
       ("Y2K moment", Date(timeIntervalSince1970: 946_684_800)),
@@ -101,7 +101,7 @@ struct TimestampDemo {
       title: "Historical Timestamps"
     )
 
-    // Демонстрация точности
+    // Precision demonstration
     print("  🎯 Precision demonstration:")
     let preciseTime = Date()
     let nanoTimestamp = TimestampHandler.TimestampValue(from: preciseTime)
@@ -122,7 +122,7 @@ struct TimestampDemo {
   private static func demonstrateRoundTripCompatibility() throws {
     ExampleUtils.printStep(3, "Round-Trip Compatibility Testing")
 
-    // Тестирование различных временных значений
+    // Test various time values
     let testDates = [
       Date(timeIntervalSince1970: 0.123456789),  // Microsecond precision
       Date(timeIntervalSince1970: 1234567890.987654321),  // Large timestamp
@@ -179,7 +179,7 @@ struct TimestampDemo {
   private static func demonstrateEdgeCases() throws {
     ExampleUtils.printStep(4, "Edge Cases and Validation")
 
-    // Тестирование граничных значений
+    // Test boundary values
     let edgeCases = [
       ("Very small positive", Date(timeIntervalSince1970: 0.0001)),
       ("Very large valid", Date(timeIntervalSince1970: 253_402_300_799)),  // Max valid timestamp
@@ -222,7 +222,7 @@ struct TimestampDemo {
 
     ExampleUtils.printDataTable(edgeResults, title: "Edge Cases Validation")
 
-    // Тестирование валидации правил Protocol Buffers
+    // Test Protocol Buffers validation rules
     print("  📝 Protocol Buffers validation rules:")
     print("    • Seconds must be in range [-62135596800, 253402300799]")
     print("    • Nanos must be in range [0, 999999999]")
@@ -290,10 +290,10 @@ struct TimestampDemo {
     ExampleUtils.printDataTable(precisionTests, title: "Precision Analysis")
 
     print("  💡 Key insights:")
-    print("    • Protocol Buffers Timestamp поддерживает наносекундную точность")
-    print("    • Swift Date имеет ограничения в точности (обычно микросекунды)")
-    print("    • Round-trip конвертация теряет точность на уровне наносекунд")
-    print("    • Для большинства применений точность более чем достаточна")
+    print("    • Protocol Buffers Timestamp supports nanosecond precision")
+    print("    • Swift Date has precision limitations (typically microseconds)")
+    print("    • Round-trip conversion loses precision at nanosecond level")
+    print("    • For most applications, precision is more than sufficient")
   }
 }
 

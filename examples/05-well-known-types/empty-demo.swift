@@ -1,20 +1,20 @@
 /**
  * 🚫 SwiftProtoReflect Example: Empty Demo
  *
- * Описание: Работа с google.protobuf.Empty - пустые сообщения без полей
- * Ключевые концепции: EmptyHandler, Unit Type, Singleton Pattern
- * Сложность: 🔰 Начальный
- * Время выполнения: < 5 секунд
+ * Description: Working with google.protobuf.Empty - empty messages without fields
+ * Key concepts: EmptyHandler, Unit Type, Singleton Pattern
+ * Complexity: 🔰 Beginner
+ * Execution time: < 5 seconds
  *
- * Что изучите:
- * - Создание и конвертация google.protobuf.Empty
- * - Singleton pattern для EmptyValue
- * - Интеграция с Swift Void типом
- * - Использование в качестве placeholder'а
+ * What you'll learn:
+ * - Creating and converting google.protobuf.Empty
+ * - Singleton pattern for EmptyValue
+ * - Integration with Swift Void type
+ * - Using as placeholder
  * - gRPC Empty responses
- * - Unit type семантика
+ * - Unit type semantics
  *
- * Запуск:
+ * Run with:
  *   swift run EmptyDemo
  */
 
@@ -33,12 +33,12 @@ struct EmptyDemo {
     try demonstrateUseCases()
     try demonstratePerformanceAndComparisons()
 
-    ExampleUtils.printSuccess("Empty demo завершена! Вы изучили все аспекты работы с google.protobuf.Empty.")
+    ExampleUtils.printSuccess("Empty demo completed! You've learned all aspects of working with google.protobuf.Empty.")
 
     ExampleUtils.printNext([
-      "Далее изучите: field-mask-demo.swift - маски полей для updates",
-      "Сравните: timestamp-demo.swift - временные метки",
-      "Сравните: duration-demo.swift - временные интервалы",
+      "Next, explore: field-mask-demo.swift - field masks for updates",
+      "Compare with: timestamp-demo.swift - timestamps",
+      "Compare with: duration-demo.swift - time intervals",
     ])
   }
 
@@ -47,7 +47,7 @@ struct EmptyDemo {
   private static func demonstrateBasicUsage() throws {
     ExampleUtils.printStep(1, "Basic Empty Operations")
 
-    // Создание EmptyValue
+    // Create EmptyValue
     let empty1 = EmptyHandler.EmptyValue()
     let empty2 = EmptyHandler.EmptyValue.instance
 
@@ -56,19 +56,19 @@ struct EmptyDemo {
     print("    Singleton instance: \(empty2)")
     print("    Are equal: \(empty1 == empty2 ? "✅ YES" : "❌ NO")")
 
-    // Конвертация в DynamicMessage
+    // Convert to DynamicMessage
     let emptyMessage = try EmptyHandler.createDynamic(from: empty1)
 
     print("  📋 Empty message structure:")
     print("    Message type: \(emptyMessage.descriptor.name)")
     print("    Full name: \(emptyMessage.descriptor.fullName)")
     print("    Fields count: \(emptyMessage.descriptor.fields.count)")
-    // Извлекаем package из fullName (убираем .Empty с конца)
+    // Extract package from fullName (remove .Empty from the end)
     let fullName = emptyMessage.descriptor.fullName
     let packageName = fullName.replacingOccurrences(of: ".Empty", with: "")
     print("    Package: \(packageName)")
 
-    // Конвертация обратно
+    // Convert back
     let extractedValue = try EmptyHandler.createSpecialized(from: emptyMessage) as! EmptyHandler.EmptyValue
 
     print("  🔄 Round-trip conversion:")
@@ -76,7 +76,7 @@ struct EmptyDemo {
     print("    Extracted: \(extractedValue)")
     print("    Round-trip success: \(empty1 == extractedValue ? "✅ YES" : "❌ NO")")
 
-    // Проверка singleton behavior
+    // Check singleton behavior
     print("  🔒 Singleton behavior:")
     print("    All instances equal: \(empty1 == empty2 && empty2 == extractedValue ? "✅ YES" : "❌ NO")")
     print("    Instance is singleton: \(extractedValue == EmptyHandler.EmptyValue.instance ? "✅ YES" : "❌ NO")")
@@ -85,7 +85,7 @@ struct EmptyDemo {
   private static func demonstrateUnitTypeIntegration() throws {
     ExampleUtils.printStep(2, "Unit Type Integration with Swift Void")
 
-    // Интеграция с Void типом
+    // Integration with Void type
     let voidValue: Void = ()
     let emptyFromVoid = EmptyHandler.EmptyValue.from(voidValue)
 
@@ -94,13 +94,13 @@ struct EmptyDemo {
     print("    Converted to Empty: \(emptyFromVoid)")
     print("    Is singleton: \(emptyFromVoid == EmptyHandler.EmptyValue.instance ? "✅ YES" : "❌ NO")")
 
-    // Конвертация обратно в Void
+    // Convert back to Void
     let empty = EmptyHandler.EmptyValue.instance
-    empty.toVoid()  // Возвращает Void
+    empty.toVoid()  // Returns Void
 
     print("    Converted back to Void: () (operation completed)")
 
-    // Демонстрация использования в функциях
+    // Demonstrate usage in functions
     func processEmpty(_ empty: EmptyHandler.EmptyValue) {
       print("    Processing Empty value: \(empty)")
     }
@@ -113,13 +113,13 @@ struct EmptyDemo {
     processEmpty(emptyFromVoid)
     processVoid(empty.toVoid())
 
-    // Unit type семантика
+    // Unit type semantics
     let unitTypeAnalysis = [
-      "Empty как unit type": "Представляет отсутствие данных",
-      "Singleton pattern": "Все экземпляры семантически равны",
-      "Void integration": "Seamless конвертация с Swift Void",
-      "Memory efficient": "Минимальное использование памяти",
-      "Type safety": "Строгая типизация для пустых ответов",
+      "Empty as unit type": "Represents absence of data",
+      "Singleton pattern": "All instances are semantically equal",
+      "Void integration": "Seamless conversion with Swift Void",
+      "Memory efficient": "Minimal memory usage",
+      "Type safety": "Strong typing for empty responses",
     ]
 
     ExampleUtils.printTable(unitTypeAnalysis, title: "Unit Type Properties")
@@ -136,12 +136,12 @@ struct EmptyDemo {
     print("    Created via convenience method: \(emptyMessage1.descriptor.name)")
     print("    Second instance: \(emptyMessage2.descriptor.name)")
 
-    // isEmpty() проверка
+    // isEmpty() check
     print("  🔍 Empty detection:")
     print("    First message isEmpty(): \(emptyMessage1.isEmpty() ? "✅ YES" : "❌ NO")")
     print("    Second message isEmpty(): \(emptyMessage2.isEmpty() ? "✅ YES" : "❌ NO")")
 
-    // Создание не-Empty сообщения для сравнения
+    // Create non-Empty message for comparison
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     var messageDescriptor = MessageDescriptor(name: "NotEmpty", parent: fileDescriptor)
     messageDescriptor.addField(FieldDescriptor(name: "value", number: 1, type: .string))
@@ -163,7 +163,7 @@ struct EmptyDemo {
       "    Both are singleton: \(convertedEmpty1 == EmptyHandler.EmptyValue.instance && convertedEmpty2 == EmptyHandler.EmptyValue.instance ? "✅ YES" : "❌ NO")"
     )
 
-    // Error handling для неправильных типов
+    // Error handling for incorrect types
     print("  ⚠️ Error handling:")
     do {
       let _ = try notEmptyMessage.toEmpty()
@@ -200,7 +200,7 @@ struct EmptyDemo {
       }
     }
 
-    // Демонстрация использования
+    // Demonstrate usage
     let deleteResponse = try MockgRPCService.deleteUser()
     let clearResponse = try MockgRPCService.clearCache()
     let healthResponse = try MockgRPCService.healthCheck()
@@ -213,13 +213,13 @@ struct EmptyDemo {
     let useCaseResults = [
       [
         "Operation": "Delete User", "Response Type": "EmptyValue", "Success": "✅",
-        "Use Case": "Confirmation без данных",
+        "Use Case": "Confirmation without data",
       ],
       [
         "Operation": "Clear Cache", "Response Type": "DynamicMessage", "Success": "✅",
-        "Use Case": "Операции без возврата",
+        "Use Case": "Operations without return",
       ],
-      ["Operation": "Health Check", "Response Type": "EmptyValue", "Success": "✅", "Use Case": "Status проверки"],
+      ["Operation": "Health Check", "Response Type": "EmptyValue", "Success": "✅", "Use Case": "Status check"],
     ]
 
     ExampleUtils.printDataTable(useCaseResults, title: "gRPC Use Cases")
@@ -279,11 +279,11 @@ struct EmptyDemo {
     ExampleUtils.printDataTable(endpointData, title: "API Endpoints Using Empty")
 
     print("  💡 Empty usage patterns:")
-    print("    • Confirmation responses без данных")
+    print("    • Confirmation responses without data")
     print("    • Health check endpoints")
-    print("    • DELETE операции")
-    print("    • Logout/clear операции")
-    print("    • Placeholder для будущих полей")
+    print("    • DELETE operations")
+    print("    • Logout/clear operations")
+    print("    • Placeholder for future fields")
   }
 
   private static func demonstratePerformanceAndComparisons() throws {
@@ -327,7 +327,7 @@ struct EmptyDemo {
     print("    Conversion rate: \(String(format: "%.0f", conversionsPerSecond)) conversions/second")
     print("    Round-trip rate: \(String(format: "%.0f", roundTripsPerSecond)) round-trips/second")
 
-    // Размер и memory footprint
+    // Size and memory footprint
     print("  💾 Memory characteristics:")
 
     let emptyMessage = try DynamicMessage.emptyMessage()
@@ -344,7 +344,7 @@ struct EmptyDemo {
 
     ExampleUtils.printTable(characteristics, title: "Memory Characteristics")
 
-    // Сравнение с другими Well-Known Types
+    // Comparison with other Well-Known Types
     let comparison = [
       ["Type": "Empty", "Fields": "0", "Use Case": "Unit type, confirmations", "Complexity": "Minimal"],
       ["Type": "Timestamp", "Fields": "2", "Use Case": "Time representation", "Complexity": "Medium"],
@@ -355,10 +355,10 @@ struct EmptyDemo {
     ExampleUtils.printDataTable(comparison, title: "Well-Known Types Comparison")
 
     print("  📊 Key insights:")
-    print("    • Empty является самым простым Well-Known Type")
-    print("    • Singleton pattern обеспечивает efficiency")
-    print("    • Отлично подходит для confirmations и health checks")
-    print("    • Нулевой wire format размер")
-    print("    • High performance благодаря простоте")
+    print("    • Empty is the simplest Well-Known Type")
+    print("    • Singleton pattern ensures efficiency")
+    print("    • Perfect for confirmations and health checks")
+    print("    • Zero wire format size")
+    print("    • High performance due to simplicity")
   }
 }

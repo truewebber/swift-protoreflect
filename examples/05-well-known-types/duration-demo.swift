@@ -1,20 +1,20 @@
 /**
  * ⏱ SwiftProtoReflect Example: Duration Demo
  *
- * Описание: Работа с google.protobuf.Duration и конвертация с TimeInterval
- * Ключевые концепции: DurationHandler, WellKnownTypes, TimeInterval conversion
- * Сложность: 🔧 Средний
- * Время выполнения: < 10 секунд
+ * Description: Working with google.protobuf.Duration and conversion with TimeInterval
+ * Key concepts: DurationHandler, WellKnownTypes, TimeInterval conversion
+ * Complexity: 🔧 Intermediate
+ * Execution time: < 10 seconds
  *
- * Что изучите:
- * - Создание и конвертация google.protobuf.Duration
- * - Интеграция с Foundation.TimeInterval
- * - Временные интервалы с наносекундной точностью
- * - Отрицательные длительности времени
- * - Utility операции (abs, negated, zero)
- * - Валидация seconds/nanos полей
+ * What you'll learn:
+ * - Creating and converting google.protobuf.Duration
+ * - Integration with Foundation.TimeInterval
+ * - Time intervals with nanosecond precision
+ * - Negative time durations
+ * - Utility operations (abs, negated, zero)
+ * - Validation of seconds/nanos fields
  *
- * Запуск:
+ * Run with:
  *   swift run DurationDemo
  */
 
@@ -33,12 +33,12 @@ struct DurationDemo {
     try demonstrateSignValidation()
     try demonstratePerformanceAndEdgeCases()
 
-    ExampleUtils.printSuccess("Duration demo завершена! Вы изучили все аспекты работы с google.protobuf.Duration.")
+    ExampleUtils.printSuccess("Duration demo completed! You've learned all aspects of working with google.protobuf.Duration.")
 
     ExampleUtils.printNext([
-      "Далее изучите: empty-demo.swift - пустые сообщения",
-      "Сравните: timestamp-demo.swift - временные метки",
-      "Продвинутое: field-mask-demo.swift - маски полей для updates",
+      "Next, explore: empty-demo.swift - empty messages",
+      "Compare with: timestamp-demo.swift - timestamps",
+      "Advanced: field-mask-demo.swift - field masks for updates",
     ])
   }
 
@@ -47,7 +47,7 @@ struct DurationDemo {
   private static func demonstrateBasicUsage() throws {
     ExampleUtils.printStep(1, "Basic Duration Operations")
 
-    // Создание из TimeInterval
+    // Create from TimeInterval
     let timeInterval: TimeInterval = 123.456789
     let durationValue = DurationHandler.DurationValue(from: timeInterval)
     let durationMessage = try DurationHandler.createDynamic(from: durationValue)
@@ -56,7 +56,7 @@ struct DurationDemo {
     print("  📊 Duration seconds: \(durationValue.seconds)")
     print("  🔢 Duration nanos: \(durationValue.nanos)")
 
-    // Конвертация обратно
+    // Convert back
     let extractedValue = try DurationHandler.createSpecialized(from: durationMessage) as! DurationHandler.DurationValue
     let reconstructedInterval = extractedValue.toTimeInterval()
 
@@ -66,7 +66,7 @@ struct DurationDemo {
     print("  ✅ Precision (difference): \(String(format: "%.9f", timeDifference)) seconds")
     print("  ✅ High precision match: \(timeDifference < 0.000001 ? "YES" : "NO")")
 
-    // Проверка структуры сообщения
+    // Check message structure
     print("  📋 Message structure:")
     print("    Message type: \(durationMessage.descriptor.name)")
     print("    Fields count: \(durationMessage.descriptor.fields.count)")
@@ -75,7 +75,7 @@ struct DurationDemo {
       print("    \(field.name): \(value ?? "nil")")
     }
 
-    // Проверка sign consistency
+    // Check sign consistency
     let sameSign =
       (durationValue.seconds >= 0 && durationValue.nanos >= 0)
       || (durationValue.seconds <= 0 && durationValue.nanos <= 0)
@@ -86,7 +86,7 @@ struct DurationDemo {
   private static func demonstrateAdvancedOperations() throws {
     ExampleUtils.printStep(2, "Advanced Duration Operations")
 
-    // Различные типы временных интервалов
+    // Various types of time intervals
     let testDurations = [
       ("Millisecond", 0.001),
       ("Second", 1.0),
@@ -118,7 +118,7 @@ struct DurationDemo {
       title: "Duration Types Analysis"
     )
 
-    // Демонстрация точности с дробными секундами
+    // Precision demonstration with fractional seconds
     print("  🎯 Precision demonstration with fractional seconds:")
     let precisionTests = [0.1, 0.01, 0.001, 0.0001, 0.00001]
 
@@ -138,7 +138,7 @@ struct DurationDemo {
   private static func demonstrateUtilityMethods() throws {
     ExampleUtils.printStep(3, "Duration Utility Methods")
 
-    // Создание различных duration значений для демонстрации
+    // Create various duration values for demonstration
     let testCases = [
       ("Positive duration", try DurationHandler.DurationValue(seconds: 5, nanos: 500_000_000)),
       ("Negative duration", try DurationHandler.DurationValue(seconds: -3, nanos: -250_000_000)),
@@ -167,7 +167,7 @@ struct DurationDemo {
 
     ExampleUtils.printDataTable(utilityResults, title: "Utility Methods Results")
 
-    // Демонстрация специальных методов
+    // Demonstration of special methods
     print("  🔧 Special operations:")
     let positiveDuration = try DurationHandler.DurationValue(seconds: 2, nanos: 500_000_000)
     let negativeDuration = try DurationHandler.DurationValue(seconds: -1, nanos: -750_000_000)
@@ -191,9 +191,9 @@ struct DurationDemo {
   private static func demonstrateSignValidation() throws {
     ExampleUtils.printStep(4, "Sign Validation and Edge Cases")
 
-    // Тестирование правил знаков для Duration
+    // Testing sign rules for Duration
     let signTestCases = [
-      // Валидные случаи
+      // Valid cases
       ("Both positive", 1, 500_000_000, true),
       ("Both negative", -1, -500_000_000, true),
       ("Zero seconds, positive nanos", 0, 123_456_789, true),
@@ -202,11 +202,11 @@ struct DurationDemo {
       ("Negative seconds, zero nanos", -5, 0, true),
       ("Both zero", 0, 0, true),
 
-      // Невалидные случаи (смешанные знаки)
+      // Invalid cases (mixed signs)
       ("Positive seconds, negative nanos", 1, -500_000_000, false),
       ("Negative seconds, positive nanos", -1, 500_000_000, false),
 
-      // Граничные случаи
+      // Edge cases
       ("Max valid nanos", 0, 999_999_999, true),
       ("Min valid nanos", 0, -999_999_999, true),
       ("Invalid large nanos", 0, 1_000_000_000, false),
@@ -317,11 +317,11 @@ struct DurationDemo {
     ExampleUtils.printDataTable(edgeResults, title: "Edge Cases Analysis")
 
     print("  💡 Key insights:")
-    print("    • Duration поддерживает как положительные, так и отрицательные интервалы")
-    print("    • Наносекундная точность сохраняется в большинстве случаев")
-    print("    • Utility методы (abs, negated, zero) работают корректно")
-    print("    • Валидация знаков обеспечивает canonical representation")
-    print("    • Performance соответствует требованиям production использования")
+    print("    • Duration supports both positive and negative intervals")
+    print("    • Nanosecond precision is preserved in most cases")
+    print("    • Utility methods (abs, negated, zero) work correctly")
+    print("    • Sign validation ensures canonical representation")
+    print("    • Performance meets production usage requirements")
   }
 }
 
