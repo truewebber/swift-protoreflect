@@ -1,20 +1,20 @@
 /**
  * 🎛 SwiftProtoReflect Example: Value Demo
  *
- * Описание: Работа с google.protobuf.Value для универсальных динамических значений
- * Ключевые концепции: ValueHandler, ValueValue, Type switching, Dynamic values
- * Сложность: 🔧 Средний
- * Время выполнения: < 12 секунд
+ * Description: Working with google.protobuf.Value for universal dynamic values
+ * Key concepts: ValueHandler, ValueValue, Type switching, Dynamic values
+ * Complexity: 🔧 Intermediate
+ * Execution time: < 12 seconds
  *
- * Что изучите:
- * - Создание и манипуляция google.protobuf.Value
- * - Конвертация между произвольными Swift типами и ValueValue
- * - Type switching и pattern matching для различных типов значений
- * - Интеграция с DynamicMessage через valueMessage extensions
- * - Performance analysis и edge cases handling
- * - Real-world сценарии для dynamic type handling
+ * What you'll learn:
+ * - Creating and manipulating google.protobuf.Value
+ * - Converting between arbitrary Swift types and ValueValue
+ * - Type switching and pattern matching for different value types
+ * - Integration with DynamicMessage through valueMessage extensions
+ * - Performance analysis and edge cases handling
+ * - Real-world scenarios for dynamic type handling
  *
- * Запуск:
+ * Run with:
  *   swift run ValueDemo
  */
 
@@ -34,12 +34,12 @@ struct ValueDemo {
     try demonstrateRoundTripCompatibility()
     try demonstratePerformanceAndRealWorldScenarios()
 
-    ExampleUtils.printSuccess("Value demo завершена! Вы изучили все аспекты работы с google.protobuf.Value.")
+    ExampleUtils.printSuccess("Value demo completed! You've learned all aspects of working with google.protobuf.Value.")
 
     ExampleUtils.printNext([
-      "Далее изучите: any-demo.swift - type erasure поддержка",
-      "Интеграция: well-known-registry.swift - comprehensive demo",
-      "Сравните: struct-demo.swift - JSON-like структуры",
+      "Next, explore: any-demo.swift - type erasure support",
+      "Integration: well-known-registry.swift - comprehensive demo",
+      "Compare with: struct-demo.swift - JSON-like structures",
     ])
   }
 
@@ -50,7 +50,7 @@ struct ValueDemo {
 
     print("  🎛 Creating values from Swift types:")
 
-    // Все основные типы ValueValue
+    // All basic ValueValue types
     let basicValues: [(String, Any, String)] = [
       ("Null Value", NSNull(), "null"),
       ("String Value", "Hello, World!", "string"),
@@ -91,7 +91,7 @@ struct ValueDemo {
 
     ExampleUtils.printDataTable(valueResults, title: "Basic Value Types")
 
-    // Специальная демонстрация каждого case'а
+    // Special demonstration of each case
     print("  🔍 Detailed case-by-case analysis:")
 
     // Null value
@@ -132,7 +132,7 @@ struct ValueDemo {
   private static func demonstrateTypeSwitchingAndPatternMatching() throws {
     ExampleUtils.printStep(2, "Type Switching and Pattern Matching")
 
-    // Набор разнообразных значений для демонстрации type switching
+    // Set of diverse values for type switching demonstration
     let testValues: [(String, ValueHandler.ValueValue)] = [
       ("null", .nullValue),
       ("integer", .numberValue(42)),
@@ -162,7 +162,7 @@ struct ValueDemo {
 
     ExampleUtils.printDataTable(typeAnalysis, title: "Type Analysis")
 
-    // Pattern matching примеры
+    // Pattern matching examples
     print("  🎯 Pattern matching examples:")
     for (name, value) in testValues {
       let matchResult = performPatternMatching(value)
@@ -255,7 +255,7 @@ struct ValueDemo {
 
     print("  🔗 DynamicMessage.valueMessage() examples:")
 
-    // Различные типы значений через convenience extensions
+    // Various value types through convenience extensions
     let testCases: [(String, Any)] = [
       ("Simple number", 42.5),
       ("Text message", "Hello from Value!"),
@@ -273,17 +273,17 @@ struct ValueDemo {
 
     for (description, swiftValue) in testCases {
       do {
-        // Через convenience extension
+        // Through convenience extension
         let valueMessage = try DynamicMessage.valueMessage(from: swiftValue)
 
-        // Проверка структуры сообщения
+        // Check message structure
         let messageType = valueMessage.descriptor.fullName
         let hasValueData = try valueMessage.hasValue(forField: "value_data")
 
-        // Извлечение через extension
+        // Extract through extension
         let extractedValue = try valueMessage.toAnyValue()
 
-        // Валидация roundtrip
+        // Validate roundtrip
         let isRoundTripValid = validateRoundTrip(original: swiftValue, extracted: extractedValue)
 
         integrationResults.append([
@@ -307,7 +307,7 @@ struct ValueDemo {
 
     ExampleUtils.printDataTable(integrationResults, title: "DynamicMessage Integration")
 
-    // Прямая работа с ValueHandler
+    // Direct work with ValueHandler
     print("  🛠 Direct ValueHandler operations:")
 
     let complexValue = try ValueHandler.ValueValue(from: [
@@ -318,17 +318,17 @@ struct ValueDemo {
       ]
     ])
 
-    // Создание DynamicMessage
+    // Create DynamicMessage
     let message = try ValueHandler.createDynamic(from: complexValue)
     print("    Created message type: \(message.descriptor.fullName)")
     print("    Message has \(message.descriptor.fields.count) field(s)")
 
-    // Извлечение значения обратно
+    // Extract value back
     let extractedValue = try ValueHandler.createSpecialized(from: message) as! ValueHandler.ValueValue
     print("    Extracted value type: \(getValueTypeName(extractedValue))")
     print("    Values match: \(extractedValue == complexValue)")
 
-    // Анализ содержимого
+    // Analyze content
     if case .structValue(let structValue) = extractedValue {
       print("    Struct contains \(structValue.fields.count) field(s)")
       print("    Top-level keys: \(structValue.fields.keys.sorted())")
@@ -340,7 +340,7 @@ struct ValueDemo {
 
     print("  🔄 Comprehensive round-trip testing:")
 
-    // Генерация тестовых случаев разной сложности
+    // Generate test cases of different complexity
     let roundTripTests: [(String, ValueHandler.ValueValue)] = [
       ("Null", .nullValue),
       ("Zero", .numberValue(0.0)),
@@ -453,11 +453,11 @@ struct ValueDemo {
     ExampleUtils.printDataTable(performanceResults, title: "Performance Benchmarks")
 
     print("  💡 Performance insights:")
-    print("    • google.protobuf.Value подходит для универсальных динамических данных")
-    print("    • Type switching эффективен для обработки разнородных данных")
-    print("    • Round-trip операции быстрые и надежные")
-    print("    • Подходит для real-time обработки (< 100μs для простых значений)")
-    print("    • Интеграция с DynamicMessage seamless и удобная")
+    print("    • google.protobuf.Value is suitable for universal dynamic data")
+    print("    • Type switching is efficient for processing heterogeneous data")
+    print("    • Round-trip operations are fast and reliable")
+    print("    • Suitable for real-time processing (< 100μs for simple values)")
+    print("    • Integration with DynamicMessage is seamless and convenient")
   }
 
   // MARK: - Helper Methods
@@ -528,8 +528,8 @@ struct ValueDemo {
   private static func convertToJSON(_ value: ValueHandler.ValueValue) throws -> String {
     let anyValue = value.toAny()
 
-    // NSJSONSerialization требует top-level объект должен быть Array или Dictionary
-    // Для примитивных типов оборачиваем в массив
+    // NSJSONSerialization requires top-level object must be Array or Dictionary
+    // For primitive types, wrap them in an array
     let jsonObject: Any
     if anyValue is NSNull || anyValue is String || anyValue is NSNumber || anyValue is Bool {
       jsonObject = [anyValue]
@@ -541,9 +541,9 @@ struct ValueDemo {
     let jsonData = try JSONSerialization.data(withJSONObject: jsonObject, options: [])
     let jsonString = String(data: jsonData, encoding: .utf8) ?? "Invalid JSON"
 
-    // Для примитивов убираем обёртку массива
+    // For primitives, remove the array wrapper
     if anyValue is NSNull || anyValue is String || anyValue is NSNumber || anyValue is Bool {
-      let trimmed = jsonString.dropFirst().dropLast()  // Убираем [ и ]
+      let trimmed = jsonString.dropFirst().dropLast()  // Remove [ and ]
       return String(trimmed)
     }
     else {
