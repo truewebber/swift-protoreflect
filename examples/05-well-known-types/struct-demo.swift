@@ -1,20 +1,20 @@
 /**
  * 📦 SwiftProtoReflect Example: Struct Demo
  *
- * Описание: Работа с google.protobuf.Struct для динамических JSON-like структур
- * Ключевые концепции: StructHandler, ValueValue, Dynamic structures, JSON mapping
- * Сложность: 🔧 Средний
- * Время выполнения: < 15 секунд
+ * Description: Working with google.protobuf.Struct for dynamic JSON-like structures
+ * Key concepts: StructHandler, ValueValue, Dynamic structures, JSON mapping
+ * Complexity: 🔧 Intermediate
+ * Execution time: < 15 seconds
  *
- * Что изучите:
- * - Создание и манипуляция google.protobuf.Struct
- * - Конвертация между Dictionary<String, Any> и StructValue
- * - Поддержка вложенных структур и массивов
- * - ValueValue для различных типов данных
- * - Операции со структурами (adding, removing, merging)
- * - Round-trip совместимость
+ * What you'll learn:
+ * - Creating and manipulating google.protobuf.Struct
+ * - Converting between Dictionary<String, Any> and StructValue
+ * - Support for nested structures and arrays
+ * - ValueValue for different data types
+ * - Struct operations (adding, removing, merging)
+ * - Round-trip compatibility
  *
- * Запуск:
+ * Run with:
  *   swift run StructDemo
  */
 
@@ -34,12 +34,12 @@ struct StructDemo {
     try demonstrateRoundTripCompatibility()
     try demonstratePerformanceAndComplexity()
 
-    ExampleUtils.printSuccess("Struct demo завершена! Вы изучили все аспекты работы с google.protobuf.Struct.")
+    ExampleUtils.printSuccess("Struct demo completed! You've learned all aspects of working with google.protobuf.Struct.")
 
     ExampleUtils.printNext([
-      "Далее изучите: value-demo.swift - универсальные значения",
-      "Продвинутое: any-demo.swift - type erasure поддержка",
-      "Интеграция: well-known-registry.swift - comprehensive demo",
+      "Next, explore: value-demo.swift - universal values",
+      "Advanced: any-demo.swift - type erasure support",
+      "Integration: well-known-registry.swift - comprehensive demo",
     ])
   }
 
@@ -48,12 +48,12 @@ struct StructDemo {
   private static func demonstrateBasicStructOperations() throws {
     ExampleUtils.printStep(1, "Basic Struct Operations")
 
-    // Создание пустой структуры
+    // Create empty structure
     let emptyStruct = StructHandler.StructValue()
     print("  📦 Empty struct: \(emptyStruct)")
     print("  📏 Fields count: \(emptyStruct.fields.count)")
 
-    // Создание структуры из Dictionary
+    // Create structure from Dictionary
     let userDict: [String: Any] = [
       "name": "John Doe",
       "age": 30,
@@ -66,7 +66,7 @@ struct StructDemo {
     print("  👤 User struct: \(userStruct)")
     print("  📏 Fields count: \(userStruct.fields.count)")
 
-    // Доступ к полям
+    // Access fields
     if let name = userStruct.getValue("name") {
       print("  🏷  Name field: \(name)")
     }
@@ -75,15 +75,15 @@ struct StructDemo {
       print("  🎂 Age field: \(age)")
     }
 
-    // Проверка наличия полей
+    // Check field presence
     print("  🔍 Contains 'name': \(userStruct.contains("name"))")
     print("  🔍 Contains 'salary': \(userStruct.contains("salary"))")
 
-    // Конвертация обратно в Dictionary
+    // Convert back to Dictionary
     let reconstructedDict = userStruct.toDictionary()
     print("  🔄 Reconstructed dict keys: \(reconstructedDict.keys.sorted())")
 
-    // Проверка сохранности данных
+    // Check data preservation
     print("  ✅ Data integrity:")
     print("    Name match: \(reconstructedDict["name"] as? String == userDict["name"] as? String)")
     print("    Age match: \(reconstructedDict["age"] as? Double == Double(userDict["age"] as! Int))")
@@ -93,7 +93,7 @@ struct StructDemo {
   private static func demonstrateValueTypes() throws {
     ExampleUtils.printStep(2, "ValueValue Types Demonstration")
 
-    // Демонстрация всех типов ValueValue
+    // Demonstration of all ValueValue types
     let valueExamples: [(String, Any, StructHandler.ValueValue)] = [
       ("Null Value", NSNull(), .nullValue),
       ("String Value", "Hello, World!", .stringValue("Hello, World!")),
@@ -136,7 +136,7 @@ struct StructDemo {
 
     ExampleUtils.printDataTable(typeResults, title: "ValueValue Types")
 
-    // Специальные случаи с числами
+    // Special cases with numbers
     print("  🔢 Number type handling:")
     let numberTypes: [Any] = [Int32(100), Int64(200), UInt32(300), UInt64(400), Float(5.5), Double(6.6)]
     for number in numberTypes {
@@ -148,7 +148,7 @@ struct StructDemo {
   private static func demonstrateNestedStructures() throws {
     ExampleUtils.printStep(3, "Nested Structures and Complex Data")
 
-    // Создание сложной вложенной структуры
+    // Create complex nested structure
     let complexData: [String: Any] = [
       "user": [
         "personal": [
@@ -178,7 +178,7 @@ struct StructDemo {
     let complexStruct = try StructHandler.StructValue(from: complexData)
     print("  📦 Top-level fields: \(complexStruct.fields.keys.sorted())")
 
-    // Навигация по вложенной структуре
+    // Navigate through nested structure
     if let userValue = complexStruct.getValue("user"),
       case .structValue(let userStruct) = userValue
     {
@@ -219,13 +219,13 @@ struct StructDemo {
       }
     }
 
-    // Тестирование глубокого round-trip
+    // Test deep round-trip
     print("  🔄 Testing deep round-trip conversion...")
     let dynamicMessage = try StructHandler.createDynamic(from: complexStruct)
     let extractedStruct = try StructHandler.createSpecialized(from: dynamicMessage) as! StructHandler.StructValue
     let finalDict = extractedStruct.toDictionary()
 
-    // Проверка глубокой целостности
+    // Check deep integrity
     let originalUser = complexData["user"] as! [String: Any]
     let originalPersonal = originalUser["personal"] as! [String: Any]
     let finalUser = finalDict["user"] as! [String: Any]
@@ -240,7 +240,7 @@ struct StructDemo {
   private static func demonstrateStructOperations() throws {
     ExampleUtils.printStep(4, "Struct Operations and Manipulation")
 
-    // Базовая структура пользователя
+    // Base user structure
     let baseUser = try StructHandler.StructValue(from: [
       "name": "Bob Smith",
       "age": 25,
@@ -249,7 +249,7 @@ struct StructDemo {
 
     print("  📦 Base user: \(baseUser)")
 
-    // Adding операции
+    // Adding operations
     print("  ➕ Adding operations:")
     let withEmail = baseUser.adding("email", value: .stringValue("bob.smith@company.com"))
     let withSalary = withEmail.adding("salary", value: .numberValue(85000.0))
@@ -260,7 +260,7 @@ struct StructDemo {
     print("    After adding active: \(withActive.fields.keys.count) fields")
     print("    Original unchanged: \(baseUser.fields.keys.count) fields")
 
-    // Removing операции
+    // Removing operations
     print("  ➖ Removing operations:")
     let withoutAge = withActive.removing("age")
     let withoutDept = withoutAge.removing("department")
@@ -269,7 +269,7 @@ struct StructDemo {
     print("    After removing department: \(withoutDept.fields.keys.count) fields")
     print("    Final fields: \(withoutDept.fields.keys.sorted())")
 
-    // Merging операции
+    // Merging operations
     print("  🔀 Merging operations:")
     let profileData = try StructHandler.StructValue(from: [
       "age": 26,  // Override existing
@@ -286,7 +286,7 @@ struct StructDemo {
     print("    Profile data fields: \(profileData.fields.keys.sorted())")
     print("    Merged result fields: \(mergedUser.fields.keys.sorted())")
 
-    // Проверка override поведения
+    // Check override behavior
     if let mergedAge = mergedUser.getValue("age"),
       let originalAge = baseUser.getValue("age")
     {
@@ -297,7 +297,7 @@ struct StructDemo {
   private static func demonstrateRoundTripCompatibility() throws {
     ExampleUtils.printStep(5, "Round-Trip Compatibility Testing")
 
-    // Тестовые сценарии с разными типами данных
+    // Test scenarios with different data types
     let testCases: [(String, [String: Any])] = [
       (
         "Simple flat structure",
@@ -351,7 +351,7 @@ struct StructDemo {
         let structValue2 = try StructHandler.createSpecialized(from: dynamicMessage) as! StructHandler.StructValue
         let resultData = structValue2.toDictionary()
 
-        // Проверка целостности
+        // Check integrity
         let integrityCheck = try verifyDataIntegrity(original: originalData, result: resultData)
 
         testResults.append([
@@ -422,10 +422,10 @@ struct StructDemo {
     print("    🎯 Operations per second: \(String(format: "%.0f", opsPerSecond))")
 
     print("  💡 Performance insights:")
-    print("    • google.protobuf.Struct отлично подходит для динамических JSON-like данных")
-    print("    • Round-trip операции эффективны даже для сложных структур")
-    print("    • Масштабируется линейно с размером данных")
-    print("    • Подходит для real-time сценариев (< 1ms для типичных размеров)")
+    print("    • google.protobuf.Struct is excellent for dynamic JSON-like data")
+    print("    • Round-trip operations are efficient even for complex structures")
+    print("    • Scales linearly with data size")
+    print("    • Suitable for real-time scenarios (< 1ms for typical sizes)")
   }
 
   // MARK: - Helper Methods
