@@ -1,20 +1,20 @@
 /**
  * 📄 SwiftProtoReflect Example: JSON Conversion
  *
- * Описание: Демонстрация JSON сериализации и десериализации динамических Protocol Buffers сообщений
- * Ключевые концепции: JSONSerializer, JSONDeserializer, JSON mapping, Cross-format compatibility
- * Сложность: 🔧 Средний
- * Время выполнения: < 10 секунд
+ * Description: Demonstration of JSON serialization and deserialization of dynamic Protocol Buffers messages
+ * Key concepts: JSONSerializer, JSONDeserializer, JSON mapping, Cross-format compatibility
+ * Complexity: 🔧 Intermediate
+ * Execution time: < 10 seconds
  *
- * Что изучите:
- * - JSON сериализация динамических сообщений в Protocol Buffers JSON формат
- * - Десериализация из JSON обратно в динамические сообщения
- * - Protocol Buffers JSON mapping rules (поля в camelCase, enum как строки)
- * - Сравнение JSON vs Binary форматов по размеру и читаемости
- * - Round-trip совместимость между JSON и Binary форматами
- * - Работа с вложенными объектами и массивами в JSON
+ * What you'll learn:
+ * - JSON serialization of dynamic messages to Protocol Buffers JSON format
+ * - Deserialization from JSON back to dynamic messages
+ * - Protocol Buffers JSON mapping rules (fields in camelCase, enums as strings)
+ * - Comparison of JSON vs Binary formats by size and readability
+ * - Round-trip compatibility between JSON and Binary formats
+ * - Working with nested objects and arrays in JSON
  *
- * Запуск:
+ * Run:
  *   swift run JsonConversion
  */
 
@@ -33,33 +33,33 @@ struct JsonConversionExample {
     try step4UcrossFormatCompatibility()
     try step5UjsonReadabilityDemo()
 
-    ExampleUtils.printSuccess("JSON конвертация успешно изучена!")
+    ExampleUtils.printSuccess("JSON conversion successfully learned!")
 
     ExampleUtils.printNext([
-      "Далее попробуйте: swift run BinaryData - продвинутая работа с binary данными",
-      "Или изучите: streaming.swift - потоковая обработка больших datasets",
-      "Сравните: protobuf-serialization.swift - binary сериализация",
+      "Next try: swift run BinaryData - advanced binary data work",
+      "Or explore: streaming.swift - streaming processing of large datasets",
+      "Compare: protobuf-serialization.swift - binary serialization",
     ])
   }
 
   // MARK: - Implementation Steps
 
   private static func step1UbasicJsonSerialization() throws {
-    ExampleUtils.printStep(1, "Базовая JSON сериализация")
+    ExampleUtils.printStep(1, "Basic JSON serialization")
 
-    // Создаем тестовое сообщение
+    // Create test message
     var (person, _) = try createPersonMessage()
 
-    // Заполняем данными
+    // Fill with data
     try person.set("Emma Wilson", forField: "name")
     try person.set(Int32(25), forField: "age")
     try person.set("emma.wilson@example.com", forField: "email")
     try person.set(["programming", "reading", "hiking"], forField: "hobbies")
 
-    print("  📝 Создано сообщение:")
+    print("  📝 Created message:")
     person.prettyPrint()
 
-    // JSON сериализация
+    // JSON serialization
     let (jsonData, serializeTime) = try ExampleUtils.measureTime {
       let serializer = JSONSerializer()
       return try serializer.serialize(person)
@@ -67,13 +67,13 @@ struct JsonConversionExample {
 
     ExampleUtils.printTiming("JSON serialization", time: serializeTime)
 
-    // Анализ JSON результата
+    // Analyze JSON result
     let jsonString = String(data: jsonData, encoding: .utf8) ?? "Invalid UTF-8"
-    print("  📦 JSON размер: \(ExampleUtils.formatDataSize(jsonData.count))")
-    print("  📄 JSON содержимое:")
+    print("  📦 JSON size: \(ExampleUtils.formatDataSize(jsonData.count))")
+    print("  📄 JSON content:")
     print("    \(jsonString)")
 
-    // JSON десериализация
+    // JSON deserialization
     let (deserializedPerson, deserializeTime) = try ExampleUtils.measureTime {
       let deserializer = JSONDeserializer()
       return try deserializer.deserialize(jsonData, using: person.descriptor)
@@ -81,20 +81,20 @@ struct JsonConversionExample {
 
     ExampleUtils.printTiming("JSON deserialization", time: deserializeTime)
 
-    print("  📋 Десериализованное сообщение:")
+    print("  📋 Deserialized message:")
     deserializedPerson.prettyPrint()
 
-    // Проверка корректности
+    // Check correctness
     try verifyJsonRoundTrip(original: person, deserialized: deserializedPerson)
   }
 
   private static func step2UcomplexJsonStructures() throws {
-    ExampleUtils.printStep(2, "Сложные JSON структуры")
+    ExampleUtils.printStep(2, "Complex JSON structures")
 
-    // Создаем сложное сообщение с nested объектами
+    // Create complex message with nested objects
     var (company, _) = try createCompanyMessage()
 
-    // Заполняем детальными данными
+    // Fill with detailed data
     try company.set("InnovateCorp LLC", forField: "name")
     try company.set("STARTUP", forField: "type")
     try company.set([Int32(15), Int32(32), Int32(48)], forField: "quarterly_revenue")
@@ -102,10 +102,10 @@ struct JsonConversionExample {
     try company.set(true, forField: "publicly_traded")
     try company.set(1500, forField: "employee_count")
 
-    print("  🏢 Создано сложное сообщение:")
+    print("  🏢 Created complex message:")
     company.prettyPrint()
 
-    // JSON сериализация сложной структуры
+    // JSON serialization of complex structure
     let (complexJsonData, complexSerializeTime) = try ExampleUtils.measureTime {
       let serializer = JSONSerializer()
       return try serializer.serialize(company)
@@ -113,18 +113,18 @@ struct JsonConversionExample {
 
     ExampleUtils.printTiming("Complex JSON serialization", time: complexSerializeTime)
 
-    // Анализ сложного JSON
+    // Analyze complex JSON
     let _ = String(data: complexJsonData, encoding: .utf8) ?? "Invalid UTF-8"
-    print("  📦 Complex JSON размер: \(ExampleUtils.formatDataSize(complexJsonData.count))")
+    print("  📦 Complex JSON size: \(ExampleUtils.formatDataSize(complexJsonData.count))")
     print("  📄 Structured JSON:")
 
-    // Красивое форматирование JSON
+    // Pretty format JSON
     if let prettyJsonData = try? JSONSerialization.jsonObject(with: complexJsonData),
       let formattedData = try? JSONSerialization.data(withJSONObject: prettyJsonData, options: .prettyPrinted),
       let formattedString = String(data: formattedData, encoding: .utf8)
     {
       let lines = formattedString.components(separatedBy: .newlines)
-      for line in lines.prefix(15) {  // Показываем первые 15 строк
+      for line in lines.prefix(15) {  // Show first 15 lines
         print("    \(line)")
       }
       if lines.count > 15 {
@@ -132,7 +132,7 @@ struct JsonConversionExample {
       }
     }
 
-    // Десериализация и проверка
+    // Deserialization and check
     let (deserializedCompany, complexDeserializeTime) = try ExampleUtils.measureTime {
       let deserializer = JSONDeserializer()
       return try deserializer.deserialize(complexJsonData, using: company.descriptor)
@@ -140,16 +140,16 @@ struct JsonConversionExample {
 
     ExampleUtils.printTiming("Complex JSON deserialization", time: complexDeserializeTime)
 
-    // Проверка массивов в JSON
+    // Check arrays in JSON
     try verifyJsonArrays(original: company, deserialized: deserializedCompany)
   }
 
   private static func step3UjsonVsBinaryComparison() throws {
-    ExampleUtils.printStep(3, "Сравнение JSON vs Binary форматов")
+    ExampleUtils.printStep(3, "JSON vs Binary format comparison")
 
     print("  📊 Comparative analysis...")
 
-    // Создаем тестовые сообщения для сравнения
+    // Create test messages for comparison
     let testCases = [
       ("Small Message", 1),
       ("Medium Dataset", 10),
@@ -180,7 +180,7 @@ struct JsonConversionExample {
       print("      Ratio:  \(String(format: "%.1fx", sizeRatio)) size, \(String(format: "%.1fx", timeRatio)) time")
     }
 
-    // Сводная таблица
+    // Summary table
     ExampleUtils.printTable(
       [
         "Format": "JSON | Binary",
@@ -194,21 +194,21 @@ struct JsonConversionExample {
   }
 
   private static func step4UcrossFormatCompatibility() throws {
-    ExampleUtils.printStep(4, "Cross-format совместимость")
+    ExampleUtils.printStep(4, "Cross-format compatibility")
 
-    print("  🔄 Тестирование JSON ↔ Binary совместимости...")
+    print("  🔄 Testing JSON ↔ Binary compatibility...")
 
-    // Создаем исходное сообщение
+    // Create original message
     var (originalMessage, _) = try createPersonMessage()
     try originalMessage.set("Cross Format User", forField: "name")
     try originalMessage.set(Int32(35), forField: "age")
     try originalMessage.set("crossformat@test.com", forField: "email")
     try originalMessage.set(["testing", "validation", "compatibility"], forField: "hobbies")
 
-    print("  📋 Исходное сообщение:")
+    print("  📋 Original message:")
     originalMessage.prettyPrint()
 
-    // Путь 1: Original → JSON → Binary → Message
+    // Path 1: Original → JSON → Binary → Message
     let jsonSerializer = JSONSerializer()
     let binarySerializer = BinarySerializer()
     let jsonDeserializer = JSONDeserializer()
@@ -222,7 +222,7 @@ struct JsonConversionExample {
     print("  🔄 Path 1: Original → JSON → Binary → Final")
     finalMessage1.prettyPrint()
 
-    // Путь 2: Original → Binary → JSON → Message
+    // Path 2: Original → Binary → JSON → Message
     let binaryData2 = try binarySerializer.serialize(originalMessage)
     let binaryMessage = try binaryDeserializer.deserialize(binaryData2, using: originalMessage.descriptor)
     let jsonData2 = try jsonSerializer.serialize(binaryMessage)
@@ -231,7 +231,7 @@ struct JsonConversionExample {
     print("  🔄 Path 2: Original → Binary → JSON → Final")
     finalMessage2.prettyPrint()
 
-    // Проверка идентичности всех путей
+    // Check identity across all paths
     let crossCompatibility = try verifyCrossFormatEquality(
       original: originalMessage,
       jsonPath: finalMessage1,
@@ -239,30 +239,30 @@ struct JsonConversionExample {
     )
 
     if crossCompatibility {
-      print("  ✅ Cross-format совместимость: PASSED")
+      print("  ✅ Cross-format compatibility: PASSED")
     }
     else {
-      print("  ❌ Cross-format совместимость: FAILED")
+      print("  ❌ Cross-format compatibility: FAILED")
     }
   }
 
   private static func step5UjsonReadabilityDemo() throws {
-    ExampleUtils.printStep(5, "JSON читаемость и debugging")
+    ExampleUtils.printStep(5, "JSON readability and debugging")
 
-    // Создаем сообщение для демонстрации читаемости
+    // Create message to demonstrate readability
     var (debugMessage, _) = try createDebugMessage()
 
-    // Заполняем тестовыми данными с ошибками
+    // Fill with test data containing errors
     try debugMessage.set("Debug Session #42", forField: "session_name")
     try debugMessage.set("ERROR", forField: "level")
     try debugMessage.set(["network_timeout", "auth_failure", "data_corruption"], forField: "error_codes")
     try debugMessage.set(1_699_123_456, forField: "timestamp")
     try debugMessage.set(["user_id: 12345", "action: login", "ip: 192.168.1.100"], forField: "metadata")
 
-    print("  🐛 Debug сообщение создано:")
+    print("  🐛 Debug message created:")
     debugMessage.prettyPrint()
 
-    // JSON сериализация для debugging
+    // JSON serialization for debugging
     let jsonSerializer = JSONSerializer()
     let debugJsonData = try jsonSerializer.serialize(debugMessage)
 
@@ -274,7 +274,7 @@ struct JsonConversionExample {
       let debugJsonString = String(data: formattedData, encoding: .utf8)
     {
 
-      print("  📄 Human-readable JSON для debugging:")
+      print("  📄 Human-readable JSON for debugging:")
       print("    ┌─ JSON Debug Output ─────────────────────────────┐")
 
       let lines = debugJsonString.components(separatedBy: .newlines)
@@ -284,10 +284,10 @@ struct JsonConversionExample {
       print("    └─────────────────────────────────────────────────┘")
     }
 
-    // Демонстрация JSON validation
-    print("  🔍 JSON validation демонстрация:")
+    // Demonstrate JSON validation
+    print("  🔍 JSON validation demonstration:")
 
-    // Имитация поврежденного JSON
+    // Simulate corrupted JSON
     let invalidJsonString = """
       {
         "sessionName": "Broken Session",
@@ -297,22 +297,22 @@ struct JsonConversionExample {
       }
       """
 
-    print("    ❌ Поврежденный JSON:")
+    print("    ❌ Corrupted JSON:")
     print("      \(invalidJsonString.replacingOccurrences(of: "\n", with: " "))")
 
     if let invalidJsonData = invalidJsonString.data(using: .utf8) {
       do {
         let _ = try JSONDeserializer().deserialize(invalidJsonData, using: debugMessage.descriptor)
-        print("    😱 Unexpected: Поврежденный JSON был принят!")
+        print("    😱 Unexpected: Corrupted JSON was accepted!")
       }
       catch {
-        print("    ✅ Expected: JSON validation отклонил поврежденные данные")
+        print("    ✅ Expected: JSON validation rejected corrupted data")
         print("      Error: \(error)")
       }
     }
 
-    // Демонстрация JSON field mapping
-    print("  🗂  JSON field mapping примеры:")
+    // Demonstrate JSON field mapping
+    print("  🗂  JSON field mapping examples:")
 
     ExampleUtils.printTable(
       [
@@ -383,7 +383,7 @@ struct JsonConversionExample {
   }
 
   private static func verifyJsonRoundTrip(original: DynamicMessage, deserialized: DynamicMessage) throws {
-    print("  🔍 Проверка JSON round-trip:")
+    print("  🔍 Checking JSON round-trip:")
 
     let fields = ["name", "age", "email", "hobbies"]
     var allMatch = true
@@ -405,7 +405,7 @@ struct JsonConversionExample {
   }
 
   private static func verifyJsonArrays(original: DynamicMessage, deserialized: DynamicMessage) throws {
-    print("  🔍 Проверка JSON массивов:")
+    print("  🔍 Checking JSON arrays:")
 
     let revenueOriginal = try original.get(forField: "quarterly_revenue") as? [Int32] ?? []
     let revenueDeserialized = try deserialized.get(forField: "quarterly_revenue") as? [Int32] ?? []
@@ -442,7 +442,7 @@ struct JsonConversionExample {
   private static func benchmarkJsonSerialization(messageCount: Int) throws -> (Int, TimeInterval) {
     let jsonSerializer = JSONSerializer()
 
-    // Создаем тестовые сообщения
+    // Create test messages
     var messages: [DynamicMessage] = []
     for i in 0..<messageCount {
       var (message, _) = try createPersonMessage()
@@ -453,7 +453,7 @@ struct JsonConversionExample {
       messages.append(message)
     }
 
-    // Benchmark JSON сериализация
+    // Benchmark JSON serialization
     let (allJsonData, serializeTime) = try ExampleUtils.measureTime {
       var combinedSize = 0
       for message in messages {
@@ -469,7 +469,7 @@ struct JsonConversionExample {
   private static func benchmarkBinarySerialization(messageCount: Int) throws -> (Int, TimeInterval) {
     let binarySerializer = BinarySerializer()
 
-    // Создаем тестовые сообщения
+    // Create test messages
     var messages: [DynamicMessage] = []
     for i in 0..<messageCount {
       var (message, _) = try createPersonMessage()
@@ -480,7 +480,7 @@ struct JsonConversionExample {
       messages.append(message)
     }
 
-    // Benchmark Binary сериализация
+    // Benchmark Binary serialization
     let (allBinaryData, serializeTime) = try ExampleUtils.measureTime {
       var combinedSize = 0
       for message in messages {
@@ -499,18 +499,17 @@ struct JsonConversionExample {
     binaryPath: DynamicMessage
   ) throws -> Bool {
     let fields = ["name", "age", "email", "hobbies"]
-
+    
     for fieldName in fields {
       let originalValue = try original.get(forField: fieldName)
       let jsonValue = try jsonPath.get(forField: fieldName)
       let binaryValue = try binaryPath.get(forField: fieldName)
-
+      
       if !areJsonValuesEqual(originalValue, jsonValue) || !areJsonValuesEqual(originalValue, binaryValue) {
-        print("    ❌ Field '\(fieldName)' differs across formats")
         return false
       }
     }
-
+    
     return true
   }
 }

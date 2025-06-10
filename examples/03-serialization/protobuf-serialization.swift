@@ -1,20 +1,20 @@
 /**
  * 💾 SwiftProtoReflect Example: Protocol Buffers Serialization
  *
- * Описание: Демонстрация binary Protocol Buffers сериализации и десериализации динамических сообщений
- * Ключевые концепции: BinarySerializer, BinaryDeserializer, Wire Format, Round-trip compatibility
- * Сложность: 🔧 Средний
- * Время выполнения: < 10 секунд
+ * Description: Demonstration of binary Protocol Buffers serialization and deserialization of dynamic messages
+ * Key concepts: BinarySerializer, BinaryDeserializer, Wire Format, Round-trip compatibility
+ * Complexity: 🔧 Intermediate
+ * Execution time: < 10 seconds
  *
- * Что изучите:
- * - Binary сериализация динамических сообщений в Protocol Buffers формат
- * - Десериализация из binary данных обратно в динамические сообщения
- * - Wire format совместимость и кодирование
- * - Round-trip тестирование (message -> binary -> message)
- * - Анализ размера данных и производительности
- * - Работа с различными типами полей при сериализации
+ * What you'll learn:
+ * - Binary serialization of dynamic messages to Protocol Buffers format
+ * - Deserialization from binary data back to dynamic messages
+ * - Wire format compatibility and encoding
+ * - Round-trip testing (message -> binary -> message)
+ * - Data size and performance analysis
+ * - Working with different field types during serialization
  *
- * Запуск:
+ * Run:
  *   swift run ProtobufSerialization
  */
 
@@ -33,32 +33,32 @@ struct ProtobufSerializationExample {
     try step4UperformanceAnalysis()
     try step5UwireFormatAnalysis()
 
-    ExampleUtils.printSuccess("Protocol Buffers сериализация успешно изучена!")
+    ExampleUtils.printSuccess("Protocol Buffers serialization successfully learned!")
 
     ExampleUtils.printNext([
-      "Далее попробуйте: swift run JsonConversion - JSON сериализация",
-      "Или изучите: binary-data.swift - работа с бинарными данными",
-      "Продвинутые: streaming.swift - потоковая обработка данных",
+      "Next try: swift run JsonConversion - JSON serialization",
+      "Or explore: binary-data.swift - working with binary data",
+      "Advanced: streaming.swift - streaming data processing",
     ])
   }
 
   // MARK: - Implementation Steps
 
   private static func step1UbasicSerialization() throws {
-    ExampleUtils.printStep(1, "Базовая binary сериализация")
+    ExampleUtils.printStep(1, "Basic binary serialization")
 
-    // Создаем простое сообщение
+    // Create simple message
     var (person, _) = try createPersonMessage()
 
-    // Заполняем данными
+    // Fill with data
     try person.set("Alice Johnson", forField: "name")
     try person.set(Int32(28), forField: "age")
     try person.set("alice@example.com", forField: "email")
 
-    print("  📝 Создано сообщение:")
+    print("  📝 Created message:")
     person.prettyPrint()
 
-    // Сериализация в binary формат
+    // Serialize to binary format
     let (binaryData, serializeTime) = try ExampleUtils.measureTime {
       let serializer = BinarySerializer()
       return try serializer.serialize(person)
@@ -66,11 +66,11 @@ struct ProtobufSerializationExample {
 
     ExampleUtils.printTiming("Binary serialization", time: serializeTime)
 
-    // Анализ результата
-    print("  📦 Binary размер: \(ExampleUtils.formatDataSize(binaryData.count))")
+    // Analyze result
+    print("  📦 Binary size: \(ExampleUtils.formatDataSize(binaryData.count))")
     print("  🔢 Hex preview: \(ExampleUtils.formatDataPreview(binaryData))")
 
-    // Десериализация обратно
+    // Deserialize back
     let (deserializedPerson, deserializeTime) = try ExampleUtils.measureTime {
       let deserializer = BinaryDeserializer()
       return try deserializer.deserialize(binaryData, using: person.descriptor)
@@ -78,30 +78,30 @@ struct ProtobufSerializationExample {
 
     ExampleUtils.printTiming("Binary deserialization", time: deserializeTime)
 
-    print("  📋 Десериализованное сообщение:")
+    print("  📋 Deserialized message:")
     deserializedPerson.prettyPrint()
 
-    // Проверка идентичности
+    // Check identity
     try verifyMessagesEqual(original: person, deserialized: deserializedPerson)
   }
 
   private static func step2UcomplexMessageSerialization() throws {
-    ExampleUtils.printStep(2, "Сериализация сложных сообщений")
+    ExampleUtils.printStep(2, "Complex message serialization")
 
-    // Создаем сложное сообщение с различными типами полей
+    // Create complex message with different field types
     var (company, _) = try createCompanyMessage()
 
-    // Заполняем сложными данными
+    // Fill with complex data
     try company.set("TechCorp Inc.", forField: "name")
     try company.set("CORPORATION", forField: "type")
     try company.set([Int32(100), Int32(200), Int32(300)], forField: "revenue_millions")
     try company.set(["usa", "uk", "japan"], forField: "offices")
     try company.set(true, forField: "public_company")
 
-    print("  🏢 Создано сложное сообщение:")
+    print("  🏢 Created complex message:")
     company.prettyPrint()
 
-    // Сериализация
+    // Serialization
     let (complexBinaryData, complexSerializeTime) = try ExampleUtils.measureTime {
       let serializer = BinarySerializer()
       return try serializer.serialize(company)
@@ -109,10 +109,10 @@ struct ProtobufSerializationExample {
 
     ExampleUtils.printTiming("Complex message serialization", time: complexSerializeTime)
 
-    print("  📦 Размер сложного сообщения: \(ExampleUtils.formatDataSize(complexBinaryData.count))")
+    print("  📦 Complex message size: \(ExampleUtils.formatDataSize(complexBinaryData.count))")
     print("  🔢 Hex preview: \(ExampleUtils.formatDataPreview(complexBinaryData, maxBytes: 30))")
 
-    // Десериализация
+    // Deserialization
     let (deserializedCompany, complexDeserializeTime) = try ExampleUtils.measureTime {
       let deserializer = BinaryDeserializer()
       return try deserializer.deserialize(complexBinaryData, using: company.descriptor)
@@ -120,17 +120,17 @@ struct ProtobufSerializationExample {
 
     ExampleUtils.printTiming("Complex message deserialization", time: complexDeserializeTime)
 
-    print("  📋 Десериализованное сложное сообщение:")
+    print("  📋 Deserialized complex message:")
     deserializedCompany.prettyPrint()
 
-    // Проверка repeated полей
+    // Check repeated fields
     try verifyRepeatedFields(original: company, deserialized: deserializedCompany)
   }
 
   private static func step3UroundTripCompatibility() throws {
-    ExampleUtils.printStep(3, "Round-trip совместимость")
+    ExampleUtils.printStep(3, "Round-trip compatibility")
 
-    print("  🔄 Тестирование multiple round-trips...")
+    print("  🔄 Testing multiple round-trips...")
 
     var currentMessage = try createPersonMessage().0
     try currentMessage.set("Round Trip User", forField: "name")
@@ -140,16 +140,16 @@ struct ProtobufSerializationExample {
     var totalSerializeTime: TimeInterval = 0
     var totalDeserializeTime: TimeInterval = 0
 
-    // Выполняем несколько циклов сериализация -> десериализация
+    // Perform several serialization -> deserialization cycles
     for round in 1...5 {
-      // Сериализация
+      // Serialization
       let (binaryData, serializeTime) = try ExampleUtils.measureTime {
         let serializer = BinarySerializer()
         return try serializer.serialize(currentMessage)
       }
       totalSerializeTime += serializeTime
 
-      // Десериализация
+      // Deserialization
       let (newMessage, deserializeTime) = try ExampleUtils.measureTime {
         let deserializer = BinaryDeserializer()
         return try deserializer.deserialize(binaryData, using: currentMessage.descriptor)
@@ -163,10 +163,10 @@ struct ProtobufSerializationExample {
     ExampleUtils.printTiming("Total serialization (5 rounds)", time: totalSerializeTime)
     ExampleUtils.printTiming("Total deserialization (5 rounds)", time: totalDeserializeTime)
 
-    print("  📋 Финальное сообщение после 5 round-trips:")
+    print("  📋 Final message after 5 round-trips:")
     currentMessage.prettyPrint()
 
-    // Проверяем что данные не изменились
+    // Check that data hasn't changed
     let finalName: String? = try currentMessage.get(forField: "name") as? String
     let finalAge: Int32? = try currentMessage.get(forField: "age") as? Int32
     let finalEmail: String? = try currentMessage.get(forField: "email") as? String
@@ -177,19 +177,19 @@ struct ProtobufSerializationExample {
       && ExampleUtils.assertEqual(finalEmail, "roundtrip@test.com", description: "Email preservation")
 
     if isValid {
-      print("  ✅ Round-trip совместимость: PASSED")
+      print("  ✅ Round-trip compatibility: PASSED")
     }
     else {
-      print("  ❌ Round-trip совместимость: FAILED")
+      print("  ❌ Round-trip compatibility: FAILED")
     }
   }
 
   private static func step4UperformanceAnalysis() throws {
-    ExampleUtils.printStep(4, "Анализ производительности")
+    ExampleUtils.printStep(4, "Performance analysis")
 
     print("  📊 Performance benchmarking...")
 
-    // Создаем тестовые сообщения разных размеров
+    // Create test messages of different sizes
     let testCases = [
       ("Small", 1),
       ("Medium", 10),
@@ -216,24 +216,24 @@ struct ProtobufSerializationExample {
       print("      Throughput: \(String(format: "%.2f", throughputMBps)) MB/s")
     }
 
-    // Сводная таблица
+    // Summary table
     ExampleUtils.printTable(
       [
         "Small (1 msg)": "\(ExampleUtils.formatDataSize(results["Small"]!.size))",
         "Medium (10 msgs)": "\(ExampleUtils.formatDataSize(results["Medium"]!.size))",
         "Large (100 msgs)": "\(ExampleUtils.formatDataSize(results["Large"]!.size))",
       ],
-      title: "Размеры данных"
+      title: "Data Sizes"
     )
   }
 
   private static func step5UwireFormatAnalysis() throws {
-    ExampleUtils.printStep(5, "Анализ Wire Format")
+    ExampleUtils.printStep(5, "Wire Format analysis")
 
-    // Создаем сообщение с различными типами полей для анализа wire format
+    // Create message with different field types for wire format analysis
     var (message, _) = try createWireFormatTestMessage()
 
-    // Заполняем данными
+    // Fill with data
     try message.set("Test", forField: "string_field")
     try message.set(Int32(12345), forField: "int32_field")
     try message.set(true, forField: "bool_field")
@@ -242,21 +242,21 @@ struct ProtobufSerializationExample {
     let serializer = BinarySerializer()
     let binaryData = try serializer.serialize(message)
 
-    print("  🔍 Wire format анализ:")
+    print("  🔍 Wire format analysis:")
     print("    Total size: \(binaryData.count) bytes")
     print("    Hex dump: \(ExampleUtils.formatDataPreview(binaryData, maxBytes: 50))")
 
-    // Анализируем structure wire format
+    // Analyze wire format structure
     analyzeWireFormat(binaryData)
 
-    print("  📋 Исходное сообщение:")
+    print("  📋 Original message:")
     message.prettyPrint()
 
-    // Проверяем десериализацию
+    // Check deserialization
     let deserializer = BinaryDeserializer()
     let reconstructed = try deserializer.deserialize(binaryData, using: message.descriptor)
 
-    print("  📋 Восстановленное сообщение:")
+    print("  📋 Reconstructed message:")
     reconstructed.prettyPrint()
   }
 
@@ -314,7 +314,7 @@ struct ProtobufSerializationExample {
   }
 
   private static func verifyMessagesEqual(original: DynamicMessage, deserialized: DynamicMessage) throws {
-    print("  🔍 Проверка идентичности сообщений:")
+    print("  🔍 Checking message identity:")
 
     for field in original.descriptor.fields.values {
       let originalValue = try original.get(forField: field.name)
@@ -327,7 +327,7 @@ struct ProtobufSerializationExample {
   }
 
   private static func verifyRepeatedFields(original: DynamicMessage, deserialized: DynamicMessage) throws {
-    print("  🔍 Проверка repeated полей:")
+    print("  🔍 Checking repeated fields:")
 
     let revenueOriginal = try original.get(forField: "revenue_millions") as? [Int32] ?? []
     let revenueDeserialized = try deserialized.get(forField: "revenue_millions") as? [Int32] ?? []
@@ -367,7 +367,7 @@ struct ProtobufSerializationExample {
     let serializer = BinarySerializer()
     let deserializer = BinaryDeserializer()
 
-    // Создаем тестовые сообщения
+    // Create test messages
     var messages: [DynamicMessage] = []
     for i in 0..<messageCount {
       var (message, _) = try createPersonMessage()
@@ -377,7 +377,7 @@ struct ProtobufSerializationExample {
       messages.append(message)
     }
 
-    // Benchmark сериализация
+    // Benchmark serialization
     let (allBinaryData, serializeTime) = try ExampleUtils.measureTime {
       var combinedData = Data()
       for message in messages {
@@ -387,7 +387,7 @@ struct ProtobufSerializationExample {
       return combinedData
     }
 
-    // Benchmark десериализация (упрощенная - десериализуем первое сообщение)
+    // Benchmark deserialization (simplified - deserialize first message)
     if let firstMessage = messages.first {
       let firstMessageData = try serializer.serialize(firstMessage)
       let (_, deserializeTime) = try ExampleUtils.measureTime {
@@ -401,12 +401,12 @@ struct ProtobufSerializationExample {
   }
 
   private static func analyzeWireFormat(_ data: Data) {
-    print("    Wire format структура:")
+    print("    Wire format structure:")
 
     var offset = 0
     var fieldNumber = 1
 
-    while offset < data.count && offset < 20 {  // Ограничиваем для краткости
+    while offset < data.count && offset < 20 {  // Limit for brevity
       if offset + 1 < data.count {
         let byte1 = data[offset]
         let wireType = byte1 & 0x07
@@ -430,7 +430,7 @@ struct ProtobufSerializationExample {
       }
 
       fieldNumber += 1
-      if fieldNumber > 10 { break }  // Ограничиваем вывод
+      if fieldNumber > 10 { break }  // Limit output
     }
   }
 
