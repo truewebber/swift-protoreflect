@@ -2,14 +2,14 @@
  * ValueHandler.swift
  * SwiftProtoReflect
  *
- * Обработчик для google.protobuf.Value - универсальные JSON-like значения
+ * Handler for google.protobuf.Value - universal JSON-like values
  */
 
 import Foundation
 
 // MARK: - Value Handler
 
-/// Обработчик для google.protobuf.Value.
+/// Handler for google.protobuf.Value.
 public struct ValueHandler: WellKnownTypeHandler {
 
   public static let handledTypeName = WellKnownTypeNames.value
@@ -17,13 +17,13 @@ public struct ValueHandler: WellKnownTypeHandler {
 
   // MARK: - Type Aliases
 
-  /// Повторное использование ValueValue из StructHandler для совместимости.
+  /// Reuse ValueValue from StructHandler for compatibility.
   public typealias ValueValue = StructHandler.ValueValue
 
   // MARK: - Handler Implementation
 
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
-    // Проверяем тип сообщения
+    // Check message type
     guard message.descriptor.fullName == handledTypeName else {
       throw WellKnownTypeError.invalidData(
         typeName: handledTypeName,
@@ -31,13 +31,13 @@ public struct ValueHandler: WellKnownTypeHandler {
       )
     }
 
-    // Упрощенная реализация: храним Value как JSON в bytes поле
+    // Simplified implementation: store Value as JSON in bytes field
     do {
       if try message.hasValue(forField: "value_data") {
         let data = try message.get(forField: "value_data") as? Data ?? Data()
         if !data.isEmpty {
           let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
-          // Извлекаем значение из wrapper объекта
+          // Extract value from wrapper object
           if let wrappedValue = jsonObject as? [String: Any],
             let actualValue = wrappedValue["value"]
           {
@@ -54,7 +54,7 @@ public struct ValueHandler: WellKnownTypeHandler {
       )
     }
 
-    // Если поле пустое или отсутствует, возвращаем null
+    // If field is empty or missing, return null
     return ValueValue.nullValue
   }
 
@@ -67,18 +67,18 @@ public struct ValueHandler: WellKnownTypeHandler {
       )
     }
 
-    // Создаем дескриптор для Value
+    // Create descriptor for Value
     let valueDescriptor = createValueDescriptor()
 
-    // Создаем сообщение
+    // Create message
     let factory = MessageFactory()
     var message = factory.createMessage(from: valueDescriptor)
 
-    // Сериализуем значение в JSON и сохраняем как Data
+    // Serialize value to JSON and save as Data
     let anyValue = valueValue.toAny()
 
     do {
-      // Оборачиваем значение в dictionary чтобы избежать проблем с top-level типами
+      // Wrap value in dictionary to avoid issues with top-level types
       let wrappedValue = ["value": anyValue]
       let jsonData = try JSONSerialization.data(withJSONObject: wrappedValue, options: [])
       try message.set(jsonData, forField: "value_data")
@@ -100,22 +100,22 @@ public struct ValueHandler: WellKnownTypeHandler {
 
   // MARK: - Descriptor Creation
 
-  /// Создает дескриптор для google.protobuf.Value.
-  /// - Returns: MessageDescriptor для Value.
+  /// Creates descriptor for google.protobuf.Value.
+  /// - Returns: MessageDescriptor for Value.
   private static func createValueDescriptor() -> MessageDescriptor {
-    // Создаем файл дескриптор
+    // Create file descriptor
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/struct.proto",
       package: "google.protobuf"
     )
 
-    // Создаем дескриптор сообщения Value
+    // Create Value message descriptor
     var messageDescriptor = MessageDescriptor(
       name: "Value",
       parent: fileDescriptor
     )
 
-    // Упрощенная реализация: храним JSON как bytes
+    // Simplified implementation: store JSON as bytes
     let valueDataField = FieldDescriptor(
       name: "value_data",
       number: 1,
@@ -123,7 +123,7 @@ public struct ValueHandler: WellKnownTypeHandler {
     )
     messageDescriptor.addField(valueDataField)
 
-    // Регистрируем в файле
+    // Register in file
     fileDescriptor.addMessage(messageDescriptor)
 
     return messageDescriptor
@@ -134,18 +134,18 @@ public struct ValueHandler: WellKnownTypeHandler {
 
 extension DynamicMessage {
 
-  /// Создает DynamicMessage из произвольного значения для google.protobuf.Value.
-  /// - Parameter value: Произвольное значение.
-  /// - Returns: DynamicMessage представляющий Value.
+  /// Creates DynamicMessage from arbitrary value for google.protobuf.Value.
+  /// - Parameter value: Arbitrary value.
+  /// - Returns: DynamicMessage representing Value.
   /// - Throws: WellKnownTypeError.
   public static func valueMessage(from value: Any) throws -> DynamicMessage {
     let valueValue = try ValueHandler.ValueValue(from: value)
     return try ValueHandler.createDynamic(from: valueValue)
   }
 
-  /// Конвертирует DynamicMessage в произвольное значение (если это Value).
-  /// - Returns: Произвольное значение.
-  /// - Throws: WellKnownTypeError если сообщение не является Value.
+  /// Converts DynamicMessage to arbitrary value (if it's Value).
+  /// - Returns: Arbitrary value.
+  /// - Throws: WellKnownTypeError if message is not Value.
   public func toAnyValue() throws -> Any {
     guard descriptor.fullName == WellKnownTypeNames.value else {
       throw WellKnownTypeError.invalidData(

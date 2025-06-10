@@ -2,7 +2,7 @@
  * EmptyHandler.swift
  * SwiftProtoReflect
  *
- * Обработчик для google.protobuf.Empty - представляет пустые сообщения без полей
+ * Handler for google.protobuf.Empty - represents empty messages without fields
  */
 
 import Foundation
@@ -10,7 +10,7 @@ import SwiftProtobuf
 
 // MARK: - Empty Handler
 
-/// Обработчик для google.protobuf.Empty.
+/// Handler for google.protobuf.Empty.
 public struct EmptyHandler: WellKnownTypeHandler {
 
   public static let handledTypeName = WellKnownTypeNames.empty
@@ -18,15 +18,15 @@ public struct EmptyHandler: WellKnownTypeHandler {
 
   // MARK: - Empty Representation
 
-  /// Специализированное представление Empty.
+  /// Specialized representation of Empty.
   ///
-  /// Empty сообщения не содержат полей, поэтому это простая единица типа.
+  /// Empty messages contain no fields, so this is a simple unit type.
   public struct EmptyValue: Equatable, CustomStringConvertible {
 
-    /// Создает единственный экземпляр EmptyValue.
+    /// Creates the single instance of EmptyValue.
     public init() {}
 
-    /// Единственный экземпляр Empty (singleton pattern).
+    /// The single instance of Empty (singleton pattern).
     public static let instance = EmptyValue()
 
     public var description: String {
@@ -37,7 +37,7 @@ public struct EmptyHandler: WellKnownTypeHandler {
   // MARK: - Handler Implementation
 
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
-    // Проверяем тип сообщения
+    // Check message type
     guard message.descriptor.fullName == handledTypeName else {
       throw WellKnownTypeError.invalidData(
         typeName: handledTypeName,
@@ -45,7 +45,7 @@ public struct EmptyHandler: WellKnownTypeHandler {
       )
     }
 
-    // Для Empty сообщения просто возвращаем единственный экземпляр
+    // For Empty message just return the single instance
     return EmptyValue.instance
   }
 
@@ -58,40 +58,40 @@ public struct EmptyHandler: WellKnownTypeHandler {
       )
     }
 
-    // Создаем дескриптор для Empty
+    // Create descriptor for Empty
     let emptyDescriptor = createEmptyDescriptor()
 
-    // Создаем пустое сообщение
+    // Create empty message
     let factory = MessageFactory()
     let message = factory.createMessage(from: emptyDescriptor)
 
-    // Empty сообщение не имеет полей, поэтому просто возвращаем созданное сообщение
+    // Empty message has no fields, so just return the created message
     return message
   }
 
   public static func validate(_ specialized: Any) -> Bool {
-    // EmptyValue всегда валиден
+    // EmptyValue is always valid
     return specialized is EmptyValue
   }
 
   // MARK: - Descriptor Creation
 
-  /// Создает дескриптор для google.protobuf.Empty.
-  /// - Returns: MessageDescriptor для Empty.
+  /// Creates descriptor for google.protobuf.Empty.
+  /// - Returns: MessageDescriptor for Empty.
   private static func createEmptyDescriptor() -> MessageDescriptor {
-    // Создаем файл дескриптор
+    // Create file descriptor
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/empty.proto",
       package: "google.protobuf"
     )
 
-    // Создаем дескриптор сообщения
+    // Create message descriptor
     let messageDescriptor = MessageDescriptor(
       name: "Empty",
       parent: fileDescriptor
     )
 
-    // Empty сообщение не имеет полей - только регистрируем в файле
+    // Empty message has no fields - only register in file
     fileDescriptor.addMessage(messageDescriptor)
 
     return messageDescriptor
@@ -102,22 +102,22 @@ public struct EmptyHandler: WellKnownTypeHandler {
 
 extension DynamicMessage {
 
-  /// Создает DynamicMessage для google.protobuf.Empty.
-  /// - Returns: DynamicMessage представляющий Empty.
+  /// Creates DynamicMessage for google.protobuf.Empty.
+  /// - Returns: DynamicMessage representing Empty.
   /// - Throws: WellKnownTypeError.
   public static func emptyMessage() throws -> DynamicMessage {
     return try EmptyHandler.createDynamic(from: EmptyHandler.EmptyValue.instance)
   }
 
-  /// Проверяет, является ли DynamicMessage пустым сообщением (Empty).
-  /// - Returns: true если сообщение является Empty.
+  /// Checks if DynamicMessage is an empty message (Empty).
+  /// - Returns: true if message is Empty.
   public func isEmpty() -> Bool {
     return descriptor.fullName == WellKnownTypeNames.empty
   }
 
-  /// Конвертирует DynamicMessage в EmptyValue (если это Empty).
+  /// Converts DynamicMessage to EmptyValue (if it's Empty).
   /// - Returns: EmptyValue.
-  /// - Throws: WellKnownTypeError если сообщение не является Empty.
+  /// - Throws: WellKnownTypeError if message is not Empty.
   public func toEmpty() throws -> EmptyHandler.EmptyValue {
     guard descriptor.fullName == WellKnownTypeNames.empty else {
       throw WellKnownTypeError.invalidData(
@@ -133,17 +133,17 @@ extension DynamicMessage {
 
 // MARK: - Unit Type Integration
 
-/// Extension для интеграции с Swift Void как аналогом Empty.
+/// Extension for integration with Swift Void as analog of Empty.
 extension EmptyHandler.EmptyValue {
 
-  /// Создает EmptyValue из Void.
-  /// - Parameter void: Void значение.
+  /// Creates EmptyValue from Void.
+  /// - Parameter void: Void value.
   /// - Returns: EmptyValue.
   public static func from(_ void: Void) -> EmptyHandler.EmptyValue {
     return EmptyHandler.EmptyValue.instance
   }
 
-  /// Конвертирует EmptyValue в Void.
+  /// Converts EmptyValue to Void.
   /// - Returns: Void.
   public func toVoid() {
     return ()

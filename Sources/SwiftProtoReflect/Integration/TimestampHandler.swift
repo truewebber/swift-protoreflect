@@ -2,7 +2,7 @@
  * TimestampHandler.swift
  * SwiftProtoReflect
  *
- * Обработчик для google.protobuf.Timestamp - конвертация между DynamicMessage и Date
+ * Handler for google.protobuf.Timestamp - conversion between DynamicMessage and Date
  */
 
 import Foundation
@@ -10,7 +10,7 @@ import SwiftProtobuf
 
 // MARK: - Timestamp Handler
 
-/// Обработчик для google.protobuf.Timestamp.
+/// Handler for google.protobuf.Timestamp.
 public struct TimestampHandler: WellKnownTypeHandler {
 
   public static let handledTypeName = WellKnownTypeNames.timestamp
@@ -18,7 +18,7 @@ public struct TimestampHandler: WellKnownTypeHandler {
 
   // MARK: - Timestamp Representation
 
-  /// Специализированное представление Timestamp.
+  /// Specialized representation of Timestamp.
   public struct TimestampValue: Equatable, CustomStringConvertible {
 
     /// Seconds of UTC time since Unix epoch (1970-01-01T00:00:00Z).
@@ -27,11 +27,11 @@ public struct TimestampHandler: WellKnownTypeHandler {
     /// Non-negative fractions of a second at nanosecond resolution.
     public let nanos: Int32
 
-    /// Инициализация с секундами и наносекундами.
-    /// - Parameters:.
-    ///   - seconds: Секунды с Unix epoch.
-    ///   - nanos: Наносекунды (0-999999999).
-    /// - Throws: WellKnownTypeError если значения невалидны.
+    /// Initialization with seconds and nanoseconds.
+    /// - Parameters:
+    ///   - seconds: Seconds since Unix epoch.
+    ///   - nanos: Nanoseconds (0-999999999).
+    /// - Throws: WellKnownTypeError if values are invalid.
     public init(seconds: Int64, nanos: Int32) throws {
       guard Self.isValidNanos(nanos) else {
         throw WellKnownTypeError.invalidData(
@@ -51,7 +51,7 @@ public struct TimestampHandler: WellKnownTypeHandler {
       self.nanos = nanos
     }
 
-    /// Инициализация из Date.
+    /// Initialization from Date.
     /// - Parameter date: Foundation Date.
     public init(from date: Date) {
       let timeInterval = date.timeIntervalSince1970
@@ -59,15 +59,15 @@ public struct TimestampHandler: WellKnownTypeHandler {
       self.nanos = Int32((timeInterval - Double(self.seconds)) * 1_000_000_000)
     }
 
-    /// Конвертация в Date.
+    /// Conversion to Date.
     /// - Returns: Foundation Date.
     public func toDate() -> Date {
       let timeInterval = Double(seconds) + Double(nanos) / 1_000_000_000.0
       return Date(timeIntervalSince1970: timeInterval)
     }
 
-    /// Текущее время.
-    /// - Returns: TimestampValue с текущим временем.
+    /// Current time.
+    /// - Returns: TimestampValue with current time.
     public static func now() -> TimestampValue {
       return TimestampValue(from: Date())
     }
@@ -92,19 +92,19 @@ public struct TimestampHandler: WellKnownTypeHandler {
 
     // MARK: - Validation
 
-    /// Валидация наносекунд.
-    /// - Parameter nanos: Значение наносекунд.
-    /// - Returns: true если валидны.
+    /// Validates nanoseconds.
+    /// - Parameter nanos: Nanoseconds value.
+    /// - Returns: true if valid.
     internal static func isValidNanos(_ nanos: Int32) -> Bool {
       return nanos >= 0 && nanos <= 999_999_999
     }
 
-    /// Валидация секунд (в разумных пределах).
-    /// - Parameter seconds: Значение секунд.
-    /// - Returns: true если валидны.
+    /// Validates seconds (within reasonable bounds).
+    /// - Parameter seconds: Seconds value.
+    /// - Returns: true if valid.
     internal static func isValidSeconds(_ seconds: Int64) -> Bool {
-      // Разрешаем от 1 января 1678 до 31 декабря 2261
-      // (примерно как в оригинальном protobuf)
+      // Allow from January 1, 1678 to December 31, 2261
+      // (approximately as in original protobuf)
       return seconds >= -9_223_372_036 && seconds <= 253_402_300_799
     }
   }
@@ -112,7 +112,7 @@ public struct TimestampHandler: WellKnownTypeHandler {
   // MARK: - Handler Implementation
 
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
-    // Проверяем тип сообщения
+    // Check message type
     guard message.descriptor.fullName == handledTypeName else {
       throw WellKnownTypeError.invalidData(
         typeName: handledTypeName,
@@ -120,7 +120,7 @@ public struct TimestampHandler: WellKnownTypeHandler {
       )
     }
 
-    // Извлекаем поля seconds и nanos
+    // Extract seconds and nanos fields
     let secondsValue: Int64
     let nanosValue: Int32
 
@@ -157,7 +157,7 @@ public struct TimestampHandler: WellKnownTypeHandler {
       )
     }
 
-    // Создаем TimestampValue
+    // Create TimestampValue
     return try TimestampValue(seconds: secondsValue, nanos: nanosValue)
   }
 
@@ -170,14 +170,14 @@ public struct TimestampHandler: WellKnownTypeHandler {
       )
     }
 
-    // Создаем дескриптор для Timestamp
+    // Create descriptor for Timestamp
     let timestampDescriptor = createTimestampDescriptor()
 
-    // Создаем сообщение
+    // Create message
     let factory = MessageFactory()
     var message = factory.createMessage(from: timestampDescriptor)
 
-    // Устанавливаем поля
+    // Set fields
     try message.set(timestampValue.seconds, forField: "seconds")
     try message.set(timestampValue.nanos, forField: "nanos")
 
@@ -194,22 +194,22 @@ public struct TimestampHandler: WellKnownTypeHandler {
 
   // MARK: - Descriptor Creation
 
-  /// Создает дескриптор для google.protobuf.Timestamp.
-  /// - Returns: MessageDescriptor для Timestamp.
+  /// Creates descriptor for google.protobuf.Timestamp.
+  /// - Returns: MessageDescriptor for Timestamp.
   private static func createTimestampDescriptor() -> MessageDescriptor {
-    // Создаем файл дескриптор
+    // Create file descriptor
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/timestamp.proto",
       package: "google.protobuf"
     )
 
-    // Создаем дескриптор сообщения
+    // Create message descriptor
     var messageDescriptor = MessageDescriptor(
       name: "Timestamp",
       parent: fileDescriptor
     )
 
-    // Добавляем поле seconds
+    // Add seconds field
     let secondsField = FieldDescriptor(
       name: "seconds",
       number: 1,
@@ -217,7 +217,7 @@ public struct TimestampHandler: WellKnownTypeHandler {
     )
     messageDescriptor.addField(secondsField)
 
-    // Добавляем поле nanos
+    // Add nanos field
     let nanosField = FieldDescriptor(
       name: "nanos",
       number: 2,
@@ -225,7 +225,7 @@ public struct TimestampHandler: WellKnownTypeHandler {
     )
     messageDescriptor.addField(nanosField)
 
-    // Регистрируем в файле
+    // Register in file
     fileDescriptor.addMessage(messageDescriptor)
 
     return messageDescriptor
@@ -236,14 +236,14 @@ public struct TimestampHandler: WellKnownTypeHandler {
 
 extension Date {
 
-  /// Создает Date из TimestampValue.
+  /// Creates Date from TimestampValue.
   /// - Parameter timestamp: TimestampValue.
   /// - Returns: Date.
   public init(from timestamp: TimestampHandler.TimestampValue) {
     self = timestamp.toDate()
   }
 
-  /// Конвертирует Date в TimestampValue.
+  /// Converts Date to TimestampValue.
   /// - Returns: TimestampValue.
   public func toTimestampValue() -> TimestampHandler.TimestampValue {
     return TimestampHandler.TimestampValue(from: self)
@@ -252,18 +252,18 @@ extension Date {
 
 extension DynamicMessage {
 
-  /// Создает DynamicMessage из Date для google.protobuf.Timestamp.
+  /// Creates DynamicMessage from Date for google.protobuf.Timestamp.
   /// - Parameter date: Foundation Date.
-  /// - Returns: DynamicMessage представляющий Timestamp.
+  /// - Returns: DynamicMessage representing Timestamp.
   /// - Throws: WellKnownTypeError.
   public static func timestampMessage(from date: Date) throws -> DynamicMessage {
     let timestamp = TimestampHandler.TimestampValue(from: date)
     return try TimestampHandler.createDynamic(from: timestamp)
   }
 
-  /// Конвертирует DynamicMessage в Date (если это Timestamp).
+  /// Converts DynamicMessage to Date (if it's Timestamp).
   /// - Returns: Date.
-  /// - Throws: WellKnownTypeError если сообщение не является Timestamp.
+  /// - Throws: WellKnownTypeError if message is not Timestamp.
   public func toDate() throws -> Date {
     guard descriptor.fullName == WellKnownTypeNames.timestamp else {
       throw WellKnownTypeError.invalidData(

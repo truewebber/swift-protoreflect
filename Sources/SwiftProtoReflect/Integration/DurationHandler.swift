@@ -2,7 +2,7 @@
  * DurationHandler.swift
  * SwiftProtoReflect
  *
- * Обработчик для google.protobuf.Duration - конвертация между DynamicMessage и TimeInterval
+ * Handler for google.protobuf.Duration - conversion between DynamicMessage and TimeInterval
  */
 
 import Foundation
@@ -10,7 +10,7 @@ import SwiftProtobuf
 
 // MARK: - Duration Handler
 
-/// Обработчик для google.protobuf.Duration.
+/// Handler for google.protobuf.Duration.
 public struct DurationHandler: WellKnownTypeHandler {
 
   public static let handledTypeName = WellKnownTypeNames.duration
@@ -18,7 +18,7 @@ public struct DurationHandler: WellKnownTypeHandler {
 
   // MARK: - Duration Representation
 
-  /// Специализированное представление Duration.
+  /// Specialized representation of Duration.
   public struct DurationValue: Equatable, CustomStringConvertible {
 
     /// Signed seconds of the span of time.
@@ -29,11 +29,11 @@ public struct DurationHandler: WellKnownTypeHandler {
     /// Must be from -999,999,999 to +999,999,999 inclusive.
     public let nanos: Int32
 
-    /// Инициализация с секундами и наносекундами.
-    /// - Parameters:.
-    ///   - seconds: Секунды длительности (могут быть отрицательными).
-    ///   - nanos: Наносекунды (должны иметь тот же знак что и seconds, или быть 0).
-    /// - Throws: WellKnownTypeError если значения невалидны.
+    /// Initialization with seconds and nanoseconds.
+    /// - Parameters:
+    ///   - seconds: Duration seconds (can be negative).
+    ///   - nanos: Nanoseconds (must have same sign as seconds, or be 0).
+    /// - Throws: WellKnownTypeError if values are invalid.
     public init(seconds: Int64, nanos: Int32) throws {
       guard Self.isValidNanos(nanos) else {
         throw WellKnownTypeError.invalidData(
@@ -53,41 +53,41 @@ public struct DurationHandler: WellKnownTypeHandler {
       self.nanos = nanos
     }
 
-    /// Инициализация из TimeInterval.
-    /// - Parameter timeInterval: Foundation TimeInterval (секунды как Double).
+    /// Initialization from TimeInterval.
+    /// - Parameter timeInterval: Foundation TimeInterval (seconds as Double).
     public init(from timeInterval: TimeInterval) {
       let totalSeconds = timeInterval
       self.seconds = Int64(totalSeconds)
 
-      // Вычисляем наносекунды с учетом знака
+      // Calculate nanoseconds with sign consideration
       let fractionalSeconds = totalSeconds - Double(self.seconds)
       self.nanos = Int32(fractionalSeconds * 1_000_000_000)
     }
 
-    /// Конвертация в TimeInterval.
+    /// Conversion to TimeInterval.
     /// - Returns: Foundation TimeInterval.
     public func toTimeInterval() -> TimeInterval {
       return Double(seconds) + Double(nanos) / 1_000_000_000.0
     }
 
-    /// Создает нулевую длительность.
-    /// - Returns: DurationValue равная нулю.
+    /// Creates zero duration.
+    /// - Returns: DurationValue equal to zero.
     public static func zero() -> DurationValue {
       return try! DurationValue(seconds: 0, nanos: 0)
     }
 
-    /// Абсолютное значение длительности.
-    /// - Returns: DurationValue с положительными значениями.
+    /// Absolute value of duration.
+    /// - Returns: DurationValue with positive values.
     public func abs() -> DurationValue {
       if seconds < 0 || (seconds == 0 && nanos < 0) {
-        // Отрицательная длительность - делаем положительной
+        // Negative duration - make positive
         return try! DurationValue(seconds: -seconds, nanos: -nanos)
       }
       return self
     }
 
-    /// Отрицательная длительность.
-    /// - Returns: DurationValue с противоположным знаком.
+    /// Negative duration.
+    /// - Returns: DurationValue with opposite sign.
     public func negated() -> DurationValue {
       return try! DurationValue(seconds: -seconds, nanos: -nanos)
     }
@@ -101,7 +101,7 @@ public struct DurationHandler: WellKnownTypeHandler {
         return String(format: "%.3fs", totalSeconds)
       }
       else {
-        // Для очень маленьких значений показываем в миллисекундах или наносекундах
+        // For very small values show in milliseconds or nanoseconds
         let totalMillis = totalSeconds * 1000
         if Swift.abs(totalMillis) >= 1 {
           return String(format: "%.3fms", totalMillis)
@@ -112,25 +112,25 @@ public struct DurationHandler: WellKnownTypeHandler {
       }
     }
 
-    /// Валидация наносекунд.
-    /// - Parameter nanos: Значение наносекунд.
-    /// - Returns: true если валидны.
+    /// Validates nanoseconds.
+    /// - Parameter nanos: Nanoseconds value.
+    /// - Returns: true if valid.
     internal static func isValidNanos(_ nanos: Int32) -> Bool {
       return nanos >= -999_999_999 && nanos <= 999_999_999
     }
 
-    /// Валидация комбинации секунд и наносекунд.
-    /// - Parameters:.
-    ///   - seconds: Секунды.
-    ///   - nanos: Наносекунды.
-    /// - Returns: true если комбинация валидна.
+    /// Validates combination of seconds and nanoseconds.
+    /// - Parameters:
+    ///   - seconds: Seconds.
+    ///   - nanos: Nanoseconds.
+    /// - Returns: true if combination is valid.
     internal static func isValidSecondsNanosCombination(seconds: Int64, nanos: Int32) -> Bool {
-      // Если одно из значений ноль, то комбинация всегда валидна
+      // If one value is zero, combination is always valid
       if seconds == 0 || nanos == 0 {
         return true
       }
 
-      // Оба значения должны иметь одинаковый знак
+      // Both values must have same sign
       return (seconds > 0 && nanos > 0) || (seconds < 0 && nanos < 0)
     }
   }
@@ -138,7 +138,7 @@ public struct DurationHandler: WellKnownTypeHandler {
   // MARK: - Handler Implementation
 
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
-    // Проверяем тип сообщения
+    // Check message type
     guard message.descriptor.fullName == handledTypeName else {
       throw WellKnownTypeError.invalidData(
         typeName: handledTypeName,
@@ -146,7 +146,7 @@ public struct DurationHandler: WellKnownTypeHandler {
       )
     }
 
-    // Извлекаем поля seconds и nanos
+    // Extract seconds and nanos fields
     let secondsValue: Int64
     let nanosValue: Int32
 
@@ -183,7 +183,7 @@ public struct DurationHandler: WellKnownTypeHandler {
       )
     }
 
-    // Создаем DurationValue
+    // Create DurationValue
     return try DurationValue(seconds: secondsValue, nanos: nanosValue)
   }
 
@@ -196,14 +196,14 @@ public struct DurationHandler: WellKnownTypeHandler {
       )
     }
 
-    // Создаем дескриптор для Duration
+    // Create descriptor for Duration
     let durationDescriptor = createDurationDescriptor()
 
-    // Создаем сообщение
+    // Create message
     let factory = MessageFactory()
     var message = factory.createMessage(from: durationDescriptor)
 
-    // Устанавливаем поля
+    // Set fields
     try message.set(durationValue.seconds, forField: "seconds")
     try message.set(durationValue.nanos, forField: "nanos")
 
@@ -221,22 +221,22 @@ public struct DurationHandler: WellKnownTypeHandler {
 
   // MARK: - Descriptor Creation
 
-  /// Создает дескриптор для google.protobuf.Duration.
-  /// - Returns: MessageDescriptor для Duration.
+  /// Creates descriptor for google.protobuf.Duration.
+  /// - Returns: MessageDescriptor for Duration.
   private static func createDurationDescriptor() -> MessageDescriptor {
-    // Создаем файл дескриптор
+    // Create file descriptor
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/duration.proto",
       package: "google.protobuf"
     )
 
-    // Создаем дескриптор сообщения
+    // Create message descriptor
     var messageDescriptor = MessageDescriptor(
       name: "Duration",
       parent: fileDescriptor
     )
 
-    // Добавляем поле seconds
+    // Add seconds field
     let secondsField = FieldDescriptor(
       name: "seconds",
       number: 1,
@@ -244,7 +244,7 @@ public struct DurationHandler: WellKnownTypeHandler {
     )
     messageDescriptor.addField(secondsField)
 
-    // Добавляем поле nanos
+    // Add nanos field
     let nanosField = FieldDescriptor(
       name: "nanos",
       number: 2,
@@ -252,7 +252,7 @@ public struct DurationHandler: WellKnownTypeHandler {
     )
     messageDescriptor.addField(nanosField)
 
-    // Регистрируем в файле
+    // Register in file
     fileDescriptor.addMessage(messageDescriptor)
 
     return messageDescriptor
@@ -263,14 +263,14 @@ public struct DurationHandler: WellKnownTypeHandler {
 
 extension TimeInterval {
 
-  /// Создает TimeInterval из DurationValue.
+  /// Creates TimeInterval from DurationValue.
   /// - Parameter duration: DurationValue.
   /// - Returns: TimeInterval.
   public init(from duration: DurationHandler.DurationValue) {
     self = duration.toTimeInterval()
   }
 
-  /// Конвертирует TimeInterval в DurationValue.
+  /// Converts TimeInterval to DurationValue.
   /// - Returns: DurationValue.
   public func toDurationValue() -> DurationHandler.DurationValue {
     return DurationHandler.DurationValue(from: self)
@@ -279,18 +279,18 @@ extension TimeInterval {
 
 extension DynamicMessage {
 
-  /// Создает DynamicMessage из TimeInterval для google.protobuf.Duration.
+  /// Creates DynamicMessage from TimeInterval for google.protobuf.Duration.
   /// - Parameter timeInterval: Foundation TimeInterval.
-  /// - Returns: DynamicMessage представляющий Duration.
+  /// - Returns: DynamicMessage representing Duration.
   /// - Throws: WellKnownTypeError.
   public static func durationMessage(from timeInterval: TimeInterval) throws -> DynamicMessage {
     let duration = DurationHandler.DurationValue(from: timeInterval)
     return try DurationHandler.createDynamic(from: duration)
   }
 
-  /// Конвертирует DynamicMessage в TimeInterval (если это Duration).
+  /// Converts DynamicMessage to TimeInterval (if it's Duration).
   /// - Returns: TimeInterval.
-  /// - Throws: WellKnownTypeError если сообщение не является Duration.
+  /// - Throws: WellKnownTypeError if message is not Duration.
   public func toTimeInterval() throws -> TimeInterval {
     guard descriptor.fullName == WellKnownTypeNames.duration else {
       throw WellKnownTypeError.invalidData(
