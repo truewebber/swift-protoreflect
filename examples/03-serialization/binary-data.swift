@@ -1,20 +1,20 @@
 /**
  * 🔧 SwiftProtoReflect Example: Binary Data Operations
  *
- * Описание: Продвинутые операции с binary данными Protocol Buffers - bytes поля, hex encoding, data manipulation
- * Ключевые концепции: Data fields, Binary encoding, Hex manipulation, Data integrity, Custom data formats
- * Сложность: 🚀 Продвинутый
- * Время выполнения: < 15 секунд
+ * Description: Advanced operations with binary Protocol Buffers data - bytes fields, hex encoding, data manipulation
+ * Key concepts: Data fields, Binary encoding, Hex manipulation, Data integrity, Custom data formats
+ * Complexity: 🚀 Advanced
+ * Execution time: < 15 seconds
  *
- * Что изучите:
- * - Работа с bytes полями в динамических сообщениях
- * - Binary data encoding и декодирование (hex, base64)
- * - Data integrity проверки (checksums, hashing)
- * - Кастомные binary протоколы поверх Protocol Buffers
- * - Performance оптимизации для больших binary данных
- * - Data compression и decompression техники
+ * What you'll learn:
+ * - Working with bytes fields in dynamic messages
+ * - Binary data encoding and decoding (hex, base64)
+ * - Data integrity checks (checksums, hashing)
+ * - Custom binary protocols over Protocol Buffers
+ * - Performance optimizations for large binary data
+ * - Data compression and decompression techniques
  *
- * Запуск:
+ * Usage:
  *   swift run BinaryData
  */
 
@@ -30,79 +30,79 @@ struct BinaryDataExample {
   static func main() throws {
     ExampleUtils.printHeader("Advanced Binary Data Operations")
 
-    try step1UbytesFieldsHandling()
-    try step2UdataEncodingFormats()
-    try step3UdataIntegrityChecks()
-    try step4UcustomBinaryProtocols()
-    try step5UdataCompressionTechniques()
+    try step1_bytesFieldsHandling()
+    try step2_dataEncodingFormats()
+    try step3_dataIntegrityChecks()
+    try step4_customBinaryProtocols()
+    try step5_dataCompressionTechniques()
 
-    ExampleUtils.printSuccess("Binary data операции успешно изучены!")
+    ExampleUtils.printSuccess("Binary data operations successfully explored!")
 
     ExampleUtils.printNext([
-      "Далее попробуйте: swift run Streaming - потоковая обработка данных",
-      "Или изучите: compression.swift - продвинутые техники сжатия",
-      "Сравните: json-conversion.swift - human-readable форматы",
+      "Next try: swift run Streaming - streaming data processing",
+      "Or explore: compression.swift - advanced compression techniques",
+      "Compare: json-conversion.swift - human-readable formats",
     ])
   }
 
   // MARK: - Implementation Steps
 
-  private static func step1UbytesFieldsHandling() throws {
-    ExampleUtils.printStep(1, "Работа с bytes полями")
+  private static func step1_bytesFieldsHandling() throws {
+    ExampleUtils.printStep(1, "Working with bytes fields")
 
-    // Создаем сообщение с bytes полями
+    // Create message with bytes fields
     var (binaryMessage, _) = try createBinaryMessage()
 
-    // Различные типы binary данных
+    // Various types of binary data
     let textData = "Hello, Binary World! 🌍".data(using: .utf8)!
     let imageHeader = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])  // PNG header
     let cryptoKey = generateRandomData(length: 32)  // 256-bit key
     let configData = try createConfigData()
 
-    // Заполняем binary поля
+    // Fill binary fields
     try binaryMessage.set("Binary Demo", forField: "name")
     try binaryMessage.set(textData, forField: "payload")
     try binaryMessage.set(imageHeader, forField: "file_header")
     try binaryMessage.set(cryptoKey, forField: "encryption_key")
     try binaryMessage.set(configData, forField: "config_blob")
 
-    print("  📦 Создано сообщение с binary данными:")
+    print("  📦 Created message with binary data:")
     binaryMessage.prettyPrint()
 
-    // Анализ binary данных
-    print("  🔍 Анализ binary полей:")
+    // Binary data analysis
+    print("  🔍 Binary fields analysis:")
     print("    📄 Text data: \(textData.count) bytes (\(ExampleUtils.formatDataPreview(textData)))")
     print("    🖼  Image header: \(imageHeader.count) bytes (\(ExampleUtils.formatDataPreview(imageHeader)))")
     print("    🔐 Crypto key: \(cryptoKey.count) bytes (\(ExampleUtils.formatDataPreview(cryptoKey)))")
     print("    ⚙️  Config blob: \(configData.count) bytes (\(ExampleUtils.formatDataPreview(configData)))")
 
-    // Сериализация и анализ
+    // Serialization and analysis
     let serializer = BinarySerializer()
     let binaryData = try serializer.serialize(binaryMessage)
 
-    print("  📊 Serialization результаты:")
+    print("  📊 Serialization results:")
     print("    Total size: \(ExampleUtils.formatDataSize(binaryData.count))")
     print(
       "    Overhead: \(String(format: "%.1f%%", calculateOverhead(original: textData.count + imageHeader.count + cryptoKey.count + configData.count, serialized: binaryData.count)))"
     )
 
-    // Проверка десериализации
+    // Check deserialization
     let deserializer = BinaryDeserializer()
     let restoredMessage = try deserializer.deserialize(binaryData, using: binaryMessage.descriptor)
 
-    // Проверка integrity binary данных
+    // Verify binary data integrity
     try verifyBinaryDataIntegrity(original: binaryMessage, restored: restoredMessage)
   }
 
-  private static func step2UdataEncodingFormats() throws {
-    ExampleUtils.printStep(2, "Data encoding форматы")
+  private static func step2_dataEncodingFormats() throws {
+    ExampleUtils.printStep(2, "Data encoding formats")
 
     let originalData = "Binary encoding demonstration with special chars: ñáéíóú 🚀💻🔥".data(using: .utf8)!
 
     print("  📄 Original data: \(originalData.count) bytes")
     print("    Raw: \(String(data: originalData, encoding: .utf8) ?? "Invalid UTF-8")")
 
-    // Различные encoding форматы
+    // Various encoding formats
     let encodingFormats = [
       ("Hex", originalData.map { String(format: "%02x", $0) }.joined()),
       ("Base64", originalData.base64EncodedString()),
@@ -115,7 +115,7 @@ struct BinaryDataExample {
       ),
     ]
 
-    print("  🔄 Encoding форматы:")
+    print("  🔄 Encoding formats:")
     for (format, encoded) in encodingFormats {
       let preview = encoded.count > 80 ? String(encoded.prefix(77)) + "..." : encoded
       print("    \(format): \(preview)")
@@ -124,8 +124,8 @@ struct BinaryDataExample {
       )
     }
 
-    // Тестирование round-trip encoding
-    print("  🔄 Round-trip encoding тесты:")
+    // Test round-trip encoding
+    print("  🔄 Round-trip encoding tests:")
 
     // Hex round-trip
     let hexEncoded = originalData.map { String(format: "%02x", $0) }.joined()
@@ -139,7 +139,7 @@ struct BinaryDataExample {
     let base64Match = originalData == base64Decoded
     print("    ✅ Base64: \(base64Match ? "PASSED" : "FAILED")")
 
-    // Создаем сообщение с encoded данными
+    // Create message with encoded data
     var (encodedMessage, _) = try createEncodedMessage()
     try encodedMessage.set("Encoding Demo", forField: "title")
     try encodedMessage.set(hexEncoded, forField: "hex_data")
@@ -150,15 +150,15 @@ struct BinaryDataExample {
     encodedMessage.prettyPrint()
   }
 
-  private static func step3UdataIntegrityChecks() throws {
-    ExampleUtils.printStep(3, "Data integrity проверки")
+  private static func step3_dataIntegrityChecks() throws {
+    ExampleUtils.printStep(3, "Data integrity checks")
 
     let testData = generateRandomData(length: 1024)  // 1KB test data
 
-    print("  🔒 Data integrity демонстрация:")
+    print("  🔒 Data integrity demonstration:")
     print("    Test data: \(ExampleUtils.formatDataSize(testData.count))")
 
-    // Различные checksum алгоритмы
+    // Various checksum algorithms
     let checksums = [
       ("Simple Sum", calculateSimpleChecksum(testData)),
       ("CRC-32", String(calculateCRC32(testData), radix: 16).uppercased()),
@@ -166,12 +166,12 @@ struct BinaryDataExample {
       ("SHA-256", calculateSHA256(testData)),
     ]
 
-    print("  🔍 Checksum результаты:")
+    print("  🔍 Checksum results:")
     for (algorithm, checksum) in checksums {
       print("    \(algorithm): \(checksum)")
     }
 
-    // Создаем сообщение с integrity данными
+    // Create message with integrity data
     var (integrityMessage, _) = try createIntegrityMessage()
     try integrityMessage.set("Integrity Test", forField: "name")
     try integrityMessage.set(testData, forField: "data")
@@ -179,13 +179,13 @@ struct BinaryDataExample {
     try integrityMessage.set(checksums[3].1, forField: "sha256_hash")  // SHA-256
     try integrityMessage.set(Int64(testData.count), forField: "data_size")
 
-    // Сериализация
+    // Serialization
     let serializer = BinarySerializer()
     let serializedData = try serializer.serialize(integrityMessage)
 
     print("  📦 Integrity message: \(ExampleUtils.formatDataSize(serializedData.count))")
 
-    // Симуляция data corruption
+    // Simulate data corruption
     print("  🧪 Data corruption simulation:")
 
     var corruptedData = testData
@@ -198,7 +198,7 @@ struct BinaryDataExample {
     print("    Corrupted MD5: \(corruptedMD5)")
     print("    Integrity: \(originalMD5 == corruptedMD5 ? "❌ CORRUPTED" : "✅ DETECTED")")
 
-    // Проверка восстановленных данных
+    // Check restored data
     let deserializer = BinaryDeserializer()
     let restoredMessage = try deserializer.deserialize(serializedData, using: integrityMessage.descriptor)
 
@@ -211,12 +211,12 @@ struct BinaryDataExample {
     }
   }
 
-  private static func step4UcustomBinaryProtocols() throws {
-    ExampleUtils.printStep(4, "Кастомные binary протоколы")
+  private static func step4_customBinaryProtocols() throws {
+    ExampleUtils.printStep(4, "Custom binary protocols")
 
-    print("  🔧 Построение custom protocol поверх Protocol Buffers...")
+    print("  🔧 Building custom protocol over Protocol Buffers...")
 
-    // Создаем custom protocol header
+    // Create custom protocol header
     let protocolHeader = createCustomProtocolHeader(
       version: 1,
       messageType: 0x42,
@@ -227,28 +227,28 @@ struct BinaryDataExample {
     // Payload data
     let payloadData = "Custom protocol payload with binary data".data(using: .utf8)!
 
-    // Создаем сообщение для custom protocol
+    // Create message for custom protocol
     var (protocolMessage, _) = try createProtocolMessage()
     try protocolMessage.set("CustomProtocol", forField: "protocol_name")
     try protocolMessage.set(protocolHeader, forField: "header")
     try protocolMessage.set(payloadData, forField: "payload")
     try protocolMessage.set(Int32(payloadData.count), forField: "payload_size")
 
-    print("  📊 Custom protocol структура:")
+    print("  📊 Custom protocol structure:")
     print("    Header: \(protocolHeader.count) bytes (\(ExampleUtils.formatDataPreview(protocolHeader)))")
     print("    Payload: \(payloadData.count) bytes")
     print("    Total: \(protocolHeader.count + payloadData.count) bytes")
 
-    // Анализ протокольной структуры
+    // Analyze protocol structure
     analyzeProtocolHeader(protocolHeader)
 
-    // Сериализация custom protocol
+    // Serialize custom protocol
     let serializer = BinarySerializer()
     let protocolData = try serializer.serialize(protocolMessage)
 
     print("  📦 Serialized protocol: \(ExampleUtils.formatDataSize(protocolData.count))")
 
-    // Демонстрация protocol parsing
+    // Demonstrate protocol parsing
     print("  🔍 Protocol parsing simulation:")
 
     let deserializer = BinaryDeserializer()
@@ -268,10 +268,10 @@ struct BinaryDataExample {
     }
   }
 
-  private static func step5UdataCompressionTechniques() throws {
-    ExampleUtils.printStep(5, "Data encoding и compression демонстрация")
+  private static func step5_dataCompressionTechniques() throws {
+    ExampleUtils.printStep(5, "Data encoding and compression demonstration")
 
-    // Создаем большой dataset для демонстрации
+    // Create large dataset for demonstration
     let largeText = """
       This is a large text data for compression demonstration. 
       We repeat this text multiple times to simulate real-world scenarios.
@@ -285,7 +285,7 @@ struct BinaryDataExample {
     print("  📊 Data encoding analysis:")
     print("    Original size: \(ExampleUtils.formatDataSize(originalData.count))")
 
-    // Различные encoding methods (симуляция compression)
+    // Various encoding methods (compression simulation)
     let encodingTests = [
       ("Base64", originalData.base64EncodedData()),
       ("Hex", originalData.map { String(format: "%02x", $0) }.joined().data(using: .utf8)!),
@@ -315,7 +315,7 @@ struct BinaryDataExample {
     print("    Most efficient: \(bestEncoding.0) encoding")
     print("    Least efficient: \(worstEncoding.0) encoding")
 
-    // Создаем сообщение с encoded data
+    // Create message with encoded data
     var (compressedMessage, _) = try createCompressedMessage()
     try compressedMessage.set("Encoding Demo", forField: "title")
     try compressedMessage.set(bestEncoding.1, forField: "compressed_data")
@@ -498,7 +498,7 @@ struct BinaryDataExample {
   }
 
   private static func verifyBinaryDataIntegrity(original: DynamicMessage, restored: DynamicMessage) throws {
-    print("  🔍 Binary data integrity проверка:")
+    print("  🔍 Binary data integrity check:")
 
     let binaryFields = ["payload", "file_header", "encryption_key", "config_blob"]
     var allMatch = true
@@ -622,7 +622,7 @@ struct BinaryDataExample {
   }
 
   private static func analyzeProtocolHeader(_ header: Data) {
-    print("    Header структура (8 bytes):")
+    print("    Header structure (8 bytes):")
     for (index, byte) in header.enumerated() {
       let description = getHeaderFieldDescription(index: index)
       print("      Byte \(index): 0x\(String(format: "%02X", byte)) (\(description))")
