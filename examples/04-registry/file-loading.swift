@@ -1,19 +1,19 @@
 /**
  * SwiftProtoReflect File Loading Example
  *
- * Этот пример демонстрирует загрузку и управление файлами дескрипторов:
+ * This example demonstrates loading and managing descriptor files:
  *
- * 1. Создание и сохранение файлов дескрипторов
- * 2. Загрузка дескрипторов из различных источников
- * 3. Parsing и валидация структур дескрипторов
- * 4. Dependency resolution между файлами
- * 5. Caching и оптимизация загрузки
+ * 1. Creating and saving descriptor files
+ * 2. Loading descriptors from various sources
+ * 3. Parsing and validation of descriptor structures
+ * 4. Dependency resolution between files
+ * 5. Caching and loading optimization
  *
- * Основные концепции:
+ * Key concepts:
  * - FileDescriptor management
- * - Schema loading и parsing
+ * - Schema loading and parsing
  * - Cross-file dependencies
- * - Validation и error handling
+ * - Validation and error handling
  * - Performance optimization
  */
 
@@ -25,24 +25,24 @@ struct FileLoadingExample {
   static func run() throws {
     ExampleUtils.printHeader("File Descriptor Loading")
 
-    try step1UbasicFileCreationAndStructure()
-    try step2UdescriptorParsingAndValidation()
-    try step3UdependencyResolutionDemo()
-    try step4UbatchLoadingAndCaching()
-    try step5UerrorHandlingAndRecovery()
+    try step1_basicFileCreationAndStructure()
+    try step2_descriptorParsingAndValidation()
+    try step3_dependencyResolutionDemo()
+    try step4_batchLoadingAndCaching()
+    try step5_errorHandlingAndRecovery()
 
-    print("\n🎉 File descriptor загрузка успешно изучена!")
+    print("\n🎉 File descriptor loading successfully explored!")
 
-    print("\n🔍 Что попробовать дальше:")
-    print("  • Далее изучите: dependency-resolution.swift - продвинутое разрешение зависимостей")
-    print("  • Сравните: schema-validation.swift - валидация схем")
-    print("  • Вернитесь к: type-registry.swift - управление реестром типов")
+    print("\n🔍 What to try next:")
+    print("  • Next explore: dependency-resolution.swift - advanced dependency resolution")
+    print("  • Compare: schema-validation.swift - schema validation")
+    print("  • Return to: type-registry.swift - type registry management")
   }
 
-  private static func step1UbasicFileCreationAndStructure() throws {
+  private static func step1_basicFileCreationAndStructure() throws {
     ExampleUtils.printStep(1, "Basic file creation and structure")
 
-    print("  📁 Создание и анализ структуры файлов дескрипторов...")
+    print("  📁 Creating and analyzing descriptor file structures...")
 
     // Create comprehensive file descriptor collection
     let fileCollection = try createFileDescriptorCollection()
@@ -63,7 +63,7 @@ struct FileLoadingExample {
           print("         • \(message.name) (\(message.fields.count) fields)")
         }
         if fileDesc.messages.count > 3 {
-          print("         ... и ещё \(fileDesc.messages.count - 3)")
+          print("         ... and \(fileDesc.messages.count - 3) more")
         }
       }
 
@@ -97,10 +97,10 @@ struct FileLoadingExample {
     }
   }
 
-  private static func step2UdescriptorParsingAndValidation() throws {
+  private static func step2_descriptorParsingAndValidation() throws {
     ExampleUtils.printStep(2, "Descriptor parsing and validation")
 
-    print("  🔬 Парсинг и валидация дескрипторов...")
+    print("  🔬 Parsing and validating descriptors...")
 
     let fileCollection = try createFileDescriptorCollection()
 
@@ -171,7 +171,7 @@ struct FileLoadingExample {
     }
   }
 
-  private static func step3UdependencyResolutionDemo() throws {
+  private static func step3_dependencyResolutionDemo() throws {
     ExampleUtils.printStep(3, "Dependency resolution demonstration")
 
     print("  🧩 Демонстрация разрешения зависимостей...")
@@ -238,7 +238,7 @@ struct FileLoadingExample {
     }
   }
 
-  private static func step4UbatchLoadingAndCaching() throws {
+  private static func step4_batchLoadingAndCaching() throws {
     ExampleUtils.printStep(4, "Batch loading and caching")
 
     print("  🚀 Batch loading и caching стратегии...")
@@ -312,7 +312,7 @@ struct FileLoadingExample {
     print("      Memory usage: \(ExampleUtils.formatDataSize(cacheStats.memoryUsage))")
   }
 
-  private static func step5UerrorHandlingAndRecovery() throws {
+  private static func step5_errorHandlingAndRecovery() throws {
     ExampleUtils.printStep(5, "Error handling and recovery")
 
     print("  🛠 Error handling и recovery strategies...")
