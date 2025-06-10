@@ -1,20 +1,20 @@
 /**
  * 🌊 SwiftProtoReflect Example: Streaming Data Processing
  *
- * Описание: Потоковая обработка больших datasets с Protocol Buffers для memory-efficient операций
- * Ключевые концепции: Streaming serialization, Memory management, Large datasets, Batch processing
- * Сложность: 🚀 Продвинутый
- * Время выполнения: < 20 секунд
+ * Description: Streaming processing of large datasets with Protocol Buffers for memory-efficient operations
+ * Key concepts: Streaming serialization, Memory management, Large datasets, Batch processing
+ * Complexity: 🚀 Advanced
+ * Execution time: < 20 seconds
  *
- * Что изучите:
- * - Потоковая сериализация больших datasets без загрузки всего в память
- * - Memory-efficient batch processing с Protocol Buffers
- * - Streaming deserialization для обработки данных по частям
- * - Large file handling и progressive loading
- * - Memory footprint optimization для больших объемов данных
- * - Producer-Consumer patterns для streaming обработки
+ * What you'll learn:
+ * - Streaming serialization of large datasets without loading everything into memory
+ * - Memory-efficient batch processing with Protocol Buffers
+ * - Streaming deserialization for processing data in chunks
+ * - Large file handling and progressive loading
+ * - Memory footprint optimization for large data volumes
+ * - Producer-Consumer patterns for streaming processing
  *
- * Запуск:
+ * Usage:
  *   swift run Streaming
  */
 
@@ -31,27 +31,27 @@ struct StreamingExample {
   static func main() throws {
     ExampleUtils.printHeader("Streaming Protocol Buffers Processing")
 
-    try step1UmemoryEfficientSerialization()
-    try step2UbatchProcessing()
-    try step3UlargeDatasetStreaming()
-    try step4UproducerConsumerPattern()
-    try step5UmemoryOptimizationTechniques()
+    try step1_memoryEfficientSerialization()
+    try step2_batchProcessing()
+    try step3_largeDatasetStreaming()
+    try step4_producerConsumerPattern()
+    try step5_memoryOptimizationTechniques()
 
-    ExampleUtils.printSuccess("Streaming обработка данных успешно изучена!")
+    ExampleUtils.printSuccess("Streaming data processing successfully explored!")
 
     ExampleUtils.printNext([
-      "Далее попробуйте: swift run Compression - продвинутые техники сжатия",
-      "Сравните: binary-data.swift - binary операции",
-      "Изучите: protobuf-serialization.swift - основы сериализации",
+      "Next try: swift run Compression - advanced compression techniques",
+      "Compare: binary-data.swift - binary operations",
+      "Learn: protobuf-serialization.swift - serialization basics",
     ])
   }
 
   // MARK: - Implementation Steps
 
-  private static func step1UmemoryEfficientSerialization() throws {
-    ExampleUtils.printStep(1, "Memory-efficient сериализация")
+  private static func step1_memoryEfficientSerialization() throws {
+    ExampleUtils.printStep(1, "Memory-efficient serialization")
 
-    print("  💾 Создание large dataset симуляции...")
+    print("  💾 Creating large dataset simulation...")
 
     let datasetSize = 10_000  // 10K records
     let batchSize = 100
@@ -124,7 +124,7 @@ struct StreamingExample {
 
     ExampleUtils.printTiming("Streaming serialization (\(datasetSize) records)", time: streamingTime)
 
-    print("  📊 Streaming результаты:")
+    print("  📊 Streaming results:")
     print("    Total records: \(datasetSize)")
     print("    Batch size: \(batchSize)")
     print("    Total size: \(ExampleUtils.formatDataSize(totalSerialized))")
@@ -139,8 +139,8 @@ struct StreamingExample {
     _ = ExampleUtils.writeToTempFile("Streaming file path: \(streamingFile)", filename: "streaming_output_info.txt")
   }
 
-  private static func step2UbatchProcessing() throws {
-    ExampleUtils.printStep(2, "Batch processing и deserialization")
+  private static func step2_batchProcessing() throws {
+    ExampleUtils.printStep(2, "Batch processing and deserialization")
 
     // Read back the streaming file we created
     #if canImport(Foundation) && !os(Linux)
@@ -167,7 +167,7 @@ struct StreamingExample {
     var batchCount = 0
     let processingBatchSize = 250  // Different from serialization batch size
 
-    print("  📖 Reading и processing streaming data...")
+    print("  📖 Reading and processing streaming data...")
 
     let (_, processingTime) = try ExampleUtils.measureTime {
       var currentBatch: [DynamicMessage] = []
@@ -211,17 +211,17 @@ struct StreamingExample {
 
     ExampleUtils.printTiming("Batch processing (\(recordsProcessed) records)", time: processingTime)
 
-    print("  📊 Processing результаты:")
+    print("  📊 Processing results:")
     print("    Records processed: \(recordsProcessed)")
     print("    Batches processed: \(batchCount)")
     print("    Average score: \(String(format: "%.2f", totalScoreSum / Double(recordsProcessed)))")
     print("    Processing rate: \(String(format: "%.1f", Double(recordsProcessed) / processingTime)) records/sec")
   }
 
-  private static func step3UlargeDatasetStreaming() throws {
+  private static func step3_largeDatasetStreaming() throws {
     ExampleUtils.printStep(3, "Large dataset streaming simulation")
 
-    print("  🏔 Симуляция обработки очень большого dataset...")
+    print("  🏔 Simulating very large dataset processing...")
 
     // Simulate a very large dataset (1M records) without actually creating it
     let virtualDatasetSize = 1_000_000
@@ -233,7 +233,7 @@ struct StreamingExample {
     let totalDataSize = virtualDatasetSize * recordSize
     let batchMemoryUsage = streamingBatchSize * recordSize
 
-    print("  📊 Large dataset параметры:")
+    print("  📊 Large dataset parameters:")
     print("    Virtual dataset size: \(virtualDatasetSize) records")
     print("    Estimated total size: \(ExampleUtils.formatDataSize(totalDataSize))")
     print("    Streaming batch size: \(streamingBatchSize)")
@@ -262,7 +262,7 @@ struct StreamingExample {
       }
     }
 
-    print("  📈 Streaming simulation результаты:")
+    print("  📈 Streaming simulation results:")
     statisticsCollector.printReport()
     ExampleUtils.printTiming("Total simulation time", time: simulationTime)
 
@@ -270,10 +270,10 @@ struct StreamingExample {
     print("    Projected real processing time: \(String(format: "%.1f", projectedRealTime))s")
   }
 
-  private static func step4UproducerConsumerPattern() throws {
+  private static func step4_producerConsumerPattern() throws {
     ExampleUtils.printStep(4, "Producer-Consumer streaming pattern")
 
-    print("  🔄 Демонстрация Producer-Consumer pattern для streaming...")
+    print("  🔄 Demonstrating Producer-Consumer pattern for streaming...")
 
     let queue = StreamingQueue<ProcessedRecord>(maxSize: 50)
     let (recordDescriptor, _) = try createStreamingRecordMessage()
@@ -287,7 +287,7 @@ struct StreamingExample {
     let producedCounter = ThreadSafeCounter()
     let consumedCounter = ThreadSafeCounter()
 
-    print("  🏭 Starting producers (\(producerCount)) и consumers (\(consumerCount))...")
+    print("  🏭 Starting producers (\(producerCount)) and consumers (\(consumerCount))...")
 
     let (_, patternTime) = ExampleUtils.measureTime {
       // Create producer tasks
@@ -379,17 +379,17 @@ struct StreamingExample {
 
     ExampleUtils.printTiming("Producer-Consumer pattern", time: patternTime)
 
-    print("  📊 Producer-Consumer результаты:")
+    print("  📊 Producer-Consumer results:")
     print("    Produced records: \(producedCounter.value)")
     print("    Consumed records: \(consumedCounter.value)")
     print("    Queue efficiency: \(consumedCounter.value == producedCounter.value ? "✅ Perfect" : "❌ Loss detected")")
     print("    Processing rate: \(String(format: "%.1f", Double(consumedCounter.value) / patternTime)) records/sec")
   }
 
-  private static func step5UmemoryOptimizationTechniques() throws {
+  private static func step5_memoryOptimizationTechniques() throws {
     ExampleUtils.printStep(5, "Memory optimization techniques")
 
-    print("  🧠 Memory optimization strategies демонстрация...")
+    print("  🧠 Memory optimization strategies demonstration...")
 
     // Technique 1: Object Pooling
     print("  🏊 Object Pooling pattern:")
