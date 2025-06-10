@@ -1,19 +1,19 @@
 /**
  * 🏗️ SwiftProtoReflect Example: Nested Types (Enum inside Message)
  *
- * Описание: Демонстрация nested enum и nested message внутри Protocol Buffers сообщений
- * Ключевые концепции: Nested Enum, Nested Message, Type hierarchies, Name resolution
- * Сложность: 🔧🔧 Продвинутый
- * Время выполнения: < 15 секунд
+ * Description: Demonstration of nested enum and nested message inside Protocol Buffers messages
+ * Key concepts: Nested Enum, Nested Message, Type hierarchies, Name resolution
+ * Complexity: 🔧🔧 Advanced
+ * Execution time: < 15 seconds
  *
- * Что изучите:
- * - Создание enum внутри message (nested enum)
- * - Создание message внутри message (nested message)
- * - Правильное именование и обращение к nested типам
- * - Использование nested типов в полях
+ * What you'll learn:
+ * - Creating enum inside message (nested enum)
+ * - Creating message inside message (nested message)
+ * - Proper naming and accessing nested types
+ * - Using nested types in fields
  * - Nested type name resolution (ParentMessage.NestedType)
  *
- * Запуск:
+ * Run:
  *   swift run NestedTypes
  */
 
@@ -24,7 +24,7 @@ import SwiftProtoReflect
 @main
 struct NestedTypesExample {
   static func main() throws {
-    ExampleUtils.printHeader("Nested Types - Enum и Message внутри Message")
+    ExampleUtils.printHeader("Nested Types - Enum and Message inside Message")
 
     try step1UbasicNestedEnum()
     try step2UnestedMessage()
@@ -32,24 +32,24 @@ struct NestedTypesExample {
     try step4UnestedTypeAccess()
     try step5UrealWorldExample()
 
-    ExampleUtils.printSuccess("Вы освоили работу с nested types в Protocol Buffers!")
+    ExampleUtils.printSuccess("You mastered working with nested types in Protocol Buffers!")
 
     ExampleUtils.printNext([
-      "Следующий: message-cloning.swift - клонирование сложных структур",
-      "Продвинутые: conditional-logic.swift - условная логика на основе типов",
-      "Изучите: field-manipulation.swift - манипуляции с полями",
+      "Next: message-cloning.swift - cloning complex structures",
+      "Advanced: conditional-logic.swift - conditional logic based on types",
+      "Explore: field-manipulation.swift - field manipulations",
     ])
   }
 
   // MARK: - Implementation Steps
 
   private static func step1UbasicNestedEnum() throws {
-    ExampleUtils.printStep(1, "Базовое использование nested enum")
+    ExampleUtils.printStep(1, "Basic nested enum usage")
 
     let fileDescriptor = try createBasicNestedEnumStructure()
     let factory = MessageFactory()
 
-    // Создаем сообщение с nested enum
+    // Create message with nested enum
     guard let userDesc = fileDescriptor.messages.values.first(where: { $0.name == "User" }) else {
       throw NSError(domain: "Example", code: 1, userInfo: [NSLocalizedDescriptionKey: "User descriptor not found"])
     }
@@ -59,7 +59,7 @@ struct NestedTypesExample {
     try user.set(Int32(1), forField: "status")  // ACTIVE = 1 (nested enum value)
     try user.set(Int32(2), forField: "role")  // ADMIN = 2 (nested enum value)
 
-    print("  👤 Создан User с nested enum полями:")
+    print("  👤 Created User with nested enum fields:")
     print("    Name: \(try user.get(forField: "name") as? String ?? "Unknown")")
 
     let statusValue = try user.get(forField: "status") as? Int32 ?? 0
@@ -68,9 +68,9 @@ struct NestedTypesExample {
     print("    Status: \(statusValue) (\(getStatusName(statusValue)))")
     print("    Role: \(roleValue) (\(getRoleName(roleValue)))")
 
-    // Демонстрируем доступ к nested enum
+    // Demonstrate access to nested enum
     if let statusEnum = userDesc.nestedEnum(named: "Status") {
-      print("  📋 Nested enum User.Status значения:")
+      print("  📋 Nested enum User.Status values:")
       for value in statusEnum.allValues() {
         print("    \(value.name) = \(value.number)")
       }
@@ -78,12 +78,12 @@ struct NestedTypesExample {
   }
 
   private static func step2UnestedMessage() throws {
-    ExampleUtils.printStep(2, "Nested message внутри message")
+    ExampleUtils.printStep(2, "Nested message inside message")
 
     let fileDescriptor = try createNestedMessageStructure()
     let factory = MessageFactory()
 
-    // Создаем родительское сообщение
+    // Create parent message
     guard let companyDesc = fileDescriptor.messages.values.first(where: { $0.name == "Company" }) else {
       throw NSError(domain: "Example", code: 1, userInfo: [NSLocalizedDescriptionKey: "Company descriptor not found"])
     }
@@ -91,7 +91,7 @@ struct NestedTypesExample {
     var company = factory.createMessage(from: companyDesc)
     try company.set("TechCorp Inc.", forField: "name")
 
-    // Создаем nested message (Address)
+    // Create nested message (Address)
     guard let addressDesc = companyDesc.nestedMessage(named: "Address") else {
       throw NSError(
         domain: "Example",
@@ -106,10 +106,10 @@ struct NestedTypesExample {
     try address.set("CA", forField: "state")
     try address.set("94102", forField: "zip_code")
 
-    // Устанавливаем nested message в родительское
+    // Set nested message in parent
     try company.set(address, forField: "headquarters")
 
-    print("  🏢 Создана Company с nested Address:")
+    print("  🏢 Created Company with nested Address:")
     print("    Company: \(try company.get(forField: "name") as? String ?? "Unknown")")
 
     if let hq = try company.get(forField: "headquarters") as? DynamicMessage {
@@ -122,12 +122,12 @@ struct NestedTypesExample {
   }
 
   private static func step3UcomplexHierarchy() throws {
-    ExampleUtils.printStep(3, "Сложная иерархия nested типов")
+    ExampleUtils.printStep(3, "Complex nested type hierarchy")
 
     let fileDescriptor = try createComplexHierarchyStructure()
     let factory = MessageFactory()
 
-    // Создаем Document с nested Chapter и Section
+    // Create Document with nested Chapter and Section
     guard let documentDesc = fileDescriptor.messages.values.first(where: { $0.name == "Document" }) else {
       throw NSError(domain: "Example", code: 1, userInfo: [NSLocalizedDescriptionKey: "Document descriptor not found"])
     }
@@ -136,7 +136,7 @@ struct NestedTypesExample {
     try document.set("Technical Manual", forField: "title")
     try document.set(Int32(1), forField: "type")  // MANUAL = 1 (nested enum)
 
-    // Создаем Chapter (nested message)
+    // Create Chapter (nested message)
     guard let chapterDesc = documentDesc.nestedMessage(named: "Chapter") else {
       throw NSError(
         domain: "Example",
@@ -149,7 +149,7 @@ struct NestedTypesExample {
     try chapter.set("Introduction", forField: "title")
     try chapter.set(Int32(1), forField: "number")
 
-    // Создаем Section (nested в Chapter)
+    // Create Section (nested in Chapter)
     guard let sectionDesc = chapterDesc.nestedMessage(named: "Section") else {
       throw NSError(
         domain: "Example",
@@ -161,18 +161,18 @@ struct NestedTypesExample {
     var section = factory.createMessage(from: sectionDesc)
     try section.set("Getting Started", forField: "title")
     try section.set("This section covers...", forField: "content")
-    try section.set(Int32(2), forField: "importance")  // HIGH = 2 (nested enum в Section)
+    try section.set(Int32(2), forField: "importance")  // HIGH = 2 (nested enum in Section)
 
-    // Собираем иерархию
+    // Assemble hierarchy
     try chapter.set([section], forField: "sections")
     try document.set([chapter], forField: "chapters")
 
-    print("  📚 Создана сложная иерархия nested types:")
+    print("  📚 Created complex nested type hierarchy:")
     try printDocumentHierarchy(document)
   }
 
   private static func step4UnestedTypeAccess() throws {
-    ExampleUtils.printStep(4, "Доступ к nested типам и их метаданным")
+    ExampleUtils.printStep(4, "Access to nested types and their metadata")
 
     let fileDescriptor = try createComplexHierarchyStructure()
 
@@ -180,9 +180,9 @@ struct NestedTypesExample {
       return
     }
 
-    print("  🔍 Анализ nested типов в Document:")
+    print("  🔍 Analysis of nested types in Document:")
 
-    // Показываем nested enums
+    // Show nested enums
     print("    Nested Enums:")
     for (name, enumDesc) in documentDesc.nestedEnums {
       print("      Document.\(name):")
@@ -191,12 +191,12 @@ struct NestedTypesExample {
       }
     }
 
-    // Показываем nested messages
+    // Show nested messages
     print("    Nested Messages:")
     for (name, nestedDesc) in documentDesc.nestedMessages {
       print("      Document.\(name) (fields: \(nestedDesc.fields.count))")
 
-      // Показываем nested типы в nested message
+      // Show nested types in nested message
       if !nestedDesc.nestedMessages.isEmpty {
         print("        Nested in \(name):")
         for (nestedName, _) in nestedDesc.nestedMessages {
@@ -214,7 +214,7 @@ struct NestedTypesExample {
   }
 
   private static func step5UrealWorldExample() throws {
-    ExampleUtils.printStep(5, "Реальный пример: Order Management System")
+    ExampleUtils.printStep(5, "Real-world example: Order Management System")
 
     let fileDescriptor = try createOrderManagementStructure()
     let factory = MessageFactory()
@@ -228,7 +228,7 @@ struct NestedTypesExample {
     try order.set(Int32(2), forField: "status")  // PROCESSING = 2
     try order.set(Int32(1), forField: "priority")  // HIGH = 1
 
-    // Создаем Payment (nested message)
+    // Create Payment (nested message)
     guard let paymentDesc = orderDesc.nestedMessage(named: "Payment") else {
       throw NSError(
         domain: "Example",
@@ -240,14 +240,14 @@ struct NestedTypesExample {
     var payment = factory.createMessage(from: paymentDesc)
     try payment.set(299.99, forField: "amount")
     try payment.set("USD", forField: "currency")
-    try payment.set(Int32(1), forField: "method")  // CREDIT_CARD = 1 (nested enum в Payment)
+    try payment.set(Int32(1), forField: "method")  // CREDIT_CARD = 1 (nested enum in Payment)
 
     try order.set(payment, forField: "payment_info")
 
     let orderSummary = try analyzeOrder(order)
     ExampleUtils.printTable(orderSummary, title: "Order Management Analysis")
 
-    print("  💡 Демонстрирует реальное использование nested types в business логике")
+    print("  💡 Demonstrates real-world usage of nested types in business logic")
   }
 
   // MARK: - Structure Creation Methods
@@ -257,24 +257,24 @@ struct NestedTypesExample {
 
     var userDesc = MessageDescriptor(name: "User", parent: fileDescriptor)
 
-    // Создаем nested enum Status внутри User
+    // Create nested enum Status inside User
     var statusEnum = EnumDescriptor(name: "Status", parent: userDesc)
     statusEnum.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0))
     statusEnum.addValue(EnumDescriptor.EnumValue(name: "ACTIVE", number: 1))
     statusEnum.addValue(EnumDescriptor.EnumValue(name: "INACTIVE", number: 2))
     statusEnum.addValue(EnumDescriptor.EnumValue(name: "SUSPENDED", number: 3))
 
-    // Создаем nested enum Role внутри User
+    // Create nested enum Role inside User
     var roleEnum = EnumDescriptor(name: "Role", parent: userDesc)
     roleEnum.addValue(EnumDescriptor.EnumValue(name: "GUEST", number: 0))
     roleEnum.addValue(EnumDescriptor.EnumValue(name: "USER", number: 1))
     roleEnum.addValue(EnumDescriptor.EnumValue(name: "ADMIN", number: 2))
 
-    // Добавляем nested enums в message
+    // Add nested enums to message
     userDesc.addNestedEnum(statusEnum)
     userDesc.addNestedEnum(roleEnum)
 
-    // Добавляем поля которые используют nested enums
+    // Add fields that use nested enums
     userDesc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     userDesc.addField(FieldDescriptor(name: "status", number: 2, type: .int32))  // User.Status
     userDesc.addField(FieldDescriptor(name: "role", number: 3, type: .int32))  // User.Role
@@ -288,24 +288,24 @@ struct NestedTypesExample {
 
     var companyDesc = MessageDescriptor(name: "Company", parent: fileDescriptor)
 
-    // Создаем nested message Address внутри Company
+    // Create nested message Address inside Company
     var addressDesc = MessageDescriptor(name: "Address", parent: companyDesc)
     addressDesc.addField(FieldDescriptor(name: "street", number: 1, type: .string))
     addressDesc.addField(FieldDescriptor(name: "city", number: 2, type: .string))
     addressDesc.addField(FieldDescriptor(name: "state", number: 3, type: .string))
     addressDesc.addField(FieldDescriptor(name: "zip_code", number: 4, type: .string))
 
-    // Добавляем nested message в Company
+    // Add nested message to Company
     companyDesc.addNestedMessage(addressDesc)
 
-    // Добавляем поля в Company
+    // Add fields to Company
     companyDesc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     companyDesc.addField(
       FieldDescriptor(
         name: "headquarters",
         number: 2,
         type: .message,
-        typeName: "example.Company.Address"  // Полное имя nested message
+        typeName: "example.Company.Address"  // Full nested message name
       )
     )
 
@@ -332,10 +332,10 @@ struct NestedTypesExample {
     chapterDesc.addField(FieldDescriptor(name: "title", number: 1, type: .string))
     chapterDesc.addField(FieldDescriptor(name: "number", number: 2, type: .int32))
 
-    // Nested message Section внутри Chapter (двухуровневая вложенность!)
+    // Nested message Section inside Chapter (two-level nesting!)
     var sectionDesc = MessageDescriptor(name: "Section", parent: chapterDesc)
 
-    // Nested enum Importance внутри Section
+    // Nested enum Importance inside Section
     var importanceEnum = EnumDescriptor(name: "Importance", parent: sectionDesc)
     importanceEnum.addValue(EnumDescriptor.EnumValue(name: "LOW", number: 0))
     importanceEnum.addValue(EnumDescriptor.EnumValue(name: "MEDIUM", number: 1))
@@ -353,14 +353,14 @@ struct NestedTypesExample {
         name: "sections",
         number: 3,
         type: .message,
-        typeName: "example.Document.Chapter.Section",  // Трехуровневое имя!
+        typeName: "example.Document.Chapter.Section",  // Three-level name!
         isRepeated: true
       )
     )
 
     documentDesc.addNestedMessage(chapterDesc)
 
-    // Поля Document
+    // Document fields
     documentDesc.addField(FieldDescriptor(name: "title", number: 1, type: .string))
     documentDesc.addField(FieldDescriptor(name: "type", number: 2, type: .int32))  // Document.DocumentType
     documentDesc.addField(
@@ -402,7 +402,7 @@ struct NestedTypesExample {
     // Nested message Payment
     var paymentDesc = MessageDescriptor(name: "Payment", parent: orderDesc)
 
-    // Nested enum PaymentMethod внутри Payment
+    // Nested enum PaymentMethod inside Payment
     var paymentMethodEnum = EnumDescriptor(name: "PaymentMethod", parent: paymentDesc)
     paymentMethodEnum.addValue(EnumDescriptor.EnumValue(name: "CASH", number: 0))
     paymentMethodEnum.addValue(EnumDescriptor.EnumValue(name: "CREDIT_CARD", number: 1))
@@ -417,7 +417,7 @@ struct NestedTypesExample {
 
     orderDesc.addNestedMessage(paymentDesc)
 
-    // Поля Order
+    // Order fields
     orderDesc.addField(FieldDescriptor(name: "order_id", number: 1, type: .string))
     orderDesc.addField(FieldDescriptor(name: "status", number: 2, type: .int32))  // Order.OrderStatus
     orderDesc.addField(FieldDescriptor(name: "priority", number: 3, type: .int32))  // Order.Priority
@@ -505,23 +505,19 @@ struct NestedTypesExample {
     let statusValue = try order.get(forField: "status") as? Int32 ?? 0
     let priorityValue = try order.get(forField: "priority") as? Int32 ?? 0
 
-    let statusName = getOrderStatusName(statusValue)
-    let priorityName = getOrderPriorityName(priorityValue)
-
     var result: [String: String] = [
       "Order ID": orderId,
-      "Status": statusName,
-      "Priority": priorityName,
+      "Status": getOrderStatusName(statusValue),
+      "Priority": getOrderPriorityName(priorityValue),
     ]
 
     if let payment = try order.get(forField: "payment_info") as? DynamicMessage {
       let amount = try payment.get(forField: "amount") as? Double ?? 0.0
       let currency = try payment.get(forField: "currency") as? String ?? "USD"
       let methodValue = try payment.get(forField: "method") as? Int32 ?? 0
-      let methodName = getPaymentMethodName(methodValue)
 
-      result["Payment Amount"] = String(format: "%.2f %@", amount, currency)
-      result["Payment Method"] = methodName
+      result["Payment Amount"] = "\(amount) \(currency)"
+      result["Payment Method"] = getPaymentMethodName(methodValue)
     }
 
     return result

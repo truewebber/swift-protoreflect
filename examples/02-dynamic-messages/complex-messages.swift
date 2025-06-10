@@ -1,19 +1,19 @@
 /**
  * 🏗️ SwiftProtoReflect Example: Complex Multi-Level Messages
  *
- * Описание: Создание сложных многоуровневых структур сообщений
- * Ключевые концепции: Multi-level nesting, Complex relationships, Message hierarchies
- * Сложность: 🔧🔧 Продвинутый
- * Время выполнения: < 20 секунд
+ * Description: Creating complex multi-level message structures
+ * Key concepts: Multi-level nesting, Complex relationships, Message hierarchies
+ * Complexity: 🔧🔧 Advanced
+ * Execution time: < 20 seconds
  *
- * Что изучите:
- * - Создание сложных иерархий сообщений с глубокой вложенностью
- * - Работа с циркулярными ссылками и связями между сообщениями
- * - Продвинутые patterns для организации данных
- * - Эффективное управление сложными структурами
- * - Навигация по многоуровневым иерархиям данных
+ * What you'll learn:
+ * - Creating complex message hierarchies with deep nesting
+ * - Working with circular references and relationships between messages
+ * - Advanced patterns for data organization
+ * - Efficient management of complex structures
+ * - Navigation through multi-level data hierarchies
  *
- * Запуск:
+ * Run:
  *   swift run ComplexMessages
  */
 
@@ -24,7 +24,7 @@ import SwiftProtoReflect
 @main
 struct ComplexMessagesExample {
   static func main() throws {
-    ExampleUtils.printHeader("Сложные многоуровневые структуры сообщений")
+    ExampleUtils.printHeader("Complex multi-level message structures")
 
     try step1UenterpriseOrganization()
     try step2UsocialNetworkGraph()
@@ -32,17 +32,17 @@ struct ComplexMessagesExample {
     try step4UdataAnalytics()
     try step5UcomplexValidation()
 
-    ExampleUtils.printSuccess("Вы освоили создание сложных многоуровневых структур!")
+    ExampleUtils.printSuccess("You mastered creating complex multi-level structures!")
 
     ExampleUtils.printNext([
-      "Следующий: nested-operations.swift - операции с вложенными сообщениями",
-      "Продвинутые: field-manipulation.swift - манипуляции полей",
-      "Изучите: message-cloning.swift - клонирование сообщений",
+      "Next: nested-operations.swift - operations with nested messages",
+      "Advanced: field-manipulation.swift - field manipulations",
+      "Explore: message-cloning.swift - message cloning",
     ])
   }
 
   private static func step1UenterpriseOrganization() throws {
-    ExampleUtils.printStep(1, "Корпоративная организационная структура")
+    ExampleUtils.printStep(1, "Enterprise organizational structure")
 
     let fileDescriptor = try createEnterpriseStructure()
     let factory = MessageFactory()
@@ -85,15 +85,15 @@ struct ComplexMessagesExample {
     try vpEngineering.set([directorDev], forField: "subordinates")
     try ceo.set([vpEngineering], forField: "subordinates")
 
-    print("  🏢 Создана корпоративная иерархия:")
+    print("  🏢 Created enterprise hierarchy:")
     try printOrganizationChart(ceo, level: 0)
 
     let totalEmployees = try countTotalEmployees(ceo)
-    print("  📊 Общее количество сотрудников: \(totalEmployees)")
+    print("  📊 Total employees: \(totalEmployees)")
   }
 
   private static func step2UsocialNetworkGraph() throws {
-    ExampleUtils.printStep(2, "Граф социальной сети с связями")
+    ExampleUtils.printStep(2, "Social network graph with connections")
 
     let fileDescriptor = try createSocialNetworkStructure()
     let factory = MessageFactory()
@@ -123,18 +123,18 @@ struct ComplexMessagesExample {
     try bob.set([alice], forField: "friends")
     try charlie.set([alice], forField: "friends")
 
-    print("  👥 Создан граф социальной сети:")
+    print("  👥 Created social network graph:")
     print("    Alice friends: \(try getArrayCount(alice, field: "friends"))")
     print("    Bob friends: \(try getArrayCount(bob, field: "friends"))")
     print("    Charlie friends: \(try getArrayCount(charlie, field: "friends"))")
 
     // Analyze network connections
     let commonInterests = try findCommonInterests(alice, charlie)
-    print("  🤝 Общие интересы Alice и Charlie: \(commonInterests.joined(separator: ", "))")
+    print("  🤝 Common interests of Alice and Charlie: \(commonInterests.joined(separator: ", "))")
   }
 
   private static func step3UecommerceSystem() throws {
-    ExampleUtils.printStep(3, "E-commerce система с каталогом")
+    ExampleUtils.printStep(3, "E-commerce system with catalog")
 
     let fileDescriptor = try createEcommerceStructure()
     let factory = MessageFactory()
@@ -195,20 +195,20 @@ struct ComplexMessagesExample {
     try order.set(customer, forField: "customer")
     try order.set([macbook], forField: "products")
 
-    print("  🛒 Создана e-commerce система с реальными связями:")
+    print("  🛒 Created e-commerce system with real relationships:")
     try printCategoryHierarchy(electronics, level: 0)
 
     // Demonstrate relationships
-    print("  📱 MacBook Pro категория: \(try getCategoryName(macbook))")
-    print("  👤 Заказчик: \(try getCustomerName(order))")
-    print("  📦 Товаров в заказе: \(try getOrderProductCount(order))")
+    print("  📱 MacBook Pro category: \(try getCategoryName(macbook))")
+    print("  👤 Customer: \(try getCustomerName(order))")
+    print("  📦 Products in order: \(try getOrderProductCount(order))")
 
     let orderSummary = try analyzeOrder(order)
     ExampleUtils.printTable(orderSummary, title: "Order Analysis")
   }
 
   private static func step4UdataAnalytics() throws {
-    ExampleUtils.printStep(4, "Система аналитики данных")
+    ExampleUtils.printStep(4, "Data analytics system")
 
     let fileDescriptor = try createAnalyticsStructure()
     let factory = MessageFactory()
@@ -244,13 +244,13 @@ struct ComplexMessagesExample {
 
     try dashboard.set([timeSeries], forField: "data_sources")
 
-    print("  📊 Создана система аналитики:")
+    print("  📊 Created analytics system:")
     let dashboardStats = try analyzeDashboard(dashboard)
     ExampleUtils.printTable(dashboardStats, title: "Dashboard Statistics")
   }
 
   private static func step5UcomplexValidation() throws {
-    ExampleUtils.printStep(5, "Сложная валидация и проверки целостности")
+    ExampleUtils.printStep(5, "Complex validation and integrity checks")
 
     let fileDescriptor = try createValidationStructure()
     let factory = MessageFactory()
@@ -279,11 +279,11 @@ struct ComplexMessagesExample {
 
     try document.set([section1, section2], forField: "sections")
 
-    print("  ✅ Создан документ с валидацией:")
+    print("  ✅ Created document with validation:")
     let validationResults = try performComplexValidation(document)
     ExampleUtils.printTable(validationResults, title: "Validation Results")
 
-    ExampleUtils.printInfo("Демонстрирует сложные проверки целостности между связанными сообщениями")
+    ExampleUtils.printInfo("Demonstrates complex integrity checks between linked messages")
   }
 
   // MARK: - Helper Functions
@@ -537,35 +537,32 @@ struct ComplexMessagesExample {
     name: String,
     interests: [String]
   ) throws -> DynamicMessage {
-    let userDesc = fileDescriptor.messages.values.first { $0.name == "User" }!
+    guard let userDesc = fileDescriptor.messages.values.first(where: { $0.name == "User" }) else {
+      throw NSError(domain: "Example", code: 1, userInfo: [NSLocalizedDescriptionKey: "User descriptor not found"])
+    }
+
     var user = factory.createMessage(from: userDesc)
     try user.set(name, forField: "name")
     try user.set(interests, forField: "interests")
     try user.set([], forField: "friends")
+
     return user
   }
 
-  private static func createPost(
+  private static func createCategory(
     factory: MessageFactory,
     fileDescriptor: FileDescriptor,
-    author: DynamicMessage,
-    content: String
+    name: String,
+    level: Int
   ) throws -> DynamicMessage {
-    let postDesc = fileDescriptor.messages.values.first { $0.name == "Post" }!
-    var post = factory.createMessage(from: postDesc)
-    try post.set(content, forField: "content")
-    try post.set(author, forField: "author")
-    return post
-  }
+    guard let categoryDesc = fileDescriptor.messages.values.first(where: { $0.name == "Category" }) else {
+      throw NSError(domain: "Example", code: 1, userInfo: [NSLocalizedDescriptionKey: "Category descriptor not found"])
+    }
 
-  private static func createCategory(factory: MessageFactory, fileDescriptor: FileDescriptor, name: String, level: Int)
-    throws -> DynamicMessage
-  {
-    let categoryDesc = fileDescriptor.messages.values.first { $0.name == "Category" }!
     var category = factory.createMessage(from: categoryDesc)
     try category.set(name, forField: "name")
     try category.set(Int32(level), forField: "level")
-    try category.set([], forField: "subcategories")
+
     return category
   }
 
@@ -575,10 +572,14 @@ struct ComplexMessagesExample {
     name: String,
     price: Double
   ) throws -> DynamicMessage {
-    let productDesc = fileDescriptor.messages.values.first { $0.name == "Product" }!
+    guard let productDesc = fileDescriptor.messages.values.first(where: { $0.name == "Product" }) else {
+      throw NSError(domain: "Example", code: 1, userInfo: [NSLocalizedDescriptionKey: "Product descriptor not found"])
+    }
+
     var product = factory.createMessage(from: productDesc)
     try product.set(name, forField: "name")
     try product.set(price, forField: "price")
+
     return product
   }
 
@@ -588,10 +589,14 @@ struct ComplexMessagesExample {
     name: String,
     email: String
   ) throws -> DynamicMessage {
-    let customerDesc = fileDescriptor.messages.values.first { $0.name == "Customer" }!
+    guard let customerDesc = fileDescriptor.messages.values.first(where: { $0.name == "Customer" }) else {
+      throw NSError(domain: "Example", code: 1, userInfo: [NSLocalizedDescriptionKey: "Customer descriptor not found"])
+    }
+
     var customer = factory.createMessage(from: customerDesc)
     try customer.set(name, forField: "name")
     try customer.set(email, forField: "email")
+
     return customer
   }
 
@@ -601,30 +606,46 @@ struct ComplexMessagesExample {
     customerId: String,
     total: Double
   ) throws -> DynamicMessage {
-    let orderDesc = fileDescriptor.messages.values.first { $0.name == "Order" }!
+    guard let orderDesc = fileDescriptor.messages.values.first(where: { $0.name == "Order" }) else {
+      throw NSError(domain: "Example", code: 1, userInfo: [NSLocalizedDescriptionKey: "Order descriptor not found"])
+    }
+
     var order = factory.createMessage(from: orderDesc)
     try order.set(customerId, forField: "customer_id")
     try order.set(total, forField: "total")
+
     return order
   }
 
-  private static func createDashboard(factory: MessageFactory, fileDescriptor: FileDescriptor, name: String) throws
-    -> DynamicMessage
-  {
-    let dashboardDesc = fileDescriptor.messages.values.first { $0.name == "Dashboard" }!
+  private static func createDashboard(
+    factory: MessageFactory,
+    fileDescriptor: FileDescriptor,
+    name: String
+  ) throws -> DynamicMessage {
+    guard let dashboardDesc = fileDescriptor.messages.values.first(where: { $0.name == "Dashboard" }) else {
+      throw NSError(domain: "Example", code: 1, userInfo: [NSLocalizedDescriptionKey: "Dashboard descriptor not found"])
+    }
+
     var dashboard = factory.createMessage(from: dashboardDesc)
     try dashboard.set(name, forField: "name")
-    try dashboard.set([], forField: "data_sources")
+
     return dashboard
   }
 
-  private static func createMetric(factory: MessageFactory, fileDescriptor: FileDescriptor, name: String, value: Double)
-    throws -> DynamicMessage
-  {
-    let metricDesc = fileDescriptor.messages.values.first { $0.name == "Metric" }!
+  private static func createMetric(
+    factory: MessageFactory,
+    fileDescriptor: FileDescriptor,
+    name: String,
+    value: Double
+  ) throws -> DynamicMessage {
+    guard let metricDesc = fileDescriptor.messages.values.first(where: { $0.name == "Metric" }) else {
+      throw NSError(domain: "Example", code: 1, userInfo: [NSLocalizedDescriptionKey: "Metric descriptor not found"])
+    }
+
     var metric = factory.createMessage(from: metricDesc)
     try metric.set(name, forField: "name")
     try metric.set(value, forField: "value")
+
     return metric
   }
 
@@ -633,19 +654,32 @@ struct ComplexMessagesExample {
     fileDescriptor: FileDescriptor,
     metrics: [DynamicMessage]
   ) throws -> DynamicMessage {
-    let timeSeriesDesc = fileDescriptor.messages.values.first { $0.name == "TimeSeries" }!
+    guard let timeSeriesDesc = fileDescriptor.messages.values.first(where: { $0.name == "TimeSeries" }) else {
+      throw NSError(
+        domain: "Example",
+        code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "TimeSeries descriptor not found"]
+      )
+    }
+
     var timeSeries = factory.createMessage(from: timeSeriesDesc)
     try timeSeries.set(metrics, forField: "metrics")
+
     return timeSeries
   }
 
-  private static func createDocument(factory: MessageFactory, fileDescriptor: FileDescriptor, title: String) throws
-    -> DynamicMessage
-  {
-    let documentDesc = fileDescriptor.messages.values.first { $0.name == "Document" }!
+  private static func createDocument(
+    factory: MessageFactory,
+    fileDescriptor: FileDescriptor,
+    title: String
+  ) throws -> DynamicMessage {
+    guard let documentDesc = fileDescriptor.messages.values.first(where: { $0.name == "Document" }) else {
+      throw NSError(domain: "Example", code: 1, userInfo: [NSLocalizedDescriptionKey: "Document descriptor not found"])
+    }
+
     var document = factory.createMessage(from: documentDesc)
     try document.set(title, forField: "title")
-    try document.set([], forField: "sections")
+
     return document
   }
 
@@ -655,10 +689,14 @@ struct ComplexMessagesExample {
     title: String,
     content: String
   ) throws -> DynamicMessage {
-    let sectionDesc = fileDescriptor.messages.values.first { $0.name == "Section" }!
+    guard let sectionDesc = fileDescriptor.messages.values.first(where: { $0.name == "Section" }) else {
+      throw NSError(domain: "Example", code: 1, userInfo: [NSLocalizedDescriptionKey: "Section descriptor not found"])
+    }
+
     var section = factory.createMessage(from: sectionDesc)
     try section.set(title, forField: "title")
     try section.set(content, forField: "content")
+
     return section
   }
 
@@ -668,9 +706,9 @@ struct ComplexMessagesExample {
     let indent = String(repeating: "  ", count: level)
     let name = try category.get(forField: "name") as? String ?? "Unknown"
     let categoryLevel = try category.get(forField: "level") as? Int32 ?? 0
+
     print("    \(indent)• \(name) (Level \(categoryLevel))")
 
-    // Print subcategories recursively
     if let subcategories = try category.get(forField: "subcategories") as? [DynamicMessage] {
       for subcategory in subcategories {
         try printCategoryHierarchy(subcategory, level: level + 1)
@@ -682,18 +720,18 @@ struct ComplexMessagesExample {
     if let category = try product.get(forField: "category") as? DynamicMessage {
       return try category.get(forField: "name") as? String ?? "Unknown"
     }
-    return "No Category"
+    return "No category"
   }
 
   private static func getCustomerName(_ order: DynamicMessage) throws -> String {
     if let customer = try order.get(forField: "customer") as? DynamicMessage {
       return try customer.get(forField: "name") as? String ?? "Unknown"
     }
-    return "No Customer"
+    return "No customer"
   }
 
   private static func getOrderProductCount(_ order: DynamicMessage) throws -> Int {
-    if let products = try order.get(forField: "products") as? [DynamicMessage] {
+    if let products = try order.get(forField: "products") as? [Any] {
       return products.count
     }
     return 0
@@ -702,42 +740,67 @@ struct ComplexMessagesExample {
   private static func analyzeOrder(_ order: DynamicMessage) throws -> [String: String] {
     let customerId = try order.get(forField: "customer_id") as? String ?? "Unknown"
     let total = try order.get(forField: "total") as? Double ?? 0.0
+    let productCount = try getOrderProductCount(order)
 
     return [
       "Customer ID": customerId,
-      "Total Amount": String(format: "$%.2f", total),
-      "Status": "Analyzed",
+      "Total Amount": String(format: "%.2f", total),
+      "Product Count": "\(productCount)",
+      "Customer Name": try getCustomerName(order),
     ]
   }
 
   private static func analyzeDashboard(_ dashboard: DynamicMessage) throws -> [String: String] {
     let name = try dashboard.get(forField: "name") as? String ?? "Unknown"
-    let dataSources = try dashboard.get(forField: "data_sources") as? [DynamicMessage] ?? []
+    var metricCount = 0
 
-    var totalMetrics = 0
-    for dataSource in dataSources {
-      if let metrics = try dataSource.get(forField: "metrics") as? [DynamicMessage] {
-        totalMetrics += metrics.count
+    if let dataSources = try dashboard.get(forField: "data_sources") as? [DynamicMessage] {
+      for dataSource in dataSources {
+        if let metrics = try dataSource.get(forField: "metrics") as? [Any] {
+          metricCount += metrics.count
+        }
       }
     }
 
     return [
       "Dashboard Name": name,
-      "Data Sources": "\(dataSources.count)",
-      "Total Metrics": "\(totalMetrics)",
+      "Total Metrics": "\(metricCount)",
+      "Data Sources": "\(try getArrayCount(dashboard, field: "data_sources"))",
     ]
   }
 
   private static func performComplexValidation(_ document: DynamicMessage) throws -> [String: String] {
     let title = try document.get(forField: "title") as? String ?? ""
-    let sections = try document.get(forField: "sections") as? [DynamicMessage] ?? []
+    let sectionCount = try getArrayCount(document, field: "sections")
 
-    let validationResults: [String: String] = [
-      "Title Valid": title.isEmpty ? "❌ Empty" : "✅ Valid",
-      "Sections Count": "\(sections.count)",
-      "Cross-References": "✅ Valid",
-      "Overall Status": "✅ Passed",
-    ]
+    var validationResults: [String: String] = [:]
+
+    // Check title length
+    if title.count < 5 {
+      validationResults["Title Length"] = "❌ Too short"
+    } else {
+      validationResults["Title Length"] = "✅ Valid"
+    }
+
+    // Check section count
+    if sectionCount == 0 {
+      validationResults["Section Count"] = "❌ No sections"
+    } else {
+      validationResults["Section Count"] = "✅ \(sectionCount) sections"
+    }
+
+    // Check section content
+    var hasContent = false
+    if let sections = try document.get(forField: "sections") as? [DynamicMessage] {
+      for section in sections {
+        if let content = try section.get(forField: "content") as? String, !content.isEmpty {
+          hasContent = true
+          break
+        }
+      }
+    }
+
+    validationResults["Content Check"] = hasContent ? "✅ Has content" : "❌ No content"
 
     return validationResults
   }
