@@ -1,18 +1,18 @@
 /**
  * SwiftProtoReflect Type Registry Example
  *
- * Этот пример демонстрирует работу с реестром типов Protocol Buffers:
+ * This example demonstrates working with Protocol Buffers type registry:
  *
- * 1. Создание типов и работа с TypeRegistry
- * 2. Поиск типов по имени
- * 3. Динамическое создание сообщений
- * 4. Анализ типов и их структуры
- * 5. Работа с метаданными типов
+ * 1. Creating types and working with TypeRegistry
+ * 2. Looking up types by name
+ * 3. Dynamic message creation
+ * 4. Type analysis and structure exploration
+ * 5. Working with type metadata
  *
- * Основные концепции:
- * - TypeRegistry как каталог типов
+ * Key concepts:
+ * - TypeRegistry as type catalog
  * - Dynamic type resolution
- * - Type introspection и анализ
+ * - Type introspection and analysis
  * - Message factory pattern
  * - Type metadata exploration
  */
@@ -25,31 +25,31 @@ struct TypeRegistryExample {
   static func run() throws {
     ExampleUtils.printHeader("Type Registry Management")
 
-    try step1UbasicTypeCreationAndLookup()
-    try step2UdynamicMessageCreation()
-    try step3UtypeIntrospectionAnalysis()
-    try step4UregistryOperationsDemo()
-    try step5UmessageFactoryPatterns()
+    try step1_basicTypeCreationAndLookup()
+    try step2_dynamicMessageCreation()
+    try step3_typeIntrospectionAnalysis()
+    try step4_registryOperationsDemo()
+    try step5_messageFactoryPatterns()
 
-    print("\n🎉 Type Registry управление успешно изучено!")
+    print("\n🎉 Type Registry management successfully explored!")
 
-    print("\n🔍 Что попробовать дальше:")
-    print("  • Далее изучите: file-loading.swift - загрузка файлов дескрипторов")
-    print("  • Сравните: dependency-resolution.swift - разрешение зависимостей")
-    print("  • Продвинутые: schema-validation.swift - валидация схем")
+    print("\n🔍 What to try next:")
+    print("  • Next explore: file-loading.swift - loading descriptor files")
+    print("  • Compare: dependency-resolution.swift - dependency resolution")
+    print("  • Advanced: schema-validation.swift - schema validation")
   }
 
-  private static func step1UbasicTypeCreationAndLookup() throws {
+  private static func step1_basicTypeCreationAndLookup() throws {
     ExampleUtils.printStep(1, "Basic type creation and lookup")
 
-    print("  🏗 Создание типов и базовые операции с Registry...")
+    print("  🏗 Creating types and basic Registry operations...")
 
     let _ = TypeRegistry()  // Registry示例
 
     // Create business domain types
     let businessTypes = try createBusinessTypes()
 
-    print("  📝 Созданные типы:")
+    print("  📝 Created types:")
     for (fileName, messages) in businessTypes {
       print("    📁 \(fileName):")
       for message in messages {
@@ -61,13 +61,13 @@ struct TypeRegistryExample {
           print("        • \(field.name): \(field.type)\(repeated)")
         }
         if message.fields.count > 3 {
-          print("        ... и ещё \(message.fields.count - 3) полей")
+          print("        ... and \(message.fields.count - 3) more fields")
         }
       }
     }
 
     // Registry lookup simulation
-    print("  🔍 Симуляция поиска типов:")
+    print("  🔍 Type lookup simulation:")
 
     // Simulate what registry.findMessage would do
     let allMessages = businessTypes.flatMap { $0.messages }
@@ -94,7 +94,7 @@ struct TypeRegistryExample {
     }
   }
 
-  private static func step2UdynamicMessageCreation() throws {
+  private static func step2_dynamicMessageCreation() throws {
     ExampleUtils.printStep(2, "Dynamic message creation")
 
     print("  🎯 Динамическое создание сообщений по типам...")
@@ -155,7 +155,7 @@ struct TypeRegistryExample {
     print("    Creation rate: \(String(format: "%.1f", creationRate)) messages/sec")
   }
 
-  private static func step3UtypeIntrospectionAnalysis() throws {
+  private static func step3_typeIntrospectionAnalysis() throws {
     ExampleUtils.printStep(3, "Type introspection and analysis")
 
     print("  🔬 Глубокий анализ структуры типов...")
@@ -224,7 +224,7 @@ struct TypeRegistryExample {
     }
   }
 
-  private static func step4UregistryOperationsDemo() throws {
+  private static func step4_registryOperationsDemo() throws {
     ExampleUtils.printStep(4, "Registry operations demonstration")
 
     print("  🗂 Демонстрация операций с реестром типов...")
@@ -287,7 +287,7 @@ struct TypeRegistryExample {
     print("    Processing rate: \(String(format: "%.1f", processingRate)) types/sec")
   }
 
-  private static func step5UmessageFactoryPatterns() throws {
+  private static func step5_messageFactoryPatterns() throws {
     ExampleUtils.printStep(5, "Message factory patterns")
 
     print("  🏭 Продвинутые паттерны Message Factory...")
