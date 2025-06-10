@@ -2,14 +2,14 @@
  * AnyHandler.swift
  * SwiftProtoReflect
  *
- * Обработчик для google.protobuf.Any - поддержка type erasure для произвольных типизированных сообщений
+ * Handler for google.protobuf.Any - type erasure support for arbitrary typed messages
  */
 
 import Foundation
 
 // MARK: - Any Handler
 
-/// Обработчик для google.protobuf.Any.
+/// Handler for google.protobuf.Any.
 public struct AnyHandler: WellKnownTypeHandler {
 
   public static let handledTypeName = WellKnownTypeNames.any
@@ -17,27 +17,27 @@ public struct AnyHandler: WellKnownTypeHandler {
 
   // MARK: - Any Representation
 
-  /// Специализированное представление Any.
+  /// Specialized representation of Any.
   ///
-  /// Any содержит произвольное сериализованное сообщение с URL типа для type erasure.
+  /// Any contains an arbitrary serialized message with type URL for type erasure.
   public struct AnyValue: Equatable, CustomStringConvertible {
 
     // MARK: - Properties
 
-    /// URL типа, который описывает тип сериализованного сообщения.
-    /// Формат: type.googleapis.com/package.MessageType
+    /// Type URL that describes the type of the serialized message.
+    /// Format: type.googleapis.com/package.MessageType
     public let typeUrl: String
 
-    /// Сериализованные данные сообщения.
+    /// Serialized message data.
     public let value: Data
 
     // MARK: - Initialization
 
-    /// Создает AnyValue с указанным типом URL и данными.
+    /// Creates AnyValue with specified type URL and data.
     /// - Parameters:
-    ///   - typeUrl: URL типа сообщения
-    ///   - value: Сериализованные данные сообщения
-    /// - Throws: WellKnownTypeError если type URL невалиден
+    ///   - typeUrl: Message type URL
+    ///   - value: Serialized message data
+    /// - Throws: WellKnownTypeError if type URL is invalid
     public init(typeUrl: String, value: Data) throws {
       guard Self.isValidTypeUrl(typeUrl) else {
         throw WellKnownTypeError.invalidData(
@@ -49,27 +49,27 @@ public struct AnyHandler: WellKnownTypeHandler {
       self.value = value
     }
 
-    /// Создает AnyValue из произвольного DynamicMessage.
-    /// - Parameter message: Динамическое сообщение для упаковки
-    /// - Returns: AnyValue содержащий упакованное сообщение
-    /// - Throws: WellKnownTypeError если упаковка неуспешна
+    /// Creates AnyValue from arbitrary DynamicMessage.
+    /// - Parameter message: Dynamic message to pack
+    /// - Returns: AnyValue containing packed message
+    /// - Throws: WellKnownTypeError if packing fails
     public static func pack(_ message: DynamicMessage) throws -> AnyValue {
-      // Создаем type URL из дескриптора сообщения
+      // Create type URL from message descriptor
       let typeUrl = Self.createTypeUrl(for: message.descriptor.fullName)
 
-      // Сериализуем сообщение в бинарный формат
+      // Serialize message to binary format
       let serializer = BinarySerializer()
       let serializedData = try serializer.serialize(message)
 
       return try AnyValue(typeUrl: typeUrl, value: serializedData)
     }
 
-    /// Распаковывает Any в конкретный тип сообщения.
-    /// - Parameter targetDescriptor: Дескриптор целевого типа
-    /// - Returns: Распакованное динамическое сообщение
-    /// - Throws: WellKnownTypeError если распаковка неуспешна
+    /// Unpacks Any to concrete message type.
+    /// - Parameter targetDescriptor: Target type descriptor
+    /// - Returns: Unpacked dynamic message
+    /// - Throws: WellKnownTypeError if unpacking fails
     public func unpack(to targetDescriptor: MessageDescriptor) throws -> DynamicMessage {
-      // Проверяем что type_url соответствует ожидаемому типу
+      // Check that type_url matches expected type
       let expectedTypeName = targetDescriptor.fullName
       let actualTypeName = getTypeName()
 
@@ -81,9 +81,9 @@ public struct AnyHandler: WellKnownTypeHandler {
         )
       }
 
-      // Десериализуем данные в сообщение
+      // Deserialize data to message
       if value.isEmpty {
-        // Возвращаем пустое сообщение для пустых данных
+        // Return empty message for empty data
         let factory = MessageFactory()
         return factory.createMessage(from: targetDescriptor)
       }
@@ -93,24 +93,24 @@ public struct AnyHandler: WellKnownTypeHandler {
       }
     }
 
-    /// Извлекает имя типа сообщения из type URL.
-    /// - Returns: Полное имя типа (например, "google.protobuf.Duration")
+    /// Extracts message type name from type URL.
+    /// - Returns: Full type name (e.g., "google.protobuf.Duration")
     public func getTypeName() -> String {
       return Self.extractTypeName(from: typeUrl)
     }
 
     // MARK: - URL Utilities
 
-    /// Создает type URL для указанного имени типа.
-    /// - Parameter typeName: Полное имя типа
-    /// - Returns: Корректно сформированный type URL
+    /// Creates type URL for specified type name.
+    /// - Parameter typeName: Full type name
+    /// - Returns: Correctly formatted type URL
     internal static func createTypeUrl(for typeName: String) -> String {
       return "type.googleapis.com/\(typeName)"
     }
 
-    /// Извлекает имя типа из type URL.
-    /// - Parameter typeUrl: URL типа
-    /// - Returns: Имя типа
+    /// Extracts type name from type URL.
+    /// - Parameter typeUrl: Type URL
+    /// - Returns: Type name
     internal static func extractTypeName(from typeUrl: String) -> String {
       if let lastSlashIndex = typeUrl.lastIndex(of: "/") {
         return String(typeUrl[typeUrl.index(after: lastSlashIndex)...])
@@ -118,27 +118,27 @@ public struct AnyHandler: WellKnownTypeHandler {
       return typeUrl
     }
 
-    /// Проверяет валидность type URL.
-    /// - Parameter typeUrl: URL для проверки
-    /// - Returns: true если URL валиден
+    /// Validates type URL.
+    /// - Parameter typeUrl: URL to validate
+    /// - Returns: true if URL is valid
     internal static func isValidTypeUrl(_ typeUrl: String) -> Bool {
-      // Проверяем базовый формат
+      // Check basic format
       guard !typeUrl.isEmpty else { return false }
 
-      // Проверяем что есть хотя бы одна косая черта
+      // Check that there is at least one slash
       guard let slashIndex = typeUrl.lastIndex(of: "/") else { return false }
 
-      // Проверяем что есть домен перед косой чертой (не может начинаться с "/")
+      // Check that there is domain before slash (cannot start with "/")
       guard slashIndex != typeUrl.startIndex else { return false }
 
-      // Извлекаем домен и имя типа
+      // Extract domain and type name
       let domain = String(typeUrl[..<slashIndex])
       let typeName = String(typeUrl[typeUrl.index(after: slashIndex)...])
 
-      // Домен не должен быть пустым и должен содержать хотя бы одну точку
+      // Domain must not be empty and should contain at least one dot
       guard !domain.isEmpty && domain.contains(".") else { return false }
 
-      // Имя типа не должно быть пустым и должно содержать точку для package.Type
+      // Type name must not be empty and should contain dot for package.Type
       guard !typeName.isEmpty && typeName.contains(".") else { return false }
 
       return true
@@ -160,7 +160,7 @@ public struct AnyHandler: WellKnownTypeHandler {
   // MARK: - Handler Implementation
 
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
-    // Проверяем тип сообщения
+    // Check message type
     guard message.descriptor.fullName == handledTypeName else {
       throw WellKnownTypeError.invalidData(
         typeName: handledTypeName,
@@ -168,7 +168,7 @@ public struct AnyHandler: WellKnownTypeHandler {
       )
     }
 
-    // Извлекаем поля type_url и value
+    // Extract type_url and value fields
     guard let typeUrl = try message.get(forField: "type_url") as? String else {
       throw WellKnownTypeError.invalidData(
         typeName: handledTypeName,
@@ -195,14 +195,14 @@ public struct AnyHandler: WellKnownTypeHandler {
       )
     }
 
-    // Создаем дескриптор для Any
+    // Create descriptor for Any
     let anyDescriptor = createAnyDescriptor()
 
-    // Создаем сообщение
+    // Create message
     let factory = MessageFactory()
     var message = factory.createMessage(from: anyDescriptor)
 
-    // Устанавливаем поля
+    // Set fields
     try message.set(anyValue.typeUrl, forField: "type_url")
     try message.set(anyValue.value, forField: "value")
 
@@ -212,28 +212,28 @@ public struct AnyHandler: WellKnownTypeHandler {
   public static func validate(_ specialized: Any) -> Bool {
     guard let anyValue = specialized as? AnyValue else { return false }
 
-    // Проверяем валидность type URL
+    // Check type URL validity
     return AnyValue.isValidTypeUrl(anyValue.typeUrl)
   }
 
   // MARK: - Descriptor Creation
 
-  /// Создает дескриптор для google.protobuf.Any.
-  /// - Returns: MessageDescriptor для Any.
+  /// Creates descriptor for google.protobuf.Any.
+  /// - Returns: MessageDescriptor for Any.
   private static func createAnyDescriptor() -> MessageDescriptor {
-    // Создаем файл дескриптор
+    // Create file descriptor
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/any.proto",
       package: "google.protobuf"
     )
 
-    // Создаем дескриптор сообщения Any
+    // Create Any message descriptor
     var messageDescriptor = MessageDescriptor(
       name: "Any",
       parent: fileDescriptor
     )
 
-    // Добавляем поле type_url
+    // Add type_url field
     let typeUrlField = FieldDescriptor(
       name: "type_url",
       number: 1,
@@ -241,7 +241,7 @@ public struct AnyHandler: WellKnownTypeHandler {
     )
     messageDescriptor.addField(typeUrlField)
 
-    // Добавляем поле value
+    // Add value field
     let valueField = FieldDescriptor(
       name: "value",
       number: 2,
@@ -249,7 +249,7 @@ public struct AnyHandler: WellKnownTypeHandler {
     )
     messageDescriptor.addField(valueField)
 
-    // Регистрируем в файле
+    // Register in file
     fileDescriptor.addMessage(messageDescriptor)
 
     return messageDescriptor
@@ -260,18 +260,18 @@ public struct AnyHandler: WellKnownTypeHandler {
 
 extension DynamicMessage {
 
-  /// Упаковывает DynamicMessage в google.protobuf.Any.
-  /// - Returns: DynamicMessage представляющий Any.
+  /// Packs DynamicMessage into google.protobuf.Any.
+  /// - Returns: DynamicMessage representing Any.
   /// - Throws: WellKnownTypeError.
   public func packIntoAny() throws -> DynamicMessage {
     let anyValue = try AnyHandler.AnyValue.pack(self)
     return try AnyHandler.createDynamic(from: anyValue)
   }
 
-  /// Распаковывает google.protobuf.Any в DynamicMessage.
-  /// - Parameter targetDescriptor: Дескриптор целевого типа
-  /// - Returns: Распакованное сообщение.
-  /// - Throws: WellKnownTypeError если сообщение не является Any или типы не совпадают.
+  /// Unpacks google.protobuf.Any to DynamicMessage.
+  /// - Parameter targetDescriptor: Target type descriptor
+  /// - Returns: Unpacked message.
+  /// - Throws: WellKnownTypeError if message is not Any or types don't match.
   public func unpackFromAny(to targetDescriptor: MessageDescriptor) throws -> DynamicMessage {
     guard descriptor.fullName == WellKnownTypeNames.any else {
       throw WellKnownTypeError.invalidData(
@@ -284,10 +284,10 @@ extension DynamicMessage {
     return try anyValue.unpack(to: targetDescriptor)
   }
 
-  /// Проверяет содержит ли Any сообщение указанного типа.
-  /// - Parameter typeName: Полное имя типа для проверки
-  /// - Returns: true если Any содержит сообщение указанного типа
-  /// - Throws: WellKnownTypeError если сообщение не является Any
+  /// Checks if Any contains message of specified type.
+  /// - Parameter typeName: Full type name to check
+  /// - Returns: true if Any contains message of specified type
+  /// - Throws: WellKnownTypeError if message is not Any
   public func isAnyOf(typeName: String) throws -> Bool {
     guard descriptor.fullName == WellKnownTypeNames.any else {
       throw WellKnownTypeError.invalidData(
@@ -300,9 +300,9 @@ extension DynamicMessage {
     return anyValue.getTypeName() == typeName
   }
 
-  /// Получает имя типа содержащегося в Any сообщения.
-  /// - Returns: Полное имя типа сообщения
-  /// - Throws: WellKnownTypeError если сообщение не является Any
+  /// Gets type name of message contained in Any.
+  /// - Returns: Full type name of the message
+  /// - Throws: WellKnownTypeError if message is not Any
   public func getAnyTypeName() throws -> String {
     guard descriptor.fullName == WellKnownTypeNames.any else {
       throw WellKnownTypeError.invalidData(
@@ -320,10 +320,10 @@ extension DynamicMessage {
 
 extension AnyHandler.AnyValue {
 
-  /// Распаковывает Any используя TypeRegistry для разрешения типов.
-  /// - Parameter registry: Реестр типов для разрешения дескрипторов
-  /// - Returns: Распакованное динамическое сообщение
-  /// - Throws: WellKnownTypeError если тип не найден или десериализация неуспешна
+  /// Unpacks Any using TypeRegistry for type resolution.
+  /// - Parameter registry: Type registry for descriptor resolution
+  /// - Returns: Unpacked dynamic message
+  /// - Throws: WellKnownTypeError if type not found or deserialization fails
   public func unpack(using registry: TypeRegistry) throws -> DynamicMessage {
     let typeName = getTypeName()
 

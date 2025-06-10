@@ -2,8 +2,8 @@
  * WellKnownTypes.swift
  * SwiftProtoReflect
  *
- * Специализированная поддержка для стандартных типов Protocol Buffers (google.protobuf.*)
- * Обеспечивает оптимизированную работу с часто используемыми типами.
+ * Specialized support for standard Protocol Buffers types (google.protobuf.*)
+ * Provides optimized work with frequently used types.
  */
 
 import Foundation
@@ -11,7 +11,7 @@ import SwiftProtobuf
 
 // MARK: - Well-Known Type Names
 
-/// Константы для имен стандартных типов Protocol Buffers.
+/// Constants for standard Protocol Buffers type names.
 public struct WellKnownTypeNames {
 
   // MARK: - Critical Types (Phase 1)
@@ -49,7 +49,7 @@ public struct WellKnownTypeNames {
 
   // MARK: - Collections
 
-  /// Все поддерживаемые well-known types.
+  /// All supported well-known types.
   public static let allTypes: Set<String> = [
     timestamp, duration, empty,
     fieldMask, structType, value,
@@ -74,19 +74,19 @@ public struct WellKnownTypeNames {
 
 // MARK: - Well-Known Type Detector
 
-/// Утилиты для определения и работы с well-known types.
+/// Utilities for detecting and working with well-known types.
 public struct WellKnownTypeDetector {
 
-  /// Проверяет, является ли тип well-known.
-  /// - Parameter typeName: Полное имя типа.
-  /// - Returns: true если тип является well-known.
+  /// Checks if type is well-known.
+  /// - Parameter typeName: Full type name.
+  /// - Returns: true if type is well-known.
   public static func isWellKnownType(_ typeName: String) -> Bool {
     return WellKnownTypeNames.allTypes.contains(typeName)
   }
 
-  /// Определяет фазу поддержки типа.
-  /// - Parameter typeName: Полное имя типа.
-  /// - Returns: Фаза поддержки или nil если тип не well-known.
+  /// Determines type support phase.
+  /// - Parameter typeName: Full type name.
+  /// - Returns: Support phase or nil if type is not well-known.
   public static func getSupportPhase(for typeName: String) -> WellKnownSupportPhase? {
     if WellKnownTypeNames.criticalTypes.contains(typeName) {
       return .critical
@@ -100,9 +100,9 @@ public struct WellKnownTypeDetector {
     return nil
   }
 
-  /// Получает простое имя типа без package prefix.
-  /// - Parameter typeName: Полное имя типа.
-  /// - Returns: Простое имя типа.
+  /// Gets simple type name without package prefix.
+  /// - Parameter typeName: Full type name.
+  /// - Returns: Simple type name.
   public static func getSimpleName(for typeName: String) -> String? {
     guard isWellKnownType(typeName) else { return nil }
     return String(typeName.split(separator: ".").last ?? "")
@@ -111,13 +111,13 @@ public struct WellKnownTypeDetector {
 
 // MARK: - Support Phase
 
-/// Фазы поддержки well-known types.
+/// Well-known types support phases.
 public enum WellKnownSupportPhase: Int, CaseIterable {
   case critical = 1  // Timestamp, Duration, Empty
   case important = 2  // FieldMask, Struct, Value
   case advanced = 3  // Any, ListValue, NullValue
 
-  /// Человекочитаемое описание фазы.
+  /// Human-readable phase description.
   public var description: String {
     switch self {
     case .critical:
@@ -129,7 +129,7 @@ public enum WellKnownSupportPhase: Int, CaseIterable {
     }
   }
 
-  /// Типы, включенные в эту фазу.
+  /// Types included in this phase.
   public var includedTypes: Set<String> {
     switch self {
     case .critical:
@@ -144,51 +144,51 @@ public enum WellKnownSupportPhase: Int, CaseIterable {
 
 // MARK: - Well-Known Type Handler Protocol
 
-/// Протокол для обработки специфичных well-known types.
+/// Protocol for handling specific well-known types.
 public protocol WellKnownTypeHandler {
 
-  /// Тип, который обрабатывает этот handler.
+  /// Type that this handler processes.
   static var handledTypeName: String { get }
 
-  /// Фаза поддержки.
+  /// Support phase.
   static var supportPhase: WellKnownSupportPhase { get }
 
-  /// Создает специализированное представление из DynamicMessage.
-  /// - Parameter message: Динамическое сообщение.
-  /// - Returns: Специализированное представление.
-  /// - Throws: WellKnownTypeError если конвертация невозможна.
+  /// Creates specialized representation from DynamicMessage.
+  /// - Parameter message: Dynamic message.
+  /// - Returns: Specialized representation.
+  /// - Throws: WellKnownTypeError if conversion is impossible.
   static func createSpecialized(from message: DynamicMessage) throws -> Any
 
-  /// Создает DynamicMessage из специализированного представления.
-  /// - Parameter specialized: Специализированное представление.
-  /// - Returns: Динамическое сообщение.
-  /// - Throws: WellKnownTypeError если конвертация невозможна.
+  /// Creates DynamicMessage from specialized representation.
+  /// - Parameter specialized: Specialized representation.
+  /// - Returns: Dynamic message.
+  /// - Throws: WellKnownTypeError if conversion is impossible.
   static func createDynamic(from specialized: Any) throws -> DynamicMessage
 
-  /// Выполняет валидацию специализированного объекта.
-  /// - Parameter specialized: Объект для валидации.
-  /// - Returns: true если объект валиден.
+  /// Performs validation of specialized object.
+  /// - Parameter specialized: Object to validate.
+  /// - Returns: true if object is valid.
   static func validate(_ specialized: Any) -> Bool
 }
 
 // MARK: - Well-Known Type Errors
 
-/// Ошибки при работе с well-known types.
+/// Errors when working with well-known types.
 public enum WellKnownTypeError: Error, Equatable, CustomStringConvertible {
 
-  /// Тип не поддерживается.
+  /// Type is not supported.
   case unsupportedType(String)
 
-  /// Ошибка конвертации между типами.
+  /// Conversion error between types.
   case conversionFailed(from: String, to: String, reason: String)
 
-  /// Невалидные данные для типа.
+  /// Invalid data for type.
   case invalidData(typeName: String, reason: String)
 
-  /// Handler для типа не найден.
+  /// Handler for type not found.
   case handlerNotFound(String)
 
-  /// Ошибка валидации.
+  /// Validation error.
   case validationFailed(typeName: String, reason: String)
 
   public var description: String {
@@ -209,25 +209,25 @@ public enum WellKnownTypeError: Error, Equatable, CustomStringConvertible {
 
 // MARK: - Well-Known Types Registry
 
-/// Реестр обработчиков well-known types.
+/// Registry of well-known type handlers.
 public final class WellKnownTypesRegistry {
 
   /// Singleton instance.
   public static let shared = WellKnownTypesRegistry()
 
-  /// Зарегистрированные обработчики.
+  /// Registered handlers.
   private var handlers: [String: WellKnownTypeHandler.Type] = [:]
 
-  /// Mutex для thread-safety.
+  /// Mutex for thread-safety.
   private let handlersMutex = NSLock()
 
   private init() {
-    // Регистрируем базовые обработчики
+    // Register basic handlers
     registerDefaultHandlers()
   }
 
-  /// Регистрирует обработчик для типа.
-  /// - Parameter handlerType: Тип обработчика.
+  /// Registers handler for type.
+  /// - Parameter handlerType: Handler type.
   public func register<T: WellKnownTypeHandler>(_ handlerType: T.Type) {
     handlersMutex.lock()
     defer { handlersMutex.unlock() }
@@ -235,9 +235,9 @@ public final class WellKnownTypesRegistry {
     handlers[handlerType.handledTypeName] = handlerType
   }
 
-  /// Получает обработчик для типа.
-  /// - Parameter typeName: Имя типа.
-  /// - Returns: Обработчик или nil если не найден.
+  /// Gets handler for type.
+  /// - Parameter typeName: Type name.
+  /// - Returns: Handler or nil if not found.
   public func getHandler(for typeName: String) -> WellKnownTypeHandler.Type? {
     handlersMutex.lock()
     defer { handlersMutex.unlock() }
@@ -245,11 +245,11 @@ public final class WellKnownTypesRegistry {
     return handlers[typeName]
   }
 
-  /// Создает специализированный объект из DynamicMessage.
-  /// - Parameters:.
-  ///   - message: Динамическое сообщение.
-  ///   - typeName: Имя well-known типа.
-  /// - Returns: Специализированный объект.
+  /// Creates specialized object from DynamicMessage.
+  /// - Parameters:
+  ///   - message: Dynamic message.
+  ///   - typeName: Well-known type name.
+  /// - Returns: Specialized object.
   /// - Throws: WellKnownTypeError.
   public func createSpecialized(from message: DynamicMessage, typeName: String) throws -> Any {
     guard let handler = getHandler(for: typeName) else {
@@ -259,11 +259,11 @@ public final class WellKnownTypesRegistry {
     return try handler.createSpecialized(from: message)
   }
 
-  /// Создает DynamicMessage из специализированного объекта.
-  /// - Parameters:.
-  ///   - specialized: Специализированный объект.
-  ///   - typeName: Имя well-known типа.
-  /// - Returns: Динамическое сообщение.
+  /// Creates DynamicMessage from specialized object.
+  /// - Parameters:
+  ///   - specialized: Specialized object.
+  ///   - typeName: Well-known type name.
+  /// - Returns: Dynamic message.
   /// - Throws: WellKnownTypeError.
   public func createDynamic(from specialized: Any, typeName: String) throws -> DynamicMessage {
     guard let handler = getHandler(for: typeName) else {
@@ -273,8 +273,8 @@ public final class WellKnownTypesRegistry {
     return try handler.createDynamic(from: specialized)
   }
 
-  /// Получает все зарегистрированные типы.
-  /// - Returns: Набор имен типов.
+  /// Gets all registered types.
+  /// - Returns: Set of type names.
   public func getRegisteredTypes() -> Set<String> {
     handlersMutex.lock()
     defer { handlersMutex.unlock() }
@@ -282,7 +282,7 @@ public final class WellKnownTypesRegistry {
     return Set(handlers.keys)
   }
 
-  /// Очищает все зарегистрированные обработчики.
+  /// Clears all registered handlers.
   public func clear() {
     handlersMutex.lock()
     defer { handlersMutex.unlock() }
@@ -292,7 +292,7 @@ public final class WellKnownTypesRegistry {
 
   // MARK: - Private Methods
 
-  /// Регистрирует обработчики по умолчанию.
+  /// Registers default handlers.
   private func registerDefaultHandlers() {
     // Critical types (Phase 1)
     register(TimestampHandler.self)

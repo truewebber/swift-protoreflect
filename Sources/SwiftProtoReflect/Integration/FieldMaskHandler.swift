@@ -2,7 +2,7 @@
  * FieldMaskHandler.swift
  * SwiftProtoReflect
  *
- * Обработчик для google.protobuf.FieldMask - маски полей для partial updates
+ * Handler for google.protobuf.FieldMask - field masks for partial updates
  */
 
 import Foundation
@@ -10,7 +10,7 @@ import SwiftProtobuf
 
 // MARK: - FieldMask Handler
 
-/// Обработчик для google.protobuf.FieldMask.
+/// Handler for google.protobuf.FieldMask.
 public struct FieldMaskHandler: WellKnownTypeHandler {
 
   public static let handledTypeName = WellKnownTypeNames.fieldMask
@@ -18,15 +18,15 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
 
   // MARK: - FieldMask Representation
 
-  /// Специализированное представление FieldMask.
+  /// Specialized representation of FieldMask.
   public struct FieldMaskValue: Equatable, CustomStringConvertible {
 
-    /// Пути к полям.
+    /// Field paths.
     public let paths: [String]
 
-    /// Инициализация с путями к полям.
-    /// - Parameter paths: Список путей к полям.
-    /// - Throws: WellKnownTypeError если пути невалидны.
+    /// Initialization with field paths.
+    /// - Parameter paths: List of field paths.
+    /// - Throws: WellKnownTypeError if paths are invalid.
     public init(paths: [String]) throws {
       for path in paths {
         guard Self.isValidPath(path) else {
@@ -41,35 +41,35 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
       self.paths = paths
     }
 
-    /// Инициализация с одним путем.
-    /// - Parameter path: Путь к полю.
-    /// - Throws: WellKnownTypeError если путь невалиден.
+    /// Initialization with single path.
+    /// - Parameter path: Field path.
+    /// - Throws: WellKnownTypeError if path is invalid.
     public init(path: String) throws {
       try self.init(paths: [path])
     }
 
-    /// Инициализация пустой маски.
+    /// Initialization of empty mask.
     public init() {
       self.paths = []
     }
 
-    /// Проверяет, содержит ли маска указанный путь.
-    /// - Parameter path: Путь для проверки.
-    /// - Returns: true если путь содержится в маске.
+    /// Checks if mask contains specified path.
+    /// - Parameter path: Path to check.
+    /// - Returns: true if path is contained in mask.
     public func contains(_ path: String) -> Bool {
       return paths.contains(path)
     }
 
-    /// Проверяет, содержит ли маска путь или его родительский путь.
-    /// - Parameter path: Путь для проверки.
-    /// - Returns: true если путь или его родитель содержится в маске.
+    /// Checks if mask contains path or its parent path.
+    /// - Parameter path: Path to check.
+    /// - Returns: true if path or its parent is contained in mask.
     public func covers(_ path: String) -> Bool {
-      // Проверяем точное совпадение
+      // Check exact match
       if paths.contains(path) {
         return true
       }
 
-      // Проверяем, есть ли родительский путь в маске
+      // Check if parent path is in mask
       let components = path.split(separator: ".").map(String.init)
       for i in 1..<components.count {
         let parentPath = components[0..<i].joined(separator: ".")
@@ -81,10 +81,10 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
       return false
     }
 
-    /// Добавляет путь к маске.
-    /// - Parameter path: Путь для добавления.
-    /// - Returns: Новая FieldMaskValue с добавленным путем.
-    /// - Throws: WellKnownTypeError если путь невалиден.
+    /// Adds path to mask.
+    /// - Parameter path: Path to add.
+    /// - Returns: New FieldMaskValue with added path.
+    /// - Throws: WellKnownTypeError if path is invalid.
     public func adding(_ path: String) throws -> FieldMaskValue {
       guard Self.isValidPath(path) else {
         throw WellKnownTypeError.invalidData(
@@ -100,40 +100,40 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
       return try FieldMaskValue(paths: newPaths)
     }
 
-    /// Удаляет путь из маски.
-    /// - Parameter path: Путь для удаления.
-    /// - Returns: Новая FieldMaskValue без указанного пути.
+    /// Removes path from mask.
+    /// - Parameter path: Path to remove.
+    /// - Returns: New FieldMaskValue without specified path.
     public func removing(_ path: String) -> FieldMaskValue {
       let newPaths = paths.filter { $0 != path }
-      return try! FieldMaskValue(paths: newPaths)  // Безопасно, так как удаляем валидные пути
+      return try! FieldMaskValue(paths: newPaths)  // Safe since removing valid paths
     }
 
-    /// Объединяет две маски полей.
-    /// - Parameter other: Другая маска для объединения.
-    /// - Returns: Новая FieldMaskValue с объединенными путями.
+    /// Merges two field masks.
+    /// - Parameter other: Other mask to merge.
+    /// - Returns: New FieldMaskValue with merged paths.
     public func union(_ other: FieldMaskValue) -> FieldMaskValue {
       let combinedPaths = Array(Set(paths + other.paths)).sorted()
-      return try! FieldMaskValue(paths: combinedPaths)  // Безопасно, так как объединяем валидные пути
+      return try! FieldMaskValue(paths: combinedPaths)  // Safe since merging valid paths
     }
 
-    /// Пересечение двух масок полей.
-    /// - Parameter other: Другая маска для пересечения.
-    /// - Returns: Новая FieldMaskValue с пересечением путей.
+    /// Intersection of two field masks.
+    /// - Parameter other: Other mask for intersection.
+    /// - Returns: New FieldMaskValue with intersected paths.
     public func intersection(_ other: FieldMaskValue) -> FieldMaskValue {
       let intersectionPaths = paths.filter { other.paths.contains($0) }
-      return try! FieldMaskValue(paths: intersectionPaths)  // Безопасно, так как фильтруем валидные пути
+      return try! FieldMaskValue(paths: intersectionPaths)  // Safe since filtering valid paths
     }
 
-    /// Пустая маска полей.
-    /// - Returns: FieldMaskValue без путей.
+    /// Empty field mask.
+    /// - Returns: FieldMaskValue without paths.
     public static func empty() -> FieldMaskValue {
       return FieldMaskValue()
     }
 
-    /// Маска со всеми указанными полями.
-    /// - Parameter paths: Пути к полям.
-    /// - Returns: FieldMaskValue с указанными путями.
-    /// - Throws: WellKnownTypeError если какой-либо путь невалиден.
+    /// Mask with all specified fields.
+    /// - Parameter paths: Field paths.
+    /// - Returns: FieldMaskValue with specified paths.
+    /// - Throws: WellKnownTypeError if any path is invalid.
     public static func with(paths: [String]) throws -> FieldMaskValue {
       return try FieldMaskValue(paths: paths)
     }
@@ -147,16 +147,16 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
 
     // MARK: - Validation
 
-    /// Валидация пути к полю.
-    /// - Parameter path: Путь для валидации.
-    /// - Returns: true если путь валиден.
+    /// Validates field path.
+    /// - Parameter path: Path to validate.
+    /// - Returns: true if path is valid.
     internal static func isValidPath(_ path: String) -> Bool {
-      // Путь не должен быть пустым
+      // Path must not be empty
       guard !path.isEmpty else {
         return false
       }
 
-      // Путь может содержать только буквы, цифры, точки и подчеркивания
+      // Path can only contain letters, digits, dots and underscores
       let allowedCharacters = CharacterSet.alphanumerics.union(.init(charactersIn: "._"))
       return path.unicodeScalars.allSatisfy { allowedCharacters.contains($0) }
     }
@@ -165,7 +165,7 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
   // MARK: - Handler Implementation
 
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
-    // Проверяем тип сообщения
+    // Check message type
     guard message.descriptor.fullName == handledTypeName else {
       throw WellKnownTypeError.invalidData(
         typeName: handledTypeName,
@@ -173,7 +173,7 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
       )
     }
 
-    // Извлекаем поле paths
+    // Extract paths field
     let pathsValue: [String]
 
     do {
@@ -197,7 +197,7 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
       )
     }
 
-    // Создаем FieldMaskValue
+    // Create FieldMaskValue
     return try FieldMaskValue(paths: pathsValue)
   }
 
@@ -210,14 +210,14 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
       )
     }
 
-    // Создаем дескриптор для FieldMask
+    // Create descriptor for FieldMask
     let fieldMaskDescriptor = createFieldMaskDescriptor()
 
-    // Создаем сообщение
+    // Create message
     let factory = MessageFactory()
     var message = factory.createMessage(from: fieldMaskDescriptor)
 
-    // Устанавливаем поле paths
+    // Set paths field
     try message.set(fieldMaskValue.paths, forField: "paths")
 
     return message
@@ -228,28 +228,28 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
       return false
     }
 
-    // Проверяем все пути в маске
+    // Check all paths in mask
     return fieldMaskValue.paths.allSatisfy { FieldMaskValue.isValidPath($0) }
   }
 
   // MARK: - Descriptor Creation
 
-  /// Создает дескриптор для google.protobuf.FieldMask.
-  /// - Returns: MessageDescriptor для FieldMask.
+  /// Creates descriptor for google.protobuf.FieldMask.
+  /// - Returns: MessageDescriptor for FieldMask.
   private static func createFieldMaskDescriptor() -> MessageDescriptor {
-    // Создаем файл дескриптор
+    // Create file descriptor
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/field_mask.proto",
       package: "google.protobuf"
     )
 
-    // Создаем дескриптор сообщения
+    // Create message descriptor
     var messageDescriptor = MessageDescriptor(
       name: "FieldMask",
       parent: fileDescriptor
     )
 
-    // Добавляем поле paths
+    // Add paths field
     let pathsField = FieldDescriptor(
       name: "paths",
       number: 1,
@@ -258,7 +258,7 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
     )
     messageDescriptor.addField(pathsField)
 
-    // Регистрируем в файле
+    // Register in file
     fileDescriptor.addMessage(messageDescriptor)
 
     return messageDescriptor
@@ -269,9 +269,9 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
 
 extension Array where Element == String {
 
-  /// Создает FieldMaskValue из массива строк.
+  /// Creates FieldMaskValue from string array.
   /// - Returns: FieldMaskValue.
-  /// - Throws: WellKnownTypeError если какой-либо путь невалиден.
+  /// - Throws: WellKnownTypeError if any path is invalid.
   public func toFieldMaskValue() throws -> FieldMaskHandler.FieldMaskValue {
     return try FieldMaskHandler.FieldMaskValue(paths: self)
   }
@@ -279,18 +279,18 @@ extension Array where Element == String {
 
 extension DynamicMessage {
 
-  /// Создает DynamicMessage из массива путей для google.protobuf.FieldMask.
-  /// - Parameter paths: Пути к полям.
-  /// - Returns: DynamicMessage представляющий FieldMask.
+  /// Creates DynamicMessage from path array for google.protobuf.FieldMask.
+  /// - Parameter paths: Field paths.
+  /// - Returns: DynamicMessage representing FieldMask.
   /// - Throws: WellKnownTypeError.
   public static func fieldMaskMessage(from paths: [String]) throws -> DynamicMessage {
     let fieldMask = try FieldMaskHandler.FieldMaskValue(paths: paths)
     return try FieldMaskHandler.createDynamic(from: fieldMask)
   }
 
-  /// Конвертирует DynamicMessage в массив путей (если это FieldMask).
-  /// - Returns: Массив путей к полям.
-  /// - Throws: WellKnownTypeError если сообщение не является FieldMask.
+  /// Converts DynamicMessage to path array (if it's FieldMask).
+  /// - Returns: Array of field paths.
+  /// - Throws: WellKnownTypeError if message is not FieldMask.
   public func toFieldPaths() throws -> [String] {
     guard descriptor.fullName == WellKnownTypeNames.fieldMask else {
       throw WellKnownTypeError.invalidData(

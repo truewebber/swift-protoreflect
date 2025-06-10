@@ -2,7 +2,7 @@
  * StructHandler.swift
  * SwiftProtoReflect
  *
- * Обработчик для google.protobuf.Struct - динамические JSON-like структуры
+ * Handler for google.protobuf.Struct - dynamic JSON-like structures
  */
 
 import Foundation
@@ -10,7 +10,7 @@ import SwiftProtobuf
 
 // MARK: - Struct Handler
 
-/// Обработчик для google.protobuf.Struct.
+/// Handler for google.protobuf.Struct.
 public struct StructHandler: WellKnownTypeHandler {
 
   public static let handledTypeName = WellKnownTypeNames.structType
@@ -18,21 +18,21 @@ public struct StructHandler: WellKnownTypeHandler {
 
   // MARK: - Struct Representation
 
-  /// Специализированное представление Struct.
+  /// Specialized representation of Struct.
   public struct StructValue: Equatable, CustomStringConvertible {
 
-    /// Поля структуры.
+    /// Structure fields.
     public let fields: [String: ValueValue]
 
-    /// Инициализация с полями структуры.
-    /// - Parameter fields: Словарь полей структуры.
+    /// Initialization with structure fields.
+    /// - Parameter fields: Dictionary of structure fields.
     public init(fields: [String: ValueValue] = [:]) {
       self.fields = fields
     }
 
-    /// Инициализация из Dictionary<String, Any>.
-    /// - Parameter dictionary: Словарь с произвольными значениями.
-    /// - Throws: WellKnownTypeError если конвертация невозможна.
+    /// Initialization from Dictionary<String, Any>.
+    /// - Parameter dictionary: Dictionary with arbitrary values.
+    /// - Throws: WellKnownTypeError if conversion is impossible.
     public init(from dictionary: [String: Any]) throws {
       var convertedFields: [String: ValueValue] = [:]
 
@@ -43,49 +43,49 @@ public struct StructHandler: WellKnownTypeHandler {
       self.fields = convertedFields
     }
 
-    /// Создает пустую структуру.
-    /// - Returns: StructValue без полей.
+    /// Creates empty structure.
+    /// - Returns: StructValue without fields.
     public static func empty() -> StructValue {
       return StructValue()
     }
 
-    /// Проверяет, содержит ли структура указанный ключ.
-    /// - Parameter key: Ключ для проверки.
-    /// - Returns: true если ключ присутствует в структуре.
+    /// Checks if structure contains specified key.
+    /// - Parameter key: Key to check.
+    /// - Returns: true if key is present in structure.
     public func contains(_ key: String) -> Bool {
       return fields[key] != nil
     }
 
-    /// Получает значение по ключу.
-    /// - Parameter key: Ключ поля.
-    /// - Returns: ValueValue или nil если ключ не найден.
+    /// Gets value by key.
+    /// - Parameter key: Field key.
+    /// - Returns: ValueValue or nil if key not found.
     public func getValue(_ key: String) -> ValueValue? {
       return fields[key]
     }
 
-    /// Создает новую структуру с добавленным полем.
+    /// Creates new structure with added field.
     /// - Parameters:
-    ///   - key: Ключ поля.
-    ///   - value: Значение поля.
-    /// - Returns: Новая StructValue с добавленным полем.
+    ///   - key: Field key.
+    ///   - value: Field value.
+    /// - Returns: New StructValue with added field.
     public func adding(_ key: String, value: ValueValue) -> StructValue {
       var newFields = fields
       newFields[key] = value
       return StructValue(fields: newFields)
     }
 
-    /// Создает новую структуру без указанного поля.
-    /// - Parameter key: Ключ поля для удаления.
-    /// - Returns: Новая StructValue без указанного поля.
+    /// Creates new structure without specified field.
+    /// - Parameter key: Field key to remove.
+    /// - Returns: New StructValue without specified field.
     public func removing(_ key: String) -> StructValue {
       var newFields = fields
       newFields.removeValue(forKey: key)
       return StructValue(fields: newFields)
     }
 
-    /// Объединяет две структуры.
-    /// - Parameter other: Другая структура для объединения.
-    /// - Returns: Новая StructValue с объединенными полями (значения из other переписывают значения из self).
+    /// Merges two structures.
+    /// - Parameter other: Other structure to merge.
+    /// - Returns: New StructValue with merged fields (values from other overwrite values from self).
     public func merging(_ other: StructValue) -> StructValue {
       var newFields = fields
       for (key, value) in other.fields {
@@ -94,8 +94,8 @@ public struct StructHandler: WellKnownTypeHandler {
       return StructValue(fields: newFields)
     }
 
-    /// Конвертирует в Dictionary<String, Any>.
-    /// - Returns: Словарь с произвольными значениями.
+    /// Converts to Dictionary<String, Any>.
+    /// - Returns: Dictionary with arbitrary values.
     public func toDictionary() -> [String: Any] {
       var result: [String: Any] = [:]
       for (key, value) in fields {
@@ -116,7 +116,7 @@ public struct StructHandler: WellKnownTypeHandler {
 
   // MARK: - Value Representation
 
-  /// Специализированное представление для google.protobuf.Value.
+  /// Specialized representation for google.protobuf.Value.
   public enum ValueValue: Equatable, CustomStringConvertible {
     case nullValue
     case numberValue(Double)
@@ -125,15 +125,15 @@ public struct StructHandler: WellKnownTypeHandler {
     case structValue(StructValue)
     case listValue([ValueValue])
 
-    /// Инициализация из произвольного Swift значения.
-    /// - Parameter value: Произвольное значение для конвертации.
-    /// - Throws: WellKnownTypeError если тип не поддерживается.
+    /// Initialization from arbitrary Swift value.
+    /// - Parameter value: Arbitrary value for conversion.
+    /// - Throws: WellKnownTypeError if type is not supported.
     public init(from value: Any) throws {
       switch value {
       case is NSNull:
         self = .nullValue
       case let number as NSNumber:
-        // NSNumber может представлять как Bool, так и Number
+        // NSNumber can represent both Bool and Number
         #if canImport(CoreFoundation) && !os(Linux)
           if CFGetTypeID(number) == CFBooleanGetTypeID() {
             self = .boolValue(number.boolValue)
@@ -185,8 +185,8 @@ public struct StructHandler: WellKnownTypeHandler {
       }
     }
 
-    /// Конвертирует в произвольное Swift значение.
-    /// - Returns: Произвольное значение.
+    /// Converts to arbitrary Swift value.
+    /// - Returns: Arbitrary value.
     public func toAny() -> Any {
       switch self {
       case .nullValue:
@@ -226,7 +226,7 @@ public struct StructHandler: WellKnownTypeHandler {
   // MARK: - Handler Implementation
 
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
-    // Проверяем тип сообщения
+    // Check message type
     guard message.descriptor.fullName == handledTypeName else {
       throw WellKnownTypeError.invalidData(
         typeName: handledTypeName,
@@ -234,7 +234,7 @@ public struct StructHandler: WellKnownTypeHandler {
       )
     }
 
-    // Извлекаем поле fields как Data и десериализуем JSON
+    // Extract fields field as Data and deserialize JSON
     let fieldsValue: [String: Any]
 
     do {
@@ -242,7 +242,7 @@ public struct StructHandler: WellKnownTypeHandler {
         let value = try message.get(forField: "fields")
 
         if let data = value as? Data {
-          // Десериализуем JSON данные
+          // Deserialize JSON data
           let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
           if let dict = jsonObject as? [String: Any] {
             fieldsValue = dict
@@ -267,7 +267,7 @@ public struct StructHandler: WellKnownTypeHandler {
       )
     }
 
-    // Создаем StructValue
+    // Create StructValue
     return try StructValue(from: fieldsValue)
   }
 
@@ -280,14 +280,14 @@ public struct StructHandler: WellKnownTypeHandler {
       )
     }
 
-    // Создаем дескриптор для Struct
+    // Create descriptor for Struct
     let structDescriptor = createStructDescriptor()
 
-    // Создаем сообщение
+    // Create message
     let factory = MessageFactory()
     var message = factory.createMessage(from: structDescriptor)
 
-    // Сериализуем поля в JSON и сохраняем как Data
+    // Serialize fields to JSON and save as Data
     let fieldsDict = structValue.toDictionary()
 
     do {
@@ -311,31 +311,31 @@ public struct StructHandler: WellKnownTypeHandler {
 
   // MARK: - Descriptor Creation
 
-  /// Создает дескриптор для google.protobuf.Struct.
-  /// - Returns: MessageDescriptor для Struct.
+  /// Creates descriptor for google.protobuf.Struct.
+  /// - Returns: MessageDescriptor for Struct.
   private static func createStructDescriptor() -> MessageDescriptor {
-    // Создаем файл дескриптор
+    // Create file descriptor
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/struct.proto",
       package: "google.protobuf"
     )
 
-    // Создаем дескриптор сообщения Struct
+    // Create Struct message descriptor
     var messageDescriptor = MessageDescriptor(
       name: "Struct",
       parent: fileDescriptor
     )
 
-    // Добавляем поле fields как bytes для хранения JSON сериализованных данных
-    // Это упрощенная версия для поддержки динамических структур
+    // Add fields field as bytes for storing JSON serialized data
+    // This is simplified version for dynamic structure support
     let fieldsField = FieldDescriptor(
       name: "fields",
       number: 1,
-      type: .bytes  // Храним JSON как бинарные данные
+      type: .bytes  // Store JSON as binary data
     )
     messageDescriptor.addField(fieldsField)
 
-    // Регистрируем в файле
+    // Register in file
     fileDescriptor.addMessage(messageDescriptor)
 
     return messageDescriptor
@@ -346,9 +346,9 @@ public struct StructHandler: WellKnownTypeHandler {
 
 extension Dictionary where Key == String, Value == Any {
 
-  /// Создает StructValue из словаря.
+  /// Creates StructValue from dictionary.
   /// - Returns: StructValue.
-  /// - Throws: WellKnownTypeError если конвертация невозможна.
+  /// - Throws: WellKnownTypeError if conversion is impossible.
   public func toStructValue() throws -> StructHandler.StructValue {
     return try StructHandler.StructValue(from: self)
   }
@@ -356,18 +356,18 @@ extension Dictionary where Key == String, Value == Any {
 
 extension DynamicMessage {
 
-  /// Создает DynamicMessage из словаря для google.protobuf.Struct.
-  /// - Parameter fields: Поля структуры.
-  /// - Returns: DynamicMessage представляющий Struct.
+  /// Creates DynamicMessage from dictionary for google.protobuf.Struct.
+  /// - Parameter fields: Structure fields.
+  /// - Returns: DynamicMessage representing Struct.
   /// - Throws: WellKnownTypeError.
   public static func structMessage(from fields: [String: Any]) throws -> DynamicMessage {
     let structValue = try StructHandler.StructValue(from: fields)
     return try StructHandler.createDynamic(from: structValue)
   }
 
-  /// Конвертирует DynamicMessage в словарь (если это Struct).
-  /// - Returns: Словарь полей структуры.
-  /// - Throws: WellKnownTypeError если сообщение не является Struct.
+  /// Converts DynamicMessage to dictionary (if it's Struct).
+  /// - Returns: Dictionary of structure fields.
+  /// - Throws: WellKnownTypeError if message is not Struct.
   public func toFieldsDictionary() throws -> [String: Any] {
     guard descriptor.fullName == WellKnownTypeNames.structType else {
       throw WellKnownTypeError.invalidData(
