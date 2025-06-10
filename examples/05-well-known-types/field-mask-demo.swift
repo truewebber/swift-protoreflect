@@ -1,20 +1,20 @@
 /**
  * 🎯 SwiftProtoReflect Example: FieldMask Demo
  *
- * Описание: Работа с google.protobuf.FieldMask для partial updates и field filtering
- * Ключевые концепции: FieldMaskHandler, FieldMaskValue, partial updates, field masking
- * Сложность: 🔧 Средний
- * Время выполнения: < 15 секунд
+ * Description: Working with google.protobuf.FieldMask for partial updates and field filtering
+ * Key concepts: FieldMaskHandler, FieldMaskValue, partial updates, field masking
+ * Complexity: 🔧 Intermediate
+ * Execution time: < 15 seconds
  *
- * Что изучите:
- * - Создание и управление масками полей (FieldMask)
- * - Set операции с масками (union, intersection, difference)
- * - Валидация путей полей и path notation
- * - Partial updates с применением масок полей
- * - Advanced field filtering и conditional updates
- * - Real-world сценарии использования FieldMask
+ * What you'll learn:
+ * - Creating and managing field masks (FieldMask)
+ * - Set operations with masks (union, intersection, difference)
+ * - Field path validation and path notation
+ * - Partial updates with field mask application
+ * - Advanced field filtering and conditional updates
+ * - Real-world FieldMask usage scenarios
  *
- * Запуск:
+ * Run with:
  *   swift run FieldMaskDemo
  */
 
@@ -35,12 +35,12 @@ struct FieldMaskDemo {
     try demonstrateRealWorldScenarios()
     try demonstratePerformanceAnalysis()
 
-    ExampleUtils.printSuccess("FieldMask demo завершена! Вы изучили все аспекты работы с google.protobuf.FieldMask.")
+    ExampleUtils.printSuccess("FieldMask demo completed! You've learned all aspects of working with google.protobuf.FieldMask.")
 
     ExampleUtils.printNext([
-      "Далее изучите: struct-demo.swift - динамические JSON-like структуры",
-      "Сравните: value-demo.swift - универсальные значения",
-      "Продвинутое: any-demo.swift - type erasure с Any",
+      "Next, explore: struct-demo.swift - dynamic JSON-like structures",
+      "Compare with: value-demo.swift - universal values",
+      "Advanced: any-demo.swift - type erasure with Any",
     ])
   }
 
@@ -49,26 +49,26 @@ struct FieldMaskDemo {
   private static func demonstrateBasicUsage() throws {
     ExampleUtils.printStep(1, "Basic FieldMask Operations")
 
-    // Создание масок полей различными способами
+    // Creating field masks in various ways
     print("  📝 Creating FieldMask instances:")
 
-    // Способ 1: Из массива путей
+    // Method 1: From array of paths
     let basicMask = try FieldMaskHandler.FieldMaskValue(paths: ["name", "email", "age"])
     print("    • From array: \(basicMask)")
 
-    // Способ 2: Из одного пути
+    // Method 2: From single path
     let singleMask = try FieldMaskHandler.FieldMaskValue(path: "profile.settings.theme")
     print("    • Single path: \(singleMask)")
 
-    // Способ 3: Пустая маска
+    // Method 3: Empty mask
     let emptyMask = FieldMaskHandler.FieldMaskValue()
     print("    • Empty mask: \(emptyMask)")
 
-    // Способ 4: Через convenience метод
+    // Method 4: Through convenience method
     let convenienceMask = try ["user.name", "user.email", "metadata.version"].toFieldMaskValue()
     print("    • Convenience method: \(convenienceMask)")
 
-    // Создание динамических сообщений
+    // Creating dynamic messages
     print("\n  🏗  Converting to DynamicMessage:")
     let basicMessage = try FieldMaskHandler.createDynamic(from: basicMask)
     let _ = try FieldMaskHandler.createDynamic(from: singleMask)
@@ -76,16 +76,16 @@ struct FieldMaskDemo {
     print("    • Basic mask message type: \(basicMessage.descriptor.name)")
     print("    • Fields count: \(basicMessage.descriptor.fields.count)")
 
-    // Извлечение путей из сообщения
+    // Extracting paths from message
     let extractedPaths = try basicMessage.toFieldPaths()
     print("    • Extracted paths: \(extractedPaths)")
 
-    // Round-trip тест
+    // Round-trip test
     let roundTripMask = try FieldMaskHandler.createSpecialized(from: basicMessage) as! FieldMaskHandler.FieldMaskValue
     let roundTripSuccess = roundTripMask == basicMask
     print("    • Round-trip test: \(roundTripSuccess ? "✅ SUCCESS" : "❌ FAILED")")
 
-    // Тестирование contains и covers
+    // Testing contains and covers
     print("\n  🔍 Testing path matching:")
     let testPaths = ["name", "email", "profile", "profile.settings", "profile.settings.theme", "unknown"]
 
@@ -111,7 +111,7 @@ struct FieldMaskDemo {
   private static func demonstrateSetOperations() throws {
     ExampleUtils.printStep(2, "Set Operations with FieldMasks")
 
-    // Создаем тестовые маски для демонстрации set операций
+    // Create test masks for set operations demonstration
     let userMask = try FieldMaskHandler.FieldMaskValue(paths: ["user.name", "user.email", "user.age"])
     let profileMask = try FieldMaskHandler.FieldMaskValue(paths: ["user.email", "profile.avatar", "profile.bio"])
     let metadataMask = try FieldMaskHandler.FieldMaskValue(paths: ["metadata.created", "metadata.updated", "user.name"])
@@ -173,16 +173,16 @@ struct FieldMaskDemo {
   private static func demonstratePathValidationAndCoverage() throws {
     ExampleUtils.printStep(3, "Path Validation and Coverage Analysis")
 
-    // Тестируем различные пути на валидность
+    // Test various paths for validity
     let pathTestCases = [
-      // Валидные пути
+      // Valid paths
       ("user.name", true),
       ("profile.settings.theme", true),
       ("metadata.tags.0.name", true),
       ("contact_info.email_address", true),
       ("nested.very.deep.field.value", true),
 
-      // Невалидные пути
+      // Invalid paths
       ("", false),
       ("user..name", false),
       (".profile", false),
@@ -223,7 +223,7 @@ struct FieldMaskDemo {
 
     ExampleUtils.printDataTable(validationResults, title: "Path Validation Results")
 
-    // Демонстрируем coverage анализ
+    // Demonstrate coverage analysis
     print("\n  🎯 Coverage analysis:")
     let complexMask = try FieldMaskHandler.FieldMaskValue(paths: [
       "user",
@@ -285,7 +285,7 @@ struct FieldMaskDemo {
   private static func demonstratePartialUpdates() throws {
     ExampleUtils.printStep(4, "Partial Updates with FieldMask")
 
-    // Создаем исходное "сообщение пользователя" (симулируем через словарь)
+    // Create original "user message" (simulate through dictionary)
     var userData: [String: Any] = [
       "user": [
         "name": "John Doe",
@@ -312,7 +312,7 @@ struct FieldMaskDemo {
     print("  📋 Original user data:")
     ExampleUtils.printTable(flattenDictionary(userData, prefix: ""), title: "Current State")
 
-    // Различные сценарии partial updates
+    // Various partial update scenarios
     let updateScenarios: [(String, [String], [String: Any])] = [
       (
         "Basic profile update",
@@ -349,15 +349,15 @@ struct FieldMaskDemo {
     for (scenarioName, maskPaths, updates) in updateScenarios {
       print("\n  🔄 Scenario: \(scenarioName)")
 
-      // Создаем маску полей
+      // Create field mask
       let updateMask = try FieldMaskHandler.FieldMaskValue(paths: maskPaths)
       print("    • Field mask: \(updateMask)")
 
-      // Симулируем применение partial update
+      // Simulate applying partial update
       let beforeUpdateData = userData
       applyPartialUpdate(&userData, mask: updateMask, updates: updates)
 
-      // Показываем что изменилось
+      // Show what changed
       let changedFields = findChangedFields(before: beforeUpdateData, after: userData, mask: updateMask)
       if !changedFields.isEmpty {
         print("    • Changed fields:")
@@ -372,7 +372,7 @@ struct FieldMaskDemo {
     print("\n  📋 Final user data after all updates:")
     ExampleUtils.printTable(flattenDictionary(userData, prefix: ""), title: "Final State")
 
-    // Демонстрируем защиту от нежелательных изменений
+    // Demonstrate protection from unwanted changes
     print("\n  🛡  Protection demonstration:")
     let restrictiveMask = try FieldMaskHandler.FieldMaskValue(paths: ["user.name"])
     let maliciousUpdates: [String: Any] = [
@@ -397,7 +397,7 @@ struct FieldMaskDemo {
   private static func demonstrateAdvancedFieldFiltering() throws {
     ExampleUtils.printStep(5, "Advanced Field Filtering Techniques")
 
-    // Создаем комплексную структуру данных для демонстрации
+    // Create complex data structure for demonstration
     let complexData: [String: Any] = [
       "public_info": [
         "name": "TechCorp Inc.",
@@ -428,7 +428,7 @@ struct FieldMaskDemo {
       ],
     ]
 
-    // Различные роли с разными уровнями доступа
+    // Various roles with different access levels
     let accessRoles: [(String, [String], String)] = [
       (
         "Public API",
@@ -490,7 +490,7 @@ struct FieldMaskDemo {
       print("       Allowed paths: \(allowedPaths.count)")
       print("       Accessible fields: \(filteredFieldsCount)/\(originalFieldsCount)")
 
-      // Показываем примеры доступных данных
+      // Show examples of accessible data
       let flatFiltered = flattenDictionary(filteredData, prefix: "")
       if flatFiltered.count <= 5 {
         print("       Sample data: \(Array(flatFiltered.keys).sorted().joined(separator: ", "))")
@@ -501,15 +501,15 @@ struct FieldMaskDemo {
       }
     }
 
-    // Динамическое построение масок на основе условий
+    // Dynamic mask construction based on conditions
     print("\n  🎛  Dynamic mask construction:")
 
     let privacySettings = complexData["user_preferences"] as! [String: Any]
     let privacy = privacySettings["privacy"] as! [String: Bool]
 
-    var dynamicPaths: [String] = ["public_info.name"]  // Всегда доступно
+    var dynamicPaths: [String] = ["public_info.name"]  // Always available
 
-    // Условно добавляем поля на основе privacy настроек
+    // Conditionally add fields based on privacy settings
     if privacy["show_email"] == true {
       dynamicPaths.append("contact.email")
     }
@@ -532,7 +532,7 @@ struct FieldMaskDemo {
   private static func demonstrateRealWorldScenarios() throws {
     ExampleUtils.printStep(6, "Real-World FieldMask Scenarios")
 
-    // Сценарий 1: API versioning и field evolution
+    // Scenario 1: API versioning and field evolution
     print("  📱 Scenario 1: API Versioning with FieldMask")
 
     let v1Fields = ["user.name", "user.email"]
@@ -576,7 +576,7 @@ struct FieldMaskDemo {
 
     ExampleUtils.printDataTable(versioningResults, title: "API Version Compatibility")
 
-    // Сценарий 2: Микросервисы и данные между сервисами
+    // Scenario 2: Microservices and data between services
     print("\n  🏢 Scenario 2: Microservices Data Sharing")
 
     let serviceEndpoints: [(String, [String])] = [
@@ -592,7 +592,7 @@ struct FieldMaskDemo {
       serviceMasks[service] = try FieldMaskHandler.FieldMaskValue(paths: fields)
     }
 
-    // Анализ пересечений между сервисами
+    // Analyze intersections between services
     let serviceNames = Array(serviceMasks.keys).sorted()
     print("    • Service data sharing analysis:")
 
@@ -610,7 +610,7 @@ struct FieldMaskDemo {
       }
     }
 
-    // Сценарий 3: Database projection и query optimization
+    // Scenario 3: Database projection and query optimization
     print("\n  💾 Scenario 3: Database Query Optimization")
 
     let queryScenarios: [(String, [String], String)] = [
@@ -640,7 +640,7 @@ struct FieldMaskDemo {
   private static func demonstratePerformanceAnalysis() throws {
     ExampleUtils.printStep(7, "Performance Analysis and Optimization")
 
-    // Performance тестирование различных операций
+    // Performance testing of various operations
     let performanceTestCases = [
       ("Small mask (5 paths)", 5),
       ("Medium mask (25 paths)", 25),
@@ -651,15 +651,15 @@ struct FieldMaskDemo {
     var performanceResults: [[String: String]] = []
 
     for (testName, pathCount) in performanceTestCases {
-      // Генерируем тестовые пути
+      // Generate test paths
       let testPaths = (0..<pathCount).map { "field\($0).subfield\($0 % 10).value" }
 
-      // Тестируем создание маски
+      // Test mask creation
       let (creationResult, creationTime) = ExampleUtils.measureTime {
         return try! FieldMaskHandler.FieldMaskValue(paths: testPaths)
       }
 
-      // Тестируем set операции
+      // Test set operations
       let secondMask = try! FieldMaskHandler.FieldMaskValue(paths: Array(testPaths.dropFirst(pathCount / 2)))
       let (_, unionTime) = ExampleUtils.measureTime {
         return creationResult.union(secondMask)
@@ -669,7 +669,7 @@ struct FieldMaskDemo {
         return creationResult.intersection(secondMask)
       }
 
-      // Тестируем contains/covers операции
+      // Test contains/covers operations
       let testQueryPaths = testPaths.prefix(10)
       let (_, queryTime) = ExampleUtils.measureTime {
         for path in testQueryPaths {
@@ -678,7 +678,7 @@ struct FieldMaskDemo {
         }
       }
 
-      // Тестируем сериализацию
+      // Test serialization
       let (_, serializationTime) = ExampleUtils.measureTime {
         return try! FieldMaskHandler.createDynamic(from: creationResult)
       }
@@ -700,7 +700,7 @@ struct FieldMaskDemo {
     let largePathSet = (0..<1000).map { "very.long.field.path.number.\($0).with.multiple.segments.for.testing" }
     let _ = try FieldMaskHandler.FieldMaskValue(paths: largePathSet)
 
-    let estimatedMemoryPerPath = 50  // Примерная оценка в байтах
+    let estimatedMemoryPerPath = 50  // Rough estimate in bytes
     let totalEstimatedMemory = largePathSet.count * estimatedMemoryPerPath
 
     print("    • Large mask paths: \(largePathSet.count)")
