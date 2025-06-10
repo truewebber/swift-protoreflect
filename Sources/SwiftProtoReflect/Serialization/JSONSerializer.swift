@@ -2,39 +2,39 @@
 // JSONSerializer.swift
 // SwiftProtoReflect
 //
-// Создан: 2025-05-25
+// Created: 2025-05-25
 //
 
 import Foundation
 
 /// JSONSerializer.
 ///
-/// Предоставляет функциональность для сериализации динамических Protocol Buffers сообщений.
-/// в JSON формат согласно официальной спецификации Protocol Buffers JSON mapping.
-/// Обеспечивает полную совместимость с protoc --json_out.
+/// Provides functionality for serializing dynamic Protocol Buffers messages
+/// to JSON format according to official Protocol Buffers JSON mapping specification.
+/// Ensures full compatibility with protoc --json_out.
 public struct JSONSerializer {
 
   // MARK: - Properties
 
-  /// Опции JSON сериализации.
+  /// JSON serialization options.
   public let options: JSONSerializationOptions
 
   // MARK: - Initialization
 
-  /// Создает новый экземпляр JSONSerializer.
+  /// Creates new JSONSerializer instance.
   ///
-  /// - Parameter options: Опции JSON сериализации.
+  /// - Parameter options: JSON serialization options.
   public init(options: JSONSerializationOptions = JSONSerializationOptions()) {
     self.options = options
   }
 
   // MARK: - Serialization Methods
 
-  /// Сериализует динамическое сообщение в JSON формат.
+  /// Serializes dynamic message to JSON format.
   ///
-  /// - Parameter message: Динамическое сообщение для сериализации.
-  /// - Returns: JSON строка в Data формате.
-  /// - Throws: JSONSerializationError если сериализация не удалась.
+  /// - Parameter message: Dynamic message to serialize.
+  /// - Returns: JSON string in Data format.
+  /// - Throws: JSONSerializationError if serialization failed.
   public func serialize(_ message: DynamicMessage) throws -> Data {
     let jsonObject = try serializeToJSONObject(message)
 
@@ -48,18 +48,18 @@ public struct JSONSerializer {
     }
   }
 
-  /// Сериализует динамическое сообщение в JSON объект.
+  /// Serializes dynamic message to JSON object.
   ///
-  /// - Parameter message: Динамическое сообщение для сериализации.
-  /// - Returns: JSON совместимый объект (Dictionary).
-  /// - Throws: JSONSerializationError если сериализация не удалась.
+  /// - Parameter message: Dynamic message to serialize.
+  /// - Returns: JSON compatible object (Dictionary).
+  /// - Throws: JSONSerializationError if serialization failed.
   public func serializeToJSONObject(_ message: DynamicMessage) throws -> [String: Any] {
     var result: [String: Any] = [:]
 
     let descriptor = message.descriptor
     let fieldAccess = FieldAccessor(message)
 
-    // Обрабатываем все поля с данными
+    // Process all fields with data
     for field in descriptor.allFields() where fieldAccess.hasValue(field.name) {
 
       let fieldName = options.useOriginalFieldNames ? field.name : field.jsonName
@@ -71,7 +71,7 @@ public struct JSONSerializer {
 
   // MARK: - Private Methods
 
-  /// Сериализует значение поля в JSON совместимый объект.
+  /// Serializes field value to JSON compatible object.
   private func serializeFieldValue(_ field: FieldDescriptor, from fieldAccess: FieldAccessor) throws -> Any {
     if field.isMap {
       return try serializeMapField(field, from: fieldAccess)
@@ -84,7 +84,7 @@ public struct JSONSerializer {
     }
   }
 
-  /// Сериализует одиночное поле.
+  /// Serializes single field.
   private func serializeSingleField(_ field: FieldDescriptor, from fieldAccess: FieldAccessor) throws -> Any {
     guard let value = fieldAccess.getValue(field.name, as: Any.self) else {
       throw JSONSerializationError.missingFieldValue(fieldName: field.name)
@@ -93,7 +93,7 @@ public struct JSONSerializer {
     return try convertValueToJSON(value, type: field.type, typeName: field.typeName)
   }
 
-  /// Сериализует repeated поле.
+  /// Serializes repeated field.
   private func serializeRepeatedField(_ field: FieldDescriptor, from fieldAccess: FieldAccessor) throws -> Any {
     guard let values = fieldAccess.getValue(field.name, as: [Any].self) else {
       throw JSONSerializationError.invalidFieldType(
@@ -112,7 +112,7 @@ public struct JSONSerializer {
     return jsonArray
   }
 
-  /// Сериализует map поле.
+  /// Serializes map field.
   private func serializeMapField(_ field: FieldDescriptor, from fieldAccess: FieldAccessor) throws -> Any {
     guard let mapEntryInfo = field.mapEntryInfo else {
       throw JSONSerializationError.missingMapEntryInfo(fieldName: field.name)
@@ -129,7 +129,7 @@ public struct JSONSerializer {
     var jsonObject: [String: Any] = [:]
 
     for (key, value) in mapValues {
-      // Конвертируем ключ в строку (JSON объекты всегда имеют строковые ключи)
+      // Convert key to string (JSON objects always have string keys)
       let jsonKey = try convertMapKeyToJSONString(key, keyType: mapEntryInfo.keyFieldInfo.type)
       let jsonValue = try convertValueToJSON(
         value,
@@ -142,7 +142,7 @@ public struct JSONSerializer {
     return jsonObject
   }
 
-  /// Конвертирует значение в JSON совместимый тип.
+  /// Converts value to JSON compatible type.
   internal func convertValueToJSON(_ value: Any, type: FieldType, typeName: String?) throws -> Any {
     switch type {
     case .double:
@@ -179,7 +179,7 @@ public struct JSONSerializer {
           actual: String(describing: Swift.type(of: value))
         )
       }
-      // int64 представляется как строка в JSON
+      // int64 is represented as string in JSON
       return String(int64Value)
 
     case .uint32, .fixed32:
@@ -198,7 +198,7 @@ public struct JSONSerializer {
           actual: String(describing: Swift.type(of: value))
         )
       }
-      // uint64 представляется как строка в JSON
+      // uint64 is represented as string in JSON
       return String(uint64Value)
 
     case .bool:
@@ -226,7 +226,7 @@ public struct JSONSerializer {
           actual: String(describing: Swift.type(of: value))
         )
       }
-      // bytes представляются как base64 строка
+      // bytes are represented as base64 string
       return bytesValue.base64EncodedString()
 
     case .message:
@@ -236,7 +236,7 @@ public struct JSONSerializer {
           actual: String(describing: Swift.type(of: value))
         )
       }
-      // Рекурсивно сериализуем вложенное сообщение
+      // Recursively serialize nested message
       return try serializeToJSONObject(messageValue)
 
     case .enum:
@@ -246,8 +246,8 @@ public struct JSONSerializer {
           actual: String(describing: Swift.type(of: value))
         )
       }
-      // В JSON enum представляется как строка с именем значения
-      // Пока возвращаем число, можно расширить для поддержки имен enum
+      // In JSON enum is represented as string with value name
+      // For now return number, can be extended to support enum names
       return Int(enumValue)
 
     case .group:
@@ -255,7 +255,7 @@ public struct JSONSerializer {
     }
   }
 
-  /// Конвертирует ключ map в JSON строку.
+  /// Converts map key to JSON string.
   internal func convertMapKeyToJSONString(_ key: Any, keyType: FieldType) throws -> String {
     switch keyType {
     case .string:
@@ -317,7 +317,7 @@ public struct JSONSerializer {
     }
   }
 
-  /// Конвертирует double значение с обработкой специальных случаев.
+  /// Converts double value with handling of special cases.
   private func convertDoubleToJSON(_ value: Double) -> Any {
     if value.isInfinite {
       return value > 0 ? "Infinity" : "-Infinity"
@@ -330,7 +330,7 @@ public struct JSONSerializer {
     }
   }
 
-  /// Конвертирует float значение с обработкой специальных случаев.
+  /// Converts float value with handling of special cases.
   private func convertFloatToJSON(_ value: Float) -> Any {
     if value.isInfinite {
       return value > 0 ? "Infinity" : "-Infinity"
@@ -346,18 +346,18 @@ public struct JSONSerializer {
 
 // MARK: - JSON Serialization Options
 
-/// Опции для JSON сериализации.
+/// Options for JSON serialization.
 public struct JSONSerializationOptions {
-  /// Использовать оригинальные имена полей вместо camelCase.
+  /// Use original field names instead of camelCase.
   public let useOriginalFieldNames: Bool
 
-  /// Форматировать JSON с отступами для читаемости.
+  /// Format JSON with indentation for readability.
   public let prettyPrinted: Bool
 
-  /// Включать поля с default значениями.
+  /// Include fields with default values.
   public let includeDefaultValues: Bool
 
-  /// Создает опции JSON сериализации.
+  /// Creates JSON serialization options.
   public init(
     useOriginalFieldNames: Bool = false,
     prettyPrinted: Bool = false,
@@ -371,7 +371,7 @@ public struct JSONSerializationOptions {
 
 // MARK: - JSON Serialization Errors
 
-/// Ошибки JSON сериализации.
+/// JSON serialization errors.
 public enum JSONSerializationError: Error, Equatable {
   case invalidFieldType(fieldName: String, expectedType: String, actualType: String)
   case valueTypeMismatch(expected: String, actual: String)
@@ -421,7 +421,7 @@ public enum JSONSerializationError: Error, Equatable {
     case (.invalidMapKeyType(let lType), .invalidMapKeyType(let rType)):
       return lType == rType
     case (.jsonWriteError(_), .jsonWriteError(_)):
-      // Трудно сравнивать underlying errors, поэтому считаем равными если оба jsonWriteError
+      // Hard to compare underlying errors, so consider equal if both are jsonWriteError
       return true
     default:
       return false

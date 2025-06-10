@@ -2,7 +2,7 @@
 // BinarySerializer.swift
 // SwiftProtoReflect
 //
-// Создан: 2025-05-24
+// Created: 2025-05-24
 //
 
 import Foundation
@@ -10,32 +10,32 @@ import SwiftProtobuf
 
 /// BinarySerializer.
 ///
-/// Предоставляет функциональность для сериализации динамических Protocol Buffers сообщений.
-/// в бинарный wire format, используя интеграцию с библиотекой Swift Protobuf.
-/// для обеспечения совместимости со стандартом Protocol Buffers.
+/// Provides functionality for serializing dynamic Protocol Buffers messages
+/// to binary wire format, using integration with Swift Protobuf library
+/// to ensure compatibility with Protocol Buffers standard.
 public struct BinarySerializer {
 
   // MARK: - Properties
 
-  /// Опции сериализации.
+  /// Serialization options.
   public let options: SerializationOptions
 
   // MARK: - Initialization
 
-  /// Создает новый экземпляр BinarySerializer.
+  /// Creates new BinarySerializer instance.
   ///
-  /// - Parameter options: Опции сериализации.
+  /// - Parameter options: Serialization options.
   public init(options: SerializationOptions = SerializationOptions()) {
     self.options = options
   }
 
   // MARK: - Serialization Methods
 
-  /// Сериализует динамическое сообщение в бинарный формат.
+  /// Serializes dynamic message to binary format.
   ///
-  /// - Parameter message: Динамическое сообщение для сериализации.
-  /// - Returns: Сериализованные данные в бинарном формате.
-  /// - Throws: SerializationError если сериализация не удалась.
+  /// - Parameter message: Dynamic message to serialize.
+  /// - Returns: Serialized data in binary format.
+  /// - Throws: SerializationError if serialization failed.
   public func serialize(_ message: DynamicMessage) throws -> Data {
     var encoder = BinaryEncoder()
     try encodeMessage(message, to: &encoder)
@@ -44,14 +44,14 @@ public struct BinarySerializer {
 
   // MARK: - Private Methods
 
-  /// Кодирует сообщение в binary encoder.
+  /// Encodes message to binary encoder.
   private func encodeMessage(_ message: DynamicMessage, to encoder: inout BinaryEncoder) throws {
     let descriptor = message.descriptor
 
-    // Получаем все поля с данными
+    // Get all fields with data
     let fieldAccess = FieldAccessor(message)
 
-    // Сортируем поля по номерам для детерминированного вывода
+    // Sort fields by numbers for deterministic output
     let sortedFields = descriptor.allFields().sorted { $0.number < $1.number }
 
     for field in sortedFields where fieldAccess.hasValue(field.name) {
@@ -60,7 +60,7 @@ public struct BinarySerializer {
     }
   }
 
-  /// Кодирует отдельное поле.
+  /// Encodes single field.
   private func encodeField(_ field: FieldDescriptor, from message: DynamicMessage, to encoder: inout BinaryEncoder)
     throws
   {
@@ -77,7 +77,7 @@ public struct BinarySerializer {
     }
   }
 
-  /// Кодирует одиночное поле.
+  /// Encodes single field.
   private func encodeSingleField(
     _ field: FieldDescriptor,
     from fieldAccess: FieldAccessor,
@@ -93,7 +93,7 @@ public struct BinarySerializer {
     try encodeValue(value, type: field.type, typeName: field.typeName, to: &encoder)
   }
 
-  /// Кодирует repeated поле.
+  /// Encodes repeated field.
   private func encodeRepeatedField(
     _ field: FieldDescriptor,
     from fieldAccess: FieldAccessor,
@@ -107,12 +107,12 @@ public struct BinarySerializer {
       )
     }
 
-    // Для packed repeated fields (числовые типы в proto3)
+    // For packed repeated fields (numeric types in proto3)
     if isPackable(field.type) && options.usePackedRepeated {
       try encodePackedRepeatedField(field, values: values, to: &encoder)
     }
     else {
-      // Обычная кодировка repeated field
+      // Regular repeated field encoding
       for value in values {
         let tag = UInt32((UInt32(field.number) << 3) | wireType(for: field.type).rawValue)
         encoder.writeVarint(UInt64(tag))
@@ -121,14 +121,14 @@ public struct BinarySerializer {
     }
   }
 
-  /// Кодирует packed repeated поле.
+  /// Encodes packed repeated field.
   private func encodePackedRepeatedField(_ field: FieldDescriptor, values: [Any], to encoder: inout BinaryEncoder)
     throws
   {
     let tag = UInt32((UInt32(field.number) << 3) | WireType.lengthDelimited.rawValue)
     encoder.writeVarint(UInt64(tag))
 
-    // Вычисляем размер packed данных
+    // Calculate packed data size
     var packedData = Data()
     var packedEncoder = BinaryEncoder(data: packedData)
 
@@ -141,7 +141,7 @@ public struct BinarySerializer {
     encoder.writeRawData(packedData)
   }
 
-  /// Кодирует map поле.
+  /// Encodes map field.
   private func encodeMapField(
     _ field: FieldDescriptor,
     from fieldAccess: FieldAccessor,
@@ -159,21 +159,21 @@ public struct BinarySerializer {
       )
     }
 
-    // Map кодируется как repeated message entries
+    // Map is encoded as repeated message entries
     for (key, value) in mapValues {
       let tag = UInt32((UInt32(field.number) << 3) | WireType.lengthDelimited.rawValue)
       encoder.writeVarint(UInt64(tag))
 
-      // Кодируем map entry как message
+      // Encode map entry as message
       var entryData = Data()
       var entryEncoder = BinaryEncoder(data: entryData)
 
-      // Key field (всегда номер 1)
+      // Key field (always number 1)
       let keyTag = UInt32((1 << 3) | wireType(for: mapEntryInfo.keyFieldInfo.type).rawValue)
       entryEncoder.writeVarint(UInt64(keyTag))
       try encodeValue(key, type: mapEntryInfo.keyFieldInfo.type, typeName: nil, to: &entryEncoder)
 
-      // Value field (всегда номер 2)
+      // Value field (always number 2)
       let valueTag = UInt32((2 << 3) | wireType(for: mapEntryInfo.valueFieldInfo.type).rawValue)
       entryEncoder.writeVarint(UInt64(valueTag))
       try encodeValue(
@@ -189,7 +189,7 @@ public struct BinarySerializer {
     }
   }
 
-  /// Кодирует значение определенного типа.
+  /// Encodes value of specific type.
   private func encodeValue(_ value: Any, type: FieldType, typeName: String?, to encoder: inout BinaryEncoder) throws {
     switch type {
     case .double:
@@ -311,7 +311,7 @@ public struct BinarySerializer {
         )
       }
 
-      // Кодируем вложенное сообщение
+      // Encode nested message
       var nestedData = Data()
       var nestedEncoder = BinaryEncoder(data: nestedData)
       try encodeMessage(messageValue, to: &nestedEncoder)
@@ -331,7 +331,7 @@ public struct BinarySerializer {
     }
   }
 
-  /// Определяет wire type для поля.
+  /// Determines wire type for field.
   private func wireType(for fieldType: FieldType) -> WireType {
     switch fieldType {
     case .double, .fixed64, .sfixed64:
@@ -343,11 +343,11 @@ public struct BinarySerializer {
     case .string, .bytes, .message:
       return .lengthDelimited
     case .group:
-      return .startGroup  // Устаревшее
+      return .startGroup  // Deprecated
     }
   }
 
-  /// Проверяет, может ли тип поля быть packed.
+  /// Checks if field type can be packed.
   private func isPackable(_ fieldType: FieldType) -> Bool {
     switch fieldType {
     case .double, .float, .int32, .int64, .uint32, .uint64,
@@ -360,12 +360,12 @@ public struct BinarySerializer {
 
   // MARK: - ZigZag Encoding
 
-  /// ZigZag кодирование для 32-битных чисел со знаком.
+  /// ZigZag encoding for 32-bit signed numbers.
   static func zigzagEncode32(_ value: Int32) -> UInt32 {
     return UInt32(bitPattern: (value << 1) ^ (value >> 31))
   }
 
-  /// ZigZag кодирование для 64-битных чисел со знаком.
+  /// ZigZag encoding for 64-bit signed numbers.
   static func zigzagEncode64(_ value: Int64) -> UInt64 {
     return UInt64(bitPattern: (value << 1) ^ (value >> 63))
   }
@@ -373,7 +373,7 @@ public struct BinarySerializer {
 
 // MARK: - Binary Encoder
 
-/// Низкоуровневый binary encoder для Protocol Buffers wire format.
+/// Low-level binary encoder for Protocol Buffers wire format.
 private struct BinaryEncoder {
   private(set) var data: Data
 
@@ -381,7 +381,7 @@ private struct BinaryEncoder {
     self.data = data
   }
 
-  /// Записывает varint значение.
+  /// Writes varint value.
   mutating func writeVarint(_ value: UInt64) {
     var val = value
     while val >= 0x80 {
@@ -391,31 +391,31 @@ private struct BinaryEncoder {
     data.append(UInt8(val & 0x7F))
   }
 
-  /// Записывает 32-битное fixed значение.
+  /// Writes 32-bit fixed value.
   mutating func writeFixed32(_ value: UInt32) {
     withUnsafeBytes(of: value.littleEndian) { bytes in
       data.append(contentsOf: bytes)
     }
   }
 
-  /// Записывает 64-битное fixed значение.
+  /// Writes 64-bit fixed value.
   mutating func writeFixed64(_ value: UInt64) {
     withUnsafeBytes(of: value.littleEndian) { bytes in
       data.append(contentsOf: bytes)
     }
   }
 
-  /// Записывает float значение.
+  /// Writes float value.
   mutating func writeFloat(_ value: Float) {
     writeFixed32(value.bitPattern)
   }
 
-  /// Записывает double значение.
+  /// Writes double value.
   mutating func writeDouble(_ value: Double) {
     writeFixed64(value.bitPattern)
   }
 
-  /// Записывает сырые данные.
+  /// Writes raw data.
   mutating func writeRawData(_ rawData: Data) {
     data.append(rawData)
   }
@@ -423,12 +423,12 @@ private struct BinaryEncoder {
 
 // MARK: - Serialization Options
 
-/// Опции для сериализации.
+/// Options for serialization.
 public struct SerializationOptions {
-  /// Использовать ли packed encoding для repeated числовых полей.
+  /// Whether to use packed encoding for repeated numeric fields.
   public let usePackedRepeated: Bool
 
-  /// Создает опции сериализации.
+  /// Creates serialization options.
   public init(usePackedRepeated: Bool = true) {
     self.usePackedRepeated = usePackedRepeated
   }
@@ -436,7 +436,7 @@ public struct SerializationOptions {
 
 // MARK: - Serialization Errors
 
-/// Ошибки сериализации.
+/// Serialization errors.
 public enum SerializationError: Error, Equatable {
   case invalidFieldType(fieldName: String, expectedType: String, actualType: String)
   case valueTypeMismatch(expected: String, actual: String)

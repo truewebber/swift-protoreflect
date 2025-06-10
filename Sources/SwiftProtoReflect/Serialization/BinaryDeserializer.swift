@@ -2,7 +2,7 @@
 // BinaryDeserializer.swift
 // SwiftProtoReflect
 //
-// Создан: 2025-05-25
+// Created: 2025-05-25
 //
 
 import Foundation
@@ -10,34 +10,34 @@ import SwiftProtobuf
 
 /// BinaryDeserializer.
 ///
-/// Предоставляет функциональность для десериализации динамических Protocol Buffers сообщений.
-/// из бинарного wire format, используя интеграцию с библиотекой Swift Protobuf.
-/// для обеспечения совместимости со стандартом Protocol Buffers.
+/// Provides functionality for deserializing dynamic Protocol Buffers messages
+/// from binary wire format, using integration with Swift Protobuf library
+/// to ensure compatibility with Protocol Buffers standard.
 public struct BinaryDeserializer {
 
   // MARK: - Properties
 
-  /// Опции десериализации.
+  /// Deserialization options.
   public let options: DeserializationOptions
 
   // MARK: - Initialization
 
-  /// Создает новый экземпляр BinaryDeserializer.
+  /// Creates new BinaryDeserializer instance.
   ///
-  /// - Parameter options: Опции десериализации.
+  /// - Parameter options: Deserialization options.
   public init(options: DeserializationOptions = DeserializationOptions()) {
     self.options = options
   }
 
   // MARK: - Deserialization Methods
 
-  /// Десериализует бинарные данные в динамическое сообщение.
+  /// Deserializes binary data to dynamic message.
   ///
-  /// - Parameters:.
-  ///   - data: Бинарные данные для десериализации.
-  ///   - descriptor: Дескриптор сообщения для определения структуры.
-  /// - Returns: Десериализованное динамическое сообщение.
-  /// - Throws: DeserializationError если десериализация не удалась.
+  /// - Parameters:
+  ///   - data: Binary data to deserialize.
+  ///   - descriptor: Message descriptor to determine structure.
+  /// - Returns: Deserialized dynamic message.
+  /// - Throws: DeserializationError if deserialization failed.
   public func deserialize(_ data: Data, using descriptor: MessageDescriptor) throws -> DynamicMessage {
     var decoder = BinaryDecoder(data: data)
     return try decodeMessage(from: &decoder, using: descriptor)
@@ -45,7 +45,7 @@ public struct BinaryDeserializer {
 
   // MARK: - Private Methods
 
-  /// Декодирует сообщение из binary decoder.
+  /// Decodes message from binary decoder.
   private func decodeMessage(from decoder: inout BinaryDecoder, using descriptor: MessageDescriptor) throws
     -> DynamicMessage
   {
@@ -54,7 +54,7 @@ public struct BinaryDeserializer {
     var unknownFields = Data()
 
     while decoder.hasMoreData {
-      // Читаем tag (field number + wire type)
+      // Read tag (field number + wire type)
       let tag = try decoder.readVarint()
       let fieldNumber = Int(tag >> 3)
       let wireType = WireType(rawValue: UInt32(tag & 0x7))
@@ -63,12 +63,12 @@ public struct BinaryDeserializer {
         throw DeserializationError.invalidWireType(tag: UInt32(tag))
       }
 
-      // Ищем поле по номеру
+      // Find field by number
       if let field = descriptor.field(number: fieldNumber) {
         try decodeField(field, wireType: wireType, from: &decoder, into: &message)
       }
       else {
-        // Неизвестное поле - сохраняем для совместимости
+        // Unknown field - preserve for compatibility
         if options.preserveUnknownFields {
           let unknownFieldData = try skipUnknownField(wireType: wireType, from: &decoder)
           unknownFields.append(Data([UInt8(tag)]))
@@ -83,7 +83,7 @@ public struct BinaryDeserializer {
     return message
   }
 
-  /// Декодирует отдельное поле.
+  /// Decodes single field.
   private func decodeField(
     _ field: FieldDescriptor,
     wireType: WireType,
@@ -91,7 +91,7 @@ public struct BinaryDeserializer {
     into message: inout DynamicMessage
   ) throws {
 
-    // Проверяем совместимость wire type с типом поля
+    // Check wire type compatibility with field type
     let expectedWireType = getWireType(for: field.type)
     let isPackedRepeated = field.isRepeated && wireType == .lengthDelimited && expectedWireType != .lengthDelimited
 
@@ -119,7 +119,7 @@ public struct BinaryDeserializer {
     }
   }
 
-  /// Декодирует одиночное поле.
+  /// Decodes single field.
   private func decodeSingleField(
     _ field: FieldDescriptor,
     from decoder: inout BinaryDecoder,
@@ -129,7 +129,7 @@ public struct BinaryDeserializer {
     try message.set(value, forField: field.name)
   }
 
-  /// Декодирует repeated поле.
+  /// Decodes repeated field.
   private func decodeRepeatedField(
     _ field: FieldDescriptor,
     from decoder: inout BinaryDecoder,
@@ -137,7 +137,7 @@ public struct BinaryDeserializer {
   ) throws {
     let value = try decodeValue(type: field.type, typeName: field.typeName, from: &decoder)
 
-    // Получаем существующий массив или создаем новый
+    // Get existing array or create new one
     let fieldAccess = FieldAccessor(message)
     var array: [Any] = []
 
@@ -149,7 +149,7 @@ public struct BinaryDeserializer {
     try message.set(array, forField: field.name)
   }
 
-  /// Декодирует packed repeated поле.
+  /// Decodes packed repeated field.
   private func decodePackedRepeatedField(
     _ field: FieldDescriptor,
     from decoder: inout BinaryDecoder,
@@ -172,7 +172,7 @@ public struct BinaryDeserializer {
     try message.set(array, forField: field.name)
   }
 
-  /// Декодирует map поле.
+  /// Decodes map field.
   private func decodeMapField(
     _ field: FieldDescriptor,
     from decoder: inout BinaryDecoder,
@@ -188,7 +188,7 @@ public struct BinaryDeserializer {
     var key: Any?
     var value: Any?
 
-    // Читаем entry как обычное сообщение
+    // Read entry as regular message
     while decoder.position < entryEndPosition {
       let tag = try decoder.readVarint()
       let entryFieldNumber = Int(tag >> 3)
@@ -208,7 +208,7 @@ public struct BinaryDeserializer {
           from: &decoder
         )
       default:
-        // Пропускаем неизвестные поля в map entry
+        // Skip unknown fields in map entry
         _ = try skipUnknownField(wireType: entryWireType, from: &decoder)
       }
     }
@@ -217,7 +217,7 @@ public struct BinaryDeserializer {
       throw DeserializationError.malformedMapEntry(fieldName: field.name)
     }
 
-    // Добавляем к существующему map или создаем новый
+    // Add to existing map or create new one
     let fieldAccess = FieldAccessor(message)
     var map: [AnyHashable: Any] = [:]
 
@@ -231,7 +231,7 @@ public struct BinaryDeserializer {
     }
   }
 
-  /// Декодирует значение определенного типа.
+  /// Decodes value of specific type.
   private func decodeValue(type: FieldType, typeName: String?, from decoder: inout BinaryDecoder) throws -> Any {
     switch type {
     case .double:
@@ -301,9 +301,9 @@ public struct BinaryDeserializer {
       let length = try decoder.readVarint()
       _ = try decoder.readBytes(Int(length))
 
-      // Для десериализации вложенного сообщения нужен его дескриптор
-      // В реальной реализации это должно быть получено из TypeRegistry
-      // Пока используем заглушку
+      // For nested message deserialization we need its descriptor
+      // In real implementation this should be obtained from TypeRegistry
+      // For now using stub
       throw DeserializationError.unsupportedNestedMessage(typeName: typeName)
 
     case .enum:
@@ -315,7 +315,7 @@ public struct BinaryDeserializer {
     }
   }
 
-  /// Пропускает неизвестное поле и возвращает его данные.
+  /// Skips unknown field and returns its data.
   private func skipUnknownField(wireType: WireType, from decoder: inout BinaryDecoder) throws -> Data {
     let startPosition = decoder.position
 
@@ -341,7 +341,7 @@ public struct BinaryDeserializer {
     return decoder.data.subdata(in: startPosition..<endPosition)
   }
 
-  /// Определяет wire type для поля.
+  /// Determines wire type for field.
   private func getWireType(for fieldType: FieldType) -> WireType {
     switch fieldType {
     case .double, .fixed64, .sfixed64:
@@ -353,20 +353,20 @@ public struct BinaryDeserializer {
     case .string, .bytes, .message:
       return .lengthDelimited
     case .group:
-      return .startGroup  // Устаревшее
+      return .startGroup  // Deprecated
     }
   }
 
   // MARK: - ZigZag Decoding
 
-  /// ZigZag декодирование для 32-битных чисел со знаком.
+  /// ZigZag decoding for 32-bit signed numbers.
   static func zigzagDecode32(_ value: UInt32) -> Int32 {
     let shifted = value >> 1
     let mask = UInt32(bitPattern: -Int32(value & 1))
     return Int32(bitPattern: shifted ^ mask)
   }
 
-  /// ZigZag декодирование для 64-битных чисел со знаком.
+  /// ZigZag decoding for 64-bit signed numbers.
   static func zigzagDecode64(_ value: UInt64) -> Int64 {
     let shifted = value >> 1
     let mask = UInt64(bitPattern: -Int64(value & 1))
@@ -376,7 +376,7 @@ public struct BinaryDeserializer {
 
 // MARK: - Binary Decoder
 
-/// Низкоуровневый binary decoder для Protocol Buffers wire format.
+/// Low-level binary decoder for Protocol Buffers wire format.
 private struct BinaryDecoder {
   let data: Data
   var position: Int = 0
@@ -389,7 +389,7 @@ private struct BinaryDecoder {
     self.data = data
   }
 
-  /// Читает varint значение.
+  /// Reads varint value.
   mutating func readVarint() throws -> UInt64 {
     var result: UInt64 = 0
     var shift = 0
@@ -410,7 +410,7 @@ private struct BinaryDecoder {
     throw DeserializationError.truncatedVarint
   }
 
-  /// Читает 32-битное fixed значение.
+  /// Reads 32-bit fixed value.
   mutating func readFixed32() throws -> UInt32 {
     guard position + 4 <= data.count else {
       throw DeserializationError.truncatedMessage
@@ -424,7 +424,7 @@ private struct BinaryDecoder {
     return result
   }
 
-  /// Читает 64-битное fixed значение.
+  /// Reads 64-bit fixed value.
   mutating func readFixed64() throws -> UInt64 {
     guard position + 8 <= data.count else {
       throw DeserializationError.truncatedMessage
@@ -438,19 +438,19 @@ private struct BinaryDecoder {
     return result
   }
 
-  /// Читает float значение.
+  /// Reads float value.
   mutating func readFloat() throws -> Float {
     let bits = try readFixed32()
     return Float(bitPattern: bits)
   }
 
-  /// Читает double значение.
+  /// Reads double value.
   mutating func readDouble() throws -> Double {
     let bits = try readFixed64()
     return Double(bitPattern: bits)
   }
 
-  /// Читает указанное количество байтов.
+  /// Reads specified number of bytes.
   mutating func readBytes(_ count: Int) throws -> Data {
     guard position + count <= data.count else {
       throw DeserializationError.truncatedMessage
@@ -464,15 +464,15 @@ private struct BinaryDecoder {
 
 // MARK: - Deserialization Options
 
-/// Опции для десериализации.
+/// Options for deserialization.
 public struct DeserializationOptions {
-  /// Сохранять ли неизвестные поля для обратной совместимости.
+  /// Whether to preserve unknown fields for backward compatibility.
   public let preserveUnknownFields: Bool
 
-  /// Строгая валидация UTF-8 строк.
+  /// Strict UTF-8 string validation.
   public let strictUTF8Validation: Bool
 
-  /// Создает опции десериализации.
+  /// Creates deserialization options.
   public init(preserveUnknownFields: Bool = true, strictUTF8Validation: Bool = true) {
     self.preserveUnknownFields = preserveUnknownFields
     self.strictUTF8Validation = strictUTF8Validation
@@ -481,7 +481,7 @@ public struct DeserializationOptions {
 
 // MARK: - Deserialization Errors
 
-/// Ошибки десериализации.
+/// Deserialization errors.
 public enum DeserializationError: Error, Equatable {
   case truncatedVarint
   case truncatedMessage
