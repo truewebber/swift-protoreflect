@@ -1,20 +1,20 @@
 /**
  * ⭐ SwiftProtoReflect Example: Well-Known Types Registry Integration
  *
- * Описание: Comprehensive демонстрация интеграции всех Well-Known Types через WellKnownTypesRegistry
- * Ключевые концепции: WellKnownTypesRegistry, Handler integration, Type conversion patterns
- * Сложность: 🚀 Продвинутый
- * Время выполнения: < 15 секунд
+ * Description: Comprehensive demonstration of integrating all Well-Known Types through WellKnownTypesRegistry
+ * Key concepts: WellKnownTypesRegistry, Handler integration, Type conversion patterns
+ * Complexity: 🚀 Advanced
+ * Execution time: < 15 seconds
  *
- * Что изучите:
- * - Centralized управление всеми Well-Known Types
- * - Registry-based создание специализированных значений
- * - Cross-type операции и конвертации
+ * What you'll learn:
+ * - Centralized management of all Well-Known Types
+ * - Registry-based creation of specialized values
+ * - Cross-type operations and conversions
  * - Batch processing Well-Known Types
- * - Performance optimization для registry операций
- * - Error handling и type safety в registry
+ * - Performance optimization for registry operations
+ * - Error handling and type safety in registry
  *
- * Запуск:
+ * Run with:
  *   swift run WellKnownRegistry
  */
 
@@ -48,7 +48,7 @@ struct WellKnownRegistryExample {
 
     let registry = WellKnownTypesRegistry.shared
 
-    // Проверяем доступные типы
+    // Check available types
     let supportedTypes = [
       WellKnownTypeNames.timestamp,
       WellKnownTypeNames.duration,
@@ -132,7 +132,7 @@ struct WellKnownRegistryExample {
 
     let registry = WellKnownTypesRegistry.shared
 
-    // Создаем Struct со всеми типами Well-Known Types
+    // Create Struct with all Well-Known Types
     let complexData: [String: Any] = [
       "created_at": Date().timeIntervalSince1970,
       "duration_seconds": 3600.5,
@@ -159,7 +159,7 @@ struct WellKnownRegistryExample {
     print("    Original keys: \(complexData.keys.sorted())")
     print("    Specialized keys: \(specializedStruct.fields.keys.sorted())")
 
-    // Извлекаем и конвертируем отдельные поля
+    // Extract and convert individual fields
     if let userSettingsValue = specializedStruct.fields["user_settings"] {
       print("\n  🔧 Nested Struct Extraction:")
       print("    User Settings Type: \(type(of: userSettingsValue))")
@@ -169,7 +169,7 @@ struct WellKnownRegistryExample {
       }
     }
 
-    // Создаем FieldMask для partial updates
+    // Create FieldMask for partial updates
     let updatePaths = ["user_settings.theme", "is_active"]
     let updateMask = try FieldMaskHandler.FieldMaskValue(paths: updatePaths)
 
@@ -185,7 +185,7 @@ struct WellKnownRegistryExample {
 
     let registry = WellKnownTypesRegistry.shared
 
-    // Создаем batch данных различных типов
+    // Create batch data of various types
     let batchData: [(String, Any)] = [
       (WellKnownTypeNames.timestamp, TimestampHandler.TimestampValue(from: Date())),
       (WellKnownTypeNames.duration, DurationHandler.DurationValue(from: 1234.567)),
