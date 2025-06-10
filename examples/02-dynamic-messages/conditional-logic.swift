@@ -1,20 +1,20 @@
 /**
  * 🎯 SwiftProtoReflect Example: Conditional Logic Based on Types
  *
- * Описание: Условная логика на основе типов в динамических сообщениях
- * Ключевые концепции: Type-based decisions, Runtime type checking, Dynamic dispatch, Conditional processing
- * Сложность: 🔧🔧 Продвинутый
- * Время выполнения: < 15 секунд
+ * Description: Conditional logic based on types in dynamic messages
+ * Key concepts: Type-based decisions, Runtime type checking, Dynamic dispatch, Conditional processing
+ * Complexity: 🔧🔧 Advanced
+ * Execution time: < 15 seconds
  *
- * Что изучите:
- * - Условная логика на основе типов полей и сообщений
- * - Runtime type checking и dynamic dispatch patterns
- * - Полиморфная обработка различных типов сообщений
- * - Conditional field processing с type-specific logic
- * - Pattern matching для Protocol Buffers типов
+ * What you'll learn:
+ * - Conditional logic based on field and message types
+ * - Runtime type checking and dynamic dispatch patterns
+ * - Polymorphic processing of different message types
+ * - Conditional field processing with type-specific logic
+ * - Pattern matching for Protocol Buffers types
  * - Advanced type introspection techniques
  *
- * Запуск:
+ * Usage:
  *   swift run ConditionalLogic
  */
 
@@ -25,75 +25,75 @@ import SwiftProtoReflect
 @main
 struct ConditionalLogicExample {
   static func main() throws {
-    ExampleUtils.printHeader("Условная логика на основе типов")
+    ExampleUtils.printHeader("Conditional Logic Based on Types")
 
-    try step1UtypeBasedDecisions()
-    try step2UpolymorphicProcessing()
-    try step3UconditionalFieldProcessing()
-    try step4UdynamicDispatch()
-    try step5UpatternMatching()
-    try step6UadvancedTypeIntrospection()
+    try step1_typeBasedDecisions()
+    try step2_polymorphicProcessing()
+    try step3_conditionalFieldProcessing()
+    try step4_dynamicDispatch()
+    try step5_patternMatching()
+    try step6_advancedTypeIntrospection()
 
-    ExampleUtils.printSuccess("Вы освоили условную логику на основе типов!")
+    ExampleUtils.printSuccess("You've mastered conditional logic based on types!")
 
     ExampleUtils.printNext([
-      "Следующий: performance-optimization.swift - оптимизация производительности",
-      "Завершение: Это почти последний пример в категории 02-dynamic-messages!",
-      "Далее: ../03-serialization/ - сериализация и форматы данных",
+      "Next: performance-optimization.swift - performance optimization",
+      "Almost done: This is almost the last example in category 02-dynamic-messages!",
+      "Continue: ../03-serialization/ - serialization and data formats",
     ])
   }
 
-  private static func step1UtypeBasedDecisions() throws {
-    ExampleUtils.printStep(1, "Type-based decisions и условная обработка")
+  private static func step1_typeBasedDecisions() throws {
+    ExampleUtils.printStep(1, "Type-based decisions and conditional processing")
 
     let fileDescriptor = createMixedContentStructure()
     let factory = MessageFactory()
 
-    // Создание разных типов контента
+    // Create different types of content
     let mediaItems = try createMixedMediaItems(factory: factory, fileDescriptor: fileDescriptor)
 
-    print("  📱 Созданы различные типы медиа контента:")
+    print("  📱 Created various types of media content:")
     for (index, item) in mediaItems.enumerated() {
       print("    \(index + 1). \(try getContentType(item))")
     }
 
-    print("\n  🎯 Применение type-based logic:")
+    print("\n  🎯 Applying type-based logic:")
 
     for (index, item) in mediaItems.enumerated() {
       print("\n    📋 Item \(index + 1):")
       try processContentBasedOnType(item)
     }
 
-    // Статистика по типам
-    print("\n  📊 Статистика обработки по типам:")
+    // Statistics by types
+    print("\n  📊 Processing statistics by types:")
     let stats = try analyzeContentTypes(mediaItems)
     ExampleUtils.printTable(stats, title: "Content Type Statistics")
   }
 
-  private static func step2UpolymorphicProcessing() throws {
-    ExampleUtils.printStep(2, "Полиморфная обработка различных сообщений")
+  private static func step2_polymorphicProcessing() throws {
+    ExampleUtils.printStep(2, "Polymorphic processing of different messages")
 
     let fileDescriptor = createShapeHierarchy()
     let factory = MessageFactory()
 
-    // Создание различных геометрических фигур
+    // Create various geometric shapes
     let shapes = try createVariousShapes(factory: factory, fileDescriptor: fileDescriptor)
 
-    print("  🔺 Созданы различные геометрические фигуры:")
+    print("  🔺 Created various geometric shapes:")
     for shape in shapes {
       let shapeType = try determineShapeType(shape)
       print("    • \(shapeType)")
     }
 
-    print("\n  📐 Полиморфная обработка фигур:")
+    print("\n  📐 Polymorphic processing of shapes:")
 
     for shape in shapes {
-      print("\n    🔍 Анализ фигуры:")
+      print("\n    🔍 Shape analysis:")
       try processShapePolymorphically(shape)
     }
 
-    // Общие вычисления для всех фигур
-    print("\n  🧮 Общие вычисления:")
+    // Common calculations for all shapes
+    print("\n  🧮 Common calculations:")
     let totalArea = try calculateTotalArea(shapes)
     let avgPerimeter = try calculateAveragePerimeter(shapes)
 
@@ -107,7 +107,7 @@ struct ConditionalLogicExample {
     )
   }
 
-  private static func step3UconditionalFieldProcessing() throws {
+  private static func step3_conditionalFieldProcessing() throws {
     ExampleUtils.printStep(3, "Conditional field processing с type-specific logic")
 
     let fileDescriptor = createUserDataStructure()
@@ -143,7 +143,7 @@ struct ConditionalLogicExample {
     )
   }
 
-  private static func step4UdynamicDispatch() throws {
+  private static func step4_dynamicDispatch() throws {
     ExampleUtils.printStep(4, "Dynamic dispatch patterns для типов")
 
     let fileDescriptor = createEventSystemStructure()
@@ -177,7 +177,7 @@ struct ConditionalLogicExample {
     try demonstrateCustomHandlers(dispatcher: dispatcher, events: events)
   }
 
-  private static func step5UpatternMatching() throws {
+  private static func step5_patternMatching() throws {
     ExampleUtils.printStep(5, "Pattern matching для Protocol Buffers типов")
 
     let fileDescriptor = createAPIResponseStructure()
@@ -208,7 +208,7 @@ struct ConditionalLogicExample {
     ExampleUtils.printTable(patternStats, title: "Pattern Matching Stats")
   }
 
-  private static func step6UadvancedTypeIntrospection() throws {
+  private static func step6_advancedTypeIntrospection() throws {
     ExampleUtils.printStep(6, "Advanced type introspection techniques")
 
     let fileDescriptor = createAdvancedTypeStructure()
