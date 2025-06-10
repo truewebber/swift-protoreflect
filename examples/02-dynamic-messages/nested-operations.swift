@@ -1,19 +1,19 @@
 /**
  * 🔧 SwiftProtoReflect Example: Nested Operations
  *
- * Описание: Продвинутые операции с вложенными сообщениями
- * Ключевые концепции: Deep traversal, Nested mutations, Complex navigation
- * Сложность: 🔧🔧🔧 Экспертный
- * Время выполнения: < 15 секунд
+ * Description: Advanced operations with nested messages
+ * Key concepts: Deep traversal, Nested mutations, Complex navigation
+ * Complexity: 🔧🔧🔧 Expert
+ * Execution time: < 15 seconds
  *
- * Что изучите:
- * - Глубокие операции с многоуровневыми вложениями
- * - Массовые обновления вложенных полей
- * - Навигация по сложным структурам данных
- * - Условные операции на основе структуры
- * - Оптимизация производительности
+ * What you'll learn:
+ * - Deep operations with multi-level nesting
+ * - Batch updates of nested fields
+ * - Navigation through complex data structures
+ * - Conditional operations based on structure
+ * - Performance optimization
  *
- * Запуск:
+ * Usage:
  *   swift run NestedOperations
  */
 
@@ -24,25 +24,25 @@ import SwiftProtoReflect
 @main
 struct NestedOperationsExample {
   static func main() throws {
-    ExampleUtils.printHeader("Продвинутые операции с вложенными сообщениями")
+    ExampleUtils.printHeader("Advanced Operations with Nested Messages")
 
-    try step1UdeepTraversal()
-    try step2UbatchNestedOperations()
-    try step3UconditionalTransforms()
-    try step4UpathNavigation()
-    try step5UperformanceOptimizations()
+    try step1_deepTraversal()
+    try step2_batchNestedOperations()
+    try step3_conditionalTransforms()
+    try step4_pathNavigation()
+    try step5_performanceOptimizations()
 
-    ExampleUtils.printSuccess("Вы освоили продвинутые операции с вложенными структурами!")
+    ExampleUtils.printSuccess("You've mastered advanced operations with nested structures!")
 
     ExampleUtils.printNext([
-      "Следующий: field-manipulation.swift - манипуляции полей",
-      "Продвинутые: message-cloning.swift - клонирование",
-      "Изучите: conditional-logic.swift - условная логика",
+      "Next: field-manipulation.swift - field manipulations",
+      "Advanced: message-cloning.swift - cloning",
+      "Study: conditional-logic.swift - conditional logic",
     ])
   }
 
-  private static func step1UdeepTraversal() throws {
-    ExampleUtils.printStep(1, "Глубокая навигация по вложенным структурам")
+  private static func step1_deepTraversal() throws {
+    ExampleUtils.printStep(1, "Deep navigation through nested structures")
 
     let fileDescriptor = try createCompanyStructure()
     let factory = MessageFactory()
@@ -95,7 +95,7 @@ struct NestedOperationsExample {
     try engineeringDept.set([backendTeam, frontendTeam], forField: "teams")
     try company.set([engineeringDept], forField: "departments")
 
-    print("  🏗️ Создана вложенная структура компании:")
+    print("  🏗️ Created nested company structure:")
     try printCompanyStructure(company)
 
     // Deep traversal examples
@@ -113,8 +113,8 @@ struct NestedOperationsExample {
     )
   }
 
-  private static func step2UbatchNestedOperations() throws {
-    ExampleUtils.printStep(2, "Массовые операции с вложенными элементами")
+  private static func step2_batchNestedOperations() throws {
+    ExampleUtils.printStep(2, "Batch operations with nested elements")
 
     let fileDescriptor = try createBlogStructure()
     let factory = MessageFactory()
@@ -170,8 +170,8 @@ struct NestedOperationsExample {
     print("  🔄 Обновлено заголовков: \(updatedPosts)")
   }
 
-  private static func step3UconditionalTransforms() throws {
-    ExampleUtils.printStep(3, "Условные трансформации вложенных данных")
+  private static func step3_conditionalTransforms() throws {
+    ExampleUtils.printStep(3, "Conditional transformations of nested data")
 
     let fileDescriptor = try createProductStructure()
     let factory = MessageFactory()
@@ -207,8 +207,8 @@ struct NestedOperationsExample {
     ExampleUtils.printTable(finalStats, title: "After Transformations")
   }
 
-  private static func step4UpathNavigation() throws {
-    ExampleUtils.printStep(4, "Навигация по сложным путям")
+  private static func step4_pathNavigation() throws {
+    ExampleUtils.printStep(4, "Navigation through complex paths")
 
     let fileDescriptor = try createUniversityStructure()
     let factory = MessageFactory()
@@ -248,8 +248,8 @@ struct NestedOperationsExample {
     print("    ⬆️ Все оценки увеличены на 0.1")
   }
 
-  private static func step5UperformanceOptimizations() throws {
-    ExampleUtils.printStep(5, "Оптимизация производительности операций")
+  private static func step5_performanceOptimizations() throws {
+    ExampleUtils.printStep(5, "Performance optimization of operations")
 
     let fileDescriptor = try createTreeStructure()
     let factory = MessageFactory()
