@@ -1,43 +1,43 @@
-# Swift Protocol Buffers Reflection Library - Бизнес-требования
+# Swift Protocol Buffers Reflection Library - Business Requirements
 
-## Обзор продукта
-Swift Protocol Buffers Reflection Library - библиотека, обеспечивающая возможность динамической работы с Protocol Buffers сообщениями в Swift 6. Библиотека позволяет взаимодействовать с протобаф сообщениями без предварительно скомпилированных .pb файлов, что дает разработчикам гибкость при работе с динамически получаемыми protodescriptors.
+## Product Overview
+Swift Protocol Buffers Reflection Library is a library that provides the ability to work dynamically with Protocol Buffers messages in Swift 6. The library allows interaction with protobuf messages without pre-compiled .pb files, giving developers flexibility when working with dynamically obtained protodescriptors.
 
-## Ключевые возможности
+## Key Features
 
-### Динамическое манипулирование сообщениями
-- Возможность динамически создавать proto объекты на основе protodescriptors, полученных в runtime
-- Поддержка получения protodescriptors от gRPC сервера или из объектов дескрипторов, собранных вручную
-- Возможность выполнять proto marshal и unmarshal операции с динамически созданными объектами
+### Dynamic Message Manipulation
+- Ability to dynamically create proto objects based on protodescriptors obtained at runtime
+- Support for getting protodescriptors from gRPC server or from manually assembled descriptor objects
+- Ability to perform proto marshal and unmarshal operations with dynamically created objects
 
-### Использование без предварительной компиляции
-- Работа с proto сообщениями без необходимости предварительной компиляции .proto файлов
-- Выполнение gRPC вызовов без предварительно скомпилированных протобаф файлов
+### Usage Without Pre-compilation
+- Working with proto messages without the need for pre-compilation of .proto files
+- Performing gRPC calls without pre-compiled protobuf files
 
-## Требования и ограничения
+## Requirements and Limitations
 
-### Технические ограничения
-- Поддержка только протокола proto3, без поддержки proto2
-- Строгое соответствие поведению официальной C++ реализации protoc (https://github.com/protocolbuffers/protobuf)
-- Соблюдение спецификации Protocol Buffers с ужесточением требований официальной документации
+### Technical Limitations
+- Support only for proto3 protocol, without proto2 support
+- Strict compliance with the behavior of the official C++ protoc implementation (https://github.com/protocolbuffers/protobuf)
+- Adherence to Protocol Buffers specification with strict enforcement of official documentation requirements
 
-### Производительность
-- Целевая производительность должна быть на уровне protoc-генерируемого кода
-- Оптимизация операций сериализации/десериализации для минимизации накладных расходов на рефлексию
+### Performance
+- Target performance should be at the level of protoc-generated code
+- Optimization of serialization/deserialization operations to minimize reflection overhead
 
-## Интеграции и зависимости
-- Библиотека станет основой для будущего gRPC/gRPC-web клиента для Swift разработчиков
-- Обеспечение совместимости с существующими Swift Protocol Buffers реализациями
+## Integrations and Dependencies
+- The library will serve as the foundation for a future gRPC/gRPC-web client for Swift developers
+- Ensuring compatibility with existing Swift Protocol Buffers implementations
 
-## Сценарии использования
+## Usage Scenarios
 
-### Динамическая обработка сообщений
-- Обработка неизвестных заранее типов сообщений, полученных во время выполнения
-- Динамическое создание и манипулирование Protocol Buffers сообщениями
+### Dynamic Message Processing
+- Processing unknown message types received at runtime
+- Dynamic creation and manipulation of Protocol Buffers messages
 
-### gRPC взаимодействие
-- Выполнение gRPC вызовов к сервисам с неизвестным во время компиляции API
-- Реализация динамических gRPC клиентов
+### gRPC Interaction
+- Performing gRPC calls to services with API unknown at compile time
+- Implementation of dynamic gRPC clients
 
-## Примеры аналогов
-- Google Protocol Buffers reflection для Go: google.golang.org/protobuf/reflect/protoreflect
+## Examples of Analogs
+- Google Protocol Buffers reflection for Go: google.golang.org/protobuf/reflect/protoreflect
