@@ -2,7 +2,7 @@
 // ServiceClient.swift
 // SwiftProtoReflect
 //
-// Создан: 2025-05-25
+// Created: 2025-05-25
 //
 
 import Foundation
@@ -10,43 +10,43 @@ import GRPC
 import NIOCore
 import SwiftProtobuf
 
-/// ServiceClient предоставляет динамический интерфейс для вызова gRPC методов.
-/// без предварительной генерации клиентского кода.
+/// ServiceClient provides a dynamic interface for calling gRPC methods
+/// without pre-generating client code.
 ///
-/// Этот класс позволяет:.
-/// - Динамически вызывать gRPC методы на основе ServiceDescriptor.
-/// - Работать с DynamicMessage для входных и выходных данных.
-/// - Поддерживать unary RPC вызовы.
-/// - Обрабатывать ошибки и метаданные.
+/// This class allows:
+/// - Dynamically calling gRPC methods based on ServiceDescriptor
+/// - Working with DynamicMessage for input and output data
+/// - Supporting unary RPC calls
+/// - Handling errors and metadata
 ///
-/// ## Пример использования:.
+/// ## Usage example:
 ///
-/// ```swift.
-/// let client = ServiceClient(channel: channel).
+/// ```swift
+/// let client = ServiceClient(channel: channel)
 ///
-/// // Unary вызов.
+/// // Unary call
 /// let request = try factory.createMessage(descriptor: requestDescriptor)
 /// try request.set(field: "name", value: "John")
 ///
 /// let response = try await client.unaryCall(
-///   service: serviceDescriptor,.
-///   method: "GetUser",.
-///   request: request.
-/// ).
-/// ```.
+///   service: serviceDescriptor,
+///   method: "GetUser",
+///   request: request
+/// )
+/// ```
 public final class ServiceClient {
 
   // MARK: - Types
 
-  /// Опции для вызова gRPC методов.
+  /// Options for calling gRPC methods.
   public struct CallOptions {
-    /// Таймаут для вызова.
+    /// Timeout for the call.
     public let timeout: TimeAmount?
 
-    /// Метаданные для отправки с запросом.
+    /// Metadata to send with the request.
     public let metadata: [String: String]
 
-    /// Создает новые опции вызова.
+    /// Creates new call options.
     public init(
       timeout: TimeAmount? = nil,
       metadata: [String: String] = [:]
@@ -56,15 +56,15 @@ public final class ServiceClient {
     }
   }
 
-  /// Результат unary вызова.
+  /// Result of a unary call.
   public struct UnaryCallResult {
-    /// Ответное сообщение.
+    /// Response message.
     public let response: DynamicMessage
 
-    /// Метаданные ответа (упрощенная версия).
+    /// Response metadata (simplified version).
     public let metadata: [String: String]
 
-    /// Trailing метаданные (упрощенная версия).
+    /// Trailing metadata (simplified version).
     public let trailingMetadata: [String: String]
 
     public init(
@@ -80,23 +80,23 @@ public final class ServiceClient {
 
   // MARK: - Properties
 
-  /// gRPC канал для соединения с сервером.
+  /// gRPC channel for connecting to the server.
   private let channel: GRPCChannel
 
-  /// Фабрика для создания сообщений.
+  /// Factory for creating messages.
   private let messageFactory: MessageFactory
 
-  /// Реестр типов для разрешения дескрипторов.
+  /// Type registry for resolving descriptors.
   private let typeRegistry: TypeRegistry
 
   // MARK: - Initialization
 
-  /// Создает новый ServiceClient.
+  /// Creates a new ServiceClient.
   ///
-  /// - Parameters:.
-  ///   - channel: gRPC канал для соединения.
-  ///   - messageFactory: Фабрика для создания сообщений (по умолчанию новая).
-  ///   - typeRegistry: Реестр типов (по умолчанию новый).
+  /// - Parameters:
+  ///   - channel: gRPC channel for connection.
+  ///   - messageFactory: Factory for creating messages (default: new instance).
+  ///   - typeRegistry: Type registry (default: new instance).
   public init(
     channel: GRPCChannel,
     messageFactory: MessageFactory = MessageFactory(),
@@ -109,27 +109,27 @@ public final class ServiceClient {
 
   // MARK: - Unary Calls
 
-  /// Выполняет unary gRPC вызов.
+  /// Performs a unary gRPC call.
   ///
-  /// - Parameters:.
-  ///   - service: Дескриптор сервиса.
-  ///   - method: Имя метода.
-  ///   - request: Запросное сообщение.
-  ///   - options: Опции вызова.
-  /// - Returns: Результат вызова с ответным сообщением.
-  /// - Throws: ServiceClientError при ошибках.
+  /// - Parameters:
+  ///   - service: Service descriptor.
+  ///   - method: Method name.
+  ///   - request: Request message.
+  ///   - options: Call options.
+  /// - Returns: Call result with response message.
+  /// - Throws: ServiceClientError on errors.
   public func unaryCall(
     service: ServiceDescriptor,
     method methodName: String,
     request: DynamicMessage,
     options: CallOptions = CallOptions()
   ) async throws -> UnaryCallResult {
-    // Получаем дескриптор метода
+    // Get method descriptor
     guard let methodDescriptor = service.method(named: methodName) else {
       throw ServiceClientError.methodNotFound(methodName: methodName, serviceName: service.name)
     }
 
-    // Проверяем, что это unary метод
+    // Check that this is a unary method
     guard !methodDescriptor.clientStreaming && !methodDescriptor.serverStreaming else {
       throw ServiceClientError.invalidMethodType(
         methodName: methodName,
@@ -138,19 +138,19 @@ public final class ServiceClient {
       )
     }
 
-    // Проверяем совместимость типов
+    // Check type compatibility
     try validateRequestType(request: request, expectedType: methodDescriptor.inputType)
 
-    // Получаем дескриптор ответного типа
+    // Get response type descriptor
     let responseDescriptor = try getResponseDescriptor(outputType: methodDescriptor.outputType)
 
-    // Сериализуем запрос
+    // Serialize request
     let requestData = try serializeRequest(request)
 
-    // Формируем путь метода
+    // Form method path
     let path = "/\(service.fullName)/\(methodName)"
 
-    // Создаем gRPC вызов с использованием низкоуровневого API
+    // Create gRPC call using low-level API
     let call: UnaryCall<GRPCPayloadWrapper, GRPCPayloadWrapper> = channel.makeUnaryCall(
       path: path,
       request: GRPCPayloadWrapper(data: requestData),
@@ -158,10 +158,10 @@ public final class ServiceClient {
       interceptors: []
     )
 
-    // Выполняем вызов и обрабатываем результат
+    // Execute call and handle result
     let grpcResponse = try await call.response.get()
 
-    // Десериализуем ответ
+    // Deserialize response
     let responseMessage = try deserializeResponse(
       data: grpcResponse.data,
       descriptor: responseDescriptor
@@ -169,14 +169,14 @@ public final class ServiceClient {
 
     return UnaryCallResult(
       response: responseMessage,
-      metadata: [:],  // Упрощенная версия - пустые метаданные
+      metadata: [:],  // Simplified version - empty metadata
       trailingMetadata: [:]
     )
   }
 
   // MARK: - Private Helper Methods
 
-  /// Получает тип метода в виде строки.
+  /// Gets method type as a string.
   private func getMethodType(_ method: ServiceDescriptor.MethodDescriptor) -> String {
     switch (method.clientStreaming, method.serverStreaming) {
     case (false, false): return "unary"
@@ -186,7 +186,7 @@ public final class ServiceClient {
     }
   }
 
-  /// Проверяет совместимость типа запроса.
+  /// Validates request type compatibility.
   private func validateRequestType(request: DynamicMessage, expectedType: String) throws {
     guard request.descriptor.fullName == expectedType else {
       throw ServiceClientError.typeMismatch(
@@ -196,7 +196,7 @@ public final class ServiceClient {
     }
   }
 
-  /// Получает дескриптор ответного типа.
+  /// Gets response type descriptor.
   private func getResponseDescriptor(outputType: String) throws -> MessageDescriptor {
     guard let descriptor = typeRegistry.findMessage(named: outputType) else {
       throw ServiceClientError.typeNotFound(typeName: outputType)
@@ -204,19 +204,19 @@ public final class ServiceClient {
     return descriptor
   }
 
-  /// Сериализует запросное сообщение.
+  /// Serializes request message.
   private func serializeRequest(_ request: DynamicMessage) throws -> Data {
     let serializer = BinarySerializer()
     return try serializer.serialize(request)
   }
 
-  /// Десериализует ответное сообщение.
+  /// Deserializes response message.
   private func deserializeResponse(data: Data, descriptor: MessageDescriptor) throws -> DynamicMessage {
     let deserializer = BinaryDeserializer()
     return try deserializer.deserialize(data, using: descriptor)
   }
 
-  /// Создает gRPC опции вызова из наших опций.
+  /// Creates gRPC call options from our options.
   private func createGRPCCallOptions(from options: CallOptions) -> GRPC.CallOptions {
     var grpcOptions = GRPC.CallOptions()
 
@@ -234,7 +234,7 @@ public final class ServiceClient {
 
 // MARK: - GRPCPayloadWrapper
 
-/// Обертка для Data чтобы соответствовать протоколу GRPCPayload.
+/// Wrapper for Data to conform to GRPCPayload protocol.
 internal struct GRPCPayloadWrapper: GRPCPayload {
   let data: Data
 
@@ -253,27 +253,27 @@ internal struct GRPCPayloadWrapper: GRPCPayload {
 
 // MARK: - ServiceClientError
 
-/// Ошибки ServiceClient.
+/// ServiceClient errors.
 public enum ServiceClientError: Error, CustomStringConvertible {
-  /// Метод не найден в сервисе.
+  /// Method not found in service.
   case methodNotFound(methodName: String, serviceName: String)
 
-  /// Неверный тип метода.
+  /// Invalid method type.
   case invalidMethodType(methodName: String, expected: String, actual: String)
 
-  /// Несовпадение типов сообщений.
+  /// Message type mismatch.
   case typeMismatch(expected: String, actual: String)
 
-  /// Тип не найден в реестре.
+  /// Type not found in registry.
   case typeNotFound(typeName: String)
 
-  /// Ошибка сериализации.
+  /// Serialization error.
   case serializationError(underlying: Error)
 
-  /// Ошибка десериализации.
+  /// Deserialization error.
   case deserializationError(underlying: Error)
 
-  /// Ошибка gRPC.
+  /// gRPC error.
   case grpcError(underlying: Error)
 
   public var description: String {

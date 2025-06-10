@@ -1,23 +1,23 @@
 /// SwiftProtoReflect.
 ///
-/// Библиотека для динамической работы с Protocol Buffers сообщениями в Swift.
-/// без предварительно скомпилированных .pb файлов.
+/// Library for dynamic work with Protocol Buffers messages in Swift
+/// without pre-compiled .pb files.
 ///
-/// Основные компоненты:.
-/// - Descriptor: Система дескрипторов протобаф сообщений.
-/// - DynamicMessage: Динамическое представление и манипуляция сообщениями.
-/// - Serialization: Сериализация/десериализация сообщений.
+/// Main components:
+/// - Descriptor: Protocol Buffers message descriptor system.
+/// - DynamicMessage: Dynamic message representation and manipulation.
+/// - Serialization: Message serialization/deserialization.
 
 import Foundation
 import SwiftProtobuf
 
-/// Главная точка входа в библиотеку.
+/// Main entry point to the library.
 public enum SwiftProtoReflect {
-  /// Текущая версия библиотеки.
+  /// Current library version.
   public static let version = "0.1.0"
 
-  /// Инициализация библиотеки с возможностью настройки.
+  /// Library initialization with configuration options.
   public static func initialize(options: [String: Any] = [:]) {
-    // Будет реализовано в будущем
+    // Will be implemented in the future
   }
 }
