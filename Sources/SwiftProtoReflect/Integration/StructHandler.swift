@@ -135,19 +135,21 @@ public struct StructHandler: WellKnownTypeHandler {
       case let number as NSNumber:
         // NSNumber может представлять как Bool, так и Number
         #if canImport(CoreFoundation) && !os(Linux)
-        if CFGetTypeID(number) == CFBooleanGetTypeID() {
-          self = .boolValue(number.boolValue)
-        } else {
-          self = .numberValue(number.doubleValue)
-        }
+          if CFGetTypeID(number) == CFBooleanGetTypeID() {
+            self = .boolValue(number.boolValue)
+          }
+          else {
+            self = .numberValue(number.doubleValue)
+          }
         #else
-        // Cross-platform compatible way to detect boolean NSNumber on Linux
-        let objCType = String(cString: number.objCType)
-        if objCType == "c" || objCType == "B" { // char or Bool
-          self = .boolValue(number.boolValue)
-        } else {
-          self = .numberValue(number.doubleValue)
-        }
+          // Cross-platform compatible way to detect boolean NSNumber on Linux
+          let objCType = String(cString: number.objCType)
+          if objCType == "c" || objCType == "B" {  // char or Bool
+            self = .boolValue(number.boolValue)
+          }
+          else {
+            self = .numberValue(number.doubleValue)
+          }
         #endif
       case let bool as Bool:
         self = .boolValue(bool)

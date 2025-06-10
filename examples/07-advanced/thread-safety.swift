@@ -189,20 +189,20 @@ struct ThreadSafetyExample {
     final class MessageContainer: @unchecked Sendable {
       private var allMessages: [DynamicMessage] = []
       private let messagesLock = NSLock()
-      
+
       func append(contentsOf messages: [DynamicMessage]) {
         messagesLock.lock()
         allMessages.append(contentsOf: messages)
         messagesLock.unlock()
       }
-      
+
       var messages: [DynamicMessage] {
         messagesLock.lock()
         defer { messagesLock.unlock() }
         return allMessages
       }
     }
-    
+
     let messageContainer = MessageContainer()
 
     let creationTime = ExampleUtils.measureTime {
@@ -239,7 +239,7 @@ struct ThreadSafetyExample {
 
       group.wait()
     }
-    
+
     let allMessages = messageContainer.messages
 
     ExampleUtils.printTiming("Concurrent message creation (\(messageCount) messages)", time: creationTime.time)
@@ -352,25 +352,25 @@ struct ThreadSafetyExample {
     print("\n  🔍 Testing concurrent lookups...")
 
     let lookupCount = 1000
-    
+
     // Create thread-safe counter for successful lookups
     final class LookupCounter: @unchecked Sendable {
       private var successfulLookups = 0
       private let lookupLock = NSLock()
-      
+
       func addSuccesses(_ count: Int) {
         lookupLock.lock()
         successfulLookups += count
         lookupLock.unlock()
       }
-      
+
       var count: Int {
         lookupLock.lock()
         defer { lookupLock.unlock() }
         return successfulLookups
       }
     }
-    
+
     let lookupCounter = LookupCounter()
 
     let lookupTime = ExampleUtils.measureTime {
@@ -399,7 +399,7 @@ struct ThreadSafetyExample {
 
       group.wait()
     }
-    
+
     let successfulLookups = lookupCounter.count
 
     ExampleUtils.printTiming("Concurrent lookups (\(lookupCount) operations)", time: lookupTime.time)
@@ -664,23 +664,24 @@ struct ThreadSafetyExample {
         concurrentQueue.async { [taskDescriptor] in
           // Create local factory for this thread to avoid Sendable issues
           let localFactory = MessageFactory()
-          
+
           for i in 0..<(taskCount / threadCount) {
             let startTime = Date().timeIntervalSince1970
-            
+
             do {
               var task = localFactory.createMessage(from: taskDescriptor)
-              
+
               try task.set(Int64(threadId * 1000 + i), forField: "id")
               try task.set(Int32.random(in: 1...10), forField: "priority")
               try task.set("Task data \(threadId).\(i)", forField: "data")
 
               // Симуляция обработки
               Thread.sleep(forTimeInterval: Double.random(in: 0.0001...0.0005))
-              
+
               let processingTime = Date().timeIntervalSince1970 - startTime
               statistics.recordMessage(processingTime: processingTime)
-            } catch {
+            }
+            catch {
               statistics.recordError()
             }
           }

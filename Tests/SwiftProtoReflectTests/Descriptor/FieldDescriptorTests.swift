@@ -324,16 +324,16 @@ final class FieldDescriptorTests: XCTestCase {
     // fatalError не использует throws, и мы не можем напрямую тестировать fatalError
     // XCTExpectFailure не доступна на Linux, поэтому просто отмечаем что тест ожидает сбой
     #if os(macOS) || os(iOS)
-    XCTAssertNoThrow {
-      XCTExpectFailure("MapEntryInfo с недопустимым типом ключа bytes должен вызвать ошибку")
-    }
+      XCTAssertNoThrow {
+        XCTExpectFailure("MapEntryInfo с недопустимым типом ключа bytes должен вызвать ошибку")
+      }
 
-    XCTAssertNoThrow {
-      XCTExpectFailure("MapEntryInfo с недопустимым типом ключа double должен вызвать ошибку")
-    }
+      XCTAssertNoThrow {
+        XCTExpectFailure("MapEntryInfo с недопустимым типом ключа double должен вызвать ошибку")
+      }
     #else
-    // На Linux пропускаем тесты с fatalError из-за отсутствия XCTExpectFailure
-    print("Пропуск тестов fatalError на Linux (XCTExpectFailure недоступна)")
+      // На Linux пропускаем тесты с fatalError из-за отсутствия XCTExpectFailure
+      print("Пропуск тестов fatalError на Linux (XCTExpectFailure недоступна)")
     #endif
   }
 

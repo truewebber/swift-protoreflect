@@ -20,10 +20,11 @@
 
 import ExampleUtils
 import Foundation
-#if canImport(OSLog)
-import OSLog
-#endif
 @preconcurrency import SwiftProtoReflect
+
+#if canImport(OSLog)
+  import OSLog
+#endif
 
 @main
 struct StreamingExample {
@@ -61,9 +62,9 @@ struct StreamingExample {
 
     // Streaming file for output
     #if canImport(Foundation) && !os(Linux)
-    let tempDir = NSTemporaryDirectory()
+      let tempDir = NSTemporaryDirectory()
     #else
-    let tempDir = FileManager.default.temporaryDirectory.path + "/"
+      let tempDir = FileManager.default.temporaryDirectory.path + "/"
     #endif
     let streamingFile = "\(tempDir)streaming_records.bin"
     let outputStream = OutputStream(toFileAtPath: streamingFile, append: false)!
@@ -143,9 +144,9 @@ struct StreamingExample {
 
     // Read back the streaming file we created
     #if canImport(Foundation) && !os(Linux)
-    let tempDir = NSTemporaryDirectory()
+      let tempDir = NSTemporaryDirectory()
     #else
-    let tempDir = FileManager.default.temporaryDirectory.path + "/"
+      let tempDir = FileManager.default.temporaryDirectory.path + "/"
     #endif
     let streamingFile = "\(tempDir)streaming_records.bin"
 

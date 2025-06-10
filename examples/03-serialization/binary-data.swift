@@ -340,7 +340,7 @@ struct BinaryDataExample {
       default:
         decodedData = originalData
       }
-      
+
       let integrity = originalData == decodedData
 
       print("    Decoding: \(integrity ? "✅ SUCCESS" : "❌ FAILED")")
@@ -370,11 +370,11 @@ struct BinaryDataExample {
     print("    Protobuf size: \(ExampleUtils.formatDataSize(serializedData.count))")
     print("    Base64 encoded: \(ExampleUtils.formatDataSize(protobufEncoded.count))")
     print("    Encoding overhead: \(String(format: "%.1f%%", totalExpansion))")
-    
+
     // Simulate real compression benefits
     print("  💡 Real compression would typically provide:")
     print("    Text data: 60-80% size reduction")
-    print("    Binary data: 20-40% size reduction") 
+    print("    Binary data: 20-40% size reduction")
     print("    Protobuf data: 30-50% size reduction")
     print("    Repeated patterns: up to 90% size reduction")
   }
@@ -644,33 +644,43 @@ struct BinaryDataExample {
   }
 
   // MARK: - Helper Decoding Functions
-  
+
   private static func decodePercentString(_ percentString: String) throws -> Data {
     var data = Data()
     var index = percentString.startIndex
-    
+
     while index < percentString.endIndex {
       if percentString[index] == "%" {
         let nextIndex = percentString.index(index, offsetBy: 3)
         guard nextIndex <= percentString.endIndex else {
-          throw NSError(domain: "PercentDecode", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid percent encoding"])
+          throw NSError(
+            domain: "PercentDecode",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "Invalid percent encoding"]
+          )
         }
-        
+
         let hexStart = percentString.index(after: index)
         let hexString = String(percentString[hexStart..<nextIndex])
-        
+
         if let byte = UInt8(hexString, radix: 16) {
           data.append(byte)
-        } else {
-          throw NSError(domain: "PercentDecode", code: 2, userInfo: [NSLocalizedDescriptionKey: "Invalid hex in percent encoding"])
         }
-        
+        else {
+          throw NSError(
+            domain: "PercentDecode",
+            code: 2,
+            userInfo: [NSLocalizedDescriptionKey: "Invalid hex in percent encoding"]
+          )
+        }
+
         index = nextIndex
-      } else {
+      }
+      else {
         index = percentString.index(after: index)
       }
     }
-    
+
     return data
   }
 }
