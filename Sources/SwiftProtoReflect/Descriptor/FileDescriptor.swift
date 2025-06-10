@@ -2,7 +2,7 @@
 // FileDescriptor.swift
 // SwiftProtoReflect
 //
-// Создан: 2025-05-17
+// Created: 2025-05-17
 //
 
 import Foundation
@@ -10,35 +10,35 @@ import SwiftProtobuf
 
 /// FileDescriptor.
 ///
-/// Представление .proto файла, содержащее метаданные о сообщениях, перечислениях,
-/// сервисах и других элементах, определенных в файле Protocol Buffers.
+/// Representation of a .proto file containing metadata about messages, enums,
+/// services and other elements defined in the Protocol Buffers file.
 public struct FileDescriptor {
   // MARK: - Properties
 
-  /// Имя файла (например, "person.proto").
+  /// File name (e.g., "person.proto").
   public let name: String
 
-  /// Пакет, к которому относится файл (например, "example.person").
+  /// Package the file belongs to (e.g., "example.person").
   public let package: String
 
-  /// Зависимости файла (импортированные .proto файлы).
+  /// File dependencies (imported .proto files).
   public let dependencies: [String]
 
-  /// Опции файла.
+  /// File options.
   public let options: [String: Any]
 
-  /// Список сообщений, определенных в файле.
+  /// List of messages defined in the file.
   public private(set) var messages: [String: MessageDescriptor] = [:]
 
-  /// Список перечислений, определенных в файле.
+  /// List of enums defined in the file.
   public private(set) var enums: [String: EnumDescriptor] = [:]
 
-  /// Список сервисов, определенных в файле.
+  /// List of services defined in the file.
   public private(set) var services: [String: ServiceDescriptor] = [:]
 
   // MARK: - Initialization
 
-  /// Создает новый экземпляр FileDescriptor.
+  /// Creates a new FileDescriptor instance.
   public init(
     name: String,
     package: String,
@@ -53,16 +53,16 @@ public struct FileDescriptor {
 
   // MARK: - Methods
 
-  /// Добавляет дескриптор сообщения в файл.
+  /// Adds a message descriptor to the file.
   ///
-  /// - Parameter messageDescriptor: Дескриптор сообщения для добавления.
-  /// - Returns: Обновленный FileDescriptor.
+  /// - Parameter messageDescriptor: Message descriptor to add.
+  /// - Returns: Updated FileDescriptor.
   @discardableResult
   public mutating func addMessage(_ messageDescriptor: MessageDescriptor) -> Self {
-    // Создаем новое сообщение с учетом родительского файла
+    // Create new message considering parent file
     var newMessage = messageDescriptor
 
-    // Устанавливаем путь к файловому дескриптору, если не задан
+    // Set file descriptor path if not specified
     if newMessage.fileDescriptorPath == nil && newMessage.parentMessageFullName == nil {
       newMessage.fileDescriptorPath = self.name
     }
@@ -71,54 +71,54 @@ public struct FileDescriptor {
     return self
   }
 
-  /// Добавляет дескриптор перечисления в файл.
+  /// Adds an enum descriptor to the file.
   ///
-  /// - Parameter enumDescriptor: Дескриптор перечисления для добавления.
-  /// - Returns: Обновленный FileDescriptor.
+  /// - Parameter enumDescriptor: Enum descriptor to add.
+  /// - Returns: Updated FileDescriptor.
   @discardableResult
   public mutating func addEnum(_ enumDescriptor: EnumDescriptor) -> Self {
     enums[enumDescriptor.name] = enumDescriptor
     return self
   }
 
-  /// Добавляет дескриптор сервиса в файл.
+  /// Adds a service descriptor to the file.
   ///
-  /// - Parameter serviceDescriptor: Дескриптор сервиса для добавления.
-  /// - Returns: Обновленный FileDescriptor.
+  /// - Parameter serviceDescriptor: Service descriptor to add.
+  /// - Returns: Updated FileDescriptor.
   @discardableResult
   public mutating func addService(_ serviceDescriptor: ServiceDescriptor) -> Self {
     services[serviceDescriptor.name] = serviceDescriptor
     return self
   }
 
-  /// Получает полный путь для типа в этом файле.
+  /// Gets the full path for a type in this file.
   ///
-  /// - Parameter typeName: Имя типа.
-  /// - Returns: Полное имя с пакетом.
+  /// - Parameter typeName: Type name.
+  /// - Returns: Full name with package.
   public func getFullName(for typeName: String) -> String {
     return package.isEmpty ? typeName : "\(package).\(typeName)"
   }
 
-  /// Проверяет, содержит ли файл указанное сообщение.
+  /// Checks if the file contains the specified message.
   ///
-  /// - Parameter name: Имя сообщения.
-  /// - Returns: true, если сообщение существует.
+  /// - Parameter name: Message name.
+  /// - Returns: true if the message exists.
   public func hasMessage(named name: String) -> Bool {
     return messages[name] != nil
   }
 
-  /// Проверяет, содержит ли файл указанное перечисление.
+  /// Checks if the file contains the specified enum.
   ///
-  /// - Parameter name: Имя перечисления.
-  /// - Returns: true, если перечисление существует.
+  /// - Parameter name: Enum name.
+  /// - Returns: true if the enum exists.
   public func hasEnum(named name: String) -> Bool {
     return enums[name] != nil
   }
 
-  /// Проверяет, содержит ли файл указанный сервис.
+  /// Checks if the file contains the specified service.
   ///
-  /// - Parameter name: Имя сервиса.
-  /// - Returns: true, если сервис существует.
+  /// - Parameter name: Service name.
+  /// - Returns: true if the service exists.
   public func hasService(named name: String) -> Bool {
     return services[name] != nil
   }

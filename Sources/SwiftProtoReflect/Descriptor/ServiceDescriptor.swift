@@ -2,7 +2,7 @@
 // ServiceDescriptor.swift
 // SwiftProtoReflect
 //
-// Создан: 2025-05-23
+// Created: 2025-05-23
 //
 
 import Foundation
@@ -10,40 +10,40 @@ import SwiftProtobuf
 
 /// ServiceDescriptor.
 ///
-/// Дескриптор сервиса Protocol Buffers, который описывает gRPC сервис,.
-/// его методы, входные и выходные типы сообщений, а также опции.
+/// Protocol Buffers service descriptor that describes a gRPC service,
+/// its methods, input and output message types, and options.
 public struct ServiceDescriptor: Equatable {
   // MARK: - Types
 
-  /// Дескриптор метода сервиса с именем, входными и выходными типами.
+  /// Service method descriptor with name, input and output types.
   public struct MethodDescriptor: Equatable {
-    /// Имя метода (например, "GetUser").
+    /// Method name (e.g., "GetUser").
     public let name: String
 
-    /// Полное имя входного типа сообщения (например, "example.GetUserRequest").
+    /// Full name of input message type (e.g., "example.GetUserRequest").
     public let inputType: String
 
-    /// Полное имя выходного типа сообщения (например, "example.GetUserResponse").
+    /// Full name of output message type (e.g., "example.GetUserResponse").
     public let outputType: String
 
-    /// Указывает, является ли метод клиентским потоковым (client streaming).
+    /// Indicates if the method is client streaming.
     public let clientStreaming: Bool
 
-    /// Указывает, является ли метод серверным потоковым (server streaming).
+    /// Indicates if the method is server streaming.
     public let serverStreaming: Bool
 
-    /// Опции метода.
+    /// Method options.
     public let options: [String: Any]
 
-    /// Создает новый дескриптор метода.
+    /// Creates a new method descriptor.
     ///
-    /// - Parameters:.
-    ///   - name: Имя метода.
-    ///   - inputType: Полное имя входного типа сообщения.
-    ///   - outputType: Полное имя выходного типа сообщения.
-    ///   - clientStreaming: Флаг клиентского потока.
-    ///   - serverStreaming: Флаг серверного потока.
-    ///   - options: Опции метода.
+    /// - Parameters:
+    ///   - name: Method name.
+    ///   - inputType: Full name of input message type.
+    ///   - outputType: Full name of output message type.
+    ///   - clientStreaming: Client streaming flag.
+    ///   - serverStreaming: Server streaming flag.
+    ///   - options: Method options.
     public init(
       name: String,
       inputType: String,
@@ -70,7 +70,7 @@ public struct ServiceDescriptor: Equatable {
         return false
       }
 
-      // Сравниваем опции: проверяем ключи и значения
+      // Compare options: check keys and values
       let lhsKeys = Set(lhs.options.keys)
       let rhsKeys = Set(rhs.options.keys)
 
@@ -78,12 +78,12 @@ public struct ServiceDescriptor: Equatable {
         return false
       }
 
-      // Проверяем совпадение значений для всех ключей
+      // Check value matching for all keys
       for key in lhsKeys {
         let lhsValue = lhs.options[key]
         let rhsValue = rhs.options[key]
 
-        // Проверяем известные типы значений
+        // Check known value types
         if let lhsBool = lhsValue as? Bool, let rhsBool = rhsValue as? Bool {
           if lhsBool != rhsBool {
             return false
@@ -100,7 +100,7 @@ public struct ServiceDescriptor: Equatable {
           }
         }
         else {
-          // Для других типов, сравниваем строковые представления
+          // For other types, compare string representations
           if String(describing: lhsValue) != String(describing: rhsValue) {
             return false
           }
@@ -113,29 +113,29 @@ public struct ServiceDescriptor: Equatable {
 
   // MARK: - Properties
 
-  /// Имя сервиса (например, "UserService").
+  /// Service name (e.g., "UserService").
   public let name: String
 
-  /// Полное имя сервиса, включая пакет (например, "example.UserService").
+  /// Full service name including package (e.g., "example.UserService").
   public let fullName: String
 
-  /// Путь к родительскому файлу (для разрешения ссылок).
+  /// Path to parent file (for reference resolution).
   public var fileDescriptorPath: String?
 
-  /// Список методов сервиса по имени.
+  /// List of service methods by name.
   public private(set) var methodsByName: [String: MethodDescriptor] = [:]
 
-  /// Опции сервиса.
+  /// Service options.
   public let options: [String: Any]
 
   // MARK: - Initialization
 
-  /// Создает новый экземпляр ServiceDescriptor.
+  /// Creates a new ServiceDescriptor instance.
   ///
-  /// - Parameters:.
-  ///   - name: Имя сервиса.
-  ///   - fullName: Полное имя сервиса.
-  ///   - options: Опции сервиса.
+  /// - Parameters:
+  ///   - name: Service name.
+  ///   - fullName: Full service name.
+  ///   - options: Service options.
   public init(
     name: String,
     fullName: String,
@@ -146,14 +146,14 @@ public struct ServiceDescriptor: Equatable {
     self.options = options
   }
 
-  /// Создает новый экземпляр ServiceDescriptor с базовым именем.
+  /// Creates a new ServiceDescriptor instance with a base name.
   ///
-  /// Полное имя будет сгенерировано автоматически на основе родительского файла.
+  /// Full name will be generated automatically based on parent file.
   ///
-  /// - Parameters:.
-  ///   - name: Имя сервиса.
-  ///   - parent: Родительский файл.
-  ///   - options: Опции сервиса.
+  /// - Parameters:
+  ///   - name: Service name.
+  ///   - parent: Parent file.
+  ///   - options: Service options.
   public init(
     name: String,
     parent: FileDescriptor,
@@ -167,35 +167,35 @@ public struct ServiceDescriptor: Equatable {
 
   // MARK: - Method Methods
 
-  /// Добавляет метод к сервису.
+  /// Adds a method to the service.
   ///
-  /// - Parameter method: Дескриптор метода для добавления.
-  /// - Returns: Обновленный ServiceDescriptor.
+  /// - Parameter method: Method descriptor to add.
+  /// - Returns: Updated ServiceDescriptor.
   @discardableResult
   public mutating func addMethod(_ method: MethodDescriptor) -> Self {
     methodsByName[method.name] = method
     return self
   }
 
-  /// Проверяет, содержит ли сервис указанный метод.
+  /// Checks if the service contains the specified method.
   ///
-  /// - Parameter name: Имя метода.
-  /// - Returns: true, если метод существует.
+  /// - Parameter name: Method name.
+  /// - Returns: true if the method exists.
   public func hasMethod(named name: String) -> Bool {
     return methodsByName[name] != nil
   }
 
-  /// Получает метод по имени.
+  /// Gets a method by name.
   ///
-  /// - Parameter name: Имя метода.
-  /// - Returns: Дескриптор метода, если он существует.
+  /// - Parameter name: Method name.
+  /// - Returns: Method descriptor if it exists.
   public func method(named name: String) -> MethodDescriptor? {
     return methodsByName[name]
   }
 
-  /// Получает список всех методов сервиса.
+  /// Gets a list of all service methods.
   ///
-  /// - Returns: Список методов.
+  /// - Returns: List of methods.
   public func allMethods() -> [MethodDescriptor] {
     return Array(methodsByName.values)
   }
@@ -203,13 +203,13 @@ public struct ServiceDescriptor: Equatable {
   // MARK: - Equatable
 
   public static func == (lhs: ServiceDescriptor, rhs: ServiceDescriptor) -> Bool {
-    // Сравниваем основные свойства
+    // Compare main properties
     guard lhs.name == rhs.name && lhs.fullName == rhs.fullName && lhs.fileDescriptorPath == rhs.fileDescriptorPath
     else {
       return false
     }
 
-    // Сравниваем методы
+    // Compare methods
     let lhsMethodsByName = lhs.methodsByName
     let rhsMethodsByName = rhs.methodsByName
 
@@ -223,7 +223,7 @@ public struct ServiceDescriptor: Equatable {
       }
     }
 
-    // Сравниваем опции
+    // Compare options
     let lhsKeys = Set(lhs.options.keys)
     let rhsKeys = Set(rhs.options.keys)
 
@@ -231,12 +231,12 @@ public struct ServiceDescriptor: Equatable {
       return false
     }
 
-    // Проверяем совпадение значений для всех ключей
+    // Check value matching for all keys
     for key in lhsKeys {
       let lhsValue = lhs.options[key]
       let rhsValue = rhs.options[key]
 
-      // Проверяем известные типы значений
+      // Check known value types
       if let lhsBool = lhsValue as? Bool, let rhsBool = rhsValue as? Bool {
         if lhsBool != rhsBool {
           return false
@@ -253,7 +253,7 @@ public struct ServiceDescriptor: Equatable {
         }
       }
       else {
-        // Для других типов, сравниваем строковые представления
+        // For other types, compare string representations
         if String(describing: lhsValue) != String(describing: rhsValue) {
           return false
         }

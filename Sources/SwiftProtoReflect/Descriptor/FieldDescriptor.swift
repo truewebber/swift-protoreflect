@@ -2,7 +2,7 @@
 // FieldDescriptor.swift
 // SwiftProtoReflect
 //
-// Создан: 2025-05-18
+// Created: 2025-05-18
 //
 
 import Foundation
@@ -10,68 +10,68 @@ import SwiftProtobuf
 
 /// FieldDescriptor.
 ///
-/// Дескриптор поля Protocol Buffers, описывающий свойства поля сообщения,.
-/// включая его тип, имя, номер, опции и другие метаданные.
+/// Protocol Buffers field descriptor describing properties of a message field,
+/// including its type, name, number, options and other metadata.
 public struct FieldDescriptor: Equatable {
   // MARK: - Properties
 
-  /// Имя поля (например, "first_name").
+  /// Field name (e.g., "first_name").
   public let name: String
 
-  /// JSON имя поля (если отличается от name).
+  /// JSON field name (if different from name).
   public let jsonName: String
 
-  /// Номер поля в сообщении.
+  /// Field number in the message.
   public let number: Int
 
-  /// Тип поля (int32, string, message и т.д.)
+  /// Field type (int32, string, message, etc.)
   public let type: FieldType
 
-  /// Полное имя типа сообщения или перечисления (для типов message и enum).
+  /// Full name of message or enum type (for message and enum types).
   public let typeName: String?
 
-  /// Указывает, является ли поле массивом (repeated).
+  /// Indicates if the field is an array (repeated).
   public let isRepeated: Bool
 
-  /// Указывает, является ли поле опциональным (optional).
+  /// Indicates if the field is optional.
   public let isOptional: Bool
 
-  /// Указывает, является ли поле обязательным (required) - устаревшее для proto3.
+  /// Indicates if the field is required - deprecated for proto3.
   public let isRequired: Bool
 
-  /// Указывает, является ли поле мапой (map<key, value>).
+  /// Indicates if the field is a map (map<key, value>).
   public let isMap: Bool
 
-  /// Указывает, является ли поле oneof частью группы.
+  /// Indicates if the field is part of a oneof group.
   public let oneofIndex: Int?
 
-  /// Содержит метаданные для полей map типа.
+  /// Contains metadata for map type fields.
   public let mapEntryInfo: MapEntryInfo?
 
-  /// Значение по умолчанию для поля (если определено).
+  /// Default value for the field (if defined).
   public let defaultValue: Any?
 
-  /// Опции поля.
+  /// Field options.
   public let options: [String: Any]
 
   // MARK: - Initialization
 
-  /// Создает новый экземпляр FieldDescriptor.
+  /// Creates a new FieldDescriptor instance.
   ///
-  /// - Parameters:.
-  ///   - name: Имя поля.
-  ///   - number: Номер поля.
-  ///   - type: Тип поля.
-  ///   - typeName: Полное имя типа (для message и enum).
-  ///   - jsonName: JSON имя поля (по умолчанию равно name).
-  ///   - isRepeated: Является ли поле массивом.
-  ///   - isOptional: Является ли поле опциональным.
-  ///   - isRequired: Является ли поле обязательным.
-  ///   - isMap: Является ли поле мапой.
-  ///   - oneofIndex: Индекс oneof группы, если поле является частью oneof.
-  ///   - mapEntryInfo: Метаданные для map полей.
-  ///   - defaultValue: Значение по умолчанию.
-  ///   - options: Опции поля.
+  /// - Parameters:
+  ///   - name: Field name.
+  ///   - number: Field number.
+  ///   - type: Field type.
+  ///   - typeName: Full type name (for message and enum).
+  ///   - jsonName: JSON field name (defaults to name).
+  ///   - isRepeated: Whether the field is an array.
+  ///   - isOptional: Whether the field is optional.
+  ///   - isRequired: Whether the field is required.
+  ///   - isMap: Whether the field is a map.
+  ///   - oneofIndex: Oneof group index if the field is part of a oneof.
+  ///   - mapEntryInfo: Metadata for map fields.
+  ///   - defaultValue: Default value.
+  ///   - options: Field options.
   public init(
     name: String,
     number: Int,
@@ -92,7 +92,7 @@ public struct FieldDescriptor: Equatable {
     self.type = type
     self.typeName = typeName
     self.jsonName = jsonName ?? name
-    // Map поля автоматически являются repeated полями в Protocol Buffers
+    // Map fields are automatically repeated fields in Protocol Buffers
     self.isRepeated = isMap ? true : isRepeated
     self.isOptional = isOptional
     self.isRequired = isRequired
@@ -102,32 +102,32 @@ public struct FieldDescriptor: Equatable {
     self.defaultValue = defaultValue
     self.options = options
 
-    // Валидация: убедиться, что typeName задан для message и enum типов
+    // Validation: ensure typeName is specified for message and enum types
     if case .message = type, typeName == nil {
-      fatalError("typeName должен быть указан для полей типа 'message'")
+      fatalError("typeName must be specified for 'message' type fields")
     }
     if case .enum = type, typeName == nil {
-      fatalError("typeName должен быть указан для полей типа 'enum'")
+      fatalError("typeName must be specified for 'enum' type fields")
     }
 
-    // Валидация: убедиться, что для map указаны нужные параметры
+    // Validation: ensure mapEntryInfo is specified for map fields
     if isMap && mapEntryInfo == nil {
-      fatalError("mapEntryInfo должен быть указан для полей типа 'map'")
+      fatalError("mapEntryInfo must be specified for 'map' type fields")
     }
   }
 
   // MARK: - Methods
 
-  /// Возвращает полное имя типа для сообщений и перечислений.
+  /// Returns the full type name for messages and enums.
   ///
-  /// - Returns: Полное имя типа или nil для скалярных типов.
+  /// - Returns: Full type name or nil for scalar types.
   public func getFullTypeName() -> String? {
     return typeName
   }
 
-  /// Проверяет, является ли поле скалярным типом.
+  /// Checks if the field is a scalar type.
   ///
-  /// - Returns: true, если поле имеет скалярный тип.
+  /// - Returns: true if the field has a scalar type.
   public func isScalarType() -> Bool {
     switch type {
     case .double, .float, .int32, .int64, .uint32, .uint64,
@@ -139,9 +139,9 @@ public struct FieldDescriptor: Equatable {
     }
   }
 
-  /// Проверяет, является ли поле числовым типом.
+  /// Checks if the field is a numeric type.
   ///
-  /// - Returns: true, если поле имеет числовой тип.
+  /// - Returns: true if the field has a numeric type.
   public func isNumericType() -> Bool {
     switch type {
     case .double, .float, .int32, .int64, .uint32, .uint64,
@@ -152,9 +152,9 @@ public struct FieldDescriptor: Equatable {
     }
   }
 
-  /// Получает информацию о ключе и значении для map полей.
+  /// Gets key and value information for map fields.
   ///
-  /// - Returns: Информация о map поле или nil, если поле не map.
+  /// - Returns: Map field information or nil if the field is not a map.
   public func getMapKeyValueInfo() -> MapEntryInfo? {
     guard isMap else {
       return nil
@@ -166,7 +166,7 @@ public struct FieldDescriptor: Equatable {
   // MARK: - Equatable
 
   public static func == (lhs: FieldDescriptor, rhs: FieldDescriptor) -> Bool {
-    // Сравниваем основные свойства
+    // Compare main properties
     guard
       lhs.name == rhs.name && lhs.jsonName == rhs.jsonName && lhs.number == rhs.number && lhs.type == rhs.type
         && lhs.typeName == rhs.typeName && lhs.isRepeated == rhs.isRepeated && lhs.isOptional == rhs.isOptional
@@ -176,8 +176,8 @@ public struct FieldDescriptor: Equatable {
       return false
     }
 
-    // Сравниваем options: проверяем ключи и значения
-    // Может потребоваться индивидуальное сравнение для каждого возможного типа значения
+    // Compare options: check keys and values
+    // May require individual comparison for each possible value type
     let lhsKeys = Set(lhs.options.keys)
     let rhsKeys = Set(rhs.options.keys)
 
@@ -185,14 +185,14 @@ public struct FieldDescriptor: Equatable {
       return false
     }
 
-    // Проверяем совпадение значений для всех ключей
+    // Check value matching for all keys
     for key in lhsKeys {
-      // Поскольку options имеет тип [String: Any], мы можем проверить только строковое представление
-      // или, где возможно, преобразовать к известным типам
+      // Since options is of type [String: Any], we can only check string representation
+      // or convert to known types where possible
       let lhsValue = lhs.options[key]
       let rhsValue = rhs.options[key]
 
-      // Проверяем известные типы значений
+      // Check known value types
       if let lhsBool = lhsValue as? Bool, let rhsBool = rhsValue as? Bool {
         if lhsBool != rhsBool {
           return false
@@ -209,7 +209,7 @@ public struct FieldDescriptor: Equatable {
         }
       }
       else {
-        // Для других типов, сравниваем строковые представления
+        // For other types, compare string representations
         if String(describing: lhsValue) != String(describing: rhsValue) {
           return false
         }
@@ -220,7 +220,7 @@ public struct FieldDescriptor: Equatable {
   }
 }
 
-/// Тип поля Protocol Buffers.
+/// Protocol Buffers field type.
 public enum FieldType: Equatable {
   case double
   case float
@@ -239,33 +239,33 @@ public enum FieldType: Equatable {
   case bytes
   case message
   case `enum`
-  case group  // Устаревшее, для совместимости с proto2
+  case group  // Deprecated, for proto2 compatibility
 }
 
-/// Класс, описывающий метаданные для полей типа map<key, value>.
+/// Class describing metadata for map<key, value> type fields.
 ///
-/// Использует reference-type, чтобы избежать циклических ссылок.
+/// Uses reference-type to avoid circular references.
 public final class MapEntryInfo: Equatable {
-  /// Информация о поле ключа.
+  /// Key field information.
   public let keyFieldInfo: KeyFieldInfo
 
-  /// Информация о поле значения.
+  /// Value field information.
   public let valueFieldInfo: ValueFieldInfo
 
-  /// Создает новый экземпляр MapEntryInfo.
+  /// Creates a new MapEntryInfo instance.
   ///
-  /// - Parameters:.
-  ///   - keyFieldInfo: Информация о поле ключа.
-  ///   - valueFieldInfo: Информация о поле значения.
+  /// - Parameters:
+  ///   - keyFieldInfo: Key field information.
+  ///   - valueFieldInfo: Value field information.
   public init(keyFieldInfo: KeyFieldInfo, valueFieldInfo: ValueFieldInfo) {
-    // Проверка типа ключа (должен быть скалярным, кроме float, double, bytes)
+    // Validate key type (must be scalar except float, double, bytes)
     let validKeyTypes: [FieldType] = [
       .int32, .int64, .uint32, .uint64, .sint32, .sint64,
       .fixed32, .fixed64, .sfixed32, .sfixed64, .bool, .string,
     ]
 
     guard validKeyTypes.contains(keyFieldInfo.type) else {
-      fatalError("Недопустимый тип ключа для map: \(keyFieldInfo.type)")
+      fatalError("Invalid key type for map: \(keyFieldInfo.type)")
     }
 
     self.keyFieldInfo = keyFieldInfo
@@ -277,7 +277,7 @@ public final class MapEntryInfo: Equatable {
   }
 }
 
-/// Информация о поле ключа в map.
+/// Key field information in a map.
 public struct KeyFieldInfo: Equatable {
   public let name: String
   public let number: Int
@@ -290,7 +290,7 @@ public struct KeyFieldInfo: Equatable {
   }
 }
 
-/// Информация о поле значения в map.
+/// Value field information in a map.
 public struct ValueFieldInfo: Equatable {
   public let name: String
   public let number: Int
@@ -304,10 +304,10 @@ public struct ValueFieldInfo: Equatable {
     self.typeName = typeName
 
     if case .message = type, typeName == nil {
-      fatalError("typeName должен быть указан для полей типа 'message'")
+      fatalError("typeName must be specified for 'message' type fields")
     }
     if case .enum = type, typeName == nil {
-      fatalError("typeName должен быть указан для полей типа 'enum'")
+      fatalError("typeName must be specified for 'enum' type fields")
     }
   }
 }

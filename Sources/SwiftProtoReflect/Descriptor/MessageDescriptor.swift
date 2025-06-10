@@ -2,7 +2,7 @@
 // MessageDescriptor.swift
 // SwiftProtoReflect
 //
-// Создан: 2025-05-18
+// Created: 2025-05-18
 //
 
 import Foundation
@@ -10,46 +10,46 @@ import SwiftProtobuf
 
 /// MessageDescriptor.
 ///
-/// Дескриптор сообщения Protocol Buffers, который описывает.
-/// структуру сообщения, его поля, вложенные типы и опции.
+/// Protocol Buffers message descriptor that describes
+/// the structure of a message, its fields, nested types and options.
 public struct MessageDescriptor {
   // MARK: - Properties
 
-  /// Имя сообщения (например, "Person").
+  /// Message name (e.g., "Person").
   public let name: String
 
-  /// Полное имя сообщения, включая пакет (например, "example.person.Person").
+  /// Full message name including package (e.g., "example.person.Person").
   public let fullName: String
 
-  /// Путь к родительскому файлу (для разрешения ссылок).
+  /// Path to parent file (for reference resolution).
   public var fileDescriptorPath: String?
 
-  /// Полное имя родительского сообщения (если это вложенное сообщение).
+  /// Full name of parent message (if this is a nested message).
   public var parentMessageFullName: String?
 
-  /// Список полей сообщения.
+  /// List of message fields.
   public private(set) var fields: [Int: FieldDescriptor] = [:]
 
-  /// Список полей сообщения по имени.
+  /// List of message fields by name.
   public private(set) var fieldsByName: [String: FieldDescriptor] = [:]
 
-  /// Список вложенных сообщений.
+  /// List of nested messages.
   public private(set) var nestedMessages: [String: MessageDescriptor] = [:]
 
-  /// Список вложенных перечислений.
+  /// List of nested enums.
   public private(set) var nestedEnums: [String: EnumDescriptor] = [:]
 
-  /// Опции сообщения.
+  /// Message options.
   public let options: [String: Any]
 
   // MARK: - Initialization
 
-  /// Создает новый экземпляр MessageDescriptor.
+  /// Creates a new MessageDescriptor instance.
   ///
-  /// - Parameters:.
-  ///   - name: Имя сообщения.
-  ///   - fullName: Полное имя сообщения.
-  ///   - options: Опции сообщения.
+  /// - Parameters:
+  ///   - name: Message name.
+  ///   - fullName: Full message name.
+  ///   - options: Message options.
   public init(
     name: String,
     fullName: String,
@@ -60,14 +60,14 @@ public struct MessageDescriptor {
     self.options = options
   }
 
-  /// Создает новый экземпляр MessageDescriptor с базовым именем.
+  /// Creates a new MessageDescriptor instance with a base name.
   ///
-  /// Полное имя будет сгенерировано автоматически на основе родительского файла или сообщения.
+  /// Full name will be generated automatically based on parent file or message.
   ///
-  /// - Parameters:.
-  ///   - name: Имя сообщения.
-  ///   - parent: Родительский файл или сообщение.
-  ///   - options: Опции сообщения.
+  /// - Parameters:
+  ///   - name: Message name.
+  ///   - parent: Parent file or message.
+  ///   - options: Message options.
   public init(
     name: String,
     parent: Any? = nil,
@@ -92,10 +92,10 @@ public struct MessageDescriptor {
 
   // MARK: - Field Methods
 
-  /// Добавляет поле в сообщение.
+  /// Adds a field to the message.
   ///
-  /// - Parameter field: Дескриптор поля для добавления.
-  /// - Returns: Обновленный MessageDescriptor.
+  /// - Parameter field: Field descriptor to add.
+  /// - Returns: Updated MessageDescriptor.
   @discardableResult
   public mutating func addField(_ field: FieldDescriptor) -> Self {
     fields[field.number] = field
@@ -103,51 +103,51 @@ public struct MessageDescriptor {
     return self
   }
 
-  /// Проверяет, содержит ли сообщение указанное поле.
+  /// Checks if the message contains the specified field.
   ///
-  /// - Parameter number: Номер поля.
-  /// - Returns: true, если поле существует.
+  /// - Parameter number: Field number.
+  /// - Returns: true if the field exists.
   public func hasField(number: Int) -> Bool {
     return fields[number] != nil
   }
 
-  /// Проверяет, содержит ли сообщение указанное поле.
+  /// Checks if the message contains the specified field.
   ///
-  /// - Parameter name: Имя поля.
-  /// - Returns: true, если поле существует.
+  /// - Parameter name: Field name.
+  /// - Returns: true if the field exists.
   public func hasField(named name: String) -> Bool {
     return fieldsByName[name] != nil
   }
 
-  /// Получает поле по номеру.
+  /// Gets a field by number.
   ///
-  /// - Parameter number: Номер поля.
-  /// - Returns: Дескриптор поля, если он существует.
+  /// - Parameter number: Field number.
+  /// - Returns: Field descriptor if it exists.
   public func field(number: Int) -> FieldDescriptor? {
     return fields[number]
   }
 
-  /// Получает поле по имени.
+  /// Gets a field by name.
   ///
-  /// - Parameter name: Имя поля.
-  /// - Returns: Дескриптор поля, если он существует.
+  /// - Parameter name: Field name.
+  /// - Returns: Field descriptor if it exists.
   public func field(named name: String) -> FieldDescriptor? {
     return fieldsByName[name]
   }
 
-  /// Получает список всех полей, упорядоченных по номеру.
+  /// Gets a list of all fields ordered by number.
   ///
-  /// - Returns: Упорядоченный список полей.
+  /// - Returns: Ordered list of fields.
   public func allFields() -> [FieldDescriptor] {
     return fields.sorted { $0.key < $1.key }.map { $0.value }
   }
 
   // MARK: - Nested Type Methods
 
-  /// Добавляет вложенное сообщение.
+  /// Adds a nested message.
   ///
-  /// - Parameter message: Дескриптор вложенного сообщения.
-  /// - Returns: Обновленный MessageDescriptor.
+  /// - Parameter message: Nested message descriptor.
+  /// - Returns: Updated MessageDescriptor.
   @discardableResult
   public mutating func addNestedMessage(_ message: MessageDescriptor) -> Self {
     var messageCopy = message
@@ -157,47 +157,47 @@ public struct MessageDescriptor {
     return self
   }
 
-  /// Добавляет вложенное перечисление.
+  /// Adds a nested enum.
   ///
-  /// - Parameter enumDescriptor: Дескриптор вложенного перечисления.
-  /// - Returns: Обновленный MessageDescriptor.
+  /// - Parameter enumDescriptor: Nested enum descriptor.
+  /// - Returns: Updated MessageDescriptor.
   @discardableResult
   public mutating func addNestedEnum(_ enumDescriptor: EnumDescriptor) -> Self {
     nestedEnums[enumDescriptor.name] = enumDescriptor
     return self
   }
 
-  /// Проверяет, содержит ли сообщение указанное вложенное сообщение.
+  /// Checks if the message contains the specified nested message.
   ///
-  /// - Parameter name: Имя вложенного сообщения.
-  /// - Returns: true, если вложенное сообщение существует.
+  /// - Parameter name: Nested message name.
+  /// - Returns: true if the nested message exists.
   public func hasNestedMessage(named name: String) -> Bool {
     return nestedMessages[name] != nil
   }
 
-  /// Проверяет, содержит ли сообщение указанное вложенное перечисление.
+  /// Checks if the message contains the specified nested enum.
   ///
-  /// - Parameter name: Имя вложенного перечисления.
-  /// - Returns: true, если вложенное перечисление существует.
+  /// - Parameter name: Nested enum name.
+  /// - Returns: true if the nested enum exists.
   public func hasNestedEnum(named name: String) -> Bool {
     return nestedEnums[name] != nil
   }
 
-  /// Получает вложенное сообщение по имени.
+  /// Gets a nested message by name.
   ///
-  /// - Parameter name: Имя вложенного сообщения.
-  /// - Returns: Дескриптор вложенного сообщения, если он существует.
+  /// - Parameter name: Nested message name.
+  /// - Returns: Nested message descriptor if it exists.
   public func nestedMessage(named name: String) -> MessageDescriptor? {
     return nestedMessages[name]
   }
 
-  /// Получает вложенное перечисление по имени.
+  /// Gets a nested enum by name.
   ///
-  /// - Parameter name: Имя вложенного перечисления.
-  /// - Returns: Дескриптор вложенного перечисления, если он существует.
+  /// - Parameter name: Nested enum name.
+  /// - Returns: Nested enum descriptor if it exists.
   public func nestedEnum(named name: String) -> EnumDescriptor? {
     return nestedEnums[name]
   }
 }
 
-// FieldDescriptor определен в файле FieldDescriptor.swift
+// FieldDescriptor is defined in FieldDescriptor.swift file
