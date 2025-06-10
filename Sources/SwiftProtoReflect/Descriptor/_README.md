@@ -1,12 +1,12 @@
 # Descriptor Module
 
-Этот модуль отвечает за работу с дескрипторами протобаф сообщений. Он обеспечивает:
+This module handles protobuf message descriptors. It provides:
 
-- Хранение и управление метаданными proto-файлов
-- Описание структуры сообщений и полей
-- Информацию о типах, перечислениях и сервисах
+- Storage and management of proto-file metadata
+- Description of message and field structures
+- Information about types, enumerations, and services
 
-## Состояние модуля
+## Module Status
 
 - [x] FileDescriptor
 - [x] MessageDescriptor
@@ -14,7 +14,7 @@
 - [x] EnumDescriptor
 - [x] ServiceDescriptor
 
-## Взаимодействие с другими модулями
+## Interactions with Other Modules
 
-- **Registry**: для регистрации и разрешения типов
-- **Dynamic**: для создания сообщений на основе дескрипторов
+- **Registry**: for type registration and resolution
+- **Dynamic**: for creating messages based on descriptors

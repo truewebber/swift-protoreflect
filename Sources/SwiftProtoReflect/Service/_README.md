@@ -1,38 +1,38 @@
 # Service Module
 
-Этот модуль отвечает за динамическое взаимодействие с gRPC сервисами. Он обеспечивает:
+This module handles dynamic interaction with gRPC services. It provides:
 
-- Динамические вызовы методов gRPC без предварительной компиляции .proto файлов
-- Обработку ответов от сервера с неизвестными во время компиляции типами
-- Работу с gRPC сервисами через динамические дескрипторы
+- Dynamic gRPC method calls without pre-compiling .proto files
+- Processing server responses with compile-time unknown types
+- Working with gRPC services through dynamic descriptors
 
-## Состояние модуля
+## Module Status
 
-- [x] **ServiceClient** - Динамический клиент для вызова gRPC методов ✅ ЗАВЕРШЕН
-  - [x] Unary вызовы (85.93% покрытие тестами)
-  - [x] Валидация типов запросов/ответов
-  - [x] Обработка ошибок (полное покрытие всех типов ошибок)
-  - [x] Настраиваемые опции вызова (таймауты, метаданные)
-  - [x] GRPCPayloadWrapper (полное покрытие сериализации/десериализации)
-  - [x] Helper методы (сериализация, десериализация, валидация)
-  - [ ] Client streaming вызовы (будущие версии)
-  - [ ] Server streaming вызовы (будущие версии)
-  - [ ] Bidirectional streaming вызовы (будущие версии)
+- [x] **ServiceClient** - Dynamic client for calling gRPC methods ✅ COMPLETED
+  - [x] Unary calls (85.93% test coverage)
+  - [x] Request/response type validation
+  - [x] Error handling (full coverage of all error types)
+  - [x] Configurable call options (timeouts, metadata)
+  - [x] GRPCPayloadWrapper (full serialization/deserialization coverage)
+  - [x] Helper methods (serialization, deserialization, validation)
+  - [ ] Client streaming calls (future versions)
+  - [ ] Server streaming calls (future versions)
+  - [ ] Bidirectional streaming calls (future versions)
 
-## Компоненты
+## Components
 
 ### ServiceClient
 
-Основной класс для выполнения динамических gRPC вызовов.
+Main class for performing dynamic gRPC calls.
 
-**Возможности:**
-- Динамические unary вызовы на основе ServiceDescriptor
-- Автоматическая сериализация/десериализация DynamicMessage
-- Валидация совместимости типов
-- Настраиваемые опции (таймауты, метаданные)
-- Детальная обработка ошибок
+**Capabilities:**
+- Dynamic unary calls based on ServiceDescriptor
+- Automatic DynamicMessage serialization/deserialization
+- Type compatibility validation
+- Configurable options (timeouts, metadata)
+- Detailed error handling
 
-**Пример использования:**
+**Usage example:**
 ```swift
 let client = ServiceClient(channel: channel, typeRegistry: registry)
 
@@ -51,25 +51,25 @@ print("Response: \(result.response)")
 
 ### ServiceClientError
 
-Перечисление ошибок для ServiceClient с детальными описаниями:
-- `methodNotFound` - метод не найден в сервисе
-- `invalidMethodType` - неверный тип метода (например, streaming вместо unary)
-- `typeMismatch` - несовпадение типов сообщений
-- `typeNotFound` - тип не найден в реестре
-- `serializationError` - ошибка сериализации
-- `deserializationError` - ошибка десериализации
-- `grpcError` - ошибка gRPC
+Error enumeration for ServiceClient with detailed descriptions:
+- `methodNotFound` - method not found in service
+- `invalidMethodType` - invalid method type (e.g., streaming instead of unary)
+- `typeMismatch` - message type mismatch
+- `typeNotFound` - type not found in registry
+- `serializationError` - serialization error
+- `deserializationError` - deserialization error
+- `grpcError` - gRPC error
 
-## Взаимодействие с другими модулями
+## Interactions with Other Modules
 
-- **Descriptor**: для получения метаданных о сервисах и методах
-- **Dynamic**: для работы с динамическими сообщениями при выполнении вызовов
-- **Registry**: для разрешения типов при выполнении RPC вызовов
-- **Serialization**: для сериализации/десериализации сообщений
+- **Descriptor**: for getting service and method metadata
+- **Dynamic**: for working with dynamic messages during calls
+- **Registry**: for type resolution during RPC calls
+- **Serialization**: for message serialization/deserialization
 
-## Архитектурные решения
+## Architectural Decisions
 
-1. **Интеграция с gRPC Swift**: Использует низкоуровневый API gRPC Swift для максимальной гибкости
-2. **Type Safety**: Строгая проверка типов на этапе выполнения
-3. **Error Handling**: Детальная обработка ошибок с понятными сообщениями
-4. **Extensibility**: Архитектура позволяет легко добавить поддержку streaming методов
+1. **gRPC Swift Integration**: Uses low-level gRPC Swift API for maximum flexibility
+2. **Type Safety**: Strict runtime type checking
+3. **Error Handling**: Detailed error handling with clear messages
+4. **Extensibility**: Architecture allows easy addition of streaming method support

@@ -1,99 +1,99 @@
-# Руководство разработчика SwiftProtoReflect
+# SwiftProtoReflect Developer Guide
 
-## Важно прочитать сначала!
+## Important - Read This First!
 
-**ВНИМАНИЕ:** После каждого коммита ты теряешь всю память о проделанной работе. Этот документ поможет тебе быстро восстановить контекст и продолжить разработку.
+**ATTENTION:** After each commit, you lose all memory of previous work. This document will help you quickly restore context and continue development.
 
-## Рабочий процесс с учетом потери памяти
+## Workflow Considering Memory Loss
 
-1. **Первым делом после возвращения к проекту:**
-   - Прочитай файл PROJECT_STATE.md для понимания текущего статуса
-   - Проверь секцию "Активные задачи" и "Последние обновления"
-   - Запусти `git log -5` чтобы узнать, что было сделано в последних коммитах
+1. **First thing after returning to the project:**
+   - Read PROJECT_STATE.md file to understand current status
+   - Check "Active Tasks" and "Latest Updates" sections
+   - Run `git log -5` to see what was done in recent commits
 
-2. **Перед началом работы:**
-   - Определи задачу из PROJECT_STATE.md
-   - Изучи структуру соответствующего модуля и его _README.md
-   - Запусти тесты чтобы увидеть, что работает
-   - Проверь текущее покрытие кода тестами (`make coverage`)
+2. **Before starting work:**
+   - Identify task from PROJECT_STATE.md
+   - Study the structure of the corresponding module and its _README.md
+   - Run tests to see what works
+   - Check current test coverage (`make coverage`)
 
-3. **Во время работы:**
-   - Комментируй код так, чтобы твоё "будущее я" могло понять логику
-   - Делай небольшие атомарные изменения
-   - Обновляй _README.md модуля, над которым работаешь
-   - **Стремись к максимальному покрытию кода тестами** - это критически важно для качества библиотеки
-     - Достигнутый показатель: 94.37% (превосходно!)
-     - Целевой показатель для новых модулей: 90%+ (близко к 100%)
-     - Исключения допустимы для путей с `fatalError` или других непроверяемых условий
-   - Следуй установленным паттернам проектирования для согласованности кодовой базы
-   - Используй Equatable для всех основных типов данных
-   - Строго типизируй API, минимизируй использование Any там, где это возможно
+3. **During work:**
+   - Comment code so your "future self" can understand the logic
+   - Make small atomic changes
+   - Update _README.md of the module you're working on
+   - **Strive for maximum test coverage** - this is critically important for library quality
+     - Current achievement: 94.37% (excellent!)
+     - Target for new modules: 90%+ (close to 100%)
+     - Exceptions allowed for paths with `fatalError` or other untestable conditions
+   - Follow established design patterns for codebase consistency
+   - Use Equatable for all core data types
+   - Strictly type APIs, minimize use of Any where possible
 
-4. **Перед каждым коммитом (обязательно!):**
-   - Обнови PROJECT_STATE.md, отметив завершенные задачи
-   - Запусти `make test && make coverage` и убедись, что все тесты проходят и покрытие кода достаточное
-   - Сделай подробное сообщение коммита с префиксом модуля: `[Module] What was done - Why it was done this way - What's next`
-   - Запусти `./Scripts/update-state.sh` после коммита для обновления секции "Последние обновления"
+4. **Before each commit (mandatory!):**
+   - Update PROJECT_STATE.md, marking completed tasks
+   - Run `make test && make coverage` and ensure all tests pass with sufficient coverage
+   - Make detailed commit message with module prefix: `[Module] What was done - Why it was done this way - What's next`
+   - Run `./Scripts/update-state.sh` after commit to update "Latest Updates" section
 
-## Общие принципы разработки
+## General Development Principles
 
-1. **Дизайн API**
-   - Создавай интуитивно понятное API
-   - Используй именованные параметры для улучшения читаемости
-   - Предпочитай методы с явным именованием, избегай перегрузок методов без явных различий
-   - Документируй все публичные API с DocC комментариями
+1. **API Design**
+   - Create intuitive API
+   - Use named parameters for improved readability
+   - Prefer methods with explicit naming, avoid method overloads without clear distinctions
+   - Document all public APIs with DocC comments
 
-2. **Безопасность типов**
-   - Максимально используй систему типов Swift для предотвращения ошибок во время компиляции
-   - Явно обрабатывай ошибки через throws/try
-   - Ограничивай использование force unwrapping (!) только случаями, когда это абсолютно безопасно
+2. **Type Safety**
+   - Maximize use of Swift's type system to prevent compile-time errors
+   - Explicitly handle errors through throws/try
+   - Limit use of force unwrapping (!) to cases where it's absolutely safe
 
-3. **Производительность**
-   - Оптимизируй критические участки кода
-   - Минимизируй копирование данных там, где это возможно
-   - Используй структуры данных, соответствующие характеру операций
+3. **Performance**
+   - Optimize critical code paths
+   - Minimize data copying where possible
+   - Use data structures appropriate for operation characteristics
 
-4. **Тестирование**
-   - Пиши тесты параллельно с кодом, а не после
-   - Проверяй крайние случаи и граничные условия
-   - Создавай тесты, которые проверяют не только функциональность, но и корректность обработки ошибок
+4. **Testing**
+   - Write tests in parallel with code, not after
+   - Test edge cases and boundary conditions
+   - Create tests that verify not only functionality but also correct error handling
 
-## Структура проекта
+## Project Structure
 
-- **Sources/SwiftProtoReflect/** - основной код библиотеки:
-  - **Descriptor/** - система дескрипторов протобаф сообщений
-  - **Dynamic/** - динамическое представление и манипуляция сообщениями
-  - **Serialization/** - сериализация/десериализация
-  - **Registry/** - централизованное управление типами
-  - **Service/** - взаимодействие с gRPC
-  - **Bridge/** - интеграция с Swift Protobuf
-  - **Integration/** - Well-Known Types поддержка и расширенная интеграция
+- **Sources/SwiftProtoReflect/** - main library code:
+  - **Descriptor/** - protobuf message descriptor system
+  - **Dynamic/** - dynamic representation and message manipulation
+  - **Serialization/** - serialization/deserialization
+  - **Registry/** - centralized type management
+  - **Service/** - gRPC interaction
+  - **Bridge/** - Swift Protobuf integration
+  - **Integration/** - Well-Known Types support and advanced integration
 
-- **Tests/SwiftProtoReflectTests/** - тесты, структура соответствует модулям
-  - **Descriptor/** - тесты для системы дескрипторов
-  - **Dynamic/** - тесты динамических сообщений
-  - **Serialization/** - тесты сериализации
-  - **Registry/** - тесты реестра типов
-  - **Service/** - тесты сервисных клиентов
-  - **Bridge/** - тесты интеграции
-  - **Integration/** - тесты Well-Known Types и продвинутой интеграции
-  - **Performance/** - тесты производительности
-  - **Compatibility/** - тесты совместимости с Swift Protobuf
-  - **TestUtils/** - вспомогательные инструменты для тестирования
-  - **Fixtures/** - тестовые данные
-  - **Mocks/** - моки для тестирования
+- **Tests/SwiftProtoReflectTests/** - tests, structure matches modules
+  - **Descriptor/** - descriptor system tests
+  - **Dynamic/** - dynamic message tests
+  - **Serialization/** - serialization tests
+  - **Registry/** - type registry tests
+  - **Service/** - service client tests
+  - **Bridge/** - integration tests
+  - **Integration/** - Well-Known Types and advanced integration tests
+  - **Performance/** - performance tests
+  - **Compatibility/** - Swift Protobuf compatibility tests
+  - **TestUtils/** - testing utilities
+  - **Fixtures/** - test data
+  - **Mocks/** - test mocks
 
-## Фазы разработки
+## Development Phases
 
-### Текущее состояние: ВСЕ ОСНОВНЫЕ ФАЗЫ ЗАВЕРШЕНЫ ✅
+### Current State: ALL MAIN PHASES COMPLETED ✅
 
-**ЗАВЕРШЕНО:**
-- ✅ **Foundation Phase** - полностью завершена (Descriptor System, Dynamic Module, Registry Module)
-- ✅ **Serialization Phase** - полностью завершена (Binary + JSON serialization/deserialization)
-- ✅ **Bridge Phase** - полностью завершена (Static/dynamic message conversion)
-- ✅ **Service Phase** - полностью завершена (Dynamic gRPC client)
-- ✅ **Integration Phase** - полностью завершена (ALL Well-Known Types):
-  - ✅ WellKnownTypes Foundation (базовая инфраструктура)
+**COMPLETED:**
+- ✅ **Foundation Phase** - fully completed (Descriptor System, Dynamic Module, Registry Module)
+- ✅ **Serialization Phase** - fully completed (Binary + JSON serialization/deserialization)
+- ✅ **Bridge Phase** - fully completed (Static/dynamic message conversion)
+- ✅ **Service Phase** - fully completed (Dynamic gRPC client)
+- ✅ **Integration Phase** - fully completed (ALL Well-Known Types):
+  - ✅ WellKnownTypes Foundation (base infrastructure)
   - ✅ TimestampHandler (google.protobuf.Timestamp)
   - ✅ DurationHandler (google.protobuf.Duration)  
   - ✅ EmptyHandler (google.protobuf.Empty)
@@ -102,145 +102,145 @@
   - ✅ ValueHandler (google.protobuf.Value)
   - ✅ AnyHandler (google.protobuf.Any)
 
-**Общее покрытие тестами: 94%+** (866 тестов проходят)
+**Overall test coverage: 94%+** (866 tests passing)
 
-**🎉 ПРОЕКТ ГОТОВ К ПРОДАКШН ИСПОЛЬЗОВАНИЮ**
+**🎉 PROJECT READY FOR PRODUCTION USE**
 
-### ✅ Полностью завершенные компоненты
+### ✅ Fully Completed Components
 
-**ALL Well-Known Types реализованы и протестированы:**
+**ALL Well-Known Types implemented and tested:**
 
-1. **TimestampHandler (google.protobuf.Timestamp) - ЗАВЕРШЕНО ✅**
-   - Полная поддержка временных меток с наносекундной точностью
-   - Конвертация между Foundation.Date и Timestamp
-   - Round-trip совместимость
-   - 23 теста с высоким покрытием
+1. **TimestampHandler (google.protobuf.Timestamp) - COMPLETED ✅**
+   - Full support for timestamps with nanosecond precision
+   - Conversion between Foundation.Date and Timestamp
+   - Round-trip compatibility
+   - 23 tests with high coverage
 
-2. **DurationHandler (google.protobuf.Duration) - ЗАВЕРШЕНО ✅**
-   - Поддержка временных интервалов
-   - Конвертация между Foundation.TimeInterval и Duration
-   - Корректная обработка отрицательных значений
-   - 29 тестов с полным покрытием
+2. **DurationHandler (google.protobuf.Duration) - COMPLETED ✅**
+   - Support for time intervals
+   - Conversion between Foundation.TimeInterval and Duration
+   - Correct handling of negative values
+   - 29 tests with full coverage
 
-3. **EmptyHandler (google.protobuf.Empty) - ЗАВЕРШЕНО ✅**
-   - Минималистичная поддержка пустых сообщений
-   - Singleton pattern оптимизация
-   - 15 тестов с 100% покрытием
+3. **EmptyHandler (google.protobuf.Empty) - COMPLETED ✅**
+   - Minimalist support for empty messages
+   - Singleton pattern optimization
+   - 15 tests with 100% coverage
 
-4. **FieldMaskHandler (google.protobuf.FieldMask) - ЗАВЕРШЕНО ✅**
-   - Поддержка масок полей для partial updates
+4. **FieldMaskHandler (google.protobuf.FieldMask) - COMPLETED ✅**
+   - Support for field masks for partial updates
    - Path operations (union, intersection, covers)
-   - 30 тестов с высоким покрытием
+   - 30 tests with high coverage
 
-5. **StructHandler (google.protobuf.Struct) - ЗАВЕРШЕНО ✅**
-   - Полная поддержка динамических JSON-like структур
-   - Конвертация между Dictionary<String, Any> и StructValue
-   - Поддержка вложенных структур и массивов
-   - 21 тест с покрытием 83%+ регионов
+5. **StructHandler (google.protobuf.Struct) - COMPLETED ✅**
+   - Full support for dynamic JSON-like structures
+   - Conversion between Dictionary<String, Any> and StructValue
+   - Support for nested structures and arrays
+   - 21 tests with 83%+ region coverage
 
-6. **ValueHandler (google.protobuf.Value) - ЗАВЕРШЕНО ✅**
-   - Основа для google.protobuf.Struct
-   - Поддержка всех типов значений (null, number, string, bool, struct, list)
-   - Тесная интеграция с StructHandler
-   - 14 тестов с полным покрытием основных сценариев
+6. **ValueHandler (google.protobuf.Value) - COMPLETED ✅**
+   - Foundation for google.protobuf.Struct
+   - Support for all value types (null, number, string, bool, struct, list)
+   - Tight integration with StructHandler
+   - 14 tests with full coverage of main scenarios
 
-7. **AnyHandler (google.protobuf.Any) - ЗАВЕРШЕНО ✅**
-   - Полная поддержка type erasure для произвольных типизированных сообщений
-   - Pack/unpack операции с TypeRegistry интеграцией
-   - URL validation и type resolution
-   - Все тесты покрывают edge cases и производительность
+7. **AnyHandler (google.protobuf.Any) - COMPLETED ✅**
+   - Full support for type erasure for arbitrary typed messages
+   - Pack/unpack operations with TypeRegistry integration
+   - URL validation and type resolution
+   - All tests cover edge cases and performance
 
-### 📋 Возможные направления дальнейшего развития
+### 📋 Possible Future Development Directions
 
-**Phase 4 - Optional Extensions (при необходимости):**
+**Phase 4 - Optional Extensions (if needed):**
 - Protocol Buffers extensions support
 - Custom options handling
 - Reflection API improvements
-- Performance optimizations для specific use cases
+- Performance optimizations for specific use cases
 
-**Phase 5 - Ecosystem Integration (при необходимости):**
+**Phase 5 - Ecosystem Integration (if needed):**
 - Advanced debugging tools
 - IDE integration support
 - Additional convenience APIs
 
-## Кодовые соглашения
+## Code Conventions
 
-- Следуй стилю Swift-кода из соседних файлов
-- Используй документацию в формате DocC с /// для публичного API
-- Добавляй тесты для каждой новой функциональности
-- **Требуется высокое покрытие кода тестами** - используй `make coverage` для проверки
-  - Недостижимые пути (например, с `fatalError`) могут быть исключены из требования 100% покрытия
-  - Важно: добавь комментарий, объясняющий, почему конкретный путь не покрыт тестами
+- Follow Swift code style from neighboring files
+- Use DocC format documentation with /// for public API
+- Add tests for each new functionality
+- **High test coverage required** - use `make coverage` for verification
+  - Unreachable paths (e.g., with `fatalError`) may be excluded from 100% coverage requirement
+  - Important: add comment explaining why specific path is not covered by tests
 
-## Тестирование и обработка ошибок
+## Testing and Error Handling
 
-### Структура тестов
+### Test Structure
 
-Каждый тестовый файл должен содержать:
-1. **Тесты инициализации** - проверка корректной инициализации объектов с разными параметрами
-2. **Тесты основного функционала** - проверка основных функций и методов
-3. **Тесты граничных условий** - проверка поведения в крайних случаях
-4. **Тесты ошибок** - проверка корректного выбрасывания ошибок
-5. **Тесты производительности** (опционально) - для критичных участков кода
+Each test file should contain:
+1. **Initialization tests** - verify correct object initialization with different parameters
+2. **Main functionality tests** - verify core functions and methods
+3. **Boundary condition tests** - verify behavior in edge cases
+4. **Error tests** - verify correct error throwing
+5. **Performance tests** (optional) - for critical code paths
 
-### Тестирование критических сбоев
+### Testing Critical Failures
 
-Некоторые функции используют `fatalError()` для обработки недопустимых состояний, которые не должны возникать при нормальной работе. Эти пути сложно или невозможно протестировать стандартными средствами.
+Some functions use `fatalError()` to handle invalid states that shouldn't occur during normal operation. These paths are difficult or impossible to test with standard means.
 
-Примеры не тестируемых путей в коде:
-- Проверка наличия обязательных параметров в конструкторах
-- Валидация типов, которые должны иметь соответствующие имена типов
-- Проверка структурной целостности составных объектов
+Examples of untestable code paths:
+- Checking presence of required parameters in constructors
+- Validating types that should have corresponding type names
+- Checking structural integrity of composite objects
 
-Для таких путей:
-1. Добавь четкий комментарий, объясняющий почему случается `fatalError`
-2. Используй тесты для проверки корректных случаев использования
-3. Используй специальные ожидания (XCTExpectFailure) там, где применимо
+For such paths:
+1. Add clear comment explaining why `fatalError` occurs
+2. Use tests to verify correct usage cases
+3. Use special expectations (XCTExpectFailure) where applicable
 
-### Требования к покрытию кода
+### Code Coverage Requirements
 
-Установленный минимальный порог покрытия кода тестами составляет 90%. Для критически важных компонентов следует стремиться к покрытию, близкому к 100%. 
+The established minimum code coverage threshold is 90%. For critically important components, strive for coverage close to 100%.
 
-Используйте следующие команды для проверки покрытия:
+Use the following commands to check coverage:
 ```bash
-make coverage      # Общий отчет о покрытии
+make coverage      # General coverage report
 ```
 
-## Полезные команды
+## Useful Commands
 
 ```bash
-# Проверка состояния
-git log -5                      # Последние 5 коммитов
-git diff HEAD~1                 # Что изменилось в последнем коммите
+# Status checking
+git log -5                      # Last 5 commits
+git diff HEAD~1                 # What changed in last commit
 
-# Разработка
-make lint                       # Проверка кода
-make format                     # Форматирование кода
-swift test                      # Запуск тестов
-make coverage                   # Проверка покрытия кода тестами
+# Development
+make lint                       # Code checking
+make format                     # Code formatting
+swift test                      # Run tests
+make coverage                   # Check test coverage
 
-# Создание новых компонентов
-./Scripts/setup-module.sh Integration StructHandler  # Создает заготовки файлов для нового компонента
+# Creating new components
+./Scripts/setup-module.sh Integration StructHandler  # Creates component file templates
 
-# Обновление состояния
-./Scripts/update-state.sh       # Обновление PROJECT_STATE.md
+# State updates
+./Scripts/update-state.sh       # Update PROJECT_STATE.md
 ```
 
-## Создание новых компонентов
+## Creating New Components
 
-Для быстрого создания заготовок файлов для новых компонентов используй скрипт:
+To quickly create file templates for new components, use the script:
 
 ```bash
-./Scripts/setup-module.sh <Имя модуля> <Имя компонента>
+./Scripts/setup-module.sh <Module Name> <Component Name>
 ```
 
-Скрипт автоматически:
-- Создаст .swift файл компонента с шаблоном кода в соответствующем модуле
-- Создаст файл с тестами для компонента
-- Обновит _README.md модуля, добавив новый компонент в список
-- Напомнит обновить PROJECT_STATE.md и сделать коммит
+The script automatically:
+- Creates .swift component file with code template in corresponding module
+- Creates test file for the component
+- Updates module's _README.md, adding new component to the list
+- Reminds to update PROJECT_STATE.md and make commit
 
-Пример:
+Example:
 ```bash
 ./Scripts/setup-module.sh Integration StructHandler
 ```

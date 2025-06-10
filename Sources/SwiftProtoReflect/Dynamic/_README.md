@@ -1,19 +1,19 @@
 # Dynamic Message Module
 
-Этот модуль отвечает за динамическое представление и манипуляцию Protocol Buffers сообщениями. Он обеспечивает:
+This module handles dynamic representation and manipulation of Protocol Buffers messages. It provides:
 
-- Динамическое создание сообщений на основе дескрипторов
-- Доступ и изменение полей сообщений во время выполнения
-- Типобезопасную работу с данными
+- Dynamic message creation based on descriptors
+- Runtime access and modification of message fields
+- Type-safe data operations
 
-## Состояние модуля
+## Module Status
 
 - [x] DynamicMessage
 - [x] MessageFactory
 - [x] FieldAccessor
 
-## Взаимодействие с другими модулями
+## Interactions with Other Modules
 
-- **Descriptor**: для получения метаданных о структуре сообщений
-- **Serialization**: для сериализации/десериализации динамических сообщений
-- **Bridge**: для конвертации между статическими и динамическими сообщениями
+- **Descriptor**: for getting metadata about message structure
+- **Serialization**: for serialization/deserialization of dynamic messages
+- **Bridge**: for conversion between static and dynamic messages

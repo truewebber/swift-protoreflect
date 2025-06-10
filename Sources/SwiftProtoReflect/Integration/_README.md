@@ -1,167 +1,167 @@
 # Integration Module
 
-Этот модуль отвечает за полную интеграцию с экосистемой Protocol Buffers. Он обеспечивает:
+This module handles full integration with the Protocol Buffers ecosystem. It provides:
 
-- Поддержку well-known types (google.protobuf.*)
-- Обработку Protocol Buffers extensions
-- Продвинутые функции интеграции
-- Оптимизацию производительности для production use
+- Well-known types support (google.protobuf.*)
+- Protocol Buffers extensions handling
+- Advanced integration features
+- Performance optimization for production use
 
-## Состояние модуля
+## Module Status
 
-**Integration Phase - ПОЛНОСТЬЮ ЗАВЕРШЕНО ✅**
+**Integration Phase - FULLY COMPLETED ✅**
 
-- [x] **Critical Phase 1** - ЗАВЕРШЕНО ✅
-  - [x] **WellKnownTypes Foundation** - ЗАВЕРШЕНО ✅
-  - [x] **TimestampHandler** - ЗАВЕРШЕНО ✅ (google.protobuf.Timestamp)
-  - [x] **DurationHandler** - ЗАВЕРШЕНО ✅ (google.protobuf.Duration)
-  - [x] **EmptyHandler** - ЗАВЕРШЕНО ✅ (google.protobuf.Empty)
-  - [x] **FieldMaskHandler** - ЗАВЕРШЕНО ✅ (google.protobuf.FieldMask)
-- [x] **Phase 2 Well-Known Types** - ЗАВЕРШЕНО ✅
-  - [x] **StructHandler** - google.protobuf.Struct поддержка (**ЗАВЕРШЕНО ✅**)
-  - [x] **ValueHandler** - google.protobuf.Value поддержка (**ЗАВЕРШЕНО ✅**)
-- [x] **Phase 3 Advanced Types** - ЗАВЕРШЕНО ✅
-  - [x] **AnyHandler** - google.protobuf.Any поддержка (**ЗАВЕРШЕНО ✅**)
-- [ ] **Phase 4** - ПЛАНИРУЕТСЯ (опционально)
-  - [ ] ExtensionSupport - обработка Protocol Buffers extensions
-  - [ ] AdvancedInterop - продвинутые функции интеграции
-  - [ ] PerformanceOptimizer - оптимизация производительности
+- [x] **Critical Phase 1** - COMPLETED ✅
+  - [x] **WellKnownTypes Foundation** - COMPLETED ✅
+  - [x] **TimestampHandler** - COMPLETED ✅ (google.protobuf.Timestamp)
+  - [x] **DurationHandler** - COMPLETED ✅ (google.protobuf.Duration)
+  - [x] **EmptyHandler** - COMPLETED ✅ (google.protobuf.Empty)
+  - [x] **FieldMaskHandler** - COMPLETED ✅ (google.protobuf.FieldMask)
+- [x] **Phase 2 Well-Known Types** - COMPLETED ✅
+  - [x] **StructHandler** - google.protobuf.Struct support (**COMPLETED ✅**)
+  - [x] **ValueHandler** - google.protobuf.Value support (**COMPLETED ✅**)
+- [x] **Phase 3 Advanced Types** - COMPLETED ✅
+  - [x] **AnyHandler** - google.protobuf.Any support (**COMPLETED ✅**)
+- [ ] **Phase 4** - PLANNED (optional)
+  - [ ] ExtensionSupport - Protocol Buffers extensions handling
+  - [ ] AdvancedInterop - advanced integration features
+  - [ ] PerformanceOptimizer - performance optimization
 
-🎉 **ВСЕ ОСНОВНЫЕ Well-Known Types РЕАЛИЗОВАНЫ И ГОТОВЫ К ПРОДАКШН**
+🎉 **ALL MAJOR Well-Known Types IMPLEMENTED AND PRODUCTION READY**
 
-## Компоненты
+## Components
 
 ### WellKnownTypes
-Специализированная поддержка для стандартных типов Protocol Buffers:
-- ✅ `google.protobuf.Timestamp` - временные метки (TimestampHandler)
-- ✅ `google.protobuf.Duration` - интервалы времени (DurationHandler)
-- ✅ `google.protobuf.Empty` - пустые сообщения (EmptyHandler)
-- ✅ `google.protobuf.FieldMask` - маски полей (FieldMaskHandler)
-- ✅ `google.protobuf.Struct` - произвольные структуры (StructHandler)
-- ✅ `google.protobuf.Value` - произвольные значения (ValueHandler)
-- ✅ `google.protobuf.Any` - типизированные значения (AnyHandler)
+Specialized support for standard Protocol Buffers types:
+- ✅ `google.protobuf.Timestamp` - timestamps (TimestampHandler)
+- ✅ `google.protobuf.Duration` - time intervals (DurationHandler)
+- ✅ `google.protobuf.Empty` - empty messages (EmptyHandler)
+- ✅ `google.protobuf.FieldMask` - field masks (FieldMaskHandler)
+- ✅ `google.protobuf.Struct` - arbitrary structures (StructHandler)
+- ✅ `google.protobuf.Value` - arbitrary values (ValueHandler)
+- ✅ `google.protobuf.Any` - typed values (AnyHandler)
 
 ### ExtensionSupport
-Поддержка Protocol Buffers extensions:
-- Регистрация и разрешение extensions
-- Валидация extension полей
-- Сериализация/десериализация extensions
-- Интеграция с существующей reflection системой
+Protocol Buffers extensions support:
+- Extension registration and resolution
+- Extension field validation
+- Extension serialization/deserialization
+- Integration with existing reflection system
 
 ### AdvancedInterop
-Продвинутые функции интеграции:
-- Автоматическое обнаружение типов
-- Динамическая загрузка дескрипторов
-- Кэширование и оптимизация
-- Интеграция с Proto Compiler
+Advanced integration features:
+- Automatic type discovery
+- Dynamic descriptor loading
+- Caching and optimization
+- Proto Compiler integration
 
 ### PerformanceOptimizer
-Оптимизация производительности:
-- Кэширование дескрипторов
-- Оптимизированные пути сериализации
-- Memory pool для часто используемых объектов
-- Batch операции
+Performance optimization:
+- Descriptor caching
+- Optimized serialization paths
+- Memory pool for frequently used objects
+- Batch operations
 
-## Взаимодействие с другими модулями
+## Interactions with Other Modules
 
-- **Descriptor**: для расширения системы дескрипторов well-known types
-- **Dynamic**: для специализированной работы с well-known messages
-- **Serialization**: для оптимизированной сериализации
-- **Bridge**: для интеграции с Swift Protobuf well-known types
-- **Registry**: для регистрации и разрешения extensions
+- **Descriptor**: for extending descriptor system with well-known types
+- **Dynamic**: for specialized work with well-known messages
+- **Serialization**: for optimized serialization
+- **Bridge**: for integration with Swift Protobuf well-known types
+- **Registry**: for extension registration and resolution
 
 ## Well-Known Types Priority
 
-**Phase 1 (Критические) - ЗАВЕРШЕНО ✅:**
-1. ✅ `google.protobuf.Timestamp` - наиболее часто используемый (**ЗАВЕРШЕНО**)
-2. ✅ `google.protobuf.Duration` - критичен для временных операций (**ЗАВЕРШЕНО**)
-3. ✅ `google.protobuf.Empty` - простой, но часто используемый (**ЗАВЕРШЕНО**)
-4. ✅ `google.protobuf.FieldMask` - для partial updates (**ЗАВЕРШЕНО**)
+**Phase 1 (Critical) - COMPLETED ✅:**
+1. ✅ `google.protobuf.Timestamp` - most frequently used (**COMPLETED**)
+2. ✅ `google.protobuf.Duration` - critical for time operations (**COMPLETED**)
+3. ✅ `google.protobuf.Empty` - simple but frequently used (**COMPLETED**)
+4. ✅ `google.protobuf.FieldMask` - for partial updates (**COMPLETED**)
 
-**Phase 2 (Важные) - ЗАВЕРШЕНО ✅:**
-5. ✅ `google.protobuf.Struct` - для динамических структур (**ЗАВЕРШЕНО**)
-6. ✅ `google.protobuf.Value` - основа для Struct (**ЗАВЕРШЕНО**)
+**Phase 2 (Important) - COMPLETED ✅:**
+5. ✅ `google.protobuf.Struct` - for dynamic structures (**COMPLETED**)
+6. ✅ `google.protobuf.Value` - foundation for Struct (**COMPLETED**)
 
-**Phase 3 (Продвинутые) - ЗАВЕРШЕНО ✅:**
-7. ✅ `google.protobuf.Any` - для type erasure (**ЗАВЕРШЕНО**)
+**Phase 3 (Advanced) - COMPLETED ✅:**
+7. ✅ `google.protobuf.Any` - for type erasure (**COMPLETED**)
 
-**Phase 4 (Опционально):**
-8. [ ] `google.protobuf.ListValue` - для массивов в Struct (при необходимости)
-9. [ ] `google.protobuf.NullValue` - для null значений (при необходимости)
+**Phase 4 (Optional):**
+8. [ ] `google.protobuf.ListValue` - for arrays in Struct (if needed)
+9. [ ] `google.protobuf.NullValue` - for null values (if needed)
 
-## Реализованные компоненты
+## Implemented Components
 
 ### ✅ TimestampHandler (google.protobuf.Timestamp)
-- **TimestampValue** - типизированное представление с валидацией
-- **Date Integration** - seamless конвертация между Foundation.Date и Timestamp
-- **Round-trip Compatibility** - полная совместимость конвертации туда-обратно
-- **Performance Optimized** - эффективная работа с наносекундной точностью
-- **Production Ready** - 23 теста покрывают все edge cases и сценарии
-- **Покрытие тестами: 92.05%**
+- **TimestampValue** - typed representation with validation
+- **Date Integration** - seamless conversion between Foundation.Date and Timestamp
+- **Round-trip Compatibility** - full round-trip conversion compatibility
+- **Performance Optimized** - efficient work with nanosecond precision
+- **Production Ready** - 23 tests cover all edge cases and scenarios
+- **Test Coverage: 92.05%**
 
 ### ✅ DurationHandler (google.protobuf.Duration)
-- **DurationValue** - типизированное представление с валидацией знаков
-- **TimeInterval Integration** - seamless конвертация между Foundation.TimeInterval и Duration
-- **Negative Duration Support** - корректная обработка отрицательных интервалов
-- **Sign Validation** - строгая валидация знаков seconds и nanos полей
-- **Round-trip Compatibility** - полная совместимость конвертации туда-обратно
-- **Utility Methods** - abs(), negated(), zero() для удобной работы
-- **Production Ready** - 29 тестов покрывают все edge cases и сценарии
-- **Покрытие тестами: 95.19%**
+- **DurationValue** - typed representation with sign validation
+- **TimeInterval Integration** - seamless conversion between Foundation.TimeInterval and Duration
+- **Negative Duration Support** - correct handling of negative intervals
+- **Sign Validation** - strict validation of seconds and nanos field signs
+- **Round-trip Compatibility** - full round-trip conversion compatibility
+- **Utility Methods** - abs(), negated(), zero() for convenient operations
+- **Production Ready** - 29 tests cover all edge cases and scenarios
+- **Test Coverage: 95.19%**
 
 ### ✅ EmptyHandler (google.protobuf.Empty)
-- **EmptyValue** - типизированное представление с singleton pattern
-- **Unit Type Integration** - seamless интеграция с Swift Void как аналогом Empty
-- **Round-trip Compatibility** - полная совместимость конвертации туда-обратно
-- **Minimal Overhead** - максимально эффективная реализация для пустых сообщений
-- **Production Ready** - 15 тестов покрывают все edge cases и сценарии
-- **Покрытие тестами: 100%**
+- **EmptyValue** - typed representation with singleton pattern
+- **Unit Type Integration** - seamless integration with Swift Void as Empty analog
+- **Round-trip Compatibility** - full round-trip conversion compatibility
+- **Minimal Overhead** - maximally efficient implementation for empty messages
+- **Production Ready** - 15 tests cover all edge cases and scenarios
+- **Test Coverage: 100%**
 
 ### ✅ FieldMaskHandler (google.protobuf.FieldMask)
-- **FieldMaskValue** - типизированное представление с полной валидацией путей
+- **FieldMaskValue** - typed representation with full path validation
 - **Path Operations** - union, intersection, covers, adding, removing
-- **Конвертация между DynamicMessage и FieldMaskValue** - seamless интеграция
-- **Convenience Extensions** - для Array<String> и DynamicMessage
-- **Path Validation** - строгая валидация путей согласно Protocol Buffers спецификации
-- **Round-trip Compatibility** - полная совместимость конвертации туда-обратно
-- **Production Ready** - 30 тестов покрывают все edge cases и сценарии
-- **Покрытие тестами: 96.52%**
+- **DynamicMessage and FieldMaskValue conversion** - seamless integration
+- **Convenience Extensions** - for Array<String> and DynamicMessage
+- **Path Validation** - strict path validation according to Protocol Buffers specification
+- **Round-trip Compatibility** - full round-trip conversion compatibility
+- **Production Ready** - 30 tests cover all edge cases and scenarios
+- **Test Coverage: 96.52%**
 
 ### ✅ WellKnownTypes Foundation
-- **WellKnownTypeNames** - полный набор констант для 9 стандартных типов Protocol Buffers
-- **WellKnownTypeDetector** - утилиты для определения типов и фаз поддержки
-- **WellKnownTypesRegistry** - thread-safe реестр обработчиков с singleton pattern
-- **WellKnownTypeHandler** - универсальный протокол для конвертации типов
-- **Comprehensive Error Handling** - 5 типов специализированных ошибок
-- **Thread Safety** - полная поддержка concurrent доступа к registry
-- **Покрытие тестами: 99.04%**
+- **WellKnownTypeNames** - complete set of constants for 9 standard Protocol Buffers types
+- **WellKnownTypeDetector** - utilities for type detection and support phase determination
+- **WellKnownTypesRegistry** - thread-safe handler registry with singleton pattern
+- **WellKnownTypeHandler** - universal protocol for type conversion
+- **Comprehensive Error Handling** - 5 types of specialized errors
+- **Thread Safety** - full concurrent access support for registry
+- **Test Coverage: 99.04%**
 
 ### ✅ StructHandler (google.protobuf.Struct)
-- **StructValue** - типизированное представление с полной поддержкой динамических JSON-like структур
-- **Dictionary Integration** - seamless конвертация между Dictionary<String, Any> и StructValue
-- **Nested Structures Support** - поддержка вложенных структур и массивов
-- **ValueValue Integration** - тесная интеграция с ValueValue для типизированных значений
-- **JSON Mapping** - естественная конвертация в/из JSON формата
-- **Round-trip Compatibility** - полная совместимость конвертации туда-обратно
-- **Production Ready** - 21 тест покрывают все edge cases и сценарии
-- **Покрытие тестами: 83% регионов, 88.24% строк**
+- **StructValue** - typed representation with full support for dynamic JSON-like structures
+- **Dictionary Integration** - seamless conversion between Dictionary<String, Any> and StructValue
+- **Nested Structures Support** - support for nested structures and arrays
+- **ValueValue Integration** - tight integration with ValueValue for typed values
+- **JSON Mapping** - natural conversion to/from JSON format
+- **Round-trip Compatibility** - full round-trip conversion compatibility
+- **Production Ready** - 21 tests cover all edge cases and scenarios
+- **Test Coverage: 83% regions, 88.24% lines**
 
 ### ✅ ValueHandler (google.protobuf.Value)
-- **ValueValue** - универсальное представление для всех типов google.protobuf.Value
-- **Universal Type Support** - поддержка null, number, string, bool, struct, list значений
-- **Any Integration** - seamless конвертация между произвольными Swift типами и ValueValue
-- **StructHandler Compatibility** - тесная интеграция с StructHandler для nested структур
-- **JSON-Natural Representation** - естественная работа с JSON-like значениями
-- **Round-trip Compatibility** - полная совместимость конвертации туда-обратно
-- **Production Ready** - 14 тестов покрывают все основные сценарии использования
-- **Registry Integration** - автоматическая регистрация в WellKnownTypesRegistry
+- **ValueValue** - universal representation for all google.protobuf.Value types
+- **Universal Type Support** - support for null, number, string, bool, struct, list values
+- **Any Integration** - seamless conversion between arbitrary Swift types and ValueValue
+- **StructHandler Compatibility** - tight integration with StructHandler for nested structures
+- **JSON-Natural Representation** - natural work with JSON-like values
+- **Round-trip Compatibility** - full round-trip conversion compatibility
+- **Production Ready** - 14 tests cover all main usage scenarios
+- **Registry Integration** - automatic registration in WellKnownTypesRegistry
 
 ### ✅ AnyHandler (google.protobuf.Any)
-- **AnyValue** - типизированное представление для type erasure произвольных сообщений
-- **Pack/Unpack Operations** - удобные методы для упаковки/распаковки сообщений
-- **Type URL Management** - автоматическое управление type URLs и валидация
-- **TypeRegistry Integration** - интеграция с реестром типов для автоматического разрешения
-- **Round-trip Compatibility** - полная совместимость конвертации туда-обратно
-- **Production Ready** - полное покрытие тестами всех edge cases и сценариев
-- **Convenience Extensions** - удобные методы для DynamicMessage pack/unpack операций
-- **Performance Optimized** - эффективная работа с произвольными типами сообщений
+- **AnyValue** - typed representation for type erasure of arbitrary messages
+- **Pack/Unpack Operations** - convenient methods for message packing/unpacking
+- **Type URL Management** - automatic type URL management and validation
+- **TypeRegistry Integration** - integration with type registry for automatic resolution
+- **Round-trip Compatibility** - full round-trip conversion compatibility
+- **Production Ready** - full test coverage of all edge cases and scenarios
+- **Convenience Extensions** - convenient methods for DynamicMessage pack/unpack operations
+- **Performance Optimized** - efficient work with arbitrary message types

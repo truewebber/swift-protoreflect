@@ -1,18 +1,18 @@
 # Registry Module
 
-Этот модуль отвечает за централизованное управление типами и дескрипторами. Он обеспечивает:
+This module handles centralized type and descriptor management. It provides:
 
-- Регистрацию и разрешение зависимостей между типами
-- Эффективный поиск дескрипторов по имени
-- Централизованное хранилище для всех известных типов
+- Registration and resolution of dependencies between types
+- Efficient descriptor lookup by name
+- Centralized storage for all known types
 
-## Состояние модуля
+## Module Status
 
-- [x] TypeRegistry (покрытие тестами: 97.73% строк кода) ✅
+- [x] TypeRegistry (test coverage: 97.73% lines of code) ✅
 - [x] DescriptorPool
 
-## Взаимодействие с другими модулями
+## Interactions with Other Modules
 
-- **Descriptor**: для управления дескрипторами
-- **Dynamic**: для создания сообщений по имени типа
-- **Service**: для разрешения типов при выполнении RPC вызовов
+- **Descriptor**: for descriptor management
+- **Dynamic**: for creating messages by type name
+- **Service**: for type resolution during RPC calls

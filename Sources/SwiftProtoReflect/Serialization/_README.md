@@ -1,84 +1,84 @@
 # Serialization Module
 
-Этот модуль отвечает за сериализацию и десериализацию Protocol Buffers сообщений. Он обеспечивает:
+This module handles serialization and deserialization of Protocol Buffers messages. It provides:
 
-- Бинарную сериализацию в wire format
-- Десериализацию из бинарного формата
-- JSON сериализацию согласно Protocol Buffers JSON mapping
-- JSON десериализацию согласно Protocol Buffers JSON mapping
+- Binary serialization to wire format
+- Deserialization from binary format
+- JSON serialization according to Protocol Buffers JSON mapping
+- JSON deserialization according to Protocol Buffers JSON mapping
 
-## Состояние модуля
+## Module Status
 
-- [x] **BinarySerializer** ✅ - полностью реализован с покрытием тестами 90.77%
-- [x] **BinaryDeserializer** ✅ - полностью реализован с покрытием тестами 89.69%
-- [x] **WireFormat** ✅ - общие определения для wire типов Protocol Buffers
-- [x] **JSONSerializer** ✅ - полностью реализован с покрытием тестами 81.85%
-- [x] **JSONDeserializer** ✅ - полностью реализован с покрытием тестами 60.25%
+- [x] **BinarySerializer** ✅ - fully implemented with 90.77% test coverage
+- [x] **BinaryDeserializer** ✅ - fully implemented with 89.69% test coverage
+- [x] **WireFormat** ✅ - common definitions for Protocol Buffers wire types
+- [x] **JSONSerializer** ✅ - fully implemented with 81.85% test coverage
+- [x] **JSONDeserializer** ✅ - fully implemented with 60.25% test coverage
 
-## Реализованные компоненты
+## Implemented Components
 
 ### BinarySerializer
-- Поддержка всех скалярных типов Protocol Buffers
-- Repeated fields (packed и non-packed)
-- Map fields с различными типами ключей и значений
-- Nested messages и enum поля
-- ZigZag encoding для sint32/sint64
-- Wire format совместимость со стандартом Protocol Buffers
+- Support for all Protocol Buffers scalar types
+- Repeated fields (packed and non-packed)
+- Map fields with various key and value types
+- Nested messages and enum fields
+- ZigZag encoding for sint32/sint64
+- Wire format compatibility with Protocol Buffers standard
 
 ### BinaryDeserializer
-- Round-trip десериализация со всеми типами полей
-- Обработка неизвестных полей для обратной совместимости
-- ZigZag декодирование
-- Обработка packed repeated fields
-- Корректная валидация UTF-8 строк
-- Детальная обработка ошибок
+- Round-trip deserialization with all field types
+- Unknown field handling for backward compatibility
+- ZigZag decoding
+- Packed repeated fields handling
+- Correct UTF-8 string validation
+- Detailed error handling
 
 ### JSONSerializer
-- JSON сериализация согласно официальной Protocol Buffers JSON mapping
-- Поддержка всех скалярных типов с корректным JSON представлением
-- Специальные значения: Infinity, -Infinity, NaN для float/double
-- Repeated fields как JSON массивы
-- Map fields как JSON объекты
-- Nested messages как вложенные JSON объекты
-- Bytes поля как base64 строки
-- int64/uint64 как строки в JSON (согласно спецификации)
-- Настраиваемые опции сериализации (имена полей, форматирование)
+- JSON serialization according to official Protocol Buffers JSON mapping
+- Support for all scalar types with correct JSON representation
+- Special values: Infinity, -Infinity, NaN for float/double
+- Repeated fields as JSON arrays
+- Map fields as JSON objects
+- Nested messages as nested JSON objects
+- Bytes fields as base64 strings
+- int64/uint64 as strings in JSON (according to specification)
+- Configurable serialization options (field names, formatting)
 
 ### JSONDeserializer
-- JSON десериализация согласно официальной Protocol Buffers JSON mapping
-- Round-trip совместимость с JSONSerializer
-- Поддержка всех скалярных типов из JSON представления
-- Специальные значения: парсинг "Infinity", "-Infinity", "NaN" 
-- Repeated fields из JSON массивов
-- Map fields из JSON объектов с конверсией ключей
-- Base64 декодирование для bytes полей
-- Строгая типизация с детальными ошибками валидации
-- Настраиваемые опции (игнорирование неизвестных полей)
-- Обработка как оригинальных, так и camelCase имен полей
+- JSON deserialization according to official Protocol Buffers JSON mapping
+- Round-trip compatibility with JSONSerializer
+- Support for all scalar types from JSON representation
+- Special values: parsing "Infinity", "-Infinity", "NaN"
+- Repeated fields from JSON arrays
+- Map fields from JSON objects with key conversion
+- Base64 decoding for bytes fields
+- Strict typing with detailed validation errors
+- Configurable options (ignoring unknown fields)
+- Handling of both original and camelCase field names
 
 ### WireFormat
-- Публичные определения WireType для совместного использования
-- Соответствие стандарту Protocol Buffers wire format
+- Public WireType definitions for shared usage
+- Compliance with Protocol Buffers wire format standard
 
-## Взаимодействие с другими модулями
+## Interactions with Other Modules
 
-- **Dynamic**: для работы с динамическими сообщениями
-- **Descriptor**: для получения метаданных о типах при сериализации/десериализации
-- **Bridge**: для интеграции с Swift Protobuf сериализацией
+- **Dynamic**: for working with dynamic messages
+- **Descriptor**: for getting type metadata during serialization/deserialization
+- **Bridge**: for integration with Swift Protobuf serialization
 
-## Покрытие тестами
+## Test Coverage
 
-- **BinarySerializer**: 90.77% покрытие кода (27 тестов)
-- **BinaryDeserializer**: 89.69% покрытие кода (20 тестов)
-- **JSONSerializer**: 81.85% покрытие кода (16 тестов)
-- **JSONDeserializer**: 60.25% покрытие кода (24 теста)
-- **Round-trip тестирование**: все типы полей проверены на совместимость сериализации/десериализации
+- **BinarySerializer**: 90.77% code coverage (27 tests)
+- **BinaryDeserializer**: 89.69% code coverage (20 tests)
+- **JSONSerializer**: 81.85% code coverage (16 tests)
+- **JSONDeserializer**: 60.25% code coverage (24 tests)
+- **Round-trip testing**: all field types verified for serialization/deserialization compatibility
 
-## JSON Round-trip Совместимость
+## JSON Round-trip Compatibility
 
-Модуль обеспечивает полную совместимость между JSONSerializer и JSONDeserializer:
-- **Message → JSON → Message**: данные сохраняются без потерь
-- **Все типы полей**: скалярные, repeated, map, nested messages
-- **Специальные значения**: float/double специальные случаи
-- **Форматы данных**: корректная обработка base64, числовых строк, булевых значений
-- **Опции**: поддержка различных настроек сериализации/десериализации
+The module ensures full compatibility between JSONSerializer and JSONDeserializer:
+- **Message → JSON → Message**: data preserved without loss
+- **All field types**: scalar, repeated, map, nested messages
+- **Special values**: float/double special cases
+- **Data formats**: correct handling of base64, numeric strings, boolean values
+- **Options**: support for various serialization/deserialization settings
