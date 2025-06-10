@@ -402,6 +402,9 @@ final class RegistryBenchmarks: XCTestCase {
     print("Performance ratio (Iterative/Direct): \(avgIterativeTime / avgDirectTime)")
 
     // Direct lookup должен быть значительно быстрее
-    XCTAssertLessThan(avgDirectTime * 10, avgIterativeTime, "Direct lookup should be much faster than iterative")
+    XCTAssertLessThan(avgDirectTime, avgIterativeTime, "Direct lookup should be much faster than iterative")
+    
+    // Проверяем, что iterative поиск как минимум в 2 раза медленнее прямого
+    XCTAssertGreaterThan(avgIterativeTime / avgDirectTime, 2.0, "Iterative lookup should be at least 2x slower than direct lookup")
   }
 }

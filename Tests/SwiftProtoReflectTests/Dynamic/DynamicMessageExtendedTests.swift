@@ -538,14 +538,14 @@ final class DynamicMessageExtendedTests: XCTestCase {
   func testInvalidMapKeyType() {
     // Тестируем ошибку DynamicMessageError.invalidMapKeyType напрямую
     let error = DynamicMessageError.invalidMapKeyType(type: .double)
-    XCTAssertEqual(error.errorDescription, "Недопустимый тип ключа double для map поля")
+    XCTAssertEqual(error.errorDescription, "Invalid key type double for map field")
 
     // Тестируем с другими недопустимыми типами
     let floatError = DynamicMessageError.invalidMapKeyType(type: .float)
-    XCTAssertEqual(floatError.errorDescription, "Недопустимый тип ключа float для map поля")
+    XCTAssertEqual(floatError.errorDescription, "Invalid key type float for map field")
 
     let bytesError = DynamicMessageError.invalidMapKeyType(type: .bytes)
-    XCTAssertEqual(bytesError.errorDescription, "Недопустимый тип ключа bytes для map поля")
+    XCTAssertEqual(bytesError.errorDescription, "Invalid key type bytes for map field")
   }
 
   // MARK: - NSNumber Conversion Tests

@@ -1114,18 +1114,18 @@ final class DynamicMessageTests: XCTestCase {
   func testErrorDescriptions() {
     // Проверка локализованных описаний ошибок
     let fieldNameError = DynamicMessageError.fieldNotFound(fieldName: "test_field")
-    XCTAssertEqual(fieldNameError.errorDescription, "Поле с именем 'test_field' не найдено")
+    XCTAssertEqual(fieldNameError.errorDescription, "Field with name 'test_field' not found")
 
     let fieldNumberError = DynamicMessageError.fieldNotFoundByNumber(fieldNumber: 42)
-    XCTAssertEqual(fieldNumberError.errorDescription, "Поле с номером 42 не найдено")
+    XCTAssertEqual(fieldNumberError.errorDescription, "Field with number 42 not found")
 
     let typeMismatchError = DynamicMessageError.typeMismatch(
       fieldName: "test_field",
       expectedType: "String",
       actualValue: 42
     )
-    XCTAssertTrue(typeMismatchError.errorDescription?.contains("Несоответствие типа для поля 'test_field'") ?? false)
-    XCTAssertTrue(typeMismatchError.errorDescription?.contains("ожидается String") ?? false)
+    XCTAssertTrue(typeMismatchError.errorDescription?.contains("Type mismatch for field 'test_field'") ?? false)
+    XCTAssertTrue(typeMismatchError.errorDescription?.contains("expected String") ?? false)
 
     let messageMismatchError = DynamicMessageError.messageMismatch(
       fieldName: "message_field",
@@ -1133,18 +1133,18 @@ final class DynamicMessageTests: XCTestCase {
       actualType: "test.Address"
     )
     XCTAssertTrue(
-      messageMismatchError.errorDescription?.contains("Несоответствие типа сообщения для поля 'message_field'") ?? false
+      messageMismatchError.errorDescription?.contains("Message type mismatch for field 'message_field'") ?? false
     )
-    XCTAssertTrue(messageMismatchError.errorDescription?.contains("ожидается test.Person") ?? false)
-    XCTAssertTrue(messageMismatchError.errorDescription?.contains("получено test.Address") ?? false)
+    XCTAssertTrue(messageMismatchError.errorDescription?.contains("expected test.Person") ?? false)
+    XCTAssertTrue(messageMismatchError.errorDescription?.contains("got test.Address") ?? false)
 
     let notRepeatedError = DynamicMessageError.notRepeatedField(fieldName: "test_field")
-    XCTAssertEqual(notRepeatedError.errorDescription, "Поле 'test_field' не является repeated полем")
+    XCTAssertEqual(notRepeatedError.errorDescription, "Field 'test_field' is not a repeated field")
 
     let notMapError = DynamicMessageError.notMapField(fieldName: "test_field")
-    XCTAssertEqual(notMapError.errorDescription, "Поле 'test_field' не является map полем")
+    XCTAssertEqual(notMapError.errorDescription, "Field 'test_field' is not a map field")
 
     let invalidMapKeyTypeError = DynamicMessageError.invalidMapKeyType(type: .double)
-    XCTAssertEqual(invalidMapKeyTypeError.errorDescription, "Недопустимый тип ключа double для map поля")
+    XCTAssertEqual(invalidMapKeyTypeError.errorDescription, "Invalid key type double for map field")
   }
 }
