@@ -2,7 +2,7 @@
 // DescriptorPool.swift
 // SwiftProtoReflect
 //
-// Создан: 2025-05-24
+// Created: 2025-05-24
 //
 
 import Foundation
@@ -10,47 +10,47 @@ import SwiftProtobuf
 
 /// DescriptorPool.
 ///
-/// Контейнер для динамического создания и управления дескрипторами Protocol Buffers во время выполнения.
-/// DescriptorPool используется для работы с типами протобаф, которые не могут быть предопределены заранее.
-/// Это более низкоуровневый компонент по сравнению с TypeRegistry, предназначенный для динамической работы.
-/// с дескрипторами и создания сообщений из FileDescriptorProto.
+/// Container for dynamic creation and management of Protocol Buffers descriptors at runtime.
+/// DescriptorPool is used for working with protobuf types that cannot be predefined in advance.
+/// This is a lower-level component compared to TypeRegistry, designed for dynamic work
+/// with descriptors and creating messages from FileDescriptorProto.
 ///
-/// ## Основные возможности:.
-/// - Динамическое создание дескрипторов из FileDescriptorProto.
-/// - Поддержка builtin дескрипторов для стандартных типов Protocol Buffers.
-/// - Поиск дескрипторов по различным критериям.
-/// - Построение цепочек зависимостей между дескрипторами.
-/// - Thread-safe операции для безопасного использования в многопоточной среде.
-/// - Интеграция с MessageFactory для создания динамических сообщений.
+/// ## Main capabilities:
+/// - Dynamic creation of descriptors from FileDescriptorProto.
+/// - Support for builtin descriptors for standard Protocol Buffers types.
+/// - Descriptor lookup by various criteria.
+/// - Building dependency chains between descriptors.
+/// - Thread-safe operations for safe use in multithreaded environment.
+/// - Integration with MessageFactory for creating dynamic messages.
 public class DescriptorPool {
   // MARK: - Properties
 
-  /// Пул файловых дескрипторов по имени.
+  /// Pool of file descriptors by name.
   private var fileDescriptors: [String: FileDescriptor] = [:]
 
-  /// Пул дескрипторов сообщений по полному имени.
+  /// Pool of message descriptors by full name.
   private var messageDescriptors: [String: MessageDescriptor] = [:]
 
-  /// Пул дескрипторов перечислений по полному имени.
+  /// Pool of enum descriptors by full name.
   private var enumDescriptors: [String: EnumDescriptor] = [:]
 
-  /// Пул дескрипторов сервисов по полному имени.
+  /// Pool of service descriptors by full name.
   private var serviceDescriptors: [String: ServiceDescriptor] = [:]
 
-  /// Пул дескрипторов полей по полному имени.
+  /// Pool of field descriptors by full name.
   private var fieldDescriptors: [String: FieldDescriptor] = [:]
 
-  /// Очередь для thread-safe операций.
+  /// Queue for thread-safe operations.
   private let accessQueue = DispatchQueue(label: "com.swiftprotoreflect.descriptorpool", attributes: .concurrent)
 
-  /// Включает ли пул встроенные дескрипторы для стандартных типов.
+  /// Whether pool includes built-in descriptors for standard types.
   private let includeBuiltinDescriptors: Bool
 
   // MARK: - Initialization
 
-  /// Создает новый экземпляр DescriptorPool.
+  /// Creates a new DescriptorPool instance.
   ///
-  /// - Parameter includeBuiltinDescriptors: Если true, добавляет встроенные дескрипторы для стандартных типов Protocol Buffers.
+  /// - Parameter includeBuiltinDescriptors: If true, adds built-in descriptors for standard Protocol Buffers types.
   public init(includeBuiltinDescriptors: Bool = true) {
     self.includeBuiltinDescriptors = includeBuiltinDescriptors
 
@@ -61,36 +61,36 @@ public class DescriptorPool {
 
   // MARK: - FileDescriptor Management
 
-  /// Добавляет FileDescriptor в пул.
+  /// Adds FileDescriptor to pool.
   ///
-  /// Автоматически извлекает и регистрирует все дескрипторы типов из файла.
+  /// Automatically extracts and registers all type descriptors from file.
   ///
-  /// - Parameter fileDescriptor: Файловый дескриптор для добавления.
-  /// - Throws: `DescriptorPoolError.duplicateFile` если файл уже существует
-  /// - Throws: `DescriptorPoolError.duplicateSymbol` если какой-либо символ уже существует
+  /// - Parameter fileDescriptor: File descriptor to add.
+  /// - Throws: `DescriptorPoolError.duplicateFile` if file already exists
+  /// - Throws: `DescriptorPoolError.duplicateSymbol` if any symbol already exists
   public func addFileDescriptor(_ fileDescriptor: FileDescriptor) throws {
     try accessQueue.sync(flags: .barrier) {
-      // Проверяем на дубликаты файлов
+      // Check for duplicate files
       if fileDescriptors[fileDescriptor.name] != nil {
         throw DescriptorPoolError.duplicateFile(fileDescriptor.name)
       }
 
-      // Регистрируем файл
+      // Register file
       fileDescriptors[fileDescriptor.name] = fileDescriptor
 
-      // Извлекаем и регистрируем все дескрипторы из файла
+      // Extract and register all descriptors from file
       try extractDescriptorsFromFile(fileDescriptor)
     }
   }
 
-  /// Извлекает все дескрипторы из FileDescriptor и добавляет их в пул.
+  /// Extracts all descriptors from FileDescriptor and adds them to pool.
   private func extractDescriptorsFromFile(_ fileDescriptor: FileDescriptor) throws {
-    // Извлекаем сообщения
+    // Extract messages
     for (_, messageDescriptor) in fileDescriptor.messages {
       try addMessageDescriptorRecursively(messageDescriptor)
     }
 
-    // Извлекаем перечисления
+    // Extract enums
     for (_, enumDescriptor) in fileDescriptor.enums {
       if enumDescriptors[enumDescriptor.fullName] != nil {
         throw DescriptorPoolError.duplicateSymbol(enumDescriptor.fullName)
@@ -98,7 +98,7 @@ public class DescriptorPool {
       enumDescriptors[enumDescriptor.fullName] = enumDescriptor
     }
 
-    // Извлекаем сервисы
+    // Extract services
     for (_, serviceDescriptor) in fileDescriptor.services {
       if serviceDescriptors[serviceDescriptor.fullName] != nil {
         throw DescriptorPoolError.duplicateSymbol(serviceDescriptor.fullName)
@@ -107,28 +107,28 @@ public class DescriptorPool {
     }
   }
 
-  /// Рекурсивно добавляет MessageDescriptor и все его вложенные типы.
+  /// Recursively adds MessageDescriptor and all its nested types.
   private func addMessageDescriptorRecursively(_ messageDescriptor: MessageDescriptor) throws {
-    // Проверяем на дубликаты
+    // Check for duplicates
     if messageDescriptors[messageDescriptor.fullName] != nil {
       throw DescriptorPoolError.duplicateSymbol(messageDescriptor.fullName)
     }
 
-    // Добавляем само сообщение
+    // Add the message itself
     messageDescriptors[messageDescriptor.fullName] = messageDescriptor
 
-    // Добавляем поля сообщения
+    // Add message fields
     for field in messageDescriptor.allFields() {
       let fieldFullName = "\(messageDescriptor.fullName).\(field.name)"
       fieldDescriptors[fieldFullName] = field
     }
 
-    // Рекурсивно добавляем вложенные сообщения
+    // Recursively add nested messages
     for (_, nestedMessage) in messageDescriptor.nestedMessages {
       try addMessageDescriptorRecursively(nestedMessage)
     }
 
-    // Добавляем вложенные перечисления
+    // Add nested enums
     for (_, nestedEnum) in messageDescriptor.nestedEnums {
       if enumDescriptors[nestedEnum.fullName] != nil {
         throw DescriptorPoolError.duplicateSymbol(nestedEnum.fullName)
@@ -139,73 +139,73 @@ public class DescriptorPool {
 
   // MARK: - Lookup Methods
 
-  /// Находит FileDescriptor по имени файла.
+  /// Finds FileDescriptor by file name.
   ///
-  /// - Parameter fileName: Имя файла.
-  /// - Returns: FileDescriptor или nil если не найден.
+  /// - Parameter fileName: File name.
+  /// - Returns: FileDescriptor or nil if not found.
   public func findFileDescriptor(named fileName: String) -> FileDescriptor? {
     return accessQueue.sync {
       return fileDescriptors[fileName]
     }
   }
 
-  /// Находит MessageDescriptor по полному имени.
+  /// Finds MessageDescriptor by full name.
   ///
-  /// - Parameter fullName: Полное имя сообщения.
-  /// - Returns: MessageDescriptor или nil если не найден.
+  /// - Parameter fullName: Full message name.
+  /// - Returns: MessageDescriptor or nil if not found.
   public func findMessageDescriptor(named fullName: String) -> MessageDescriptor? {
     return accessQueue.sync {
       return messageDescriptors[fullName]
     }
   }
 
-  /// Находит EnumDescriptor по полному имени.
+  /// Finds EnumDescriptor by full name.
   ///
-  /// - Parameter fullName: Полное имя перечисления.
-  /// - Returns: EnumDescriptor или nil если не найден.
+  /// - Parameter fullName: Full enum name.
+  /// - Returns: EnumDescriptor or nil if not found.
   public func findEnumDescriptor(named fullName: String) -> EnumDescriptor? {
     return accessQueue.sync {
       return enumDescriptors[fullName]
     }
   }
 
-  /// Находит ServiceDescriptor по полному имени.
+  /// Finds ServiceDescriptor by full name.
   ///
-  /// - Parameter fullName: Полное имя сервиса.
-  /// - Returns: ServiceDescriptor или nil если не найден.
+  /// - Parameter fullName: Full service name.
+  /// - Returns: ServiceDescriptor or nil if not found.
   public func findServiceDescriptor(named fullName: String) -> ServiceDescriptor? {
     return accessQueue.sync {
       return serviceDescriptors[fullName]
     }
   }
 
-  /// Находит FieldDescriptor по полному имени.
+  /// Finds FieldDescriptor by full name.
   ///
-  /// - Parameter fullName: Полное имя поля (включая имя содержащего сообщения).
-  /// - Returns: FieldDescriptor или nil если не найден.
+  /// - Parameter fullName: Full field name (including containing message name).
+  /// - Returns: FieldDescriptor or nil if not found.
   public func findFieldDescriptor(named fullName: String) -> FieldDescriptor? {
     return accessQueue.sync {
       return fieldDescriptors[fullName]
     }
   }
 
-  /// Находит FileDescriptor, содержащий указанный символ.
+  /// Finds FileDescriptor containing specified symbol.
   ///
-  /// - Parameter symbolName: Имя символа для поиска.
-  /// - Returns: FileDescriptor содержащий символ или nil если не найден.
+  /// - Parameter symbolName: Symbol name to search for.
+  /// - Returns: FileDescriptor containing symbol or nil if not found.
   public func findFileContainingSymbol(_ symbolName: String) -> FileDescriptor? {
     return accessQueue.sync {
-      // Ищем среди сообщений
+      // Search among messages
       if let messageDescriptor = messageDescriptors[symbolName] {
         return fileDescriptors[messageDescriptor.fileDescriptorPath ?? ""]
       }
 
-      // Ищем среди перечислений
+      // Search among enums
       if let enumDescriptor = enumDescriptors[symbolName] {
         return fileDescriptors[enumDescriptor.fileDescriptorPath ?? ""]
       }
 
-      // Ищем среди сервисов
+      // Search among services
       if let serviceDescriptor = serviceDescriptors[symbolName] {
         return fileDescriptors[serviceDescriptor.fileDescriptorPath ?? ""]
       }
@@ -216,10 +216,10 @@ public class DescriptorPool {
 
   // MARK: - Factory Integration Methods
 
-  /// Создает DynamicMessage для указанного типа используя MessageFactory.
+  /// Creates DynamicMessage for specified type using MessageFactory.
   ///
-  /// - Parameter typeName: Полное имя типа сообщения.
-  /// - Returns: Новое DynamicMessage или nil если тип не найден.
+  /// - Parameter typeName: Full message type name.
+  /// - Returns: New DynamicMessage or nil if type not found.
   public func createMessage(forType typeName: String) -> DynamicMessage? {
     guard let descriptor = findMessageDescriptor(named: typeName) else {
       return nil
@@ -229,13 +229,13 @@ public class DescriptorPool {
     return factory.createMessage(from: descriptor)
   }
 
-  /// Создает DynamicMessage с предзаполненными значениями.
+  /// Creates DynamicMessage with pre-filled values.
   ///
-  /// - Parameters:.
-  ///   - typeName: Полное имя типа сообщения.
-  ///   - fieldValues: Словарь значений полей.
-  /// - Returns: Новое DynamicMessage с установленными значениями или nil если тип не найден.
-  /// - Throws: Ошибки создания или установки значений полей.
+  /// - Parameters:
+  ///   - typeName: Full message type name.
+  ///   - fieldValues: Dictionary of field values.
+  /// - Returns: New DynamicMessage with set values or nil if type not found.
+  /// - Throws: Creation or field value setting errors.
   public func createMessage(forType typeName: String, fieldValues: [String: Any]) throws -> DynamicMessage? {
     guard let descriptor = findMessageDescriptor(named: typeName) else {
       return nil
@@ -247,36 +247,36 @@ public class DescriptorPool {
 
   // MARK: - Discovery Methods
 
-  /// Возвращает все известные имена типов сообщений.
+  /// Returns all known message type names.
   ///
-  /// - Returns: Массив полных имен всех зарегистрированных типов сообщений.
+  /// - Returns: Array of full names of all registered message types.
   public func allMessageTypeNames() -> [String] {
     return accessQueue.sync {
       return Array(messageDescriptors.keys).sorted()
     }
   }
 
-  /// Возвращает все известные имена типов перечислений.
+  /// Returns all known enum type names.
   ///
-  /// - Returns: Массив полных имен всех зарегистрированных типов перечислений.
+  /// - Returns: Array of full names of all registered enum types.
   public func allEnumTypeNames() -> [String] {
     return accessQueue.sync {
       return Array(enumDescriptors.keys).sorted()
     }
   }
 
-  /// Возвращает все известные имена сервисов.
+  /// Returns all known service names.
   ///
-  /// - Returns: Массив полных имен всех зарегистрированных сервисов.
+  /// - Returns: Array of full names of all registered services.
   public func allServiceNames() -> [String] {
     return accessQueue.sync {
       return Array(serviceDescriptors.keys).sorted()
     }
   }
 
-  /// Возвращает все известные имена файлов.
+  /// Returns all known file names.
   ///
-  /// - Returns: Массив имен всех зарегистрированных файлов.
+  /// - Returns: Array of names of all registered files.
   public func allFileNames() -> [String] {
     return accessQueue.sync {
       return Array(fileDescriptors.keys).sorted()
@@ -285,11 +285,11 @@ public class DescriptorPool {
 
   // MARK: - Dependency Resolution
 
-  /// Находит все зависимости для указанного типа.
+  /// Finds all dependencies for specified type.
   ///
-  /// - Parameter typeName: Полное имя типа.
-  /// - Returns: Массив полных имен всех зависимых типов.
-  /// - Throws: `DescriptorPoolError.symbolNotFound` если тип не найден
+  /// - Parameter typeName: Full type name.
+  /// - Returns: Array of full names of all dependent types.
+  /// - Throws: `DescriptorPoolError.symbolNotFound` if type not found
   public func findDependencies(for typeName: String) throws -> [String] {
     return try accessQueue.sync {
       guard let messageDescriptor = messageDescriptors[typeName] else {
@@ -303,20 +303,20 @@ public class DescriptorPool {
     }
   }
 
-  /// Рекурсивно собирает зависимости.
+  /// Recursively collects dependencies.
   private func collectDependencies(from messageDescriptor: MessageDescriptor, into dependencies: inout Set<String>) {
     for field in messageDescriptor.allFields() {
       if let typeName = field.typeName, !typeName.isEmpty {
         dependencies.insert(typeName)
 
-        // Рекурсивно обрабатываем сообщения
+        // Recursively process messages
         if let nestedMessage = messageDescriptors[typeName] {
           collectDependencies(from: nestedMessage, into: &dependencies)
         }
       }
     }
 
-    // Добавляем вложенные типы
+    // Add nested types
     for (_, nestedMessage) in messageDescriptor.nestedMessages {
       dependencies.insert(nestedMessage.fullName)
       collectDependencies(from: nestedMessage, into: &dependencies)
@@ -329,22 +329,22 @@ public class DescriptorPool {
 
   // MARK: - Built-in Descriptors
 
-  /// Настраивает встроенные дескрипторы для стандартных типов Protocol Buffers.
+  /// Sets up built-in descriptors for standard Protocol Buffers types.
   private func setupBuiltinDescriptors() {
-    // Создаем файл для встроенных типов Google
+    // Create file for Google built-in types
     var googleProtobufFile = FileDescriptor(
       name: "google/protobuf/descriptor.proto",
       package: "google.protobuf"
     )
 
-    // Добавляем основные well-known типы
+    // Add basic well-known types
     setupWellKnownTypes(&googleProtobufFile)
 
-    // Регистрируем файл (без проверки ошибок для встроенных типов)
+    // Register file (without error checking for built-in types)
     try? addFileDescriptor(googleProtobufFile)
   }
 
-  /// Настраивает well-known типы Google Protocol Buffers.
+  /// Sets up well-known Google Protocol Buffers types.
   private func setupWellKnownTypes(_ file: inout FileDescriptor) {
     // Any type
     var anyMessage = MessageDescriptor(name: "Any", parent: file)
@@ -371,7 +371,7 @@ public class DescriptorPool {
 
   // MARK: - Clear Methods
 
-  /// Очищает все дескрипторы из пула.
+  /// Clears all descriptors from pool.
   public func clear() {
     accessQueue.sync(flags: .barrier) {
       fileDescriptors.removeAll()
@@ -385,18 +385,18 @@ public class DescriptorPool {
 
 // MARK: - DescriptorPoolError
 
-/// Ошибки DescriptorPool.
+/// DescriptorPool errors.
 public enum DescriptorPoolError: Error, Equatable {
-  /// Файл уже существует в пуле.
+  /// File already exists in pool.
   case duplicateFile(String)
 
-  /// Символ уже существует в пуле.
+  /// Symbol already exists in pool.
   case duplicateSymbol(String)
 
-  /// Символ не найден в пуле.
+  /// Symbol not found in pool.
   case symbolNotFound(String)
 
-  /// Некорректный дескриптор.
+  /// Invalid descriptor.
   case invalidDescriptor(String)
 }
 

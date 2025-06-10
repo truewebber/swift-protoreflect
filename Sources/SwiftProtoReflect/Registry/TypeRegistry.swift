@@ -2,7 +2,7 @@
 // TypeRegistry.swift
 // SwiftProtoReflect
 //
-// Создан: 2025-05-24
+// Created: 2025-05-24
 //
 
 import Foundation
@@ -10,69 +10,69 @@ import SwiftProtobuf
 
 /// TypeRegistry.
 ///
-/// Централизованный реестр для управления всеми известными типами Protocol Buffers.
-/// Обеспечивает регистрацию, поиск и разрешение зависимостей между типами.
+/// Centralized registry for managing all known Protocol Buffers types.
+/// Provides registration, lookup and dependency resolution between types.
 ///
-/// ## Основные возможности:.
-/// - Регистрация FileDescriptor, MessageDescriptor, EnumDescriptor, ServiceDescriptor.
-/// - Быстрый поиск типов по полному имени.
-/// - Автоматическое извлечение типов из FileDescriptor.
-/// - Thread-safe операции.
-/// - Разрешение зависимостей между типами.
+/// ## Main capabilities:
+/// - Registration of FileDescriptor, MessageDescriptor, EnumDescriptor, ServiceDescriptor.
+/// - Fast type lookup by full name.
+/// - Automatic type extraction from FileDescriptor.
+/// - Thread-safe operations.
+/// - Dependency resolution between types.
 public class TypeRegistry {
   // MARK: - Properties
 
-  /// Реестр файловых дескрипторов по имени файла.
+  /// Registry of file descriptors by file name.
   private var fileDescriptors: [String: FileDescriptor] = [:]
 
-  /// Реестр дескрипторов сообщений по полному имени.
+  /// Registry of message descriptors by full name.
   private var messageDescriptors: [String: MessageDescriptor] = [:]
 
-  /// Реестр дескрипторов перечислений по полному имени.
+  /// Registry of enum descriptors by full name.
   private var enumDescriptors: [String: EnumDescriptor] = [:]
 
-  /// Реестр дескрипторов сервисов по полному имени.
+  /// Registry of service descriptors by full name.
   private var serviceDescriptors: [String: ServiceDescriptor] = [:]
 
-  /// Очередь для thread-safe операций.
+  /// Queue for thread-safe operations.
   private let accessQueue = DispatchQueue(label: "com.swiftprotoreflect.typeregistry", attributes: .concurrent)
 
   // MARK: - Initialization
 
-  /// Создает новый экземпляр TypeRegistry.
+  /// Creates a new TypeRegistry instance.
   public init() {
-    // Реестр инициализируется пустым
+    // Registry is initialized empty
   }
 
   // MARK: - File Registration Methods
 
-  /// Регистрирует FileDescriptor и автоматически извлекает все содержащиеся в нем типы.
+  /// Registers FileDescriptor and automatically extracts all types contained in it.
   ///
-  /// - Parameter fileDescriptor: Файловый дескриптор для регистрации.
-  /// - Throws: `RegistryError.duplicateFile` если файл уже зарегистрирован
+  /// - Parameter fileDescriptor: File descriptor to register.
+  /// - Throws: `RegistryError.duplicateFile` if file is already registered
   public func registerFile(_ fileDescriptor: FileDescriptor) throws {
     try accessQueue.sync(flags: .barrier) {
-      // Проверяем на дубликаты файлов
+      // Check for duplicate files
       if fileDescriptors[fileDescriptor.name] != nil {
         throw RegistryError.duplicateFile(fileDescriptor.name)
       }
 
-      // Регистрируем файл
+      // Register file
       fileDescriptors[fileDescriptor.name] = fileDescriptor
 
-      // Автоматически регистрируем все типы из файла
+      // Automatically register all types from file
       try registerTypesFromFile(fileDescriptor)
     }
   }
 
-  /// Извлекает и регистрирует все типы из FileDescriptor.
+  /// Extracts and registers all types from FileDescriptor.
   private func registerTypesFromFile(_ fileDescriptor: FileDescriptor) throws {
-    // Регистрируем все сообщения
+    // Register all messages
     for (_, messageDescriptor) in fileDescriptor.messages {
       try registerMessageRecursively(messageDescriptor)
     }
 
-    // Регистрируем все перечисления
+    // Register all enums
     for (_, enumDescriptor) in fileDescriptor.enums {
       if enumDescriptors[enumDescriptor.fullName] != nil {
         throw RegistryError.duplicateType(enumDescriptor.fullName)
@@ -80,7 +80,7 @@ public class TypeRegistry {
       enumDescriptors[enumDescriptor.fullName] = enumDescriptor
     }
 
-    // Регистрируем все сервисы
+    // Register all services
     for (_, serviceDescriptor) in fileDescriptor.services {
       if serviceDescriptors[serviceDescriptor.fullName] != nil {
         throw RegistryError.duplicateType(serviceDescriptor.fullName)
@@ -89,22 +89,22 @@ public class TypeRegistry {
     }
   }
 
-  /// Рекурсивно регистрирует сообщение и все его вложенные типы.
+  /// Recursively registers message and all its nested types.
   private func registerMessageRecursively(_ messageDescriptor: MessageDescriptor) throws {
-    // Проверяем на дубликаты
+    // Check for duplicates
     if messageDescriptors[messageDescriptor.fullName] != nil {
       throw RegistryError.duplicateType(messageDescriptor.fullName)
     }
 
-    // Регистрируем само сообщение
+    // Register the message itself
     messageDescriptors[messageDescriptor.fullName] = messageDescriptor
 
-    // Регистрируем вложенные сообщения
+    // Register nested messages
     for (_, nestedMessage) in messageDescriptor.nestedMessages {
       try registerMessageRecursively(nestedMessage)
     }
 
-    // Регистрируем вложенные перечисления
+    // Register nested enums
     for (_, nestedEnum) in messageDescriptor.nestedEnums {
       if enumDescriptors[nestedEnum.fullName] != nil {
         throw RegistryError.duplicateType(nestedEnum.fullName)
@@ -115,20 +115,20 @@ public class TypeRegistry {
 
   // MARK: - Direct Type Registration Methods
 
-  /// Регистрирует MessageDescriptor напрямую.
+  /// Registers MessageDescriptor directly.
   ///
-  /// - Parameter messageDescriptor: Дескриптор сообщения.
-  /// - Throws: `RegistryError.duplicateType` если тип уже зарегистрирован
+  /// - Parameter messageDescriptor: Message descriptor.
+  /// - Throws: `RegistryError.duplicateType` if type is already registered
   public func registerMessage(_ messageDescriptor: MessageDescriptor) throws {
     try accessQueue.sync(flags: .barrier) {
       try registerMessageRecursively(messageDescriptor)
     }
   }
 
-  /// Регистрирует EnumDescriptor напрямую.
+  /// Registers EnumDescriptor directly.
   ///
-  /// - Parameter enumDescriptor: Дескриптор перечисления.
-  /// - Throws: `RegistryError.duplicateType` если тип уже зарегистрирован
+  /// - Parameter enumDescriptor: Enum descriptor.
+  /// - Throws: `RegistryError.duplicateType` if type is already registered
   public func registerEnum(_ enumDescriptor: EnumDescriptor) throws {
     try accessQueue.sync(flags: .barrier) {
       if enumDescriptors[enumDescriptor.fullName] != nil {
@@ -138,10 +138,10 @@ public class TypeRegistry {
     }
   }
 
-  /// Регистрирует ServiceDescriptor напрямую.
+  /// Registers ServiceDescriptor directly.
   ///
-  /// - Parameter serviceDescriptor: Дескриптор сервиса.
-  /// - Throws: `RegistryError.duplicateType` если тип уже зарегистрирован
+  /// - Parameter serviceDescriptor: Service descriptor.
+  /// - Throws: `RegistryError.duplicateType` if type is already registered
   public func registerService(_ serviceDescriptor: ServiceDescriptor) throws {
     try accessQueue.sync(flags: .barrier) {
       if serviceDescriptors[serviceDescriptor.fullName] != nil {
@@ -153,40 +153,40 @@ public class TypeRegistry {
 
   // MARK: - Lookup Methods
 
-  /// Находит FileDescriptor по имени файла.
+  /// Finds FileDescriptor by file name.
   ///
-  /// - Parameter fileName: Имя файла.
-  /// - Returns: FileDescriptor или nil если не найден.
+  /// - Parameter fileName: File name.
+  /// - Returns: FileDescriptor or nil if not found.
   public func findFile(named fileName: String) -> FileDescriptor? {
     return accessQueue.sync {
       return fileDescriptors[fileName]
     }
   }
 
-  /// Находит MessageDescriptor по полному имени.
+  /// Finds MessageDescriptor by full name.
   ///
-  /// - Parameter fullName: Полное имя сообщения.
-  /// - Returns: MessageDescriptor или nil если не найден.
+  /// - Parameter fullName: Full message name.
+  /// - Returns: MessageDescriptor or nil if not found.
   public func findMessage(named fullName: String) -> MessageDescriptor? {
     return accessQueue.sync {
       return messageDescriptors[fullName]
     }
   }
 
-  /// Находит EnumDescriptor по полному имени.
+  /// Finds EnumDescriptor by full name.
   ///
-  /// - Parameter fullName: Полное имя перечисления.
-  /// - Returns: EnumDescriptor или nil если не найден.
+  /// - Parameter fullName: Full enum name.
+  /// - Returns: EnumDescriptor or nil if not found.
   public func findEnum(named fullName: String) -> EnumDescriptor? {
     return accessQueue.sync {
       return enumDescriptors[fullName]
     }
   }
 
-  /// Находит ServiceDescriptor по полному имени.
+  /// Finds ServiceDescriptor by full name.
   ///
-  /// - Parameter fullName: Полное имя сервиса.
-  /// - Returns: ServiceDescriptor или nil если не найден.
+  /// - Parameter fullName: Full service name.
+  /// - Returns: ServiceDescriptor or nil if not found.
   public func findService(named fullName: String) -> ServiceDescriptor? {
     return accessQueue.sync {
       return serviceDescriptors[fullName]
@@ -195,70 +195,70 @@ public class TypeRegistry {
 
   // MARK: - Query Methods
 
-  /// Проверяет, зарегистрирован ли файл.
+  /// Checks if file is registered.
   ///
-  /// - Parameter fileName: Имя файла.
-  /// - Returns: true если файл зарегистрирован.
+  /// - Parameter fileName: File name.
+  /// - Returns: true if file is registered.
   public func hasFile(named fileName: String) -> Bool {
     return findFile(named: fileName) != nil
   }
 
-  /// Проверяет, зарегистрировано ли сообщение.
+  /// Checks if message is registered.
   ///
-  /// - Parameter fullName: Полное имя сообщения.
-  /// - Returns: true если сообщение зарегистрировано.
+  /// - Parameter fullName: Full message name.
+  /// - Returns: true if message is registered.
   public func hasMessage(named fullName: String) -> Bool {
     return findMessage(named: fullName) != nil
   }
 
-  /// Проверяет, зарегистрировано ли перечисление.
+  /// Checks if enum is registered.
   ///
-  /// - Parameter fullName: Полное имя перечисления.
-  /// - Returns: true если перечисление зарегистрировано.
+  /// - Parameter fullName: Full enum name.
+  /// - Returns: true if enum is registered.
   public func hasEnum(named fullName: String) -> Bool {
     return findEnum(named: fullName) != nil
   }
 
-  /// Проверяет, зарегистрирован ли сервис.
+  /// Checks if service is registered.
   ///
-  /// - Parameter fullName: Полное имя сервиса.
-  /// - Returns: true если сервис зарегистрирован.
+  /// - Parameter fullName: Full service name.
+  /// - Returns: true if service is registered.
   public func hasService(named fullName: String) -> Bool {
     return findService(named: fullName) != nil
   }
 
   // MARK: - Enumeration Methods
 
-  /// Возвращает все зарегистрированные файлы.
+  /// Returns all registered files.
   ///
-  /// - Returns: Массив всех FileDescriptor.
+  /// - Returns: Array of all FileDescriptor.
   public func allFiles() -> [FileDescriptor] {
     return accessQueue.sync {
       return Array(fileDescriptors.values)
     }
   }
 
-  /// Возвращает все зарегистрированные сообщения.
+  /// Returns all registered messages.
   ///
-  /// - Returns: Массив всех MessageDescriptor.
+  /// - Returns: Array of all MessageDescriptor.
   public func allMessages() -> [MessageDescriptor] {
     return accessQueue.sync {
       return Array(messageDescriptors.values)
     }
   }
 
-  /// Возвращает все зарегистрированные перечисления.
+  /// Returns all registered enums.
   ///
-  /// - Returns: Массив всех EnumDescriptor.
+  /// - Returns: Array of all EnumDescriptor.
   public func allEnums() -> [EnumDescriptor] {
     return accessQueue.sync {
       return Array(enumDescriptors.values)
     }
   }
 
-  /// Возвращает все зарегистрированные сервисы.
+  /// Returns all registered services.
   ///
-  /// - Returns: Массив всех ServiceDescriptor.
+  /// - Returns: Array of all ServiceDescriptor.
   public func allServices() -> [ServiceDescriptor] {
     return accessQueue.sync {
       return Array(serviceDescriptors.values)
@@ -267,14 +267,14 @@ public class TypeRegistry {
 
   // MARK: - Dependency Resolution Methods
 
-  /// Разрешает зависимости для указанного типа сообщения.
+  /// Resolves dependencies for specified message type.
   ///
-  /// Находит все типы, от которых зависит данное сообщение.
-  /// (типы полей, вложенные типы и т.д.)
+  /// Finds all types that this message depends on.
+  /// (field types, nested types, etc.)
   ///
-  /// - Parameter fullName: Полное имя сообщения.
-  /// - Returns: Массив полных имен зависимых типов.
-  /// - Throws: `RegistryError.typeNotFound` если сообщение не найдено
+  /// - Parameter fullName: Full message name.
+  /// - Returns: Array of dependent type full names.
+  /// - Throws: `RegistryError.typeNotFound` if message not found
   public func resolveDependencies(for fullName: String) throws -> [String] {
     return try accessQueue.sync {
       guard let messageDescriptor = messageDescriptors[fullName] else {
@@ -288,21 +288,21 @@ public class TypeRegistry {
     }
   }
 
-  /// Рекурсивно собирает зависимости из MessageDescriptor.
+  /// Recursively collects dependencies from MessageDescriptor.
   private func collectDependencies(from messageDescriptor: MessageDescriptor, into dependencies: inout Set<String>) {
-    // Собираем зависимости из полей
+    // Collect dependencies from fields
     for field in messageDescriptor.allFields() {
       if let typeName = field.typeName, !typeName.isEmpty {
         dependencies.insert(typeName)
 
-        // Рекурсивно обрабатываем сообщения
+        // Recursively process messages
         if let nestedMessage = messageDescriptors[typeName] {
           collectDependencies(from: nestedMessage, into: &dependencies)
         }
       }
     }
 
-    // Добавляем вложенные типы
+    // Add nested types
     for (_, nestedMessage) in messageDescriptor.nestedMessages {
       dependencies.insert(nestedMessage.fullName)
       collectDependencies(from: nestedMessage, into: &dependencies)
@@ -315,7 +315,7 @@ public class TypeRegistry {
 
   // MARK: - Clear Methods
 
-  /// Очищает все зарегистрированные типы.
+  /// Clears all registered types.
   public func clear() {
     accessQueue.sync(flags: .barrier) {
       fileDescriptors.removeAll()
@@ -325,51 +325,51 @@ public class TypeRegistry {
     }
   }
 
-  /// Удаляет конкретный файл и все связанные с ним типы.
+  /// Removes specific file and all related types.
   ///
-  /// - Parameter fileName: Имя файла для удаления.
-  /// - Returns: true если файл был найден и удален.
+  /// - Parameter fileName: File name to remove.
+  /// - Returns: true if file was found and removed.
   public func removeFile(named fileName: String) -> Bool {
     return accessQueue.sync(flags: .barrier) {
       guard let fileDescriptor = fileDescriptors.removeValue(forKey: fileName) else {
         return false
       }
 
-      // Удаляем все типы из этого файла
+      // Remove all types from this file
       removeTypesFromFile(fileDescriptor)
       return true
     }
   }
 
-  /// Удаляет все типы, принадлежащие указанному файлу.
+  /// Removes all types belonging to specified file.
   private func removeTypesFromFile(_ fileDescriptor: FileDescriptor) {
-    // Удаляем сообщения из файла
+    // Remove messages from file
     for (_, messageDescriptor) in fileDescriptor.messages {
       removeMessageRecursively(messageDescriptor)
     }
 
-    // Удаляем перечисления из файла
+    // Remove enums from file
     for (_, enumDescriptor) in fileDescriptor.enums {
       enumDescriptors.removeValue(forKey: enumDescriptor.fullName)
     }
 
-    // Удаляем сервисы из файла
+    // Remove services from file
     for (_, serviceDescriptor) in fileDescriptor.services {
       serviceDescriptors.removeValue(forKey: serviceDescriptor.fullName)
     }
   }
 
-  /// Рекурсивно удаляет сообщение и все его вложенные типы.
+  /// Recursively removes message and all its nested types.
   private func removeMessageRecursively(_ messageDescriptor: MessageDescriptor) {
-    // Удаляем само сообщение
+    // Remove the message itself
     messageDescriptors.removeValue(forKey: messageDescriptor.fullName)
 
-    // Удаляем вложенные сообщения
+    // Remove nested messages
     for (_, nestedMessage) in messageDescriptor.nestedMessages {
       removeMessageRecursively(nestedMessage)
     }
 
-    // Удаляем вложенные перечисления
+    // Remove nested enums
     for (_, nestedEnum) in messageDescriptor.nestedEnums {
       enumDescriptors.removeValue(forKey: nestedEnum.fullName)
     }
@@ -378,15 +378,15 @@ public class TypeRegistry {
 
 // MARK: - RegistryError
 
-/// Ошибки TypeRegistry.
+/// TypeRegistry errors.
 public enum RegistryError: Error, Equatable {
-  /// Файл уже зарегистрирован.
+  /// File already registered.
   case duplicateFile(String)
 
-  /// Тип уже зарегистрирован.
+  /// Type already registered.
   case duplicateType(String)
 
-  /// Тип не найден.
+  /// Type not found.
   case typeNotFound(String)
 }
 
