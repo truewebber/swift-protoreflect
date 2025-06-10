@@ -1,21 +1,21 @@
 /**
  * 📦 SwiftProtoReflect Example: Any Demo
  *
- * Описание: Работа с google.protobuf.Any для type erasure и упаковки произвольных сообщений
- * Ключевые концепции: AnyHandler, AnyValue, Type erasure, Dynamic unpacking
- * Сложность: 🔧 Продвинутый
- * Время выполнения: < 15 секунд
+ * Description: Working with google.protobuf.Any for type erasure and packing arbitrary messages
+ * Key concepts: AnyHandler, AnyValue, Type erasure, Dynamic unpacking
+ * Complexity: 🔧 Advanced
+ * Execution time: < 15 seconds
  *
- * Что изучите:
- * - Упаковка и распаковка произвольных сообщений в google.protobuf.Any
- * - Type URL management и создание корректных URL для типов
- * - Type erasure patterns и dynamic type handling
- * - TypeRegistry integration для автоматического разрешения типов
- * - Convenience extensions для DynamicMessage (packIntoAny, unpackFromAny)
- * - Error handling и type safety валидация
- * - Real-world сценарии использования Any для microservices
+ * What you'll learn:
+ * - Packing and unpacking arbitrary messages in google.protobuf.Any
+ * - Type URL management and creating correct URLs for types
+ * - Type erasure patterns and dynamic type handling
+ * - TypeRegistry integration for automatic type resolution
+ * - Convenience extensions for DynamicMessage (packIntoAny, unpackFromAny)
+ * - Error handling and type safety validation
+ * - Real-world scenarios using Any for microservices
  *
- * Запуск:
+ * Run with:
  *   swift run AnyDemo
  */
 
@@ -36,12 +36,12 @@ struct AnyDemo {
     try demonstrateErrorHandlingAndValidation()
     try demonstrateRealWorldScenarios()
 
-    ExampleUtils.printSuccess("Any demo завершена! Вы изучили все аспекты работы с google.protobuf.Any.")
+    ExampleUtils.printSuccess("Any demo completed! You've learned all aspects of working with google.protobuf.Any.")
 
     ExampleUtils.printNext([
-      "Далее изучите: well-known-registry.swift - comprehensive integration",
-      "Интеграция: Все 6 Well-Known Types в одном месте",
-      "Сравните: struct-demo.swift и value-demo.swift - JSON vs Any",
+      "Next, explore: well-known-registry.swift - comprehensive integration",
+      "Integration: All 6 Well-Known Types in one place",
+      "Compare: struct-demo.swift and value-demo.swift - JSON vs Any",
     ])
   }
 
@@ -52,7 +52,7 @@ struct AnyDemo {
 
     print("  📦 Creating test messages for packing:")
 
-    // Создание различных типов сообщений для демонстрации
+    // Create different message types for demonstration
     let testMessages = try createTestMessages()
 
     var packingResults: [[String: String]] = []
@@ -118,7 +118,7 @@ struct AnyDemo {
 
     print("  🌐 Type URL utilities demonstration:")
 
-    // Test type names и соответствующие URLs
+    // Test type names and corresponding URLs
     let typeNames = [
       "google.protobuf.Timestamp",
       "google.protobuf.Duration",
@@ -179,7 +179,7 @@ struct AnyDemo {
 
     print("  🎭 Type erasure demonstration:")
 
-    // Создаем коллекцию разнотипных сообщений упакованных в Any
+    // Create collection of different message types packed in Any
     let messages = try createTestMessages()
     var anyValues: [AnyHandler.AnyValue] = []
 
@@ -190,7 +190,7 @@ struct AnyDemo {
 
     print("    Created collection of \(anyValues.count) type-erased messages")
 
-    // Анализ типов в коллекции
+    // Analyze types in collection
     var typeAnalysis: [String: Int] = [:]
     for anyValue in anyValues {
       let typeName = anyValue.getTypeName()
@@ -233,7 +233,7 @@ struct AnyDemo {
 
     print("  📚 TypeRegistry setup and integration:")
 
-    // Создаем registry и регистрируем типы
+    // Create registry and register types
     let registry = TypeRegistry()
     let fileDescriptors = try createFileDescriptors()
 
@@ -461,12 +461,12 @@ struct AnyDemo {
     try demonstratePerformanceBenchmarking()
 
     print("  💡 Real-world insights:")
-    print("    • google.protobuf.Any идеален для type erasure в distributed systems")
-    print("    • Type URL management критически важен для interoperability")
-    print("    • TypeRegistry integration обеспечивает dynamic type resolution")
-    print("    • Convenience extensions упрощают everyday operations")
-    print("    • Error handling обеспечивает type safety в runtime")
-    print("    • Performance подходит для high-throughput scenarios")
+    print("    • google.protobuf.Any is ideal for type erasure in distributed systems")
+    print("    • Type URL management is critically important for interoperability")
+    print("    • TypeRegistry integration provides dynamic type resolution")
+    print("    • Convenience extensions simplify everyday operations")
+    print("    • Error handling ensures type safety at runtime")
+    print("    • Performance is suitable for high-throughput scenarios")
   }
 
   // MARK: - Real-World Scenarios
