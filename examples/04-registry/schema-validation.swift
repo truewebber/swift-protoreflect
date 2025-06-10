@@ -1,13 +1,13 @@
 /**
  * SwiftProtoReflect Schema Validation Example
  *
- * Демонстрирует comprehensive валидацию Protocol Buffers схем:
+ * Demonstrates comprehensive validation of Protocol Buffers schemas:
  *
- * 1. Structural validation правил Protocol Buffers
- * 2. Semantic validation и consistency checks
+ * 1. Structural validation of Protocol Buffers rules
+ * 2. Semantic validation and consistency checks
  * 3. Schema evolution compatibility
- * 4. Performance validation и optimization hints
- * 5. Custom validation rules и reporting
+ * 4. Performance validation and optimization hints
+ * 5. Custom validation rules and reporting
  */
 
 import ExampleUtils
@@ -18,24 +18,24 @@ struct SchemaValidationExample {
   static func run() throws {
     ExampleUtils.printHeader("Schema Validation & Quality Assurance")
 
-    try step1UstructuralValidation()
-    try step2UsemanticValidation()
-    try step3UevolutionCompatibility()
-    try step4UperformanceValidation()
-    try step5UcustomValidationRules()
+    try step1_structuralValidation()
+    try step2_semanticValidation()
+    try step3_evolutionCompatibility()
+    try step4_performanceValidation()
+    try step5_customValidationRules()
 
-    print("\n🎉 Schema validation полностью изучена!")
+    print("\n🎉 Schema validation fully explored!")
 
-    print("\n🔍 Что попробовать дальше:")
-    print("  • Категория 04-registry завершена! Переходите к следующей категории")
-    print("  • Изучите другие категории: serialization, validation, well-known-types")
-    print("  • Вернитесь к: type-registry.swift, file-loading.swift")
+    print("\n🔍 What to try next:")
+    print("  • Category 04-registry completed! Move to the next category")
+    print("  • Explore other categories: serialization, validation, well-known-types")
+    print("  • Return to: type-registry.swift, file-loading.swift")
   }
 
-  private static func step1UstructuralValidation() throws {
+  private static func step1_structuralValidation() throws {
     ExampleUtils.printStep(1, "Structural validation")
 
-    print("  🏗 Валидация структурных правил Protocol Buffers...")
+    print("  🏗 Validating Protocol Buffers structural rules...")
 
     // Create schemas with various structural issues
     let testSchemas = createTestSchemas()
@@ -76,10 +76,10 @@ struct SchemaValidationExample {
     }
   }
 
-  private static func step2UsemanticValidation() throws {
+  private static func step2_semanticValidation() throws {
     ExampleUtils.printStep(2, "Semantic validation")
 
-    print("  🧠 Семантическая валидация и consistency checks...")
+    print("  🧠 Semantic validation and consistency checks...")
 
     let businessSchemas = try createBusinessSchemas()
     let semanticValidator = SemanticValidator()
@@ -127,7 +127,7 @@ struct SchemaValidationExample {
     print("    Overall integrity: \(integrityResults.overallValid ? "✅ SECURE" : "⚠️ ISSUES")")
   }
 
-  private static func step3UevolutionCompatibility() throws {
+  private static func step3_evolutionCompatibility() throws {
     ExampleUtils.printStep(3, "Schema evolution compatibility")
 
     print("  🔄 Проверка совместимости эволюции схем...")
@@ -179,7 +179,7 @@ struct SchemaValidationExample {
     }
   }
 
-  private static func step4UperformanceValidation() throws {
+  private static func step4_performanceValidation() throws {
     ExampleUtils.printStep(4, "Performance validation")
 
     print("  ⚡ Анализ производительности схем...")
@@ -227,7 +227,7 @@ struct SchemaValidationExample {
     ExampleUtils.printTiming("Performance validation (\(performanceSchemas.count) schemas)", time: benchmarkTime)
   }
 
-  private static func step5UcustomValidationRules() throws {
+  private static func step5_customValidationRules() throws {
     ExampleUtils.printStep(5, "Custom validation rules")
 
     print("  🎯 Кастомные правила валидации...")
