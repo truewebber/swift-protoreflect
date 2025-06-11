@@ -203,7 +203,7 @@ struct MemoryOptimizationExample {
     let eagerTime = ExampleUtils.measureTime {
       // Симуляция предварительной загрузки всех типов
       for typeName in typeNames {
-        for i in 1...accessCount / typeNames.count {
+        for _ in 1...accessCount / typeNames.count {
           _ = registry.getDescriptor(for: typeName)
         }
       }

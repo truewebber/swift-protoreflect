@@ -25,7 +25,7 @@ import SwiftProtoReflect
 @main
 struct MetadataOptionsExample {
   static func main() throws {
-    try ExampleUtils.printHeader("gRPC Metadata and Call Options")
+    ExampleUtils.printHeader("gRPC Metadata and Call Options")
 
     try demonstrateBasicMetadata()
     try demonstrateAuthentication()
@@ -90,7 +90,7 @@ struct MetadataOptionsExample {
       "session-id": "sess_abc123",
     ])
 
-    let (response2, time2) = try ExampleUtils.measureTime {
+    let (_, time2) = try ExampleUtils.measureTime {
       try client.makeCallWithMetadata(
         method: "CreateUser",
         metadata: trackingMetadata
@@ -112,7 +112,7 @@ struct MetadataOptionsExample {
       "custom-binary-bin": binaryData.base64EncodedString(),
     ])
 
-    let (response3, time3) = try ExampleUtils.measureTime {
+    let (_, time3) = try ExampleUtils.measureTime {
       try client.makeCallWithMetadata(
         method: "UpdateUser",
         metadata: binaryMetadata
@@ -163,7 +163,7 @@ struct MetadataOptionsExample {
       "x-api-version": "v1",
     ])
 
-    let (authResponse2, authTime2) = try ExampleUtils.measureTime {
+    let (_, authTime2) = try ExampleUtils.measureTime {
       try client.makeAuthenticatedCall(
         method: "GetUserData",
         metadata: apiKeyMetadata
@@ -184,7 +184,7 @@ struct MetadataOptionsExample {
       "x-cert-serial": clientCert.serialNumber,
     ])
 
-    let (authResponse3, authTime3) = try ExampleUtils.measureTime {
+    let (_, authTime3) = try ExampleUtils.measureTime {
       try client.makeAuthenticatedCall(
         method: "GetHighSecurityData",
         metadata: mtlsMetadata
@@ -206,7 +206,7 @@ struct MetadataOptionsExample {
       "x-device-id": "device_789",
     ])
 
-    let (authResponse4, authTime4) = try ExampleUtils.measureTime {
+    let (_, authTime4) = try ExampleUtils.measureTime {
       try client.makeAuthenticatedCall(
         method: "GetMFAProtectedData",
         metadata: mfaMetadata
@@ -239,7 +239,7 @@ struct MetadataOptionsExample {
       "x-trace-flags": traceContext.flags,
     ])
 
-    let (traceResponse1, traceTime1) = try ExampleUtils.measureTime {
+    let (_, traceTime1) = try ExampleUtils.measureTime {
       try client.makeCallWithTracing(
         method: "ProcessOrder",
         metadata: tracingMetadata,
@@ -303,7 +303,7 @@ struct MetadataOptionsExample {
       baggageMetadata.headers["baggage-\(key)"] = value
     }
 
-    let (baggageResponse, baggageTime) = try ExampleUtils.measureTime {
+    let (_, baggageTime) = try ExampleUtils.measureTime {
       try client.makeCallWithTracing(
         method: "ProcessWithContext",
         metadata: baggageMetadata,
@@ -403,7 +403,7 @@ struct MetadataOptionsExample {
       circuitBreakerThreshold: 5
     )
 
-    let (customResponse, customTime) = try ExampleUtils.measureTime {
+    let (_, customTime) = try ExampleUtils.measureTime {
       try client.makeCallWithOptions(
         method: "MonitoredOperation",
         options: customOptions
@@ -547,7 +547,7 @@ struct MetadataOptionsExample {
       .withCompression(.gzip)
       .build()
 
-    let (builderResponse, builderTime) = try ExampleUtils.measureTime {
+    let (_, builderTime) = try ExampleUtils.measureTime {
       try client.makeCallWithMetadata(
         method: "ComplexOperation",
         metadata: builtMetadata
@@ -573,7 +573,7 @@ struct MetadataOptionsExample {
     let baseMetadata = GRPCMetadata(["operation": "test"])
     let processedMetadata = try middleware.process(baseMetadata)
 
-    let (middlewareResponse, middlewareTime) = try ExampleUtils.measureTime {
+    let (_, middlewareTime) = try ExampleUtils.measureTime {
       try client.makeCallWithMetadata(
         method: "MiddlewareOperation",
         metadata: processedMetadata
