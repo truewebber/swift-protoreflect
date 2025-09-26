@@ -18,6 +18,8 @@ let package = Package(
     .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.29.0"),
     .package(url: "https://github.com/grpc/grpc-swift.git", from: "1.23.0"),
     .package(url: "https://github.com/apple/swift-nio.git", from: "2.86.0"),
+    .package(url: "https://github.com/apple/swift-nio-http2.git", from: "1.38.0"),
+    .package(url: "https://github.com/apple/swift-log.git", from: "1.6.4"),
   ],
   targets: [
     .target(
@@ -25,7 +27,16 @@ let package = Package(
       dependencies: [
         .product(name: "SwiftProtobuf", package: "swift-protobuf"),
         .product(name: "GRPC", package: "grpc-swift"),
+        
+        // NIO
         .product(name: "NIOCore", package: "swift-nio"),
+        .product(name: "NIOFoundationCompat", package: "swift-nio"),
+
+        // HPACK из nio-http2
+        .product(name: "NIOHTTP2", package: "swift-nio-http2"),
+
+        // swift-log
+        .product(name: "Logging", package: "swift-log"),
       ],
       exclude: [
         "Service/_README.md",
