@@ -32,7 +32,9 @@ struct TimestampDemo {
     try demonstrateEdgeCases()
     try demonstratePerformanceAndPrecision()
 
-    ExampleUtils.printSuccess("Timestamp demo completed! You've learned all aspects of working with google.protobuf.Timestamp.")
+    ExampleUtils.printSuccess(
+      "Timestamp demo completed! You've learned all aspects of working with google.protobuf.Timestamp."
+    )
 
     ExampleUtils.printNext([
       "Next, explore: duration-demo.swift - time intervals",

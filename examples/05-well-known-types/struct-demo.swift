@@ -34,7 +34,9 @@ struct StructDemo {
     try demonstrateRoundTripCompatibility()
     try demonstratePerformanceAndComplexity()
 
-    ExampleUtils.printSuccess("Struct demo completed! You've learned all aspects of working with google.protobuf.Struct.")
+    ExampleUtils.printSuccess(
+      "Struct demo completed! You've learned all aspects of working with google.protobuf.Struct."
+    )
 
     ExampleUtils.printNext([
       "Next, explore: value-demo.swift - universal values",

@@ -33,7 +33,9 @@ struct DurationDemo {
     try demonstrateSignValidation()
     try demonstratePerformanceAndEdgeCases()
 
-    ExampleUtils.printSuccess("Duration demo completed! You've learned all aspects of working with google.protobuf.Duration.")
+    ExampleUtils.printSuccess(
+      "Duration demo completed! You've learned all aspects of working with google.protobuf.Duration."
+    )
 
     ExampleUtils.printNext([
       "Next, explore: empty-demo.swift - empty messages",

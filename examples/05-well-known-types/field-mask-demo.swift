@@ -35,7 +35,9 @@ struct FieldMaskDemo {
     try demonstrateRealWorldScenarios()
     try demonstratePerformanceAnalysis()
 
-    ExampleUtils.printSuccess("FieldMask demo completed! You've learned all aspects of working with google.protobuf.FieldMask.")
+    ExampleUtils.printSuccess(
+      "FieldMask demo completed! You've learned all aspects of working with google.protobuf.FieldMask."
+    )
 
     ExampleUtils.printNext([
       "Next, explore: struct-demo.swift - dynamic JSON-like structures",

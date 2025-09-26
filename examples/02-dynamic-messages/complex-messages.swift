@@ -778,14 +778,16 @@ struct ComplexMessagesExample {
     // Check title length
     if title.count < 5 {
       validationResults["Title Length"] = "❌ Too short"
-    } else {
+    }
+    else {
       validationResults["Title Length"] = "✅ Valid"
     }
 
     // Check section count
     if sectionCount == 0 {
       validationResults["Section Count"] = "❌ No sections"
-    } else {
+    }
+    else {
       validationResults["Section Count"] = "✅ \(sectionCount) sections"
     }
 

@@ -499,17 +499,17 @@ struct JsonConversionExample {
     binaryPath: DynamicMessage
   ) throws -> Bool {
     let fields = ["name", "age", "email", "hobbies"]
-    
+
     for fieldName in fields {
       let originalValue = try original.get(forField: fieldName)
       let jsonValue = try jsonPath.get(forField: fieldName)
       let binaryValue = try binaryPath.get(forField: fieldName)
-      
+
       if !areJsonValuesEqual(originalValue, jsonValue) || !areJsonValuesEqual(originalValue, binaryValue) {
         return false
       }
     }
-    
+
     return true
   }
 }
