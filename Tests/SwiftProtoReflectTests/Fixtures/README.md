@@ -1,18 +1,18 @@
 # Fixtures
 
-Директория содержит фикстуры для тестирования Protocol Buffers:
+This directory contains fixtures for Protocol Buffers testing:
 
-1. `BinaryFixtures.swift` - фикстуры бинарных данных
-   - Предопределенные бинарные представления сообщений
-   - Эталонные данные для тестов десериализации
+1. `BinaryFixtures.swift` - binary data fixtures
+   - Predefined binary representations of messages
+   - Reference data for deserialization tests
 
-2. `JSONFixtures.swift` - фикстуры JSON данных
-   - Предопределенные JSON представления сообщений
-   - Эталонные данные для тестов JSON сериализации/десериализации
+2. `JSONFixtures.swift` - JSON data fixtures
+   - Predefined JSON representations of messages
+   - Reference data for JSON serialization/deserialization tests
 
-3. `MessageFixtures.swift` - фикстуры сообщений
-   - Типичные структуры сообщений для тестов
-   - Предопределенные сложные сообщения для тестов
+3. `MessageFixtures.swift` - message fixtures
+   - Typical message structures for tests
+   - Predefined complex messages for tests
 
-Эти фикстуры обеспечивают стабильные данные для тестов, позволяя тестировать
-библиотеку с известными входными и эталонными данными. 
+These fixtures provide stable data for tests, allowing to test
+the library with known input and reference data. 

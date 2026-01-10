@@ -1,9 +1,9 @@
 //
 // DynamicMessageBenchmarks.swift
 //
-// Performance benchmarks для DynamicMessage операций
+// Performance benchmarks for DynamicMessage operations
 //
-// Тестовые случаи:
+// Test cases:
 // - Field access performance (get/set operations)
 // - Message creation and cloning performance
 // - Well-Known Types conversion performance
@@ -13,7 +13,7 @@ import XCTest
 
 @testable import SwiftProtoReflect
 
-/// Performance benchmarks для DynamicMessage операций.
+/// Performance benchmarks for DynamicMessage operations.
 final class DynamicMessageBenchmarks: XCTestCase {
 
   // MARK: - Test Setup
@@ -34,47 +34,47 @@ final class DynamicMessageBenchmarks: XCTestCase {
   }
 
   private func setupTestMessages() throws {
-    // Simple message для базовых операций
+    // Simple message for basic operations
     let simpleDescriptor = try createSimpleMessageDescriptor()
     try registry.registerMessage(simpleDescriptor)
     simpleMessage = messageFactory.createMessage(from: simpleDescriptor)
 
-    // Nested message descriptor (нужно создать до complex message)
+    // Nested message descriptor (needs to be created before complex message)
     let nestedDescriptor = try createNestedMessageDescriptor()
     try registry.registerMessage(nestedDescriptor)
 
-    // Complex message с вложенными структурами
+    // Complex message with nested structures
     let complexDescriptor = try createComplexMessageDescriptor()
     try registry.registerMessage(complexDescriptor)
     complexMessage = messageFactory.createMessage(from: complexDescriptor)
 
-    // Large message с множеством полей
+    // Large message with many fields
     let largeDescriptor = try createLargeMessageDescriptor()
     try registry.registerMessage(largeDescriptor)
     largeMessage = messageFactory.createMessage(from: largeDescriptor)
 
-    // Заполняем сообщения данными
+    // Populate messages with data
     try populateMessages()
   }
 
   private func populateMessages() throws {
-    // Заполняем simple message
+    // Populate simple message
     try simpleMessage.set("Test String", forField: "text_field")
     try simpleMessage.set(Int32(42), forField: "int_field")
     try simpleMessage.set(true, forField: "bool_field")
 
-    // Заполняем complex message
+    // Populate complex message
     try complexMessage.set("Complex Message", forField: "name")
     try complexMessage.set(["item1", "item2", "item3"], forField: "repeated_strings")
 
-    // Создаем nested message
+    // Create nested message
     let nestedDescriptor = try createNestedMessageDescriptor()
     var nestedMessage = messageFactory.createMessage(from: nestedDescriptor)
     try nestedMessage.set("Nested Value", forField: "nested_text")
     try nestedMessage.set(Int32(100), forField: "nested_number")
     try complexMessage.set(nestedMessage, forField: "nested_message")
 
-    // Заполняем large message множеством полей
+    // Populate large message with many fields
     for i in 0..<100 {
       try largeMessage.set("String \(i)", forField: "string_field_\(i)")
       try largeMessage.set(Int32(i), forField: "int_field_\(i)")
@@ -83,7 +83,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
 
   // MARK: - Field Access Performance Tests
 
-  /// Performance test для get операций.
+  /// Performance test for get operations.
   func testFieldGetPerformance() {
     measure {
       for _ in 0..<1000 {
@@ -94,7 +94,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
     }
   }
 
-  /// Performance test для set операций.
+  /// Performance test for set operations.
   func testFieldSetPerformance() {
     measure {
       do {
@@ -110,7 +110,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
     }
   }
 
-  /// Performance test для repeated field операций.
+  /// Performance test for repeated field operations.
   func testRepeatedFieldPerformance() {
     measure {
       do {
@@ -125,7 +125,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
     }
   }
 
-  /// Performance test для nested message access.
+  /// Performance test for nested message access.
   func testNestedMessageAccessPerformance() {
     measure {
       for _ in 0..<1000 {
@@ -139,7 +139,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
 
   // MARK: - Message Creation Performance Tests
 
-  /// Performance test для создания сообщений.
+  /// Performance test for message creation.
   func testMessageCreationPerformance() {
     measure {
       do {
@@ -156,7 +156,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
     }
   }
 
-  /// Performance test для клонирования сообщений.
+  /// Performance test for message cloning.
   func testMessageCloningPerformance() {
     measure {
       do {
@@ -170,14 +170,14 @@ final class DynamicMessageBenchmarks: XCTestCase {
     }
   }
 
-  /// Performance test для создания больших сообщений.
+  /// Performance test for large message creation.
   func testLargeMessageCreationPerformance() {
     measure {
       do {
         for _ in 0..<100 {
           var message = messageFactory.createMessage(from: largeMessage.descriptor)
 
-          // Заполняем множество полей
+          // Populate many fields
           for i in 0..<50 {
             try message.set("String \(i)", forField: "string_field_\(i)")
             try message.set(Int32(i), forField: "int_field_\(i)")
@@ -192,7 +192,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
 
   // MARK: - Well-Known Types Performance Tests
 
-  /// Performance test для Timestamp conversions.
+  /// Performance test for Timestamp conversions.
   func testTimestampConversionPerformance() throws {
     let timestampDescriptor = try createTimestampDescriptor()
     try registry.registerMessage(timestampDescriptor)
@@ -224,7 +224,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
     }
   }
 
-  /// Performance test для Struct conversions.
+  /// Performance test for Struct conversions.
   func testStructConversionPerformance() throws {
     let structDescriptor = try createStructDescriptor()
     try registry.registerMessage(structDescriptor)
@@ -259,17 +259,17 @@ final class DynamicMessageBenchmarks: XCTestCase {
 
   // MARK: - Memory Usage Tests
 
-  /// Memory usage test для больших сообщений.
+  /// Memory usage test for large messages.
   func testLargeMessageMemoryUsage() {
     measure {
       do {
         var messages: [DynamicMessage] = []
 
-        // Создаем множество больших сообщений
+        // Create many large messages
         for i in 0..<100 {
           var message = messageFactory.createMessage(from: largeMessage.descriptor)
 
-          // Заполняем большим количеством данных
+          // Fill with lots of data
           for j in 0..<100 {
             try message.set(
               "Large String Data \(i)_\(j) with additional content to increase memory usage",
@@ -281,7 +281,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
           messages.append(message)
         }
 
-        // Выполняем операции с сообщениями
+        // Perform operations on messages
         for message in messages {
           let _ = try? message.get(forField: "string_field_0")
           let _ = try? message.get(forField: "int_field_0")
@@ -295,7 +295,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
 
   // MARK: - Concurrent Access Tests
 
-  /// Performance test для concurrent field access.
+  /// Performance test for concurrent field access.
   func testConcurrentFieldAccessPerformance() {
     let queue = DispatchQueue.global(qos: .userInitiated)
 
@@ -320,7 +320,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
     }
   }
 
-  /// Performance test для concurrent message creation.
+  /// Performance test for concurrent message creation.
   func testConcurrentMessageCreationPerformance() {
     let queue = DispatchQueue.global(qos: .userInitiated)
 
@@ -349,7 +349,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
 
   // MARK: - Validation Performance Tests
 
-  /// Performance test для валидации сообщений.
+  /// Performance test for message validation.
   func testMessageValidationPerformance() {
     measure {
       for _ in 0..<1000 {
@@ -405,7 +405,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
     let fileDescriptor = FileDescriptor(name: "large.proto", package: "performance.test")
     var messageDescriptor = MessageDescriptor(name: "LargeMessage", parent: fileDescriptor)
 
-    // Добавляем множество полей
+    // Add many fields
     for i in 0..<100 {
       messageDescriptor.addField(FieldDescriptor(name: "string_field_\(i)", number: i * 2 + 1, type: .string))
       messageDescriptor.addField(FieldDescriptor(name: "int_field_\(i)", number: i * 2 + 2, type: .int32))

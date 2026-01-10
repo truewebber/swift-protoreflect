@@ -1,11 +1,11 @@
 //
 // WireFormatTests.swift
 //
-// Тесты для проверки точного соответствия байтовому wire format Protocol Buffers
+// Tests for exact byte-level wire format compliance with Protocol Buffers
 //
-// Тестовые случаи из плана:
-// - Test-WIRE-001: Побайтовая проверка wire format всех типов полей с эталонными двоичными данными C++ protoc
-// - Test-WIRE-002: Проверка правильной обработки тегов и wire types во всех случаях
+// Test cases from the plan:
+// - Test-WIRE-001: Byte-by-byte wire format verification for all field types against reference C++ protoc binary data
+// - Test-WIRE-002: Verification of correct tag and wire type handling in all cases
 
 import XCTest
 

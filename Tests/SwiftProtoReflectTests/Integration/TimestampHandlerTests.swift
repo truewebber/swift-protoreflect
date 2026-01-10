@@ -2,7 +2,7 @@
  * TimestampHandlerTests.swift
  * SwiftProtoReflectTests
  *
- * Тесты для TimestampHandler
+ * Tests for TimestampHandler
  */
 
 import Foundation
@@ -15,12 +15,12 @@ final class TimestampHandlerTests: XCTestCase {
   // MARK: - TimestampValue Tests
 
   func testTimestampValueInitialization() {
-    // Валидная инициализация
+    // Valid initialization
     XCTAssertNoThrow(try TimestampHandler.TimestampValue(seconds: 1_234_567_890, nanos: 123_456_789))
     XCTAssertNoThrow(try TimestampHandler.TimestampValue(seconds: 0, nanos: 0))
     XCTAssertNoThrow(try TimestampHandler.TimestampValue(seconds: -1, nanos: 999_999_999))
 
-    // Невалидные наносекунды
+    // Invalid nanoseconds
     XCTAssertThrowsError(try TimestampHandler.TimestampValue(seconds: 0, nanos: -1)) { error in
       guard case WellKnownTypeError.invalidData(let typeName, let reason) = error else {
         XCTFail("Expected invalidData error")
@@ -43,8 +43,8 @@ final class TimestampHandlerTests: XCTestCase {
     let timestamp = TimestampHandler.TimestampValue(from: date)
 
     XCTAssertEqual(timestamp.seconds, 1_234_567_890)
-    // Проверяем наносекунды с некоторой толерантностью
-    XCTAssertTrue(abs(timestamp.nanos - 123_456_789) < 1000)  // До микросекунды точности
+    // Check nanoseconds with some tolerance
+    XCTAssertTrue(abs(timestamp.nanos - 123_456_789) < 1000)  // Up to microsecond accuracy
   }
 
   func testTimestampValueToDate() {
@@ -65,7 +65,7 @@ final class TimestampHandlerTests: XCTestCase {
     let timestamp = TimestampHandler.TimestampValue(from: originalDate)
     let convertedDate = timestamp.toDate()
 
-    // Должны быть близки с точностью до наносекунд
+    // Should be close to nanosecond accuracy
     XCTAssertEqual(originalDate.timeIntervalSince1970, convertedDate.timeIntervalSince1970, accuracy: 0.001)
   }
 
@@ -74,7 +74,7 @@ final class TimestampHandlerTests: XCTestCase {
     let currentTime = Date().timeIntervalSince1970
     let timestampTime = now.toDate().timeIntervalSince1970
 
-    // Должны быть в пределах секунды
+    // Should be within a second
     XCTAssertEqual(currentTime, timestampTime, accuracy: 1.0)
   }
 
@@ -83,7 +83,7 @@ final class TimestampHandlerTests: XCTestCase {
       let timestamp = try TimestampHandler.TimestampValue(seconds: 1_234_567_890, nanos: 123_456_789)
       let description = timestamp.description
 
-      // Должен содержать ISO8601 формат
+      // Should contain ISO8601 format
       XCTAssertTrue(description.contains("2009"))
       XCTAssertTrue(description.contains("T"))
       XCTAssertTrue(description.contains("Z"))
@@ -115,10 +115,10 @@ final class TimestampHandlerTests: XCTestCase {
   }
 
   func testCreateSpecializedFromMessage() throws {
-    // Создаем timestamp сообщение
+    // Create timestamp message
     let timestampMessage = try createTimestampMessage(seconds: 1_234_567_890, nanos: 123_456_789)
 
-    // Конвертируем в специализированный тип
+    // Convert to specialized type
     let specialized = try TimestampHandler.createSpecialized(from: timestampMessage)
 
     guard let timestamp = specialized as? TimestampHandler.TimestampValue else {
@@ -131,7 +131,7 @@ final class TimestampHandlerTests: XCTestCase {
   }
 
   func testCreateSpecializedFromMessageWithMissingFields() throws {
-    // Создаем сообщение только с seconds
+    // Create message with seconds only
     let timestampMessage = try createTimestampMessage(seconds: 1_234_567_890, nanos: nil)
 
     let specialized = try TimestampHandler.createSpecialized(from: timestampMessage)
@@ -142,11 +142,11 @@ final class TimestampHandlerTests: XCTestCase {
     }
 
     XCTAssertEqual(timestamp.seconds, 1_234_567_890)
-    XCTAssertEqual(timestamp.nanos, 0)  // Должно быть значение по умолчанию
+    XCTAssertEqual(timestamp.nanos, 0)  // Should be default value
   }
 
   func testCreateSpecializedFromInvalidMessage() throws {
-    // Создаем сообщение неправильного типа
+    // Create message of wrong type
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "NotTimestamp", parent: fileDescriptor)
     fileDescriptor.addMessage(messageDescriptor)
@@ -191,11 +191,11 @@ final class TimestampHandlerTests: XCTestCase {
   }
 
   func testValidate() throws {
-    // Валидные значения
+    // Valid values
     let validTimestamp = try TimestampHandler.TimestampValue(seconds: 1_234_567_890, nanos: 123_456_789)
     XCTAssertTrue(TimestampHandler.validate(validTimestamp))
 
-    // Невалидные значения
+    // Invalid values
     XCTAssertFalse(TimestampHandler.validate("not a timestamp"))
     XCTAssertFalse(TimestampHandler.validate(123))
     XCTAssertFalse(TimestampHandler.validate(Date()))
@@ -269,8 +269,8 @@ final class TimestampHandlerTests: XCTestCase {
   }
 
   func testMaxNanos() throws {
-    // Тестируем значение, которое не приводит к округлению до целой секунды
-    let timestamp = try TimestampHandler.TimestampValue(seconds: 1, nanos: 500_000_000)  // 1.5 секунды
+    // Test value that does not round up to the next whole second
+    let timestamp = try TimestampHandler.TimestampValue(seconds: 1, nanos: 500_000_000)  // 1.5 seconds
     XCTAssertEqual(timestamp.nanos, 500_000_000)
 
     let date = timestamp.toDate()
@@ -280,10 +280,10 @@ final class TimestampHandlerTests: XCTestCase {
     let roundTrip = TimestampHandler.TimestampValue(from: date)
     print("Round trip timestamp: seconds=\(roundTrip.seconds), nanos=\(roundTrip.nanos)")
 
-    // Проверяем правильность конвертации
+    // Check conversion correctness
     XCTAssertEqual(roundTrip.seconds, 1)
 
-    // Наносекунды должны быть близкими к оригиналу (с некоторой толерантностью из-за double precision)
+    // Nanos should be close to original (with some tolerance due to double precision)
     XCTAssertTrue(
       abs(roundTrip.nanos - 500_000_000) < 1000,
       "Expected nanos to be close to 500,000,000, but got \(roundTrip.nanos), difference: \(abs(roundTrip.nanos - 500_000_000))"
@@ -291,17 +291,17 @@ final class TimestampHandlerTests: XCTestCase {
   }
 
   func testExtremeNanos() throws {
-    // Отдельный тест для экстремальных значений наносекунд
-    // Максимальное значение наносекунд (999,999,999) может округляться до следующей секунды
+    // Separate test for extreme nanosecond values
+    // Maximum nanosecond value (999,999,999) can round to the next second
     let extremeTimestamp = try TimestampHandler.TimestampValue(seconds: 0, nanos: 999_999_999)
     let date = extremeTimestamp.toDate()
     let roundTrip = TimestampHandler.TimestampValue(from: date)
 
-    // Либо получаем (0, ~999999999), либо (1, 0) из-за округления double
+    // We get either (0, ~999999999) or (1, 0) due to double rounding
     let totalOriginalNanos = extremeTimestamp.seconds * 1_000_000_000 + Int64(extremeTimestamp.nanos)
     let totalRoundTripNanos = roundTrip.seconds * 1_000_000_000 + Int64(roundTrip.nanos)
 
-    // Общее количество наносекунд должно быть очень близким
+    // Total nanoseconds should be very close
     XCTAssertTrue(
       abs(totalOriginalNanos - totalRoundTripNanos) < 1_000_000,
       "Total nanoseconds should be close: original=\(totalOriginalNanos), roundtrip=\(totalRoundTripNanos)"
@@ -340,7 +340,7 @@ final class TimestampHandlerTests: XCTestCase {
   // MARK: - Helper Methods
 
   private func createTimestampMessage(seconds: Int64, nanos: Int32?) throws -> DynamicMessage {
-    // Создаем дескриптор для Timestamp
+    // Create descriptor for Timestamp
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/timestamp.proto",
       package: "google.protobuf"
@@ -367,11 +367,11 @@ final class TimestampHandlerTests: XCTestCase {
 
     fileDescriptor.addMessage(messageDescriptor)
 
-    // Создаем сообщение
+    // Create message
     let factory = MessageFactory()
     var message = factory.createMessage(from: messageDescriptor)
 
-    // Устанавливаем поля
+    // Set fields
     try message.set(seconds, forField: "seconds")
     if let nanos = nanos {
       try message.set(nanos, forField: "nanos")

@@ -2,7 +2,7 @@
 // MessageFactoryTests.swift
 // SwiftProtoReflectTests
 //
-// Создан: 2025-05-24
+// Created: 2025-05-24
 //
 
 import XCTest
@@ -23,21 +23,21 @@ final class MessageFactoryTests: XCTestCase {
     super.setUp()
     factory = MessageFactory()
 
-    // Создаем test descriptor для тестов
+    // Create test descriptor for tests
     fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
 
-    // Основное сообщение
+    // Main message
     messageDescriptor = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     messageDescriptor.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
     messageDescriptor.addField(FieldDescriptor(name: "name", number: 2, type: .string))
     messageDescriptor.addField(FieldDescriptor(name: "data", number: 3, type: .bytes))
     messageDescriptor.addField(FieldDescriptor(name: "is_active", number: 4, type: .bool))
 
-    // Вложенное сообщение
+    // Nested message
     nestedMessageDescriptor = MessageDescriptor(name: "NestedMessage", parent: fileDescriptor)
     nestedMessageDescriptor.addField(FieldDescriptor(name: "value", number: 1, type: .string))
 
-    // Поле с вложенным сообщением
+    // Field with nested message
     messageDescriptor.addField(
       FieldDescriptor(
         name: "nested",
@@ -47,7 +47,7 @@ final class MessageFactoryTests: XCTestCase {
       )
     )
 
-    // Repeated поле
+    // Repeated field
     messageDescriptor.addField(
       FieldDescriptor(
         name: "tags",
@@ -57,7 +57,7 @@ final class MessageFactoryTests: XCTestCase {
       )
     )
 
-    // Map поле
+    // Map field
     let mapField = FieldDescriptor(
       name: "metadata",
       number: 7,
@@ -71,7 +71,7 @@ final class MessageFactoryTests: XCTestCase {
     )
     messageDescriptor.addField(mapField)
 
-    // Required поле (для proto2)
+    // Required field (for proto2)
     messageDescriptor.addField(
       FieldDescriptor(
         name: "required_field",
@@ -98,7 +98,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertEqual(message.descriptor.name, "TestMessage")
     XCTAssertEqual(message.descriptor.fullName, "test.TestMessage")
 
-    // Проверяем, что поля пустые
+    // Check that fields are empty
     XCTAssertFalse(try message.hasValue(forField: "id"))
     XCTAssertFalse(try message.hasValue(forField: "name"))
     XCTAssertFalse(try message.hasValue(forField: "data"))
@@ -169,7 +169,7 @@ final class MessageFactoryTests: XCTestCase {
 
   func testCreateMessageWithInvalidType() {
     let fieldValues: [String: Any] = [
-      "id": "not_a_number"  // id поле должно быть Int32
+      "id": "not_a_number"  // id field should be Int32
     ]
 
     XCTAssertThrowsError(try factory.createMessage(from: messageDescriptor, with: fieldValues)) { error in
@@ -217,7 +217,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertNotNil(clonedNested)
     XCTAssertEqual(try clonedNested?.get(forField: "value") as? String, "nested value")
 
-    // Проверяем, что это действительно разные объекты
+    // Check that these are really different objects
     try nested.set("changed value", forField: "value")
     XCTAssertEqual(try clonedNested?.get(forField: "value") as? String, "nested value")
   }
@@ -233,7 +233,7 @@ final class MessageFactoryTests: XCTestCase {
   }
 
   func testCloneMessageWithRepeatedNestedMessages() throws {
-    // Создаем поле repeated с вложенными сообщениями
+    // Create repeated field with nested messages
     messageDescriptor.addField(
       FieldDescriptor(
         name: "repeated_nested",
@@ -261,7 +261,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertEqual(try clonedArray?[0].get(forField: "value") as? String, "value1")
     XCTAssertEqual(try clonedArray?[1].get(forField: "value") as? String, "value2")
 
-    // Проверяем, что это разные объекты
+    // Check that these are different objects
     try nested1.set("changed", forField: "value")
     XCTAssertEqual(try clonedArray?[0].get(forField: "value") as? String, "value1")
   }
@@ -279,7 +279,7 @@ final class MessageFactoryTests: XCTestCase {
   }
 
   func testCloneMessageWithMapFieldContainingMessages() throws {
-    // Создаем map поле с сообщениями в качестве значений
+    // Create map field with messages as values
     let mapField = FieldDescriptor(
       name: "message_map",
       number: 11,
@@ -310,7 +310,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertEqual(try clonedMap?["key1"]?.get(forField: "value") as? String, "value1")
     XCTAssertEqual(try clonedMap?["key2"]?.get(forField: "value") as? String, "value2")
 
-    // Проверяем, что это разные объекты
+    // Check that these are different objects
     try nested1.set("changed", forField: "value")
     XCTAssertEqual(try clonedMap?["key1"]?.get(forField: "value") as? String, "value1")
   }
@@ -344,7 +344,7 @@ final class MessageFactoryTests: XCTestCase {
   }
 
   func testValidateNestedMessage() throws {
-    // Создаем вложенное сообщение с required полем
+    // Create nested message with required field
     nestedMessageDescriptor.addField(
       FieldDescriptor(
         name: "required_nested",
@@ -356,7 +356,7 @@ final class MessageFactoryTests: XCTestCase {
 
     var nested = factory.createMessage(from: nestedMessageDescriptor)
     try nested.set("value", forField: "value")
-    // Не устанавливаем required_nested поле
+    // Don't set required_nested field
 
     var message = factory.createMessage(from: messageDescriptor)
     try message.set("required value", forField: "required_field")
@@ -383,7 +383,7 @@ final class MessageFactoryTests: XCTestCase {
   }
 
   func testValidateRepeatedFieldWithMessages() throws {
-    // Создаем repeated поле с сообщениями
+    // Create repeated field with messages
     messageDescriptor.addField(
       FieldDescriptor(
         name: "repeated_nested",
@@ -394,7 +394,7 @@ final class MessageFactoryTests: XCTestCase {
       )
     )
 
-    // Добавляем required поле к вложенному сообщению
+    // Add required field to nested message
     nestedMessageDescriptor.addField(
       FieldDescriptor(
         name: "required_nested",
@@ -410,7 +410,7 @@ final class MessageFactoryTests: XCTestCase {
 
     var invalidNested = factory.createMessage(from: nestedMessageDescriptor)
     try invalidNested.set("value", forField: "value")
-    // Не устанавливаем required_nested
+    // Don't set required_nested
 
     var message = factory.createMessage(from: messageDescriptor)
     try message.set("required value", forField: "required_field")
@@ -423,7 +423,7 @@ final class MessageFactoryTests: XCTestCase {
 
     if case .repeatedFieldValidationFailed(let fieldName, let index, let nestedErrors) = result.errors.first {
       XCTAssertEqual(fieldName, "repeated_nested")
-      XCTAssertEqual(index, 1)  // Второй элемент массива
+      XCTAssertEqual(index, 1)  // Second array element
       XCTAssertEqual(nestedErrors.count, 1)
     }
     else {
@@ -432,7 +432,7 @@ final class MessageFactoryTests: XCTestCase {
   }
 
   func testValidateMapFieldWithMessages() throws {
-    // Создаем map поле с сообщениями в качестве значений
+    // Create map field with messages as values
     let mapField = FieldDescriptor(
       name: "message_map",
       number: 13,
@@ -446,7 +446,7 @@ final class MessageFactoryTests: XCTestCase {
     )
     messageDescriptor.addField(mapField)
 
-    // Добавляем required поле к вложенному сообщению
+    // Add required field to nested message
     nestedMessageDescriptor.addField(
       FieldDescriptor(
         name: "required_nested",
@@ -462,7 +462,7 @@ final class MessageFactoryTests: XCTestCase {
 
     var invalidNested = factory.createMessage(from: nestedMessageDescriptor)
     try invalidNested.set("value", forField: "value")
-    // Не устанавливаем required_nested
+    // Don't set required_nested
 
     var message = factory.createMessage(from: messageDescriptor)
     try message.set("required value", forField: "required_field")
@@ -583,7 +583,7 @@ final class MessageFactoryTests: XCTestCase {
       error: DynamicMessageError.fieldNotFound(fieldName: "other")
     )
 
-    XCTAssertEqual(validationError1, validationError2)  // Только сравниваем fieldName
+    XCTAssertEqual(validationError1, validationError2)  // Only compare fieldName
   }
 
   // MARK: - Edge Cases
@@ -613,20 +613,20 @@ final class MessageFactoryTests: XCTestCase {
     let retrievedTags = try message.get(forField: "tags") as? [String]
     XCTAssertEqual(retrievedTags, ["tag1", "tag2"])
 
-    // Добавляем map entry отдельно
+    // Add map entry separately
     try message.setMapEntry("value", forKey: "key", inField: "metadata")
     let retrievedMetadata = try message.get(forField: "metadata") as? [String: String]
     XCTAssertEqual(retrievedMetadata?["key"], "value")
   }
 
   func testValidationWithFieldAccessError() throws {
-    // Создаем сообщение, которое будет вызывать ошибки при доступе к полю
+    // Create message that will cause field access errors
     var brokenDescriptor = MessageDescriptor(name: "BrokenMessage", parent: fileDescriptor)
     brokenDescriptor.addField(FieldDescriptor(name: "test", number: 1, type: .string))
 
     let message = factory.createMessage(from: brokenDescriptor)
 
-    // Это должно работать нормально
+    // This should work normally
     let result = factory.validate(message)
     XCTAssertTrue(result.isValid)
   }

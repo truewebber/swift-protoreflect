@@ -2,7 +2,7 @@
  * AnyHandlerTests.swift
  * SwiftProtoReflectTests
  *
- * Comprehensive тесты для AnyHandler - google.protobuf.Any поддержка
+ * Comprehensive tests for AnyHandler - google.protobuf.Any support
  */
 
 import XCTest
@@ -14,7 +14,7 @@ final class AnyHandlerTests: XCTestCase {
   // MARK: - Handler Basic Properties
 
   func testHandlerBasicProperties() {
-    // Проверяем базовые свойства handler'а
+    // Check basic handler properties
     XCTAssertEqual(AnyHandler.handledTypeName, WellKnownTypeNames.any)
     XCTAssertEqual(AnyHandler.supportPhase, .advanced)
   }
@@ -22,7 +22,7 @@ final class AnyHandlerTests: XCTestCase {
   // MARK: - AnyValue Initialization
 
   func testAnyValueInitialization() throws {
-    // Тест успешной инициализации
+    // Test successful initialization
     let typeUrl = "type.googleapis.com/google.protobuf.Duration"
     let data = Data([0x08, 0x96, 0x01])
 
@@ -32,12 +32,12 @@ final class AnyHandlerTests: XCTestCase {
   }
 
   func testAnyValueInitializationWithInvalidTypeUrl() {
-    // Тест неудачной инициализации с невалидным URL
+    // Test failed initialization with invalid URL
     let invalidUrls = [
-      "",  // пустой
-      "no-slash",  // без косой черты
-      "http://example.com/",  // пустое имя типа
-      "type.googleapis.com/InvalidType",  // без точки в имени типа
+      "",  // empty
+      "no-slash",  // without slash
+      "http://example.com/",  // empty type name
+      "type.googleapis.com/InvalidType",  // without dot in type name
     ]
 
     for invalidUrl in invalidUrls {
@@ -66,7 +66,7 @@ final class AnyHandlerTests: XCTestCase {
   }
 
   func testExtractTypeNameFromSimpleUrl() {
-    // Тест извлечения из простого URL без префикса
+    // Test extraction from simple URL without prefix
     let typeUrl = "simple.type.Name"
     let expectedTypeName = "simple.type.Name"
     let actualTypeName = AnyHandler.AnyValue.extractTypeName(from: typeUrl)
@@ -74,7 +74,7 @@ final class AnyHandlerTests: XCTestCase {
   }
 
   func testIsValidTypeUrl() {
-    // Валидные URLs
+    // Valid URLs
     let validUrls = [
       "type.googleapis.com/google.protobuf.Duration",
       "custom.domain.com/my.package.Message",
@@ -85,14 +85,14 @@ final class AnyHandlerTests: XCTestCase {
       XCTAssertTrue(AnyHandler.AnyValue.isValidTypeUrl(url), "Should be valid: \(url)")
     }
 
-    // Невалидные URLs
+    // Invalid URLs
     let invalidUrls = [
-      "",  // пустой
-      "no-slash",  // без косой черты
-      "http://example.com/",  // пустое имя типа
-      "type.googleapis.com/InvalidType",  // без точки в имени типа
-      "simple/package.Type",  // домен без точки
-      "/just.TypeName",  // нет домена (начинается с "/")
+      "",  // empty
+      "no-slash",  // without slash
+      "http://example.com/",  // empty type name
+      "type.googleapis.com/InvalidType",  // without dot in type name
+      "simple/package.Type",  // domain without dot
+      "/just.TypeName",  // no domain (starts with "/")
     ]
 
     for url in invalidUrls {
@@ -103,24 +103,24 @@ final class AnyHandlerTests: XCTestCase {
   // MARK: - Pack/Unpack Operations
 
   func testPackUnpackSimpleMessage() throws {
-    // Создаем простое сообщение для упаковки
+    // Create simple message for packing
     let originalMessage = try createTestMessage()
 
-    // Упаковываем в Any
+    // Pack into Any
     let anyValue = try AnyHandler.AnyValue.pack(originalMessage)
 
-    // Проверяем URL типа
+    // Check type URL
     let expectedTypeUrl = "type.googleapis.com/test.package.TestMessage"
     XCTAssertEqual(anyValue.typeUrl, expectedTypeUrl)
     XCTAssertFalse(anyValue.value.isEmpty)
 
-    // Проверяем получение имени типа
+    // Check getting type name
     XCTAssertEqual(anyValue.getTypeName(), "test.package.TestMessage")
 
-    // Распаковываем обратно
+    // Unpack back
     let unpackedMessage = try anyValue.unpack(to: originalMessage.descriptor)
 
-    // Проверяем что данные совпадают
+    // Check that data matches
     XCTAssertEqual(
       try unpackedMessage.get(forField: "name") as? String,
       try originalMessage.get(forField: "name") as? String
@@ -132,11 +132,11 @@ final class AnyHandlerTests: XCTestCase {
   }
 
   func testUnpackTypeMismatch() throws {
-    // Создаем сообщение и упаковываем
+    // Create message and pack
     let originalMessage = try createTestMessage()
     let anyValue = try AnyHandler.AnyValue.pack(originalMessage)
 
-    // Пытаемся распаковать в другой тип
+    // Try to unpack to different type
     let wrongDescriptor = try createWrongMessageDescriptor()
 
     XCTAssertThrowsError(
@@ -152,16 +152,16 @@ final class AnyHandlerTests: XCTestCase {
   // MARK: - Handler Implementation
 
   func testCreateSpecializedFromMessage() throws {
-    // Создаем Any сообщение
+    // Create Any message
     let anyDescriptor = try createAnyDescriptor()
     let factory = MessageFactory()
     var anyMessage = factory.createMessage(from: anyDescriptor)
 
-    // Устанавливаем поля
+    // Set fields
     try anyMessage.set("type.googleapis.com/test.Message", forField: "type_url")
     try anyMessage.set(Data([0x08, 0x96, 0x01]), forField: "value")
 
-    // Создаем специализированное представление
+    // Create specialized representation
     let specialized = try AnyHandler.createSpecialized(from: anyMessage)
 
     XCTAssertTrue(specialized is AnyHandler.AnyValue)
@@ -171,7 +171,7 @@ final class AnyHandlerTests: XCTestCase {
   }
 
   func testCreateSpecializedFromInvalidMessage() throws {
-    // Попытка создать из неправильного типа сообщения
+    // Attempt to create from wrong message type
     let wrongMessage = try createTestMessage()
 
     XCTAssertThrowsError(
@@ -185,12 +185,12 @@ final class AnyHandlerTests: XCTestCase {
   }
 
   func testCreateSpecializedWithMissingFields() throws {
-    // Создаем Any сообщение без обязательных полей
+    // Create Any message without required fields
     let anyDescriptor = try createAnyDescriptor()
     let factory = MessageFactory()
     let anyMessage = factory.createMessage(from: anyDescriptor)
 
-    // Не устанавливаем никаких полей
+    // Don't set any fields
     XCTAssertThrowsError(
       try AnyHandler.createSpecialized(from: anyMessage)
     ) { error in
@@ -202,16 +202,16 @@ final class AnyHandlerTests: XCTestCase {
   }
 
   func testCreateDynamicFromSpecialized() throws {
-    // Создаем AnyValue
+    // Create AnyValue
     let anyValue = try AnyHandler.AnyValue(
       typeUrl: "type.googleapis.com/test.Message",
       value: Data([0x08, 0x96, 0x01])
     )
 
-    // Создаем динамическое сообщение
+    // Create dynamic message
     let dynamicMessage = try AnyHandler.createDynamic(from: anyValue)
 
-    // Проверяем результат
+    // Check result
     XCTAssertEqual(dynamicMessage.descriptor.fullName, WellKnownTypeNames.any)
     XCTAssertEqual(
       try dynamicMessage.get(forField: "type_url") as? String,
@@ -224,7 +224,7 @@ final class AnyHandlerTests: XCTestCase {
   }
 
   func testCreateDynamicFromInvalidSpecialized() {
-    // Попытка создать из неправильного типа
+    // Attempt to create from wrong type
     let wrongObject = "not an AnyValue"
 
     XCTAssertThrowsError(
@@ -240,14 +240,14 @@ final class AnyHandlerTests: XCTestCase {
   // MARK: - Validation
 
   func testValidate() throws {
-    // Валидный AnyValue
+    // Valid AnyValue
     let validAnyValue = try AnyHandler.AnyValue(
       typeUrl: "type.googleapis.com/test.Message",
       value: Data([0x08, 0x96, 0x01])
     )
     XCTAssertTrue(AnyHandler.validate(validAnyValue))
 
-    // Невалидный объект
+    // Invalid object
     let invalidObject = "not an AnyValue"
     XCTAssertFalse(AnyHandler.validate(invalidObject))
   }
@@ -264,14 +264,14 @@ final class AnyHandlerTests: XCTestCase {
   }
 
   func testUnpackFromAnyExtension() throws {
-    // Создаем и упаковываем сообщение
+    // Create and pack message
     let originalMessage = try createTestMessage()
     let anyMessage = try originalMessage.packIntoAny()
 
-    // Распаковываем обратно
+    // Unpack back
     let unpackedMessage = try anyMessage.unpackFromAny(to: originalMessage.descriptor)
 
-    // Проверяем данные
+    // Check data
     XCTAssertEqual(
       try unpackedMessage.get(forField: "name") as? String,
       try originalMessage.get(forField: "name") as? String
@@ -310,14 +310,14 @@ final class AnyHandlerTests: XCTestCase {
   // MARK: - TypeRegistry Integration
 
   func testUnpackUsingRegistry() throws {
-    // Создаем registry и регистрируем тип
+    // Create registry and register type
     let registry = TypeRegistry()
     let testDescriptor = try createTestMessageDescriptor()
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test.package")
     fileDescriptor.addMessage(testDescriptor)
     try registry.registerFile(fileDescriptor)
 
-    // Создаем и упаковываем сообщение
+    // Create and pack message
     let factory = MessageFactory()
     var originalMessage = factory.createMessage(from: testDescriptor)
     try originalMessage.set("test_name", forField: "name")
@@ -325,7 +325,7 @@ final class AnyHandlerTests: XCTestCase {
 
     let anyValue = try AnyHandler.AnyValue.pack(originalMessage)
 
-    // Распаковываем используя registry
+    // Unpack using registry
     let unpackedMessage = try anyValue.unpack(using: registry)
 
     XCTAssertEqual(
@@ -361,7 +361,7 @@ final class AnyHandlerTests: XCTestCase {
   func testRegistryIntegration() {
     let registry = WellKnownTypesRegistry.shared
 
-    // Проверяем что AnyHandler зарегистрирован
+    // Check that AnyHandler is registered
     let handler = registry.getHandler(for: WellKnownTypeNames.any)
     XCTAssertNotNil(handler)
     XCTAssertTrue(handler is AnyHandler.Type)
@@ -370,14 +370,14 @@ final class AnyHandlerTests: XCTestCase {
   func testRegistryCreateSpecialized() throws {
     let registry = WellKnownTypesRegistry.shared
 
-    // Создаем Any сообщение
+    // Create Any message
     let anyDescriptor = try createAnyDescriptor()
     let factory = MessageFactory()
     var anyMessage = factory.createMessage(from: anyDescriptor)
     try anyMessage.set("type.googleapis.com/test.Message", forField: "type_url")
     try anyMessage.set(Data([0x08, 0x96, 0x01]), forField: "value")
 
-    // Создаем через registry
+    // Create through registry
     let specialized = try registry.createSpecialized(
       from: anyMessage,
       typeName: WellKnownTypeNames.any
@@ -405,7 +405,7 @@ final class AnyHandlerTests: XCTestCase {
   // MARK: - Round-trip Conversion
 
   func testRoundTripConversion() throws {
-    // Создаем исходное сообщение
+    // Create original message
     var originalMessage = try createTestMessage()
     try originalMessage.set("round_trip_test", forField: "name")
     try originalMessage.set(Int32(123), forField: "value")
@@ -469,7 +469,7 @@ final class AnyHandlerTests: XCTestCase {
   func testPackUnpackPerformance() throws {
     let originalMessage = try createTestMessage()
 
-    // Разогрев для стабилизации производительности
+    // Warm-up for performance stabilization
     for _ in 0..<10 {
       let anyValue = try AnyHandler.AnyValue.pack(originalMessage)
       _ = try anyValue.unpack(to: originalMessage.descriptor)
@@ -477,7 +477,7 @@ final class AnyHandlerTests: XCTestCase {
 
     measure {
       do {
-        for _ in 0..<200 {  // Увеличиваем количество итераций для стабильности
+        for _ in 0..<200 {  // Increase iterations for stability
           let anyValue = try AnyHandler.AnyValue.pack(originalMessage)
           _ = try anyValue.unpack(to: originalMessage.descriptor)
         }

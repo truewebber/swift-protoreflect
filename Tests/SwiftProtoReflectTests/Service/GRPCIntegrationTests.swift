@@ -1,12 +1,12 @@
 //
 // GRPCIntegrationTests.swift
 //
-// Тесты для проверки интеграции с gRPC
+// Tests for gRPC integration
 //
-// Тестовые случаи из плана:
-// - Test-GRPC-001: Получение protodescriptors от gRPC сервера
-// - Test-GRPC-002: Выполнение gRPC вызовов с динамически созданными сообщениями
-// - Test-GRPC-003: Обработка gRPC-потоков с динамическими сообщениями
+// Test cases from the plan:
+// - Test-GRPC-001: Obtaining protodescriptors from gRPC server
+// - Test-GRPC-002: Performing gRPC calls with dynamically created messages
+// - Test-GRPC-003: Handling gRPC streams with dynamic messages
 
 import XCTest
 

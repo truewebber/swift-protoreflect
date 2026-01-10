@@ -2,7 +2,7 @@
  * FieldMaskHandlerTests.swift
  * SwiftProtoReflectTests
  *
- * Тесты для FieldMaskHandler
+ * Tests for FieldMaskHandler
  */
 
 import Foundation
@@ -15,16 +15,16 @@ final class FieldMaskHandlerTests: XCTestCase {
   // MARK: - FieldMaskValue Tests
 
   func testFieldMaskValueInitialization() {
-    // Валидная инициализация
+    // Valid initialization
     XCTAssertNoThrow(try FieldMaskHandler.FieldMaskValue(paths: ["name", "age", "address.city"]))
     XCTAssertNoThrow(try FieldMaskHandler.FieldMaskValue(paths: []))
     XCTAssertNoThrow(try FieldMaskHandler.FieldMaskValue(path: "user.name"))
 
-    // Пустая маска
+    // Empty mask
     let emptyMask = FieldMaskHandler.FieldMaskValue()
     XCTAssertEqual(emptyMask.paths, [])
 
-    // Невалидные пути
+    // Invalid paths
     XCTAssertThrowsError(try FieldMaskHandler.FieldMaskValue(paths: [""])) { error in
       guard case WellKnownTypeError.invalidData(let typeName, let reason) = error else {
         XCTFail("Expected invalidData error")
@@ -68,15 +68,15 @@ final class FieldMaskHandlerTests: XCTestCase {
     do {
       let fieldMask = try FieldMaskHandler.FieldMaskValue(paths: ["name", "address"])
 
-      // Точные совпадения
+      // Exact matches
       XCTAssertTrue(fieldMask.covers("name"))
       XCTAssertTrue(fieldMask.covers("address"))
 
-      // Дочерние пути должны покрываться родительскими
+      // Child paths should be covered by parent paths
       XCTAssertTrue(fieldMask.covers("address.city"))
       XCTAssertTrue(fieldMask.covers("address.street.number"))
 
-      // Непокрытые пути
+      // Uncovered paths
       XCTAssertFalse(fieldMask.covers("age"))
       XCTAssertFalse(fieldMask.covers("contact.email"))
     }
@@ -89,17 +89,17 @@ final class FieldMaskHandlerTests: XCTestCase {
     do {
       let originalMask = try FieldMaskHandler.FieldMaskValue(paths: ["name"])
 
-      // Добавление валидного пути
+      // Adding valid path
       let updatedMask = try originalMask.adding("age")
       XCTAssertTrue(updatedMask.contains("name"))
       XCTAssertTrue(updatedMask.contains("age"))
 
-      // Добавление существующего пути (не должно дублироваться)
+      // Adding existing path (should not duplicate)
       let sameMask = try originalMask.adding("name")
       XCTAssertEqual(sameMask.paths.count, 1)
       XCTAssertTrue(sameMask.contains("name"))
 
-      // Добавление невалидного пути
+      // Adding invalid path
       XCTAssertThrowsError(try originalMask.adding("invalid-path")) { error in
         guard case WellKnownTypeError.invalidData = error else {
           XCTFail("Expected invalidData error")
@@ -121,7 +121,7 @@ final class FieldMaskHandlerTests: XCTestCase {
       XCTAssertFalse(updatedMask.contains("age"))
       XCTAssertTrue(updatedMask.contains("address"))
 
-      // Удаление несуществующего пути
+      // Removing non-existent path
       let sameMask = originalMask.removing("nonexistent")
       XCTAssertEqual(sameMask.paths.count, 3)
     }
@@ -201,7 +201,7 @@ final class FieldMaskHandlerTests: XCTestCase {
   // MARK: - Path Validation Tests
 
   func testPathValidation() {
-    // Валидные пути
+    // Valid paths
     XCTAssertTrue(FieldMaskHandler.FieldMaskValue.isValidPath("name"))
     XCTAssertTrue(FieldMaskHandler.FieldMaskValue.isValidPath("user_name"))
     XCTAssertTrue(FieldMaskHandler.FieldMaskValue.isValidPath("address.city"))
@@ -209,7 +209,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     XCTAssertTrue(FieldMaskHandler.FieldMaskValue.isValidPath("field123"))
     XCTAssertTrue(FieldMaskHandler.FieldMaskValue.isValidPath("FIELD_NAME"))
 
-    // Невалидные пути
+    // Invalid paths
     XCTAssertFalse(FieldMaskHandler.FieldMaskValue.isValidPath(""))
     XCTAssertFalse(FieldMaskHandler.FieldMaskValue.isValidPath("field-name"))
     XCTAssertFalse(FieldMaskHandler.FieldMaskValue.isValidPath("field name"))
@@ -226,10 +226,10 @@ final class FieldMaskHandlerTests: XCTestCase {
   }
 
   func testCreateSpecializedFromMessage() throws {
-    // Создаем FieldMask сообщение
+    // Create FieldMask message
     let fieldMaskMessage = try createFieldMaskMessage(paths: ["name", "age", "address.city"])
 
-    // Конвертируем в специализированный тип
+    // Convert to specialized type
     let specialized = try FieldMaskHandler.createSpecialized(from: fieldMaskMessage)
 
     guard let fieldMask = specialized as? FieldMaskHandler.FieldMaskValue else {
@@ -241,7 +241,7 @@ final class FieldMaskHandlerTests: XCTestCase {
   }
 
   func testCreateSpecializedFromMessageWithEmptyPaths() throws {
-    // Создаем сообщение с пустыми путями
+    // Create message with empty paths
     let fieldMaskMessage = try createFieldMaskMessage(paths: [])
 
     let specialized = try FieldMaskHandler.createSpecialized(from: fieldMaskMessage)
@@ -255,7 +255,7 @@ final class FieldMaskHandlerTests: XCTestCase {
   }
 
   func testCreateSpecializedFromMessageWithMissingField() throws {
-    // Создаем сообщение без поля paths
+    // Create message without paths field
     let fieldMaskMessage = try createFieldMaskMessage(paths: nil)
 
     let specialized = try FieldMaskHandler.createSpecialized(from: fieldMaskMessage)
@@ -269,7 +269,7 @@ final class FieldMaskHandlerTests: XCTestCase {
   }
 
   func testCreateSpecializedFromInvalidMessage() throws {
-    // Создаем сообщение неправильного типа
+    // Create message of wrong type
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "NotFieldMask", parent: fileDescriptor)
     fileDescriptor.addMessage(messageDescriptor)
@@ -311,14 +311,14 @@ final class FieldMaskHandlerTests: XCTestCase {
   }
 
   func testValidate() throws {
-    // Валидные значения
+    // Valid values
     let validFieldMask = try FieldMaskHandler.FieldMaskValue(paths: ["name", "age"])
     XCTAssertTrue(FieldMaskHandler.validate(validFieldMask))
 
     let emptyFieldMask = FieldMaskHandler.FieldMaskValue.empty()
     XCTAssertTrue(FieldMaskHandler.validate(emptyFieldMask))
 
-    // Невалидные значения
+    // Invalid values
     XCTAssertFalse(FieldMaskHandler.validate("not a field mask"))
     XCTAssertFalse(FieldMaskHandler.validate(123))
     XCTAssertFalse(FieldMaskHandler.validate(["name", "age"]))
@@ -398,14 +398,14 @@ final class FieldMaskHandlerTests: XCTestCase {
     let fieldMask = try FieldMaskHandler.FieldMaskValue(paths: complexPaths)
     XCTAssertEqual(fieldMask.paths, complexPaths)
 
-    // Тестируем covers для сложных путей
+    // Test covers for complex paths
     XCTAssertTrue(fieldMask.covers("user.personal_info.name"))
     XCTAssertTrue(fieldMask.covers("user.address.street_address.line1"))
     XCTAssertFalse(fieldMask.covers("user.personal_info.age"))
   }
 
   func testLargePaths() throws {
-    // Тестируем с большим количеством путей
+    // Test with large number of paths
     let largePaths = (1...100).map { "field\($0)" }
     let fieldMask = try FieldMaskHandler.FieldMaskValue(paths: largePaths)
 
@@ -418,25 +418,25 @@ final class FieldMaskHandlerTests: XCTestCase {
     let mask1 = try FieldMaskHandler.FieldMaskValue(paths: ["name", "age"])
     let mask2 = try FieldMaskHandler.FieldMaskValue(paths: ["name", "address"])
 
-    // Union должен удалить дубликаты
+    // Union should remove duplicates
     let unionMask = mask1.union(mask2)
     XCTAssertEqual(Set(unionMask.paths), Set(["name", "age", "address"]))
-    XCTAssertEqual(unionMask.paths.count, 3)  // Не должно быть дубликатов
+    XCTAssertEqual(unionMask.paths.count, 3)  // Should not have duplicates
   }
 
   func testCoversWithComplexHierarchy() throws {
     let fieldMask = try FieldMaskHandler.FieldMaskValue(paths: ["user", "metadata.tags"])
 
-    // user должен покрывать все дочерние пути
+    // user should cover all child paths
     XCTAssertTrue(fieldMask.covers("user"))
     XCTAssertTrue(fieldMask.covers("user.name"))
     XCTAssertTrue(fieldMask.covers("user.address.city"))
 
-    // metadata.tags должен покрывать свои дочерние пути
+    // metadata.tags should cover its child paths
     XCTAssertTrue(fieldMask.covers("metadata.tags"))
     XCTAssertTrue(fieldMask.covers("metadata.tags.category"))
 
-    // metadata (без .tags) не должен покрываться
+    // metadata (without .tags) should not be covered
     XCTAssertFalse(fieldMask.covers("metadata.description"))
   }
 
@@ -476,7 +476,7 @@ final class FieldMaskHandlerTests: XCTestCase {
   // MARK: - Helper Methods
 
   private func createFieldMaskMessage(paths: [String]?) throws -> DynamicMessage {
-    // Создаем дескриптор для FieldMask
+    // Create descriptor for FieldMask
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/field_mask.proto",
       package: "google.protobuf"
@@ -497,11 +497,11 @@ final class FieldMaskHandlerTests: XCTestCase {
 
     fileDescriptor.addMessage(messageDescriptor)
 
-    // Создаем сообщение
+    // Create message
     let factory = MessageFactory()
     var message = factory.createMessage(from: messageDescriptor)
 
-    // Устанавливаем поля, если переданы
+    // Set fields if provided
     if let paths = paths {
       try message.set(paths, forField: "paths")
     }

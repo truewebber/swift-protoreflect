@@ -2,7 +2,7 @@
 // DescriptorBridgeTests.swift
 // SwiftProtoReflectTests
 //
-// Создан: 2025-05-25
+// Created: 2025-05-25
 //
 
 import XCTest
@@ -32,7 +32,7 @@ final class DescriptorBridgeTests: XCTestCase {
     super.setUp()
     bridge = DescriptorBridge()
 
-    // Создаем тестовый дескриптор файла
+    // Create test file descriptor
     fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
   }
 
@@ -52,15 +52,15 @@ final class DescriptorBridgeTests: XCTestCase {
   // MARK: - Message Descriptor Conversion Tests
 
   func testMessageDescriptorToProtobuf() throws {
-    // Создаем тестовый MessageDescriptor
+    // Create test MessageDescriptor
     var messageDescriptor = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     messageDescriptor.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     messageDescriptor.addField(FieldDescriptor(name: "age", number: 2, type: .int32))
 
-    // Конвертируем в protobuf формат
+    // Convert to protobuf format
     let protobufDescriptor = try bridge.toProtobufDescriptor(from: messageDescriptor)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(protobufDescriptor.name, "TestMessage")
     XCTAssertEqual(protobufDescriptor.field.count, 2)
     XCTAssertEqual(protobufDescriptor.field[0].name, "name")
@@ -70,7 +70,7 @@ final class DescriptorBridgeTests: XCTestCase {
   }
 
   func testMessageDescriptorFromProtobuf() throws {
-    // Создаем тестовый protobuf дескриптор
+    // Create test protobuf descriptor
     var protobufDescriptor = Google_Protobuf_DescriptorProto()
     protobufDescriptor.name = "TestMessage"
 
@@ -88,10 +88,10 @@ final class DescriptorBridgeTests: XCTestCase {
 
     protobufDescriptor.field = [field1, field2]
 
-    // Конвертируем в наш формат
+    // Convert to our format
     let messageDescriptor = try bridge.fromProtobufDescriptor(protobufDescriptor, parent: fileDescriptor)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(messageDescriptor.name, "TestMessage")
     XCTAssertEqual(messageDescriptor.allFields().count, 2)
 
@@ -105,25 +105,25 @@ final class DescriptorBridgeTests: XCTestCase {
   }
 
   func testMessageDescriptorWithNestedTypes() throws {
-    // Создаем сложный MessageDescriptor с вложенными типами
+    // Create complex MessageDescriptor with nested types
     var messageDescriptor = MessageDescriptor(name: "ComplexMessage", parent: fileDescriptor)
 
-    // Добавляем вложенное сообщение
+    // Add nested message
     var nestedMessage = MessageDescriptor(name: "NestedMessage")
     nestedMessage.addField(FieldDescriptor(name: "value", number: 1, type: .string))
     messageDescriptor.addNestedMessage(nestedMessage)
 
-    // Добавляем вложенный enum
+    // Add nested enum
     var nestedEnum = EnumDescriptor(name: "NestedEnum")
     nestedEnum.addValue(EnumDescriptor.EnumValue(name: "VALUE1", number: 0))
     nestedEnum.addValue(EnumDescriptor.EnumValue(name: "VALUE2", number: 1))
     messageDescriptor.addNestedEnum(nestedEnum)
 
-    // Конвертируем в protobuf и обратно
+    // Convert to protobuf and back
     let protobufDescriptor = try bridge.toProtobufDescriptor(from: messageDescriptor)
     let convertedBack = try bridge.fromProtobufDescriptor(protobufDescriptor)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(convertedBack.name, "ComplexMessage")
     XCTAssertEqual(convertedBack.nestedMessages.count, 1)
     XCTAssertEqual(convertedBack.nestedEnums.count, 1)
@@ -134,7 +134,7 @@ final class DescriptorBridgeTests: XCTestCase {
   // MARK: - Field Descriptor Conversion Tests
 
   func testFieldDescriptorToProtobuf() throws {
-    // Тестируем скалярные типы полей
+    // Test scalar field types
     let scalarTestCases: [(FieldType, Google_Protobuf_FieldDescriptorProto.TypeEnum)] = [
       (.string, .string),
       (.int32, .int32),
@@ -156,7 +156,7 @@ final class DescriptorBridgeTests: XCTestCase {
       XCTAssertEqual(protobufField.number, 1)
     }
 
-    // Тестируем сложные типы полей (требуют typeName)
+    // Test complex field types (require typeName)
     let enumFieldDescriptor = FieldDescriptor(
       name: "enum_field",
       number: 2,
@@ -179,17 +179,17 @@ final class DescriptorBridgeTests: XCTestCase {
   }
 
   func testFieldDescriptorFromProtobuf() throws {
-    // Создаем тестовый protobuf field descriptor
+    // Create test protobuf field descriptor
     var protobufField = Google_Protobuf_FieldDescriptorProto()
     protobufField.name = "test_field"
     protobufField.number = 42
     protobufField.type = .string
     protobufField.label = .repeated
 
-    // Конвертируем в наш формат
+    // Convert to our format
     let fieldDescriptor = try bridge.fromProtobufFieldDescriptor(protobufField)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(fieldDescriptor.name, "test_field")
     XCTAssertEqual(fieldDescriptor.number, 42)
     XCTAssertEqual(fieldDescriptor.type, .string)
@@ -198,7 +198,7 @@ final class DescriptorBridgeTests: XCTestCase {
   }
 
   func testFieldDescriptorLabels() throws {
-    // Тестируем различные labels
+    // Test different labels
     let testCases: [(Google_Protobuf_FieldDescriptorProto.Label, Bool, Bool, Bool)] = [
       (.optional, false, false, true),
       (.required, false, true, false),
@@ -223,16 +223,16 @@ final class DescriptorBridgeTests: XCTestCase {
   // MARK: - Enum Descriptor Conversion Tests
 
   func testEnumDescriptorToProtobuf() throws {
-    // Создаем тестовый EnumDescriptor
+    // Create test EnumDescriptor
     var enumDescriptor = EnumDescriptor(name: "TestEnum")
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0))
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "VALUE1", number: 1))
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "VALUE2", number: 2))
 
-    // Конвертируем в protobuf формат
+    // Convert to protobuf format
     let protobufEnum = try bridge.toProtobufEnumDescriptor(from: enumDescriptor)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(protobufEnum.name, "TestEnum")
     XCTAssertEqual(protobufEnum.value.count, 3)
     XCTAssertEqual(protobufEnum.value[0].name, "UNKNOWN")
@@ -244,7 +244,7 @@ final class DescriptorBridgeTests: XCTestCase {
   }
 
   func testEnumDescriptorFromProtobuf() throws {
-    // Создаем тестовый protobuf enum descriptor
+    // Create test protobuf enum descriptor
     var protobufEnum = Google_Protobuf_EnumDescriptorProto()
     protobufEnum.name = "TestEnum"
 
@@ -258,10 +258,10 @@ final class DescriptorBridgeTests: XCTestCase {
 
     protobufEnum.value = [value1, value2]
 
-    // Конвертируем в наш формат
+    // Convert to our format
     let enumDescriptor = try bridge.fromProtobufEnumDescriptor(protobufEnum)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(enumDescriptor.name, "TestEnum")
     XCTAssertEqual(enumDescriptor.allValues().count, 2)
 
@@ -277,20 +277,20 @@ final class DescriptorBridgeTests: XCTestCase {
   // MARK: - File Descriptor Conversion Tests
 
   func testFileDescriptorToProtobuf() throws {
-    // Создаем тестовый FileDescriptor с содержимым
+    // Create test FileDescriptor with content
     var fileDesc = FileDescriptor(name: "test.proto", package: "com.example")
 
-    // Добавляем сообщение
+    // Add message
     var message = MessageDescriptor(name: "TestMessage", parent: fileDesc)
     message.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     fileDesc.addMessage(message)
 
-    // Добавляем enum
+    // Add enum
     var enumDesc = EnumDescriptor(name: "TestEnum", parent: fileDesc)
     enumDesc.addValue(EnumDescriptor.EnumValue(name: "VALUE1", number: 0))
     fileDesc.addEnum(enumDesc)
 
-    // Добавляем сервис
+    // Add service
     var service = ServiceDescriptor(name: "TestService", parent: fileDesc)
     service.addMethod(
       ServiceDescriptor.MethodDescriptor(
@@ -301,10 +301,10 @@ final class DescriptorBridgeTests: XCTestCase {
     )
     fileDesc.addService(service)
 
-    // Конвертируем в protobuf формат
+    // Convert to protobuf format
     let protobufFile = try bridge.toProtobufFileDescriptor(from: fileDesc)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(protobufFile.name, "test.proto")
     XCTAssertEqual(protobufFile.package, "com.example")
     XCTAssertEqual(protobufFile.messageType.count, 1)
@@ -316,21 +316,21 @@ final class DescriptorBridgeTests: XCTestCase {
   }
 
   func testFileDescriptorFromProtobuf() throws {
-    // Создаем тестовый protobuf file descriptor
+    // Create test protobuf file descriptor
     var protobufFile = Google_Protobuf_FileDescriptorProto()
     protobufFile.name = "test.proto"
     protobufFile.package = "com.example"
     protobufFile.dependency = ["google/protobuf/empty.proto"]
 
-    // Добавляем сообщение
+    // Add message
     var message = Google_Protobuf_DescriptorProto()
     message.name = "TestMessage"
     protobufFile.messageType = [message]
 
-    // Конвертируем в наш формат
+    // Convert to our format
     let fileDesc = try bridge.fromProtobufFileDescriptor(protobufFile)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(fileDesc.name, "test.proto")
     XCTAssertEqual(fileDesc.package, "com.example")
     XCTAssertEqual(fileDesc.dependencies, ["google/protobuf/empty.proto"])
@@ -341,7 +341,7 @@ final class DescriptorBridgeTests: XCTestCase {
   // MARK: - Service Descriptor Conversion Tests
 
   func testServiceDescriptorToProtobuf() throws {
-    // Создаем тестовый ServiceDescriptor
+    // Create test ServiceDescriptor
     var serviceDescriptor = ServiceDescriptor(name: "TestService", parent: fileDescriptor)
     serviceDescriptor.addMethod(
       ServiceDescriptor.MethodDescriptor(
@@ -360,14 +360,14 @@ final class DescriptorBridgeTests: XCTestCase {
       )
     )
 
-    // Конвертируем в protobuf формат
+    // Convert to protobuf format
     let protobufService = try bridge.toProtobufServiceDescriptor(from: serviceDescriptor)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(protobufService.name, "TestService")
     XCTAssertEqual(protobufService.method.count, 2)
 
-    // Ищем методы по имени вместо проверки по индексам
+    // Search methods by name instead of checking by indices
     let unaryMethod = protobufService.method.first { $0.name == "UnaryMethod" }
     XCTAssertNotNil(unaryMethod, "UnaryMethod not found")
     XCTAssertEqual(unaryMethod?.inputType, "TestRequest")
@@ -384,7 +384,7 @@ final class DescriptorBridgeTests: XCTestCase {
   }
 
   func testServiceDescriptorFromProtobuf() throws {
-    // Создаем тестовый protobuf service descriptor
+    // Create test protobuf service descriptor
     var protobufService = Google_Protobuf_ServiceDescriptorProto()
     protobufService.name = "TestService"
 
@@ -397,10 +397,10 @@ final class DescriptorBridgeTests: XCTestCase {
 
     protobufService.method = [method]
 
-    // Конвертируем в наш формат
+    // Convert to our format
     let serviceDescriptor = try bridge.fromProtobufServiceDescriptor(protobufService, parent: fileDescriptor)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(serviceDescriptor.name, "TestService")
     XCTAssertEqual(serviceDescriptor.allMethods().count, 1)
 
@@ -415,17 +415,17 @@ final class DescriptorBridgeTests: XCTestCase {
   // MARK: - Round-trip Conversion Tests
 
   func testMessageDescriptorRoundTrip() throws {
-    // Создаем исходный MessageDescriptor
+    // Create original MessageDescriptor
     var original = MessageDescriptor(name: "RoundTripMessage", parent: fileDescriptor)
     original.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     original.addField(FieldDescriptor(name: "age", number: 2, type: .int32, isRepeated: true))
     original.addField(FieldDescriptor(name: "active", number: 3, type: .bool, isRequired: true))
 
-    // Конвертируем в protobuf и обратно
+    // Convert to protobuf and back
     let protobufDescriptor = try bridge.toProtobufDescriptor(from: original)
     let converted = try bridge.fromProtobufDescriptor(protobufDescriptor)
 
-    // Проверяем, что данные сохранились
+    // Verify data is preserved
     XCTAssertEqual(converted.name, original.name)
     XCTAssertEqual(converted.allFields().count, original.allFields().count)
 
@@ -440,7 +440,7 @@ final class DescriptorBridgeTests: XCTestCase {
   }
 
   func testFileDescriptorRoundTrip() throws {
-    // Создаем исходный FileDescriptor
+    // Create original FileDescriptor
     var original = FileDescriptor(name: "roundtrip.proto", package: "test.roundtrip")
 
     var message = MessageDescriptor(name: "TestMessage", parent: original)
@@ -451,11 +451,11 @@ final class DescriptorBridgeTests: XCTestCase {
     enumDesc.addValue(EnumDescriptor.EnumValue(name: "VALUE1", number: 0))
     original.addEnum(enumDesc)
 
-    // Конвертируем в protobuf и обратно
+    // Convert to protobuf and back
     let protobufDescriptor = try bridge.toProtobufFileDescriptor(from: original)
     let converted = try bridge.fromProtobufFileDescriptor(protobufDescriptor)
 
-    // Проверяем, что данные сохранились
+    // Verify data is preserved
     XCTAssertEqual(converted.name, original.name)
     XCTAssertEqual(converted.package, original.package)
     XCTAssertEqual(converted.messages.count, original.messages.count)
@@ -467,10 +467,10 @@ final class DescriptorBridgeTests: XCTestCase {
   // MARK: - Error Handling Tests
 
   func testUnsupportedFieldTypeError() {
-    // Тестируем обработку ошибок конвертации
-    // Поскольку все типы поддерживаются в DescriptorBridge, тестируем другие ошибки
+    // Test conversion error handling
+    // Since all types are supported in DescriptorBridge, test other errors
 
-    // Тестируем, что group тип поддерживается (не выбрасывает ошибку)
+    // Test that group type is supported (doesn't throw error)
     var protobufField = Google_Protobuf_FieldDescriptorProto()
     protobufField.name = "test_field"
     protobufField.number = 1
@@ -495,21 +495,21 @@ final class DescriptorBridgeTests: XCTestCase {
   }
 
   func testInvalidFieldDescriptorError() {
-    // Тестируем обработку некорректного дескриптора поля
+    // Test handling of invalid field descriptor
     var protobufField = Google_Protobuf_FieldDescriptorProto()
-    protobufField.name = ""  // Пустое имя должно вызвать ошибку
-    protobufField.number = 0  // Некорректный номер поля
+    protobufField.name = ""  // Empty name should cause error
+    protobufField.number = 0  // Invalid field number
     protobufField.type = .string
     protobufField.label = .optional
 
-    // В данном случае тестируем, что конвертация проходит, но можем добавить валидацию позже
+    // In this case we test that conversion passes, but can add validation later
     XCTAssertNoThrow(try bridge.fromProtobufFieldDescriptor(protobufField))
   }
 
   // MARK: - Performance Tests
 
   func testConversionPerformance() throws {
-    // Создаем сложный дескриптор для тестирования производительности
+    // Create complex descriptor for performance testing
     var fileDesc = FileDescriptor(name: "performance.proto", package: "test.performance")
 
     for i in 0..<10 {
@@ -522,7 +522,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
     measure {
       do {
-        // Измеряем производительность конвертации
+        // Measure conversion performance
         let protobufDescriptor = try bridge.toProtobufFileDescriptor(from: fileDesc)
         _ = try bridge.fromProtobufFileDescriptor(protobufDescriptor)
       }
@@ -535,7 +535,7 @@ final class DescriptorBridgeTests: XCTestCase {
   // MARK: - Additional Coverage Tests
 
   func testMessageDescriptorWithOptions() throws {
-    // Создаем MessageDescriptor с опциями через конструктор
+    // Create MessageDescriptor with options via constructor
     var messageDescriptor = MessageDescriptor(
       name: "MessageWithOptions",
       parent: fileDescriptor,
@@ -543,29 +543,29 @@ final class DescriptorBridgeTests: XCTestCase {
     )
     messageDescriptor.addField(FieldDescriptor(name: "name", number: 1, type: .string))
 
-    // Конвертируем в protobuf формат (должно покрыть строку 57)
+    // Convert to protobuf format (should cover line 57)
     let protobufDescriptor = try bridge.toProtobufDescriptor(from: messageDescriptor)
 
-    // Проверяем, что конвертация прошла успешно
+    // Verify conversion succeeded
     XCTAssertEqual(protobufDescriptor.name, "MessageWithOptions")
     XCTAssertEqual(protobufDescriptor.field.count, 1)
   }
 
   func testMessageDescriptorFromProtobufWithOptions() throws {
-    // Создаем protobuf дескриптор с опциями
+    // Create protobuf descriptor with options
     var protobufDescriptor = Google_Protobuf_DescriptorProto()
     protobufDescriptor.name = "MessageWithOptions"
     protobufDescriptor.options = Google_Protobuf_MessageOptions()
 
-    // Конвертируем в наш формат (должно покрыть строки 99-103)
+    // Convert to our format (should cover lines 99-103)
     let messageDescriptor = try bridge.fromProtobufDescriptor(protobufDescriptor, parent: fileDescriptor)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(messageDescriptor.name, "MessageWithOptions")
   }
 
   func testFieldDescriptorWithCustomJsonName() throws {
-    // Создаем FieldDescriptor с кастомным JSON именем
+    // Create FieldDescriptor with custom JSON name
     let fieldDescriptor = FieldDescriptor(
       name: "field_name",
       number: 1,
@@ -573,16 +573,16 @@ final class DescriptorBridgeTests: XCTestCase {
       jsonName: "customJsonName"
     )
 
-    // Конвертируем в protobuf формат (должно покрыть строку 144)
+    // Convert to protobuf format (should cover line 144)
     let protobufField = try bridge.toProtobufFieldDescriptor(from: fieldDescriptor)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(protobufField.name, "field_name")
     XCTAssertEqual(protobufField.jsonName, "customJsonName")
   }
 
   func testFieldDescriptorWithOptions() throws {
-    // Создаем FieldDescriptor с опциями через конструктор
+    // Create FieldDescriptor with options via constructor
     let fieldDescriptor = FieldDescriptor(
       name: "field_with_options",
       number: 1,
@@ -590,16 +590,16 @@ final class DescriptorBridgeTests: XCTestCase {
       options: ["packed": true, "deprecated": false]
     )
 
-    // Конвертируем в protobuf формат (должно покрыть строку 149)
+    // Convert to protobuf format (should cover line 149)
     let protobufField = try bridge.toProtobufFieldDescriptor(from: fieldDescriptor)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(protobufField.name, "field_with_options")
     XCTAssertEqual(protobufField.type, .string)
   }
 
   func testFieldDescriptorFromProtobufWithOptions() throws {
-    // Создаем protobuf field descriptor с опциями
+    // Create protobuf field descriptor with options
     var protobufField = Google_Protobuf_FieldDescriptorProto()
     protobufField.name = "field_with_options"
     protobufField.number = 1
@@ -607,16 +607,16 @@ final class DescriptorBridgeTests: XCTestCase {
     protobufField.label = .optional
     protobufField.options = Google_Protobuf_FieldOptions()
 
-    // Конвертируем в наш формат (должно покрыть строки 185-189)
+    // Convert to our format (should cover lines 185-189)
     let fieldDescriptor = try bridge.fromProtobufFieldDescriptor(protobufField)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(fieldDescriptor.name, "field_with_options")
     XCTAssertEqual(fieldDescriptor.type, .string)
   }
 
   func testEnumDescriptorWithValueOptions() throws {
-    // Создаем EnumDescriptor с опциями в значениях
+    // Create EnumDescriptor with value options
     var enumDescriptor = EnumDescriptor(name: "EnumWithOptions")
 
     let enumValue = EnumDescriptor.EnumValue(
@@ -626,38 +626,38 @@ final class DescriptorBridgeTests: XCTestCase {
     )
     enumDescriptor.addValue(enumValue)
 
-    // Конвертируем в protobuf формат (должно покрыть строки 218-220)
+    // Convert to protobuf format (should cover lines 218-220)
     let protobufEnum = try bridge.toProtobufEnumDescriptor(from: enumDescriptor)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(protobufEnum.name, "EnumWithOptions")
     XCTAssertEqual(protobufEnum.value.count, 1)
     XCTAssertEqual(protobufEnum.value[0].name, "VALUE_WITH_OPTIONS")
   }
 
   func testEnumDescriptorWithEnumOptions() throws {
-    // Создаем EnumDescriptor с опциями enum'а через конструктор
+    // Create EnumDescriptor with enum options via constructor
     var enumDescriptor = EnumDescriptor(
       name: "EnumWithOptions",
       options: ["allow_alias": true]
     )
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "VALUE1", number: 0))
 
-    // Конвертируем в protobuf формат (должно покрыть строки 227-229)
+    // Convert to protobuf format (should cover lines 227-229)
     let protobufEnum = try bridge.toProtobufEnumDescriptor(from: enumDescriptor)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(protobufEnum.name, "EnumWithOptions")
     XCTAssertEqual(protobufEnum.value.count, 1)
   }
 
   func testFileDescriptorWithServices() throws {
-    // Создаем protobuf file descriptor с сервисами
+    // Create protobuf file descriptor with services
     var protobufFile = Google_Protobuf_FileDescriptorProto()
     protobufFile.name = "service_test.proto"
     protobufFile.package = "test"
 
-    // Добавляем сервис
+    // Add service
     var service = Google_Protobuf_ServiceDescriptorProto()
     service.name = "TestService"
 
@@ -669,10 +669,10 @@ final class DescriptorBridgeTests: XCTestCase {
 
     protobufFile.service = [service]
 
-    // Конвертируем в наш формат (должно покрыть строки 328-329)
+    // Convert to our format (should cover lines 328-329)
     let fileDescriptor = try bridge.fromProtobufFileDescriptor(protobufFile)
 
-    // Проверяем результат
+    // Verify result
     XCTAssertEqual(fileDescriptor.name, "service_test.proto")
     XCTAssertEqual(fileDescriptor.package, "test")
     XCTAssertEqual(fileDescriptor.services.count, 1)
@@ -680,10 +680,10 @@ final class DescriptorBridgeTests: XCTestCase {
   }
 
   func testUnknownFieldTypeHandling() throws {
-    // Создаем mock для тестирования @unknown default case
-    // Поскольку мы не можем легко создать unknown case, тестируем все известные типы
+    // Create mock to test @unknown default case
+    // Since we can't easily create unknown case, test all known types
 
-    // Тестируем скалярные типы
+    // Test scalar types
     let scalarFieldTypes: [Google_Protobuf_FieldDescriptorProto.TypeEnum] = [
       .double, .float, .int64, .uint64, .int32, .fixed64, .fixed32,
       .bool, .string, .bytes, .uint32, .sfixed32, .sfixed64, .sint32, .sint64,
@@ -696,11 +696,11 @@ final class DescriptorBridgeTests: XCTestCase {
       protobufField.type = protobufType
       protobufField.label = .optional
 
-      // Конвертируем и проверяем, что не возникает ошибок
+      // Convert and verify no errors occur
       XCTAssertNoThrow(try bridge.fromProtobufFieldDescriptor(protobufField))
     }
 
-    // Тестируем сложные типы с typeName
+    // Test complex types with typeName
     let complexFieldTypes: [(Google_Protobuf_FieldDescriptorProto.TypeEnum, String)] = [
       (.message, "TestMessage"),
       (.enum, "TestEnum"),
@@ -715,13 +715,13 @@ final class DescriptorBridgeTests: XCTestCase {
       protobufField.typeName = typeName
       protobufField.label = .optional
 
-      // Конвертируем и проверяем, что не возникает ошибок
+      // Convert and verify no errors occur
       XCTAssertNoThrow(try bridge.fromProtobufFieldDescriptor(protobufField))
     }
   }
 
   func testAllFieldTypeConversions() throws {
-    // Тестируем скалярные типы полей для полного покрытия switch statements
+    // Test scalar field types for full switch statement coverage
     let scalarFieldTypes: [(FieldType, Google_Protobuf_FieldDescriptorProto.TypeEnum)] = [
       (.double, .double), (.float, .float), (.int64, .int64), (.uint64, .uint64),
       (.int32, .int32), (.fixed64, .fixed64), (.fixed32, .fixed32), (.bool, .bool),
@@ -734,7 +734,7 @@ final class DescriptorBridgeTests: XCTestCase {
       let protobufField = try bridge.toProtobufFieldDescriptor(from: fieldDescriptor)
       XCTAssertEqual(protobufField.type, expectedProtobufType)
 
-      // Тестируем обратную конвертацию
+      // Test reverse conversion
       var reverseProtobufField = Google_Protobuf_FieldDescriptorProto()
       reverseProtobufField.name = "test"
       reverseProtobufField.number = 1
@@ -745,7 +745,7 @@ final class DescriptorBridgeTests: XCTestCase {
       XCTAssertEqual(reverseFieldDescriptor.type, fieldType)
     }
 
-    // Тестируем сложные типы полей отдельно (требуют typeName)
+    // Test complex field types separately (require typeName)
     let complexFieldTypes: [(FieldType, Google_Protobuf_FieldDescriptorProto.TypeEnum, String)] = [
       (.message, .message, "TestMessage"),
       (.enum, .enum, "TestEnum"),
@@ -758,7 +758,7 @@ final class DescriptorBridgeTests: XCTestCase {
       XCTAssertEqual(protobufField.type, expectedProtobufType)
       XCTAssertEqual(protobufField.typeName, typeName)
 
-      // Тестируем обратную конвертацию
+      // Test reverse conversion
       var reverseProtobufField = Google_Protobuf_FieldDescriptorProto()
       reverseProtobufField.name = "test"
       reverseProtobufField.number = 1
@@ -773,20 +773,20 @@ final class DescriptorBridgeTests: XCTestCase {
   }
 
   func testPrivateOptionsMethods() throws {
-    // Тестируем приватные методы для работы с опциями через публичные методы
+    // Test private methods for working with options via public methods
 
-    // Создаем MessageDescriptor с опциями для тестирования toProtobufMessageOptions
+    // Create MessageDescriptor with options to test toProtobufMessageOptions
     let messageWithOptions = MessageDescriptor(
       name: "TestMessage",
       parent: fileDescriptor,
       options: ["test_option": "test_value"]
     )
 
-    // Конвертируем - это должно вызвать toProtobufMessageOptions
+    // Convert - this should call toProtobufMessageOptions
     let protobufDescriptor = try bridge.toProtobufDescriptor(from: messageWithOptions)
     XCTAssertEqual(protobufDescriptor.name, "TestMessage")
 
-    // Создаем FieldDescriptor с опциями для тестирования toProtobufFieldOptions
+    // Create FieldDescriptor with options to test toProtobufFieldOptions
     let fieldWithOptions = FieldDescriptor(
       name: "test_field",
       number: 1,
@@ -794,7 +794,7 @@ final class DescriptorBridgeTests: XCTestCase {
       options: ["field_option": "field_value"]
     )
 
-    // Конвертируем - это должно вызвать toProtobufFieldOptions
+    // Convert - this should call toProtobufFieldOptions
     let protobufField = try bridge.toProtobufFieldDescriptor(from: fieldWithOptions)
     XCTAssertEqual(protobufField.name, "test_field")
   }

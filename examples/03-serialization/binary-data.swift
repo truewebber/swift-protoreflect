@@ -30,11 +30,11 @@ struct BinaryDataExample {
   static func main() throws {
     ExampleUtils.printHeader("Advanced Binary Data Operations")
 
-    try step1_bytesFieldsHandling()
-    try step2_dataEncodingFormats()
-    try step3_dataIntegrityChecks()
-    try step4_customBinaryProtocols()
-    try step5_dataCompressionTechniques()
+    try step1BytesFieldsHandling()
+    try step2DataEncodingFormats()
+    try step3DataIntegrityChecks()
+    try step4CustomBinaryProtocols()
+    try step5DataCompressionTechniques()
 
     ExampleUtils.printSuccess("Binary data operations successfully explored!")
 
@@ -47,7 +47,7 @@ struct BinaryDataExample {
 
   // MARK: - Implementation Steps
 
-  private static func step1_bytesFieldsHandling() throws {
+  private static func step1BytesFieldsHandling() throws {
     ExampleUtils.printStep(1, "Working with bytes fields")
 
     // Create message with bytes fields
@@ -94,7 +94,7 @@ struct BinaryDataExample {
     try verifyBinaryDataIntegrity(original: binaryMessage, restored: restoredMessage)
   }
 
-  private static func step2_dataEncodingFormats() throws {
+  private static func step2DataEncodingFormats() throws {
     ExampleUtils.printStep(2, "Data encoding formats")
 
     let originalData = "Binary encoding demonstration with special chars: ñáéíóú 🚀💻🔥".data(using: .utf8)!
@@ -150,7 +150,7 @@ struct BinaryDataExample {
     encodedMessage.prettyPrint()
   }
 
-  private static func step3_dataIntegrityChecks() throws {
+  private static func step3DataIntegrityChecks() throws {
     ExampleUtils.printStep(3, "Data integrity checks")
 
     let testData = generateRandomData(length: 1024)  // 1KB test data
@@ -211,7 +211,7 @@ struct BinaryDataExample {
     }
   }
 
-  private static func step4_customBinaryProtocols() throws {
+  private static func step4CustomBinaryProtocols() throws {
     ExampleUtils.printStep(4, "Custom binary protocols")
 
     print("  🔧 Building custom protocol over Protocol Buffers...")
@@ -268,7 +268,7 @@ struct BinaryDataExample {
     }
   }
 
-  private static func step5_dataCompressionTechniques() throws {
+  private static func step5DataCompressionTechniques() throws {
     ExampleUtils.printStep(5, "Data encoding and compression demonstration")
 
     // Create large dataset for demonstration

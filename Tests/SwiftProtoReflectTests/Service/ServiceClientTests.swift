@@ -2,7 +2,7 @@
 // ServiceClientTests.swift
 // SwiftProtoReflectTests
 //
-// Создан: 2025-05-25
+// Created: 2025-05-25
 //
 
 import GRPC
@@ -29,7 +29,7 @@ final class ServiceClientTests: XCTestCase {
 
     eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
 
-    // Создаем mock канал для тестирования
+    // Create mock channel for testing
     channel = try! GRPCChannelPool.with(
       target: .host("localhost", port: 9999),
       transportSecurity: .plaintext,
@@ -170,18 +170,18 @@ final class ServiceClientTests: XCTestCase {
         serverStreaming: serverStreaming
       )
 
-      // Then - проверяем через публичные методы, которые используют getMethodType
+      // Then - verify through public methods that use getMethodType
       let fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
       var serviceDescriptor = ServiceDescriptor(name: "TestService", parent: fileDescriptor)
       serviceDescriptor.addMethod(method)
 
-      // Создаем тестовое сообщение
+      // Create test message
       var messageDescriptor = MessageDescriptor(name: "Request", parent: fileDescriptor)
       messageDescriptor.addField(FieldDescriptor(name: "value", number: 1, type: .string))
 
       let request = messageFactory.createMessage(from: messageDescriptor)
 
-      // Для non-unary методов ожидаем ошибку invalidMethodType
+      // For non-unary methods, expect invalidMethodType error
       if expectedType != "unary" {
         do {
           _ = try await serviceClient.unaryCall(
@@ -218,7 +218,7 @@ final class ServiceClientTests: XCTestCase {
     try message.set("John", forField: "name")
     try message.set(Int32(30), forField: "age")
 
-    // When - тестируем через публичный API, который использует serializeRequest
+    // When - test through public API that uses serializeRequest
     let serializer = BinarySerializer()
     let data = try serializer.serialize(message)
 
@@ -236,11 +236,11 @@ final class ServiceClientTests: XCTestCase {
     var originalMessage = messageFactory.createMessage(from: messageDescriptor)
     try originalMessage.set("success", forField: "result")
 
-    // Сериализуем сообщение
+    // Serialize message
     let serializer = BinarySerializer()
     let data = try serializer.serialize(originalMessage)
 
-    // When - десериализуем обратно
+    // When - deserialize back
     let deserializer = BinaryDeserializer()
     let deserializedMessage = try deserializer.deserialize(data, using: messageDescriptor)
 
@@ -255,10 +255,10 @@ final class ServiceClientTests: XCTestCase {
     let timeout = TimeAmount.seconds(30)
     let options = ServiceClient.CallOptions(timeout: timeout)
 
-    // When - тестируем создание опций
+    // When - test options creation
     XCTAssertEqual(options.timeout, timeout)
 
-    // Then - проверяем, что опции корректно созданы
+    // Then - verify that options are correctly created
     XCTAssertNotNil(options.timeout)
     XCTAssertEqual(options.timeout, .seconds(30))
   }
@@ -401,7 +401,7 @@ final class ServiceClientTests: XCTestCase {
     let fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     var serviceDescriptor = ServiceDescriptor(name: "TestService", parent: fileDescriptor)
 
-    // Добавляем streaming метод
+    // Add streaming method
     let streamingMethod = ServiceDescriptor.MethodDescriptor(
       name: "StreamingMethod",
       inputType: "test.TestRequest",
@@ -442,7 +442,7 @@ final class ServiceClientTests: XCTestCase {
     let fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     var serviceDescriptor = ServiceDescriptor(name: "TestService", parent: fileDescriptor)
 
-    // Добавляем unary метод
+    // Add unary method
     let unaryMethod = ServiceDescriptor.MethodDescriptor(
       name: "TestMethod",
       inputType: "test.ExpectedRequest",
@@ -450,7 +450,7 @@ final class ServiceClientTests: XCTestCase {
     )
     serviceDescriptor.addMethod(unaryMethod)
 
-    // Создаем сообщение с неправильным типом
+    // Create message with wrong type
     var wrongMessageDescriptor = MessageDescriptor(name: "WrongRequest", parent: fileDescriptor)
     wrongMessageDescriptor.addField(FieldDescriptor(name: "value", number: 1, type: .string))
 
@@ -481,7 +481,7 @@ final class ServiceClientTests: XCTestCase {
     let fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     var serviceDescriptor = ServiceDescriptor(name: "TestService", parent: fileDescriptor)
 
-    // Добавляем unary метод с несуществующим типом ответа
+    // Add unary method with non-existent response type
     let unaryMethod = ServiceDescriptor.MethodDescriptor(
       name: "TestMethod",
       inputType: "test.TestRequest",
@@ -568,8 +568,8 @@ final class ServiceClientTests: XCTestCase {
     let request = messageFactory.createMessage(from: messageDescriptor)
     let expectedType = "test.TestRequest"
 
-    // When & Then - проверяем через публичный API
-    // Создаем сервис с правильным типом
+    // When & Then - verify through public API
+    // Create service with correct type
     var serviceDescriptor = ServiceDescriptor(name: "TestService", parent: fileDescriptor)
     let method = ServiceDescriptor.MethodDescriptor(
       name: "TestMethod",
@@ -578,15 +578,15 @@ final class ServiceClientTests: XCTestCase {
     )
     serviceDescriptor.addMethod(method)
 
-    // Регистрируем типы в реестре
+    // Register types in registry
     try typeRegistry.registerMessage(messageDescriptor)
 
-    // Создаем ответный тип
+    // Create response type
     var responseDescriptor = MessageDescriptor(name: "TestResponse", parent: fileDescriptor)
     responseDescriptor.addField(FieldDescriptor(name: "result", number: 1, type: .string))
     try typeRegistry.registerMessage(responseDescriptor)
 
-    // Тест пройдет до этапа gRPC вызова (который упадет, но валидация типов пройдет)
+    // Test will pass until gRPC call stage (which will fail, but type validation will pass)
     do {
       _ = try await serviceClient.unaryCall(
         service: serviceDescriptor,
@@ -595,7 +595,7 @@ final class ServiceClientTests: XCTestCase {
       )
     }
     catch {
-      // Ожидаем gRPC ошибку, но не ошибку валидации типов
+      // Expect gRPC error, but not type validation error
       XCTAssertFalse(error is ServiceClientError, "Should not be a ServiceClientError for type validation")
     }
   }
@@ -606,7 +606,7 @@ final class ServiceClientTests: XCTestCase {
     var responseDescriptor = MessageDescriptor(name: "TestResponse", parent: fileDescriptor)
     responseDescriptor.addField(FieldDescriptor(name: "result", number: 1, type: .string))
 
-    // Регистрируем тип в реестре
+    // Register type in registry
     try typeRegistry.registerMessage(responseDescriptor)
 
     // When
@@ -709,7 +709,7 @@ final class ServiceClientTests: XCTestCase {
 
 extension ServiceClientTests {
 
-  /// Создает тестовый GRPCPayloadWrapper для внутреннего тестирования.
+  /// Creates a test GRPCPayloadWrapper for internal testing.
   fileprivate func createTestGRPCPayloadWrapper(with data: Data) -> GRPCPayloadWrapper {
     return GRPCPayloadWrapper(data: data)
   }
@@ -717,9 +717,9 @@ extension ServiceClientTests {
 
 // MARK: - GRPCPayloadWrapper Testing Extension
 
-/// Расширение для тестирования GRPCPayloadWrapper
+/// Extension for testing GRPCPayloadWrapper
 extension GRPCPayloadWrapper {
-  /// Инициализатор для тестирования.
+  /// Initializer for testing.
   init(testData: Data) {
     self.init(data: testData)
   }

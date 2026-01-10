@@ -1,10 +1,10 @@
 // CrossPlatformTests.swift
 //
-// Тесты для проверки межплатформенной совместимости Protocol Buffers
+// Tests for checking cross-platform compatibility Protocol Buffers
 //
-// Тестовые случаи из плана:
-// - Test-CROSS-001: Проверка совместимости сообщений с другими официальными реализациями (Java, Python, Go)
-// - Test-CROSS-002: Проверка идентичности сериализованных сообщений при передаче между разными платформами
+// Test cases from plan:
+// - Test-CROSS-001: Verification of message compatibility with other official implementations (Java, Python, Go)
+// - Test-CROSS-002: Verification of serialized message identity when transferring between different platforms
 
 import XCTest
 

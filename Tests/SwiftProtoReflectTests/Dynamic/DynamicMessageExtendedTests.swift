@@ -2,8 +2,8 @@
 // DynamicMessageExtendedTests.swift
 // SwiftProtoReflectTests
 //
-// Создан: 2025-05-23
-// Дополнительные тесты для повышения покрытия кода DynamicMessage
+// Created: 2025-05-23
+// Additional tests to improve code coverage for DynamicMessage
 //
 
 import XCTest
@@ -23,10 +23,10 @@ final class DynamicMessageExtendedTests: XCTestCase {
   override func setUp() {
     super.setUp()
 
-    // Создаем тестовый файловый дескриптор
+    // Create test file descriptor
     fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
 
-    // Создаем дескриптор перечисления PhoneType
+    // Create enum descriptor PhoneType
     enumDescriptor = EnumDescriptor(name: "PhoneType", parent: fileDescriptor)
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "MOBILE", number: 0))
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "HOME", number: 1))
@@ -34,7 +34,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
     fileDescriptor.addEnum(enumDescriptor)
 
-    // Создаем дескриптор сообщения Address
+    // Create message descriptor Address
     addressMessage = MessageDescriptor(name: "Address", parent: fileDescriptor)
     addressMessage.addField(
       FieldDescriptor(
@@ -53,7 +53,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
     fileDescriptor.addMessage(addressMessage)
 
-    // Создаем дескриптор сообщения Person
+    // Create message descriptor Person
     personMessage = MessageDescriptor(name: "Person", parent: fileDescriptor)
     personMessage.addField(
       FieldDescriptor(
@@ -94,10 +94,10 @@ final class DynamicMessageExtendedTests: XCTestCase {
   func testFieldNotFoundErrors() {
     var message = DynamicMessage(descriptor: personMessage)
 
-    // Тестируем ошибку fieldNotFound для set методов
+    // Test fieldNotFound error for set methods
     XCTAssertThrowsError(try message.set("value", forField: "non_existent_field")) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -105,14 +105,14 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(fieldName, "non_existent_field")
       }
       else {
-        XCTFail("Ожидалась ошибка fieldNotFound")
+        XCTFail("Expected fieldNotFound error")
       }
     }
 
-    // Тестируем ошибку fieldNotFoundByNumber для set методов
+    // Test fieldNotFoundByNumber error for set methods
     XCTAssertThrowsError(try message.set("value", forField: 999)) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -120,14 +120,14 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(fieldNumber, 999)
       }
       else {
-        XCTFail("Ожидалась ошибка fieldNotFoundByNumber")
+        XCTFail("Expected fieldNotFoundByNumber error")
       }
     }
 
-    // Тестируем ошибку fieldNotFound для get методов
+    // Test fieldNotFound error for get methods
     XCTAssertThrowsError(try message.get(forField: "non_existent_field")) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -135,14 +135,14 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(fieldName, "non_existent_field")
       }
       else {
-        XCTFail("Ожидалась ошибка fieldNotFound")
+        XCTFail("Expected fieldNotFound error")
       }
     }
 
-    // Тестируем ошибку fieldNotFoundByNumber для get методов
+    // Test fieldNotFoundByNumber error for get methods
     XCTAssertThrowsError(try message.get(forField: 999)) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -150,14 +150,14 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(fieldNumber, 999)
       }
       else {
-        XCTFail("Ожидалась ошибка fieldNotFoundByNumber")
+        XCTFail("Expected fieldNotFoundByNumber error")
       }
     }
 
-    // Тестируем ошибку fieldNotFound для hasValue методов
+    // Test fieldNotFound error for hasValue methods
     XCTAssertThrowsError(try message.hasValue(forField: "non_existent_field")) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -165,14 +165,14 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(fieldName, "non_existent_field")
       }
       else {
-        XCTFail("Ожидалась ошибка fieldNotFound")
+        XCTFail("Expected fieldNotFound error")
       }
     }
 
-    // Тестируем ошибку fieldNotFoundByNumber для hasValue методов
+    // Test fieldNotFoundByNumber error for hasValue methods
     XCTAssertThrowsError(try message.hasValue(forField: 999)) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -180,14 +180,14 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(fieldNumber, 999)
       }
       else {
-        XCTFail("Ожидалась ошибка fieldNotFoundByNumber")
+        XCTFail("Expected fieldNotFoundByNumber error")
       }
     }
 
-    // Тестируем ошибку fieldNotFound для clearField методов
+    // Test fieldNotFound error for clearField methods
     XCTAssertThrowsError(try message.clearField("non_existent_field")) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -195,14 +195,14 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(fieldName, "non_existent_field")
       }
       else {
-        XCTFail("Ожидалась ошибка fieldNotFound")
+        XCTFail("Expected fieldNotFound error")
       }
     }
 
-    // Тестируем ошибку fieldNotFoundByNumber для clearField методов
+    // Test fieldNotFoundByNumber error for clearField methods
     XCTAssertThrowsError(try message.clearField(999)) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -210,7 +210,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(fieldNumber, 999)
       }
       else {
-        XCTFail("Ожидалась ошибка fieldNotFoundByNumber")
+        XCTFail("Expected fieldNotFoundByNumber error")
       }
     }
   }
@@ -220,13 +220,13 @@ final class DynamicMessageExtendedTests: XCTestCase {
   func testMessageTypeMismatchErrors() {
     var message = DynamicMessage(descriptor: personMessage)
 
-    // Создаем сообщение с неправильным типом
-    let wrongMessage = DynamicMessage(descriptor: personMessage)  // Person вместо Address
+    // Create message with wrong type
+    let wrongMessage = DynamicMessage(descriptor: personMessage)  // Person instead of Address
 
-    // Тестируем ошибку messageMismatch при установке вложенного сообщения
+    // Test messageMismatch error when setting nested message
     XCTAssertThrowsError(try message.set(wrongMessage, forField: "address")) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -236,14 +236,14 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(actualType, "test.Person")
       }
       else {
-        XCTFail("Ожидалась ошибка messageMismatch")
+        XCTFail("Expected messageMismatch error")
       }
     }
 
-    // Тестируем ошибку typeMismatch при попытке установить не DynamicMessage для message поля
+    // Test typeMismatch error when trying to set non-DynamicMessage for message field
     XCTAssertThrowsError(try message.set("not a message", forField: "address")) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -252,7 +252,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(expectedType, "DynamicMessage")
       }
       else {
-        XCTFail("Ожидалась ошибка typeMismatch")
+        XCTFail("Expected typeMismatch error")
       }
     }
   }
@@ -260,7 +260,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
   // MARK: - Enum Type Validation Tests
 
   func testEnumTypeValidation() {
-    // Создаем сообщение с enum полем
+    // Create message with enum field
     var messageDesc = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     messageDesc.addField(
       FieldDescriptor(
@@ -275,10 +275,10 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
     var message = DynamicMessage(descriptor: messageDesc)
 
-    // Тестируем ошибку typeMismatch для неправильного типа enum
+    // Test typeMismatch error for incorrect enum type
     XCTAssertThrowsError(try message.set(42.5, forField: "enum_field")) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -287,7 +287,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(expectedType, "Enum (Int32 or String)")
       }
       else {
-        XCTFail("Ожидалась ошибка typeMismatch")
+        XCTFail("Expected typeMismatch error")
       }
     }
   }
@@ -295,7 +295,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
   // MARK: - Group Type Tests
 
   func testGroupTypeValidation() {
-    // Создаем сообщение с group полем (устаревший тип)
+    // Create message with group field (deprecated type)
     var messageDesc = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     messageDesc.addField(
       FieldDescriptor(
@@ -310,20 +310,20 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
     var message = DynamicMessage(descriptor: messageDesc)
 
-    // Тестируем валидное group поле
+    // Test valid group field
     let groupMessage = DynamicMessage(descriptor: addressMessage)
     do {
       try message.set(groupMessage, forField: "group_field")
       XCTAssertTrue(try message.hasValue(forField: "group_field"))
     }
     catch {
-      XCTFail("Не должно быть ошибки при установке валидного group сообщения: \(error)")
+      XCTFail("Should not have error when setting valid group message: \(error)")
     }
 
-    // Тестируем ошибку typeMismatch для неправильного типа group
+    // Test typeMismatch error for incorrect group type
     XCTAssertThrowsError(try message.set("not a group", forField: "group_field")) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -332,7 +332,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(expectedType, "DynamicMessage (group)")
       }
       else {
-        XCTFail("Ожидалась ошибка typeMismatch")
+        XCTFail("Expected typeMismatch error")
       }
     }
   }
@@ -342,10 +342,10 @@ final class DynamicMessageExtendedTests: XCTestCase {
   func testRepeatedFieldErrors() {
     var message = DynamicMessage(descriptor: personMessage)
 
-    // Тестируем ошибку fieldNotFoundByNumber для addRepeatedValue
+    // Test fieldNotFoundByNumber error for addRepeatedValue
     XCTAssertThrowsError(try message.addRepeatedValue("value", forField: 999)) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -353,14 +353,14 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(fieldNumber, 999)
       }
       else {
-        XCTFail("Ожидалась ошибка fieldNotFoundByNumber")
+        XCTFail("Expected fieldNotFoundByNumber error")
       }
     }
 
-    // Тестируем ошибку notRepeatedField для обычного поля
+    // Test notRepeatedField error for regular field
     XCTAssertThrowsError(try message.addRepeatedValue("value", forField: "name")) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -368,7 +368,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(fieldName, "name")
       }
       else {
-        XCTFail("Ожидалась ошибка notRepeatedField")
+        XCTFail("Expected notRepeatedField error")
       }
     }
   }
@@ -378,10 +378,10 @@ final class DynamicMessageExtendedTests: XCTestCase {
   func testMapFieldErrors() {
     var message = DynamicMessage(descriptor: personMessage)
 
-    // Тестируем ошибку fieldNotFoundByNumber для setMapEntry
+    // Test fieldNotFoundByNumber error for setMapEntry
     XCTAssertThrowsError(try message.setMapEntry("value", forKey: "key", inField: 999)) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -389,14 +389,14 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(fieldNumber, 999)
       }
       else {
-        XCTFail("Ожидалась ошибка fieldNotFoundByNumber")
+        XCTFail("Expected fieldNotFoundByNumber error")
       }
     }
 
-    // Тестируем ошибку notMapField для обычного поля
+    // Test notMapField error for regular field
     XCTAssertThrowsError(try message.setMapEntry("value", forKey: "key", inField: "name")) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -404,7 +404,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(fieldName, "name")
       }
       else {
-        XCTFail("Ожидалась ошибка notMapField")
+        XCTFail("Expected notMapField error")
       }
     }
   }
@@ -415,16 +415,16 @@ final class DynamicMessageExtendedTests: XCTestCase {
     var message = DynamicMessage(descriptor: personMessage)
 
     do {
-      // Устанавливаем вложенное сообщение
+      // Set nested message
       let address = DynamicMessage(descriptor: addressMessage)
       try message.set(address, forField: "address")
       XCTAssertTrue(try message.hasValue(forField: "address"))
 
-      // Очищаем вложенное сообщение
+      // Clear nested message
       try message.clearField("address")
       XCTAssertFalse(try message.hasValue(forField: "address"))
 
-      // Очищаем вложенное сообщение по номеру поля
+      // Clear nested message by field number
       try message.set(address, forField: 3)
       XCTAssertTrue(try message.hasValue(forField: 3))
 
@@ -432,17 +432,17 @@ final class DynamicMessageExtendedTests: XCTestCase {
       XCTAssertFalse(try message.hasValue(forField: 3))
     }
     catch {
-      XCTFail("Не должно быть исключений при очистке вложенного сообщения: \(error)")
+      XCTFail("Should not have exceptions when clearing nested message: \(error)")
     }
   }
 
   // MARK: - Map Key Type Validation Tests
 
   func testMapKeyTypeValidation() {
-    // Создаем различные map поля для тестирования всех типов ключей
+    // Create various map fields for testing all key types
     var messageDesc = MessageDescriptor(name: "MapKeyTest", parent: fileDescriptor)
 
-    // Map с int32 ключом
+    // Map with int32 key
     let int32KeyInfo = KeyFieldInfo(name: "key", number: 1, type: .int32)
     let stringValueInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     messageDesc.addField(
@@ -457,7 +457,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
       )
     )
 
-    // Map с int64 ключом
+    // Map with int64 key
     let int64KeyInfo = KeyFieldInfo(name: "key", number: 1, type: .int64)
     messageDesc.addField(
       FieldDescriptor(
@@ -471,7 +471,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
       )
     )
 
-    // Map с uint32 ключом
+    // Map with uint32 key
     let uint32KeyInfo = KeyFieldInfo(name: "key", number: 1, type: .uint32)
     messageDesc.addField(
       FieldDescriptor(
@@ -485,7 +485,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
       )
     )
 
-    // Map с uint64 ключом
+    // Map with uint64 key
     let uint64KeyInfo = KeyFieldInfo(name: "key", number: 1, type: .uint64)
     messageDesc.addField(
       FieldDescriptor(
@@ -499,7 +499,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
       )
     )
 
-    // Map с bool ключом
+    // Map with bool key
     let boolKeyInfo = KeyFieldInfo(name: "key", number: 1, type: .bool)
     messageDesc.addField(
       FieldDescriptor(
@@ -517,30 +517,30 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
     var message = DynamicMessage(descriptor: messageDesc)
 
-    // Тестируем ошибки типов для int32 ключей
+    // Test type errors for int32 keys
     XCTAssertThrowsError(try message.setMapEntry("value", forKey: "string_key", inField: "int32_map"))
 
-    // Тестируем ошибки типов для int64 ключей
+    // Test type errors for int64 keys
     XCTAssertThrowsError(try message.setMapEntry("value", forKey: "string_key", inField: "int64_map"))
 
-    // Тестируем ошибки типов для uint32 ключей
+    // Test type errors for uint32 keys
     XCTAssertThrowsError(try message.setMapEntry("value", forKey: "string_key", inField: "uint32_map"))
 
-    // Тестируем ошибки типов для uint64 ключей
+    // Test type errors for uint64 keys
     XCTAssertThrowsError(try message.setMapEntry("value", forKey: "string_key", inField: "uint64_map"))
 
-    // Тестируем ошибки типов для bool ключей
+    // Test type errors for bool keys
     XCTAssertThrowsError(try message.setMapEntry("value", forKey: "string_key", inField: "bool_map"))
   }
 
   // MARK: - Invalid Map Key Type Test
 
   func testInvalidMapKeyType() {
-    // Тестируем ошибку DynamicMessageError.invalidMapKeyType напрямую
+    // Test DynamicMessageError.invalidMapKeyType error directly
     let error = DynamicMessageError.invalidMapKeyType(type: .double)
     XCTAssertEqual(error.errorDescription, "Invalid key type double for map field")
 
-    // Тестируем с другими недопустимыми типами
+    // Test with other invalid types
     let floatError = DynamicMessageError.invalidMapKeyType(type: .float)
     XCTAssertEqual(floatError.errorDescription, "Invalid key type float for map field")
 
@@ -551,7 +551,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
   // MARK: - NSNumber Conversion Tests
 
   func testNSNumberConversions() {
-    // Создаем сообщение с полями для NSNumber конверсий
+    // Create message with fields for NSNumber conversions
     var messageDesc = MessageDescriptor(name: "NSNumberTest", parent: fileDescriptor)
     messageDesc.addField(FieldDescriptor(name: "float_field", number: 1, type: .float))
     messageDesc.addField(FieldDescriptor(name: "double_field", number: 2, type: .double))
@@ -561,32 +561,32 @@ final class DynamicMessageExtendedTests: XCTestCase {
     var message = DynamicMessage(descriptor: messageDesc)
 
     do {
-      // Тестируем конверсию NSNumber для float поля
-      let floatNumber = NSNumber(value: 3.14 as Double)  // не Float
+      // Test NSNumber conversion for float field
+      let floatNumber = NSNumber(value: 3.14 as Double)  // not Float
       try message.set(floatNumber, forField: "float_field")
 
       let retrievedFloat = try message.get(forField: "float_field") as? Float
       XCTAssertEqual(retrievedFloat!, 3.14, accuracy: 0.001)
 
-      // Тестируем конверсию NSNumber для double поля
-      let doubleNumber = NSNumber(value: 2.71 as Float)  // не Double
+      // Test NSNumber conversion for double field
+      let doubleNumber = NSNumber(value: 2.71 as Float)  // not Double
       try message.set(doubleNumber, forField: "double_field")
 
       let retrievedDouble = try message.get(forField: "double_field") as? Double
       XCTAssertEqual(retrievedDouble!, 2.71, accuracy: 0.001)
     }
     catch {
-      XCTFail("Не должно быть исключений при конверсии NSNumber: \(error)")
+      XCTFail("Should not have exceptions during NSNumber conversion: \(error)")
     }
   }
 
   // MARK: - Map Key Conversion Tests
 
   func testMapKeyConversions() {
-    // Создаем map поля для тестирования конверсий ключей
+    // Create map fields for testing key conversions
     var messageDesc = MessageDescriptor(name: "MapKeyConversion", parent: fileDescriptor)
 
-    // Map с int32 ключом
+    // Map with int32 key
     let int32KeyInfo = KeyFieldInfo(name: "key", number: 1, type: .int32)
     let stringValueInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     messageDesc.addField(
@@ -601,7 +601,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
       )
     )
 
-    // Map с int64 ключом
+    // Map with int64 key
     let int64KeyInfo = KeyFieldInfo(name: "key", number: 1, type: .int64)
     messageDesc.addField(
       FieldDescriptor(
@@ -615,7 +615,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
       )
     )
 
-    // Map с uint32 ключом
+    // Map with uint32 key
     let uint32KeyInfo = KeyFieldInfo(name: "key", number: 1, type: .uint32)
     messageDesc.addField(
       FieldDescriptor(
@@ -629,7 +629,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
       )
     )
 
-    // Map с uint64 ключом
+    // Map with uint64 key
     let uint64KeyInfo = KeyFieldInfo(name: "key", number: 1, type: .uint64)
     messageDesc.addField(
       FieldDescriptor(
@@ -648,35 +648,35 @@ final class DynamicMessageExtendedTests: XCTestCase {
     var message = DynamicMessage(descriptor: messageDesc)
 
     do {
-      // Тестируем конверсию Int -> Int32 для ключей
+      // Test Int -> Int32 conversion for keys
       try message.setMapEntry("value1", forKey: Int(42), inField: "int32_map")
       let int32Map = try message.get(forField: "int32_map") as? [AnyHashable: String]
       XCTAssertEqual(int32Map?[Int32(42)], "value1")
 
-      // Тестируем конверсию Int -> Int64 для ключей
+      // Test Int -> Int64 conversion for keys
       try message.setMapEntry("value2", forKey: Int(84), inField: "int64_map")
       let int64Map = try message.get(forField: "int64_map") as? [AnyHashable: String]
       XCTAssertEqual(int64Map?[Int64(84)], "value2")
 
-      // Тестируем конверсию UInt -> UInt32 для ключей
+      // Test UInt -> UInt32 conversion for keys
       try message.setMapEntry("value3", forKey: UInt(123), inField: "uint32_map")
       let uint32Map = try message.get(forField: "uint32_map") as? [AnyHashable: String]
       XCTAssertEqual(uint32Map?[UInt32(123)], "value3")
 
-      // Тестируем конверсию UInt -> UInt64 для ключей
+      // Test UInt -> UInt64 conversion for keys
       try message.setMapEntry("value4", forKey: UInt(456), inField: "uint64_map")
       let uint64Map = try message.get(forField: "uint64_map") as? [AnyHashable: String]
       XCTAssertEqual(uint64Map?[UInt64(456)], "value4")
     }
     catch {
-      XCTFail("Не должно быть исключений при конверсии ключей map: \(error)")
+      XCTFail("Should not have exceptions during map key conversion: \(error)")
     }
   }
 
   // MARK: - Map Field Validation Error Tests
 
   func testMapFieldValidationErrors() {
-    // Создаем обычное (не map) поле для тестирования ошибки notMapField
+    // Create normal (non-map) field to test notMapField error
     var normalMessage = MessageDescriptor(name: "NormalMessage", parent: fileDescriptor)
     normalMessage.addField(
       FieldDescriptor(
@@ -690,11 +690,11 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
     var normalDynamicMessage = DynamicMessage(descriptor: normalMessage)
 
-    // Тестируем ошибку notMapField при попытке использовать обычное поле как map
+    // Test notMapField error when trying to use normal field as map
     XCTAssertThrowsError(try normalDynamicMessage.setMapEntry("value", forKey: "key", inField: "normal_field")) {
       error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -702,7 +702,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
         XCTAssertEqual(fieldName, "normal_field")
       }
       else {
-        XCTFail("Ожидалась ошибка notMapField")
+        XCTFail("Expected notMapField error")
       }
     }
   }

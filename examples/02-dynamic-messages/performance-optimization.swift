@@ -24,7 +24,7 @@ import SwiftProtoReflect
 struct PerformanceOptimization {
 
   static func main() throws {
-    ExampleUtils.printHeader("Оптимизация производительности")
+    ExampleUtils.printHeader("Performance Optimization")
 
     try step1UperformanceBenchmarking()
     try step2UmemoryEfficientOperations()
@@ -85,12 +85,12 @@ struct PerformanceOptimization {
   // MARK: - Step 2: Memory-Efficient Operations
 
   private static func step2UmemoryEfficientOperations() throws {
-    ExampleUtils.printStep(2, "Memory-efficient операции с большими datasets")
+    ExampleUtils.printStep(2, "Memory-efficient operations with large datasets")
 
     let fileDescriptor = createLargeDataStructure()
     let factory = MessageFactory()
 
-    print("  🧠 Сравнение memory-efficient подходов:")
+    print("  🧠 Comparing memory-efficient approaches:")
 
     // Naive approach - load everything in memory
     print("\n    📈 Naive approach:")
@@ -136,13 +136,13 @@ struct PerformanceOptimization {
   // MARK: - Step 3: Batch Processing Optimizations
 
   private static func step3UbatchProcessingOptimizations() throws {
-    ExampleUtils.printStep(3, "Batch processing оптимизации")
+    ExampleUtils.printStep(3, "Batch processing optimizations")
 
     let fileDescriptor = createLargeDataStructure()
     let factory = MessageFactory()
     let testData = try createLargeTestDataset(factory: factory, fileDescriptor: fileDescriptor, count: 2000)
 
-    print("  📦 Тестирование batch processing подходов:")
+    print("  📦 Testing batch processing approaches:")
 
     // Single item processing
     print("\n    🐌 Single item processing:")
@@ -185,12 +185,12 @@ struct PerformanceOptimization {
   // MARK: - Step 4: Caching Strategies
 
   private static func step4UcachingStrategies() throws {
-    ExampleUtils.printStep(4, "Caching стратегии для повторяющихся операций")
+    ExampleUtils.printStep(4, "Caching strategies for repeated operations")
 
     let fileDescriptor = createLargeDataStructure()
     let factory = MessageFactory()
 
-    print("  💾 Тестирование caching стратегий:")
+    print("  💾 Testing caching strategies:")
 
     // No caching baseline
     print("\n    🔄 No caching (baseline):")
@@ -247,15 +247,15 @@ struct PerformanceOptimization {
   // MARK: - Step 5: Lazy Loading and Streaming
 
   private static func step5UlazyLoadingAndStreaming() throws {
-    ExampleUtils.printStep(5, "Lazy loading и streaming подходы")
+    ExampleUtils.printStep(5, "Lazy loading and streaming approaches")
 
     let fileDescriptor = createLargeDataStructure()
     let factory = MessageFactory()
 
-    print("  🔄 Демонстрация lazy loading patterns:")
+    print("  🔄 Demonstrating lazy loading patterns:")
 
     // Eager loading
-    print("\n    📥 Eager loading (загрузка всех данных):")
+    print("\n    📥 Eager loading (load all data):")
     let (eagerData, eagerTime) = try ExampleUtils.measureTime {
       try eagerLoadingApproach(factory: factory, fileDescriptor: fileDescriptor, count: 1000)
     }
@@ -263,7 +263,7 @@ struct PerformanceOptimization {
     print("      📊 Loaded: \(eagerData.count) records immediately")
 
     // Lazy loading
-    print("\n    ⏳ Lazy loading (загрузка по требованию):")
+    print("\n    ⏳ Lazy loading (load on demand):")
     let (lazyLoader, lazySetupTime) = ExampleUtils.measureTime {
       LazyMessageLoader(factory: factory, fileDescriptor: fileDescriptor, totalCount: 1000)
     }
@@ -309,12 +309,12 @@ struct PerformanceOptimization {
   // MARK: - Step 6: Advanced Optimization Patterns
 
   private static func step6UadvancedOptimizationPatterns() throws {
-    ExampleUtils.printStep(6, "Advanced оптимизационные patterns")
+    ExampleUtils.printStep(6, "Advanced optimization patterns")
 
     let fileDescriptor = createLargeDataStructure()
     let factory = MessageFactory()
 
-    print("  🚀 Продвинутые техники оптимизации:")
+    print("  🚀 Advanced optimization techniques:")
 
     // Copy-on-write pattern
     print("\n    📋 Copy-on-write pattern:")

@@ -27,12 +27,12 @@ struct ConditionalLogicExample {
   static func main() throws {
     ExampleUtils.printHeader("Conditional Logic Based on Types")
 
-    try step1_typeBasedDecisions()
-    try step2_polymorphicProcessing()
-    try step3_conditionalFieldProcessing()
-    try step4_dynamicDispatch()
-    try step5_patternMatching()
-    try step6_advancedTypeIntrospection()
+    try step1TypeBasedDecisions()
+    try step2PolymorphicProcessing()
+    try step3ConditionalFieldProcessing()
+    try step4DynamicDispatch()
+    try step5PatternMatching()
+    try step6AdvancedTypeIntrospection()
 
     ExampleUtils.printSuccess("You've mastered conditional logic based on types!")
 
@@ -43,7 +43,7 @@ struct ConditionalLogicExample {
     ])
   }
 
-  private static func step1_typeBasedDecisions() throws {
+  private static func step1TypeBasedDecisions() throws {
     ExampleUtils.printStep(1, "Type-based decisions and conditional processing")
 
     let fileDescriptor = createMixedContentStructure()
@@ -70,7 +70,7 @@ struct ConditionalLogicExample {
     ExampleUtils.printTable(stats, title: "Content Type Statistics")
   }
 
-  private static func step2_polymorphicProcessing() throws {
+  private static func step2PolymorphicProcessing() throws {
     ExampleUtils.printStep(2, "Polymorphic processing of different messages")
 
     let fileDescriptor = createShapeHierarchy()
@@ -107,7 +107,7 @@ struct ConditionalLogicExample {
     )
   }
 
-  private static func step3_conditionalFieldProcessing() throws {
+  private static func step3ConditionalFieldProcessing() throws {
     ExampleUtils.printStep(3, "Conditional field processing with type-specific logic")
 
     let fileDescriptor = createUserDataStructure()
@@ -128,7 +128,7 @@ struct ConditionalLogicExample {
       try processUserFieldsConditionally(user)
     }
 
-    // Применение type-specific validations
+    // Apply type-specific validations
     print("\n  ✅ Type-specific validations:")
     let validationResults = try validateUserDataByTypes(userData)
 
@@ -143,23 +143,23 @@ struct ConditionalLogicExample {
     )
   }
 
-  private static func step4_dynamicDispatch() throws {
+  private static func step4DynamicDispatch() throws {
     ExampleUtils.printStep(4, "Dynamic dispatch patterns for types")
 
     let fileDescriptor = createEventSystemStructure()
     let factory = MessageFactory()
 
-    // Создание различных типов событий
+    // Create various event types
     let events = try createVariousEvents(factory: factory, fileDescriptor: fileDescriptor)
 
-    print("  📅 Созданы различные типы событий:")
+    print("  📅 Created various event types:")
     for (index, event) in events.enumerated() {
       print("    Event \(index + 1): \(try getEventType(event))")
     }
 
     print("\n  🚀 Dynamic dispatch processing:")
 
-    // Создание dispatcher'а
+    // Create dispatcher
     let dispatcher = EventDispatcher()
 
     for (index, event) in events.enumerated() {
@@ -167,26 +167,26 @@ struct ConditionalLogicExample {
       try dispatcher.dispatch(event)
     }
 
-    // Статистика dispatch'а
+    // Dispatch statistics
     print("\n  📊 Dispatch statistics:")
     let stats = dispatcher.getStatistics()
     ExampleUtils.printTable(stats, title: "Event Dispatch Stats")
 
-    // Демонстрация custom handlers
+    // Custom handlers demonstration
     print("\n  🔧 Custom handler demonstration:")
     try demonstrateCustomHandlers(dispatcher: dispatcher, events: events)
   }
 
-  private static func step5_patternMatching() throws {
-    ExampleUtils.printStep(5, "Pattern matching для Protocol Buffers типов")
+  private static func step5PatternMatching() throws {
+    ExampleUtils.printStep(5, "Pattern matching for Protocol Buffers types")
 
     let fileDescriptor = createAPIResponseStructure()
     let factory = MessageFactory()
 
-    // Создание различных API responses
+    // Create various API responses
     let responses = try createAPIResponses(factory: factory, fileDescriptor: fileDescriptor)
 
-    print("  🌐 Созданы различные API responses:")
+    print("  🌐 Created various API responses:")
     for (index, response) in responses.enumerated() {
       print("    Response \(index + 1): \(try getResponseType(response))")
     }
@@ -198,7 +198,7 @@ struct ConditionalLogicExample {
       try analyzeResponseWithPatternMatching(response)
     }
 
-    // Демонстрация complex pattern matching
+    // Complex pattern matching demonstration
     print("\n  🔧 Complex pattern matching scenarios:")
     try demonstrateComplexPatternMatching(responses)
 
@@ -208,16 +208,16 @@ struct ConditionalLogicExample {
     ExampleUtils.printTable(patternStats, title: "Pattern Matching Stats")
   }
 
-  private static func step6_advancedTypeIntrospection() throws {
+  private static func step6AdvancedTypeIntrospection() throws {
     ExampleUtils.printStep(6, "Advanced type introspection techniques")
 
     let fileDescriptor = createAdvancedTypeStructure()
     let factory = MessageFactory()
 
-    // Создание сложных типизированных структур
+    // Create complex typed structures
     let complexStructures = try createComplexTypedStructures(factory: factory, fileDescriptor: fileDescriptor)
 
-    print("  🔬 Созданы сложные типизированные структуры:")
+    print("  🔬 Created complex typed structures:")
     for (index, structure) in complexStructures.enumerated() {
       print("    Structure \(index + 1): \(try getStructureSignature(structure))")
     }

@@ -1,19 +1,19 @@
 //
 // RegistryBenchmarks.swift
 //
-// Performance benchmarks для TypeRegistry и DescriptorPool
+// Performance benchmarks for TypeRegistry and DescriptorPool
 //
-// Тестовые случаи:
-// - Type lookup performance в больших реестрах
-// - Registration performance при добавлении множества типов
+// Test cases:
+// - Type lookup performance in large registries
+// - Registration performance when adding many types
 // - Concurrent access performance
-// - Memory usage при больших объемах типов
+// - Memory usage with large type volumes
 
 import XCTest
 
 @testable import SwiftProtoReflect
 
-/// Performance benchmarks для системы реестров типов.
+/// Performance benchmarks for type registry system.
 final class RegistryBenchmarks: XCTestCase {
 
   // MARK: - Test Setup
@@ -34,28 +34,28 @@ final class RegistryBenchmarks: XCTestCase {
   }
 
   private func setupTestTypes() throws {
-    // Создаем большое количество тестовых типов для performance тестирования
+    // Create large number of test types for performance testing
     try createLargeTypeSet()
   }
 
   private func createLargeTypeSet() throws {
-    // Создаем 1000 различных сообщений для performance тестов
+    // Create 1000 different messages for performance tests
     for i in 0..<1000 {
       let fileDescriptor = FileDescriptor(name: "test_\(i).proto", package: "performance.test")
 
-      // Создаем сообщение
+      // Create message
       var messageDescriptor = MessageDescriptor(name: "TestMessage\(i)", parent: fileDescriptor)
       messageDescriptor.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
       messageDescriptor.addField(FieldDescriptor(name: "name", number: 2, type: .string))
       messageDescriptor.addField(FieldDescriptor(name: "data", number: 3, type: .bytes))
 
-      // Создаем enum
+      // Create enum
       var enumDescriptor = EnumDescriptor(name: "TestEnum\(i)", parent: fileDescriptor)
       enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0))
       enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "VALUE_A", number: 1))
       enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "VALUE_B", number: 2))
 
-      // Создаем service
+      // Create service
       var serviceDescriptor = ServiceDescriptor(name: "TestService\(i)", parent: fileDescriptor)
       let methodDescriptor = ServiceDescriptor.MethodDescriptor(
         name: "TestMethod",
@@ -77,7 +77,7 @@ final class RegistryBenchmarks: XCTestCase {
 
   // MARK: - Registration Performance Tests
 
-  /// Performance test для регистрации больших объемов типов.
+  /// Performance test for registering large volumes of types.
   func testBulkTypeRegistrationPerformance() {
     measure {
       let registry = TypeRegistry()
@@ -101,13 +101,13 @@ final class RegistryBenchmarks: XCTestCase {
     }
   }
 
-  /// Performance test для регистрации файлов.
+  /// Performance test for file registration.
   func testFileRegistrationPerformance() {
     measure {
       let registry = TypeRegistry()
 
       do {
-        // Регистрируем первые 100 файлов
+        // Register first 100 files
         for i in 0..<100 {
           let fileDescriptor = FileDescriptor(name: "test_\(i).proto", package: "performance.test")
           try registry.registerFile(fileDescriptor)
@@ -121,15 +121,15 @@ final class RegistryBenchmarks: XCTestCase {
 
   // MARK: - Type Lookup Performance Tests
 
-  /// Performance test для поиска типов по имени.
+  /// Performance test for type lookup by name.
   func testTypeLookupPerformance() throws {
-    // Сначала регистрируем все типы
+    // First register all types
     for message in testMessages {
       try typeRegistry.registerMessage(message)
     }
 
     measure {
-      // Ищем случайные типы
+      // Search for random types
       for i in stride(from: 0, to: 1000, by: 10) {
         let typeName = "performance.test.TestMessage\(i)"
         let _ = typeRegistry.findMessage(named: typeName)
@@ -137,15 +137,15 @@ final class RegistryBenchmarks: XCTestCase {
     }
   }
 
-  /// Performance test для поиска enum типов.
+  /// Performance test for enum type lookup.
   func testEnumLookupPerformance() throws {
-    // Регистрируем все enum'ы
+    // Register all enums
     for enumDesc in testEnums {
       try typeRegistry.registerEnum(enumDesc)
     }
 
     measure {
-      // Ищем случайные enum'ы
+      // Search for random enums
       for i in stride(from: 0, to: 1000, by: 10) {
         let enumName = "performance.test.TestEnum\(i)"
         let _ = typeRegistry.findEnum(named: enumName)
@@ -153,15 +153,15 @@ final class RegistryBenchmarks: XCTestCase {
     }
   }
 
-  /// Performance test для поиска service типов.
+  /// Performance test for service type lookup.
   func testServiceLookupPerformance() throws {
-    // Регистрируем все service'ы
+    // Register all services
     for service in testServices {
       try typeRegistry.registerService(service)
     }
 
     measure {
-      // Ищем случайные service'ы
+      // Search for random services
       for i in stride(from: 0, to: 1000, by: 10) {
         let serviceName = "performance.test.TestService\(i)"
         let _ = typeRegistry.findService(named: serviceName)
@@ -171,9 +171,9 @@ final class RegistryBenchmarks: XCTestCase {
 
   // MARK: - Concurrent Access Performance Tests
 
-  /// Performance test для concurrent доступа к registry.
+  /// Performance test for concurrent registry access.
   func testConcurrentRegistryAccess() throws {
-    // Предварительно регистрируем типы
+    // Pre-register types
     for message in testMessages {
       try typeRegistry.registerMessage(message)
     }
@@ -184,7 +184,7 @@ final class RegistryBenchmarks: XCTestCase {
       let expectation = self.expectation(description: "Concurrent access")
       expectation.expectedFulfillmentCount = 200
 
-      // 100 reader threads + 100 операций поиска
+      // 100 reader threads + 100 search operations
       for i in 0..<100 {
         queue.async {
           let typeName = "performance.test.TestMessage\(i % 100)"
@@ -203,7 +203,7 @@ final class RegistryBenchmarks: XCTestCase {
     }
   }
 
-  /// Performance test для concurrent регистрации.
+  /// Performance test for concurrent registration.
   func testConcurrentRegistrationPerformance() {
     let queue = DispatchQueue.global(qos: .userInitiated)
 
@@ -232,9 +232,9 @@ final class RegistryBenchmarks: XCTestCase {
 
   // MARK: - DescriptorPool Performance Tests
 
-  /// Performance test для создания сообщений через DescriptorPool.
+  /// Performance test for message creation through DescriptorPool.
   func testDescriptorPoolMessageCreationPerformance() throws {
-    // Регистрируем типы в pool с уникальными именами файлов
+    // Register types in pool with unique file names
     for i in testMessages.prefix(100).indices {
       try descriptorPool.addFileDescriptor(FileDescriptor(name: "test\(i).proto", package: "performance.test"))
     }
@@ -259,9 +259,9 @@ final class RegistryBenchmarks: XCTestCase {
     }
   }
 
-  /// Performance test для валидации сообщений.
+  /// Performance test for message validation.
   func testDescriptorPoolValidationPerformance() throws {
-    // Подготавливаем сообщения для валидации
+    // Prepare messages for validation
     var testMessage = MessageFactory().createMessage(from: testMessages[0])
     try testMessage.set(Int32(42), forField: "id")
     try testMessage.set("Test Message", forField: "name")
@@ -276,13 +276,13 @@ final class RegistryBenchmarks: XCTestCase {
 
   // MARK: - Memory Usage Tests
 
-  /// Memory usage test для больших registry.
+  /// Memory usage test for large registries.
   func testLargeRegistryMemoryUsage() throws {
     measure {
       let registry = TypeRegistry()
 
       do {
-        // Регистрируем все типы и измеряем memory impact
+        // Register all types and measure memory impact
         for message in testMessages {
           try registry.registerMessage(message)
         }
@@ -295,7 +295,7 @@ final class RegistryBenchmarks: XCTestCase {
           try registry.registerService(service)
         }
 
-        // Выполняем операции поиска для проверки memory stability
+        // Perform search operations to check memory stability
         for i in 0..<100 {
           let typeName = "performance.test.TestMessage\(i)"
           let _ = registry.findMessage(named: typeName)
@@ -309,22 +309,22 @@ final class RegistryBenchmarks: XCTestCase {
 
   // MARK: - Cache Performance Tests
 
-  /// Performance test для эффективности кэширования типов.
+  /// Performance test for type cache efficiency.
   func testTypeCacheEfficiency() throws {
-    // Регистрируем типы
+    // Register types
     for message in testMessages.prefix(100) {
       try typeRegistry.registerMessage(message)
     }
 
-    // Первый прогон - заполняем кэш
+    // First run - populate cache
     for i in 0..<100 {
       let typeName = "performance.test.TestMessage\(i)"
       let _ = typeRegistry.findMessage(named: typeName)
     }
 
-    // Второй прогон - тестируем cached lookups
+    // Second run - test cached lookups
     measure {
-      for _ in 0..<10 {  // Повторяем поиск для проверки cache hit
+      for _ in 0..<10 {  // Repeat search to check cache hit
         for i in 0..<100 {
           let typeName = "performance.test.TestMessage\(i)"
           let _ = typeRegistry.findMessage(named: typeName)
@@ -335,9 +335,9 @@ final class RegistryBenchmarks: XCTestCase {
 
   // MARK: - Stress Tests
 
-  /// Stress test для большого количества одновременных операций.
+  /// Stress test for large number of concurrent operations.
   func testHighVolumeOperationsStress() throws {
-    // Предварительная регистрация
+    // Pre-registration
     for message in testMessages.prefix(500) {
       try typeRegistry.registerMessage(message)
     }
@@ -348,7 +348,7 @@ final class RegistryBenchmarks: XCTestCase {
       let expectation = self.expectation(description: "High volume operations")
       expectation.expectedFulfillmentCount = 1000
 
-      // 1000 параллельных операций поиска
+      // 1000 parallel search operations
       for i in 0..<1000 {
         queue.async {
           let typeName = "performance.test.TestMessage\(i % 500)"
@@ -365,7 +365,7 @@ final class RegistryBenchmarks: XCTestCase {
 
   /// Comparison between different lookup strategies.
   func testLookupStrategyComparison() throws {
-    // Регистрируем типы
+    // Register types
     for message in testMessages.prefix(100) {
       try typeRegistry.registerMessage(message)
     }
@@ -373,7 +373,7 @@ final class RegistryBenchmarks: XCTestCase {
     var directLookupTimes: [TimeInterval] = []
     var iterativeLookupTimes: [TimeInterval] = []
 
-    // Direct lookup через registry
+    // Direct lookup through registry
     for _ in 0..<10 {
       let startTime = Date()
       for i in 0..<100 {
@@ -383,7 +383,7 @@ final class RegistryBenchmarks: XCTestCase {
       directLookupTimes.append(Date().timeIntervalSince(startTime))
     }
 
-    // Iterative lookup через getAllMessages
+    // Iterative lookup through getAllMessages
     for _ in 0..<10 {
       let startTime = Date()
       for i in 0..<100 {
@@ -401,10 +401,10 @@ final class RegistryBenchmarks: XCTestCase {
     print("Iterative lookup average time: \(avgIterativeTime * 1000) ms")
     print("Performance ratio (Iterative/Direct): \(avgIterativeTime / avgDirectTime)")
 
-    // Direct lookup должен быть значительно быстрее
+    // Direct lookup should be significantly faster
     XCTAssertLessThan(avgDirectTime, avgIterativeTime, "Direct lookup should be much faster than iterative")
 
-    // Проверяем, что iterative поиск как минимум в 2 раза медленнее прямого
+    // Check that iterative search is at least 2x slower than direct
     XCTAssertGreaterThan(
       avgIterativeTime / avgDirectTime,
       2.0,

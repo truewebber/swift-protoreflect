@@ -2,7 +2,7 @@
  * StructHandlerTests.swift
  * SwiftProtoReflectTests
  *
- * Тесты для StructHandler - обработчика google.protobuf.Struct
+ * Tests for StructHandler - handler for google.protobuf.Struct
  */
 
 import XCTest
@@ -14,12 +14,12 @@ final class StructHandlerTests: XCTestCase {
   // MARK: - StructValue Tests
 
   func testStructValueInitialization() {
-    // Пустая структура
+    // Empty struct
     let emptyStruct = StructHandler.StructValue()
     XCTAssertTrue(emptyStruct.fields.isEmpty)
     XCTAssertEqual(emptyStruct.description, "Struct(empty)")
 
-    // Структура с полями
+    // Struct with fields
     let fields: [String: StructHandler.ValueValue] = [
       "name": .stringValue("John"),
       "age": .numberValue(30),
@@ -50,7 +50,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertEqual(structValue.getValue("active"), .boolValue(true))
     XCTAssertEqual(structValue.getValue("score"), .numberValue(95.5))
 
-    // Проверяем вложенную структуру
+    // Check nested struct
     if case .structValue(let metadata) = structValue.getValue("metadata") {
       XCTAssertEqual(metadata.getValue("created"), .stringValue("2023-01-01"))
       if case .listValue(let tags) = metadata.getValue("tags") {
@@ -283,7 +283,7 @@ final class StructHandlerTests: XCTestCase {
 
     XCTAssertEqual(dynamicMessage.descriptor.fullName, "google.protobuf.Struct")
 
-    // Данные теперь хранятся как JSON в bytes поле
+    // Data is now stored as JSON in bytes field
     let fieldsData = try dynamicMessage.get(forField: "fields") as! Data
     let fieldsObject = try JSONSerialization.jsonObject(with: fieldsData, options: [])
     let fields = fieldsObject as! [String: Any]
@@ -652,11 +652,11 @@ final class StructHandlerTests: XCTestCase {
       parent: fileDescriptor
     )
 
-    // Соответствует реализации StructHandler - bytes поле для JSON данных
+    // Matches StructHandler implementation - bytes field for JSON data
     let fieldsField = FieldDescriptor(
       name: "fields",
       number: 1,
-      type: .bytes  // JSON сериализованные данные
+      type: .bytes  // JSON serialized data
     )
     messageDescriptor.addField(fieldsField)
 
@@ -666,7 +666,7 @@ final class StructHandlerTests: XCTestCase {
     var message = factory.createMessage(from: messageDescriptor)
 
     if !fields.isEmpty {
-      // Сериализуем поля в JSON как Data
+      // Serialize fields to JSON as Data
       let jsonData = try JSONSerialization.data(withJSONObject: fields, options: [])
       try message.set(jsonData, forField: "fields")
     }

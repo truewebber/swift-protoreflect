@@ -2,7 +2,7 @@
 // StaticMessageBridgeTests.swift
 // SwiftProtoReflectTests
 //
-// Создан: 2025-05-25
+// Created: 2025-05-25
 //
 
 import SwiftProtobuf
@@ -24,7 +24,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     super.setUp()
     bridge = StaticMessageBridge()
 
-    // Создаем тестовые дескрипторы
+    // Create test descriptors
     fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
 
     personDescriptor = MessageDescriptor(name: "Person", parent: fileDescriptor)
@@ -52,24 +52,24 @@ final class StaticMessageBridgeTests: XCTestCase {
   // MARK: - Dynamic to Static Conversion Tests
 
   func testDynamicToStaticConversion() throws {
-    // Создаем динамическое сообщение
+    // Create dynamic message
     var dynamicMessage = DynamicMessage(descriptor: personDescriptor)
     try dynamicMessage.set("John Doe", forField: "name")
     try dynamicMessage.set(Int32(30), forField: "age")
     try dynamicMessage.set("john@example.com", forField: "email")
 
-    // Конвертируем в статическое сообщение (используем Google_Protobuf_Empty как заглушку)
-    // В реальном тесте здесь должен быть соответствующий статический тип
+    // Convert to static message (using Google_Protobuf_Empty as placeholder)
+    // In real test there should be corresponding static type
     let staticMessage = try bridge.toStaticMessage(from: dynamicMessage, as: Google_Protobuf_Empty.self)
 
     XCTAssertNotNil(staticMessage)
   }
 
   func testDynamicToStaticConversionWithEmptyMessage() throws {
-    // Создаем пустое динамическое сообщение
+    // Create empty dynamic message
     let dynamicMessage = DynamicMessage(descriptor: personDescriptor)
 
-    // Конвертируем в статическое сообщение
+    // Convert to static message
     let staticMessage = try bridge.toStaticMessage(from: dynamicMessage, as: Google_Protobuf_Empty.self)
 
     XCTAssertNotNil(staticMessage)
@@ -78,20 +78,20 @@ final class StaticMessageBridgeTests: XCTestCase {
   // MARK: - Static to Dynamic Conversion Tests
 
   func testStaticToDynamicConversion() throws {
-    // Создаем статическое сообщение
+    // Create static message
     let staticMessage = Google_Protobuf_Empty()
 
-    // Конвертируем в динамическое сообщение
+    // Convert to dynamic message
     let dynamicMessage = try bridge.toDynamicMessage(from: staticMessage, using: personDescriptor)
 
     XCTAssertEqual(dynamicMessage.descriptor.name, personDescriptor.name)
   }
 
   func testStaticToDynamicConversionWithAutoDescriptor() throws {
-    // Создаем статическое сообщение
+    // Create static message
     let staticMessage = Google_Protobuf_Empty()
 
-    // Конвертируем в динамическое сообщение с автоматическим созданием дескриптора
+    // Convert to dynamic message with automatic descriptor creation
     let dynamicMessage = try bridge.toDynamicMessage(from: staticMessage)
 
     XCTAssertNotNil(dynamicMessage)
@@ -101,10 +101,10 @@ final class StaticMessageBridgeTests: XCTestCase {
   // MARK: - Batch Conversion Tests
 
   func testBatchStaticToDynamicConversion() throws {
-    // Создаем массив статических сообщений
+    // Create array of static messages
     let staticMessages = [Google_Protobuf_Empty(), Google_Protobuf_Empty()]
 
-    // Конвертируем в массив динамических сообщений
+    // Convert to array of dynamic messages
     let dynamicMessages = try bridge.toDynamicMessages(from: staticMessages, using: personDescriptor)
 
     XCTAssertEqual(dynamicMessages.count, 2)
@@ -113,19 +113,19 @@ final class StaticMessageBridgeTests: XCTestCase {
   }
 
   func testBatchDynamicToStaticConversion() throws {
-    // Создаем массив динамических сообщений
+    // Create array of dynamic messages
     let dynamicMessage1 = DynamicMessage(descriptor: personDescriptor)
     let dynamicMessage2 = DynamicMessage(descriptor: personDescriptor)
     let dynamicMessages = [dynamicMessage1, dynamicMessage2]
 
-    // Конвертируем в массив статических сообщений
+    // Convert to array of static messages
     let staticMessages = try bridge.toStaticMessages(from: dynamicMessages, as: Google_Protobuf_Empty.self)
 
     XCTAssertEqual(staticMessages.count, 2)
   }
 
   func testEmptyBatchConversion() throws {
-    // Тестируем конвертацию пустых массивов
+    // Test conversion of empty arrays
     let emptyStaticMessages: [Google_Protobuf_Empty] = []
     let emptyDynamicMessages: [DynamicMessage] = []
 
@@ -143,8 +143,8 @@ final class StaticMessageBridgeTests: XCTestCase {
 
     let isCompatible = bridge.isCompatible(staticMessage: staticMessage, with: personDescriptor)
 
-    // Совместимость зависит от реализации, но метод должен работать без ошибок
-    XCTAssertTrue(isCompatible || !isCompatible)  // Просто проверяем, что метод не падает
+    // Compatibility depends on implementation, but method should work without errors
+    XCTAssertTrue(isCompatible || !isCompatible)  // Simply check that method doesn't crash
   }
 
   func testCompatibilityCheckDynamicWithStatic() {
@@ -152,54 +152,54 @@ final class StaticMessageBridgeTests: XCTestCase {
 
     let isCompatible = bridge.isCompatible(dynamicMessage: dynamicMessage, with: Google_Protobuf_Empty.self)
 
-    // Совместимость зависит от реализации, но метод должен работать без ошибок
-    XCTAssertTrue(isCompatible || !isCompatible)  // Просто проверяем, что метод не падает
+    // Compatibility depends on implementation, but method should work without errors
+    XCTAssertTrue(isCompatible || !isCompatible)  // Simply check that method doesn't crash
   }
 
   // MARK: - Round-trip Tests
 
   func testRoundTripConversion() throws {
-    // Создаем динамическое сообщение с данными
+    // Create dynamic message with data
     var originalDynamic = DynamicMessage(descriptor: personDescriptor)
     try originalDynamic.set("Alice", forField: "name")
     try originalDynamic.set(Int32(25), forField: "age")
 
-    // Конвертируем в статическое и обратно
+    // Convert to static and back
     let staticMessage = try bridge.toStaticMessage(from: originalDynamic, as: Google_Protobuf_Empty.self)
     let resultDynamic = try bridge.toDynamicMessage(from: staticMessage, using: personDescriptor)
 
-    // Проверяем, что структура сохранилась
+    // Verify structure is preserved
     XCTAssertEqual(resultDynamic.descriptor.name, originalDynamic.descriptor.name)
   }
 
   // MARK: - Error Handling Tests
 
   func testSerializationError() {
-    // Создаем дескриптор с некорректными данными для провоцирования ошибки
+    // Create descriptor with invalid data to provoke error
     let invalidDescriptor = MessageDescriptor(name: "Invalid")
     var dynamicMessage = DynamicMessage(descriptor: invalidDescriptor)
 
-    // Добавляем некорректные данные в сообщение
+    // Add invalid data to message
     do {
       try dynamicMessage.set("invalid_value", forField: "nonexistent_field")
       XCTFail("Expected error when setting field that doesn't exist")
     }
     catch {
-      // Ожидаемая ошибка при попытке установить несуществующее поле
+      // Expected error when trying to set non-existent field
       XCTAssertTrue(error is DynamicMessageError)
     }
   }
 
   func testDescriptorCreationError() {
-    // Тестируем создание дескриптора из статического сообщения
+    // Test descriptor creation from static message
     let staticMessage = Google_Protobuf_Empty()
 
-    // Метод должен работать, но может выбросить ошибку в зависимости от реализации
+    // Method should work but may throw error depending on implementation
     do {
       _ = try bridge.toDynamicMessage(from: staticMessage)
     }
     catch {
-      // Ошибка ожидаема, так как автоматическое создание дескриптора не полностью реализовано
+      // Error expected as automatic descriptor creation is not fully implemented
       XCTAssertTrue(error is StaticMessageBridgeError)
     }
   }
@@ -210,7 +210,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     var dynamicMessage = DynamicMessage(descriptor: personDescriptor)
     try dynamicMessage.set("Bob", forField: "name")
 
-    // Тестируем расширение DynamicMessage
+    // Test DynamicMessage extension
     let staticMessage = try dynamicMessage.toStaticMessage(as: Google_Protobuf_Empty.self)
     XCTAssertNotNil(staticMessage)
   }
@@ -218,7 +218,7 @@ final class StaticMessageBridgeTests: XCTestCase {
   func testStaticMessageExtension() throws {
     let staticMessage = Google_Protobuf_Empty()
 
-    // Тестируем расширение SwiftProtobuf.Message
+    // Test SwiftProtobuf.Message extension
     let dynamicMessage = try staticMessage.toDynamicMessage(using: personDescriptor)
     XCTAssertEqual(dynamicMessage.descriptor.name, personDescriptor.name)
   }
@@ -226,12 +226,12 @@ final class StaticMessageBridgeTests: XCTestCase {
   func testStaticMessageExtensionWithAutoDescriptor() {
     let staticMessage = Google_Protobuf_Empty()
 
-    // Тестируем расширение с автоматическим созданием дескриптора
+    // Test extension with automatic descriptor creation
     do {
       _ = try staticMessage.toDynamicMessage()
     }
     catch {
-      // Ошибка ожидаема, так как автоматическое создание дескриптора не полностью реализовано
+      // Error expected as automatic descriptor creation is not fully implemented
       XCTAssertTrue(error is StaticMessageBridgeError)
     }
   }
@@ -256,14 +256,14 @@ final class StaticMessageBridgeTests: XCTestCase {
   // MARK: - Performance Tests
 
   func testConversionPerformance() throws {
-    // Создаем тестовые данные
+    // Create test data
     var dynamicMessage = DynamicMessage(descriptor: personDescriptor)
     try dynamicMessage.set("Performance Test", forField: "name")
     try dynamicMessage.set(Int32(42), forField: "age")
 
     measure {
       do {
-        // Измеряем производительность конвертации
+        // Measure conversion performance
         let staticMessage = try bridge.toStaticMessage(from: dynamicMessage, as: Google_Protobuf_Empty.self)
         _ = try bridge.toDynamicMessage(from: staticMessage, using: personDescriptor)
       }
@@ -274,7 +274,7 @@ final class StaticMessageBridgeTests: XCTestCase {
   }
 
   func testBatchConversionPerformance() throws {
-    // Создаем массив тестовых данных
+    // Create array of test data
     var dynamicMessages: [DynamicMessage] = []
     for i in 0..<100 {
       var message = DynamicMessage(descriptor: personDescriptor)
@@ -285,7 +285,7 @@ final class StaticMessageBridgeTests: XCTestCase {
 
     measure {
       do {
-        // Измеряем производительность batch конвертации
+        // Measure batch conversion performance
         let staticMessages = try bridge.toStaticMessages(from: dynamicMessages, as: Google_Protobuf_Empty.self)
         _ = try bridge.toDynamicMessages(from: staticMessages, using: personDescriptor)
       }
@@ -298,81 +298,81 @@ final class StaticMessageBridgeTests: XCTestCase {
   // MARK: - Additional Coverage Tests
 
   func testCompatibilityCheckWithIncompatibleTypes() throws {
-    // Создаем несовместимые типы для тестирования error paths в isCompatible методах
+    // Create incompatible types to test error paths in isCompatible methods
 
-    // Создаем дескриптор с полями, которые не соответствуют Google_Protobuf_Empty
+    // Create descriptor with fields that don't match Google_Protobuf_Empty
     var incompatibleDescriptor = MessageDescriptor(name: "IncompatibleMessage")
     incompatibleDescriptor.addField(FieldDescriptor(name: "required_field", number: 1, type: .string, isRequired: true))
 
-    // Создаем статическое сообщение, которое не может быть сериализовано с этим дескриптором
+    // Create static message that cannot be serialized with this descriptor
     let staticMessage = Google_Protobuf_Empty()
 
-    // Тестируем isCompatible с несовместимыми типами (должно покрыть строку 134)
+    // Test isCompatible with incompatible types (should cover line 134)
     let isCompatible = bridge.isCompatible(staticMessage: staticMessage, with: incompatibleDescriptor)
 
-    // В реальности Google_Protobuf_Empty может быть совместим с любым дескриптором,
-    // так как он не содержит данных. Проверяем, что метод не падает
-    XCTAssertTrue(isCompatible || !isCompatible)  // Просто проверяем, что метод работает
+    // In reality Google_Protobuf_Empty may be compatible with any descriptor,
+    // as it contains no data. Verify method doesn't crash
+    XCTAssertTrue(isCompatible || !isCompatible)  // Simply check that method works
   }
 
   func testCompatibilityCheckDynamicWithIncompatibleStatic() throws {
-    // Создаем динамическое сообщение с данными, которые не могут быть десериализованы в Google_Protobuf_Empty
+    // Create dynamic message with data that cannot be deserialized to Google_Protobuf_Empty
     var dynamicMessage = DynamicMessage(descriptor: personDescriptor)
     try dynamicMessage.set("John", forField: "name")
     try dynamicMessage.set(Int32(30), forField: "age")
 
-    // Создаем mock статический тип, который не может десериализовать эти данные
-    // Google_Protobuf_Empty не имеет полей, поэтому сериализованные данные с полями должны вызвать ошибку
+    // Create mock static type that cannot deserialize this data
+    // Google_Protobuf_Empty has no fields, so serialized data with fields should cause error
     let isCompatible = bridge.isCompatible(dynamicMessage: dynamicMessage, with: Google_Protobuf_Empty.self)
 
-    // Ожидаем, что совместимость будет true, так как Google_Protobuf_Empty игнорирует неизвестные поля
-    // Но если возникнет ошибка, то false (покрывает строку 153)
-    XCTAssertTrue(isCompatible || !isCompatible)  // Проверяем, что метод не падает
+    // Expect compatibility to be true as Google_Protobuf_Empty ignores unknown fields
+    // But if error occurs, then false (covers line 153)
+    XCTAssertTrue(isCompatible || !isCompatible)  // Verify method doesn't crash
   }
 
   func testCompatibilityWithCorruptedData() throws {
-    // Создаем дескриптор с некорректной структурой для провоцирования ошибки
+    // Create descriptor with invalid structure to provoke error
     let corruptedDescriptor = MessageDescriptor(name: "CorruptedMessage")
-    // Не добавляем поля, что может вызвать проблемы при сериализации
+    // Don't add fields which may cause problems during serialization
 
     let staticMessage = Google_Protobuf_Empty()
 
-    // Тестируем совместимость с некорректным дескриптором
+    // Test compatibility with invalid descriptor
     let isCompatible = bridge.isCompatible(staticMessage: staticMessage, with: corruptedDescriptor)
 
-    // Метод должен обработать ошибку и вернуть результат
+    // Method should handle error and return result
     XCTAssertTrue(isCompatible || !isCompatible)
   }
 
   func testCompatibilityWithInvalidDynamicMessage() throws {
-    // Создаем динамическое сообщение с некорректными данными
+    // Create dynamic message with invalid data
     let invalidDescriptor = MessageDescriptor(name: "InvalidMessage")
     let dynamicMessage = DynamicMessage(descriptor: invalidDescriptor)
 
-    // Пытаемся установить некорректные данные (это может не сработать, но попробуем)
-    // Создаем сообщение без полей, что может вызвать проблемы при сериализации
+    // Try to set invalid data (may not work, but let's try)
+    // Create message without fields which may cause problems during serialization
 
-    // Тестируем совместимость с некорректным динамическим сообщением
+    // Test compatibility with invalid dynamic message
     let isCompatible = bridge.isCompatible(dynamicMessage: dynamicMessage, with: Google_Protobuf_Empty.self)
 
-    // Метод должен обработать любые ошибки и вернуть результат
+    // Method should handle any errors and return result
     XCTAssertTrue(isCompatible || !isCompatible)
   }
 
   func testErrorHandlingInValidationMethods() {
-    // Создаем условия, которые могут вызвать ошибки в методах валидации
+    // Create conditions that may cause errors in validation methods
 
-    // Тест 1: Статическое сообщение с дескриптором, который требует поля, которых нет в сообщении
+    // Test 1: Static message with descriptor requiring fields that are not in message
     var strictDescriptor = MessageDescriptor(name: "StrictMessage")
     strictDescriptor.addField(FieldDescriptor(name: "mandatory_field", number: 1, type: .string, isRequired: true))
 
     let emptyMessage = Google_Protobuf_Empty()
 
-    // Этот вызов может вызвать ошибку при попытке конвертации
+    // This call may cause error during conversion attempt
     let result1 = bridge.isCompatible(staticMessage: emptyMessage, with: strictDescriptor)
-    XCTAssertTrue(result1 || !result1)  // Просто проверяем, что метод не падает
+    XCTAssertTrue(result1 || !result1)  // Simply check that method doesn't crash
 
-    // Тест 2: Динамическое сообщение с данными, которые не могут быть корректно десериализованы
+    // Test 2: Dynamic message with data that cannot be correctly deserialized
     var complexDescriptor = MessageDescriptor(name: "ComplexMessage")
     complexDescriptor.addField(
       FieldDescriptor(name: "complex_field", number: 1, type: .message, typeName: "NonExistentType")
@@ -380,33 +380,33 @@ final class StaticMessageBridgeTests: XCTestCase {
 
     let complexMessage = DynamicMessage(descriptor: complexDescriptor)
 
-    // Этот вызов может вызвать ошибку при попытке конвертации
+    // This call may cause error during conversion attempt
     let result2 = bridge.isCompatible(dynamicMessage: complexMessage, with: Google_Protobuf_Empty.self)
-    XCTAssertTrue(result2 || !result2)  // Просто проверяем, что метод не падает
+    XCTAssertTrue(result2 || !result2)  // Simply check that method doesn't crash
   }
 
   func testEdgeCasesInCompatibilityChecks() {
-    // Тестируем граничные случаи для полного покрытия error paths
+    // Test edge cases for full error path coverage
 
-    // Создаем дескриптор с максимально сложной структурой
+    // Create descriptor with maximally complex structure
     var complexDescriptor = MessageDescriptor(name: "EdgeCaseMessage")
     complexDescriptor.addField(FieldDescriptor(name: "field1", number: 1, type: .string))
     complexDescriptor.addField(FieldDescriptor(name: "field2", number: 2, type: .int32, isRepeated: true))
     complexDescriptor.addField(FieldDescriptor(name: "field3", number: 3, type: .bool, isRequired: true))
 
-    // Тестируем с пустым статическим сообщением
+    // Test with empty static message
     let emptyStatic = Google_Protobuf_Empty()
     let compatibility1 = bridge.isCompatible(staticMessage: emptyStatic, with: complexDescriptor)
     XCTAssertTrue(compatibility1 || !compatibility1)
 
-    // Создаем динамическое сообщение с частично заполненными данными
+    // Create dynamic message with partially filled data
     var partialDynamic = DynamicMessage(descriptor: complexDescriptor)
     do {
       try partialDynamic.set("test", forField: "field1")
-      // Не устанавливаем обязательное поле field3
+      // Don't set required field field3
     }
     catch {
-      // Игнорируем ошибки установки полей
+      // Ignore field setting errors
     }
 
     let compatibility2 = bridge.isCompatible(dynamicMessage: partialDynamic, with: Google_Protobuf_Empty.self)

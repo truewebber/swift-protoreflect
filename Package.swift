@@ -27,12 +27,12 @@ let package = Package(
       dependencies: [
         .product(name: "SwiftProtobuf", package: "swift-protobuf"),
         .product(name: "GRPC", package: "grpc-swift"),
-        
+
         // NIO
         .product(name: "NIOCore", package: "swift-nio"),
         .product(name: "NIOFoundationCompat", package: "swift-nio"),
 
-        // HPACK из nio-http2
+        // HPACK from nio-http2
         .product(name: "NIOHTTP2", package: "swift-nio-http2"),
 
         // swift-log

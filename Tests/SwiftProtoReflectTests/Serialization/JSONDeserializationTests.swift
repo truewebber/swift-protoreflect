@@ -1,13 +1,13 @@
 //
 // JSONDeserializationTests.swift
 //
-// Тесты для проверки JSON десериализации Protocol Buffers
+// Tests for JSON deserialization of Protocol Buffers
 //
-// Тестовые случаи из плана:
-// - Test-JSON-Deser-001: JSON десериализация всех типов данных с round-trip тестированием
-// - Test-JSON-Deser-002: Обработка специальных значений (Infinity, NaN, base64) из JSON
-// - Test-JSON-Deser-003: Корректная обработка ошибок и валидация JSON данных
-// - Test-JSON-Deser-004: Round-trip совместимость с JSONSerializer
+// Test cases from the plan:
+// - Test-JSON-Deser-001: JSON deserialization of all data types with round-trip testing
+// - Test-JSON-Deser-002: Handling special values (Infinity, NaN, base64) from JSON
+// - Test-JSON-Deser-003: Correct error handling and JSON data validation
+// - Test-JSON-Deser-004: Round-trip compatibility with JSONSerializer
 
 import XCTest
 
@@ -40,7 +40,7 @@ final class JSONDeserializationTests: XCTestCase {
   // MARK: - Round-trip Tests (Test-JSON-Deser-004)
 
   func testRoundTripAllScalarTypes() throws {
-    // Создаем сообщение со всеми скалярными типами
+    // Create message with all scalar types
     var scalarMessage = MessageDescriptor(name: "ScalarMessage", parent: fileDescriptor)
 
     scalarMessage.addField(FieldDescriptor(name: "double_field", number: 1, type: .double))
@@ -55,7 +55,7 @@ final class JSONDeserializationTests: XCTestCase {
 
     fileDescriptor.addMessage(scalarMessage)
 
-    // Создаем оригинальное сообщение
+    // Create original message
     let originalValues: [String: Any] = [
       "double_field": 3.14159,
       "float_field": Float(2.718),
@@ -74,7 +74,7 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = try serializer.serialize(originalMessage)
     let deserializedMessage = try deserializer.deserialize(jsonData, using: scalarMessage)
 
-    // Проверяем все поля
+    // Verify all fields
     let originalAccess = FieldAccessor(originalMessage)
     let deserializedAccess = FieldAccessor(deserializedMessage)
 
@@ -147,7 +147,7 @@ final class JSONDeserializationTests: XCTestCase {
     let _ = FieldAccessor(originalMessage)
     let deserializedAccess = FieldAccessor(deserializedMessage)
 
-    // Проверяем специальные значения
+    // Verify special values
     let doubleInfinity = deserializedAccess.getValue("double_infinity", as: Double.self)!
     XCTAssertTrue(doubleInfinity.isInfinite && doubleInfinity > 0)
 
@@ -205,7 +205,7 @@ final class JSONDeserializationTests: XCTestCase {
   }
 
   func testRoundTripMapFields() throws {
-    // Создаем map поле: map<string, int32>
+    // Create map field: map<string, int32>
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -358,7 +358,7 @@ final class JSONDeserializationTests: XCTestCase {
   }
 
   func testDeserializeMapFieldsFromJSON() throws {
-    // Создаем map поле: map<string, int32>
+    // Create map field: map<string, int32>
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -398,7 +398,7 @@ final class JSONDeserializationTests: XCTestCase {
   }
 
   func testDeserializeMapWithIntegerKeysFromJSON() throws {
-    // Создаем map поле: map<int32, string>
+    // Create map field: map<int32, string>
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .int32)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -500,7 +500,7 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    // С игнорированием неизвестных полей (по умолчанию)
+    // With ignoring unknown fields (default)
     let ignoreUnknownDeserializer = JSONDeserializer(options: JSONDeserializationOptions(ignoreUnknownFields: true))
     let deserializedMessage = try ignoreUnknownDeserializer.deserialize(jsonData, using: message)
 
@@ -522,7 +522,7 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    // Без игнорирования неизвестных полей
+    // Without ignoring unknown fields
     let strictDeserializer = JSONDeserializer(options: JSONDeserializationOptions(ignoreUnknownFields: false))
 
     XCTAssertThrowsError(try strictDeserializer.deserialize(jsonData, using: message)) { error in
@@ -554,7 +554,7 @@ final class JSONDeserializationTests: XCTestCase {
       if let jsonError = error as? JSONDeserializationError,
         case .invalidJSON = jsonError
       {
-        // Ожидаемая ошибка
+        // Expected error
       }
       else {
         XCTFail("Expected invalidJSON error, got: \(error)")
@@ -567,7 +567,7 @@ final class JSONDeserializationTests: XCTestCase {
     message.addField(FieldDescriptor(name: "test_field", number: 1, type: .string))
     fileDescriptor.addMessage(message)
 
-    // JSON не является объектом (это массив)
+    // JSON is not an object (it's an array)
     let arrayJsonData = "[1, 2, 3]".data(using: .utf8)!
 
     XCTAssertThrowsError(try deserializer.deserialize(arrayJsonData, using: message)) { error in
@@ -593,7 +593,7 @@ final class JSONDeserializationTests: XCTestCase {
     message.addField(FieldDescriptor(name: "bool_field", number: 6, type: .bool))
     fileDescriptor.addMessage(message)
 
-    // Тест для double с неверным типом
+    // Test for double with wrong type
     let doubleErrorJson = """
       {
         "double_field": []
@@ -613,7 +613,7 @@ final class JSONDeserializationTests: XCTestCase {
       }
     }
 
-    // Тест для int32 с неверным типом
+    // Test for int32 with wrong type
     let int32ErrorJson = """
       {
         "int32_field": {}
@@ -633,7 +633,7 @@ final class JSONDeserializationTests: XCTestCase {
       }
     }
 
-    // Тест для int64 с неверным типом
+    // Test for int64 with wrong type
     let int64ErrorJson = """
       {
         "int64_field": []
@@ -653,7 +653,7 @@ final class JSONDeserializationTests: XCTestCase {
       }
     }
 
-    // Тест для uint32 с неверным типом
+    // Test for uint32 with wrong type
     let uint32ErrorJson = """
       {
         "uint32_field": null
@@ -673,7 +673,7 @@ final class JSONDeserializationTests: XCTestCase {
       }
     }
 
-    // Тест для uint64 с неверным типом
+    // Test for uint64 with wrong type
     let uint64ErrorJson = """
       {
         "uint64_field": []
@@ -693,7 +693,7 @@ final class JSONDeserializationTests: XCTestCase {
       }
     }
 
-    // Тест для bool с неверным типом
+    // Test for bool with wrong type
     let boolErrorJson = """
       {
         "bool_field": "not a bool"
@@ -724,7 +724,7 @@ final class JSONDeserializationTests: XCTestCase {
     message.addField(FieldDescriptor(name: "float_field", number: 6, type: .float))
     fileDescriptor.addMessage(message)
 
-    // Тест для int32 с невалидным форматом строки
+    // Test for int32 with invalid string format
     let int32ErrorJson = """
       {
         "int32_field": "not_a_number"
@@ -743,7 +743,7 @@ final class JSONDeserializationTests: XCTestCase {
       }
     }
 
-    // Тест для int64 с невалидным форматом строки
+    // Test for int64 with invalid string format
     let int64ErrorJson = """
       {
         "int64_field": "invalid_int64"
@@ -762,7 +762,7 @@ final class JSONDeserializationTests: XCTestCase {
       }
     }
 
-    // Тест для uint32 с невалидным форматом строки
+    // Test for uint32 with invalid string format
     let uint32ErrorJson = """
       {
         "uint32_field": "invalid_uint32"
@@ -781,7 +781,7 @@ final class JSONDeserializationTests: XCTestCase {
       }
     }
 
-    // Тест для uint64 с невалидным форматом строки
+    // Test for uint64 with invalid string format
     let uint64ErrorJson = """
       {
         "uint64_field": "invalid_uint64"
@@ -800,7 +800,7 @@ final class JSONDeserializationTests: XCTestCase {
       }
     }
 
-    // Тест для double с невалидным форматом строки
+    // Test for double with invalid string format
     let doubleErrorJson = """
       {
         "double_field": "not_a_double"
@@ -819,7 +819,7 @@ final class JSONDeserializationTests: XCTestCase {
       }
     }
 
-    // Тест для float с невалидным форматом строки
+    // Test for float with invalid string format
     let floatErrorJson = """
       {
         "float_field": "not_a_float"
@@ -842,7 +842,7 @@ final class JSONDeserializationTests: XCTestCase {
   // MARK: - Error Description and Equality Tests
 
   func testErrorDescriptions() throws {
-    // Тестируем все типы ошибок и их описания
+    // Test all error types and their descriptions
 
     let error1 = JSONDeserializationError.invalidJSON(underlyingError: NSError(domain: "test", code: 1, userInfo: nil))
     XCTAssertTrue(error1.description.contains("Invalid JSON"))
@@ -917,7 +917,7 @@ final class JSONDeserializationTests: XCTestCase {
   }
 
   func testErrorEquality() throws {
-    // Тестируем равенство ошибок
+    // Test error equality
 
     // invalidJSON
     let invalidJson1 = JSONDeserializationError.invalidJSON(
@@ -926,7 +926,7 @@ final class JSONDeserializationTests: XCTestCase {
     let invalidJson2 = JSONDeserializationError.invalidJSON(
       underlyingError: NSError(domain: "test", code: 2, userInfo: nil)
     )
-    XCTAssertEqual(invalidJson1, invalidJson2)  // Underlying errors не сравниваются
+    XCTAssertEqual(invalidJson1, invalidJson2)  // Underlying errors are not compared
 
     // invalidJSONStructure
     let invalidStruct1 = JSONDeserializationError.invalidJSONStructure(expected: "Object", actual: "Array")
@@ -1057,7 +1057,7 @@ final class JSONDeserializationTests: XCTestCase {
       index: 6,
       underlyingError: NSError(domain: "test", code: 1, userInfo: nil)
     )
-    XCTAssertEqual(arrayElement1, arrayElement2)  // Underlying errors не сравниваются
+    XCTAssertEqual(arrayElement1, arrayElement2)  // Underlying errors are not compared
     XCTAssertNotEqual(arrayElement1, arrayElement3)
 
     // missingMapEntryInfo
@@ -1088,7 +1088,7 @@ final class JSONDeserializationTests: XCTestCase {
     XCTAssertEqual(unsupportedType1, unsupportedType2)
     XCTAssertNotEqual(unsupportedType1, unsupportedType3)
 
-    // Разные типы ошибок не равны
+    // Different error types are not equal
     XCTAssertNotEqual(invalidJson1, invalidStruct1)
     XCTAssertNotEqual(unknownField1, invalidType1)
   }
@@ -1096,14 +1096,14 @@ final class JSONDeserializationTests: XCTestCase {
   // MARK: - Performance Tests
 
   func testJSONDeserializationPerformance() throws {
-    // Создаем сложное сообщение для тестирования производительности
+    // Create complex message for performance testing
     var message = MessageDescriptor(name: "PerformanceMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "numbers", number: 1, type: .int32, isRepeated: true))
     message.addField(FieldDescriptor(name: "text", number: 2, type: .string))
     message.addField(FieldDescriptor(name: "flag", number: 3, type: .bool))
     fileDescriptor.addMessage(message)
 
-    // Создаем большой JSON
+    // Create large JSON
     let numbers = Array(1...1000).map { String($0) }.joined(separator: ", ")
     let jsonString = """
       {
@@ -1166,7 +1166,7 @@ final class JSONDeserializationTests: XCTestCase {
     message.addField(FieldDescriptor(name: "uint32_field", number: 1, type: .uint32))
     fileDescriptor.addMessage(message)
 
-    // Тестируем значение больше UInt32.max
+    // Test value greater than UInt32.max
     let jsonString = """
       {
         "uint32_field": 4294967296
@@ -1272,7 +1272,7 @@ final class JSONDeserializationTests: XCTestCase {
   }
 
   func testDeserializeMapWithAllKeyTypes() throws {
-    // Тестируем map с UInt32 ключами
+    // Test map with UInt32 keys
     let uint32KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .uint32)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     let uint32MapEntryInfo = MapEntryInfo(keyFieldInfo: uint32KeyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -1382,12 +1382,12 @@ final class JSONDeserializationTests: XCTestCase {
   }
 
   func testDeserializeInvalidMapKeyTypes() throws {
-    // Этот тест проверяет runtime ошибку при десериализации map с неподдерживаемым типом ключа
-    // Так как FieldDescriptor.init уже проверяет допустимые типы ключей при создании,
-    // мы можем протестировать только случай, когда ключ не может быть сконвертирован
-    // Поэтому заменим этот тест на проверку других error paths
+    // This test verifies runtime error when deserializing map with unsupported key type
+    // Since FieldDescriptor.init already validates allowed key types at creation,
+    // we can only test the case where key cannot be converted
+    // Therefore replacing this test to check other error paths
 
-    // Тестируем случай с signed int64 ключом, который не может быть сконвертирован
+    // Test case with signed int64 key that cannot be converted
     let int64KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .sint64)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: int64KeyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -1698,7 +1698,7 @@ final class JSONDeserializationTests: XCTestCase {
   }
 
   func testDeserializeMapWithIntegerKeyOverflow() throws {
-    // Тестируем overflow для Int32 ключа map
+    // Test overflow for Int32 map key
     let int32KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .int32)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: int32KeyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -1770,9 +1770,9 @@ final class JSONDeserializationTests: XCTestCase {
   }
 
   func testDeserializeMapWithInvalidKeyFormats() throws {
-    // Тестируем невалидные форматы для разных типов ключей
+    // Test invalid formats for different key types
 
-    // UInt32 ключи с невалидным форматом
+    // UInt32 keys with invalid format
     let uint32KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .uint32)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     let uint32MapEntryInfo = MapEntryInfo(keyFieldInfo: uint32KeyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -1817,7 +1817,7 @@ final class JSONDeserializationTests: XCTestCase {
   // MARK: - Additional Coverage Tests
 
   func testDeserializeMapWithAllKeyTypesUnique() throws {
-    // Тестируем все поддерживаемые типы ключей для map
+    // Test all supported key types for map
 
     // String keys
     let stringKeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)

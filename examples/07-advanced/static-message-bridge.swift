@@ -51,15 +51,15 @@ struct StaticMessageBridgeExample {
 
     print("  🔄 Simulating static message creation...")
 
-    // Симуляция создания статического сообщения (обычно из .pb.swift файла)
-    // В реальности это был бы SwiftProtobuf сгенерированный тип
+    // Simulating static message creation (usually from .pb.swift file)
+    // In reality, this would be a SwiftProtobuf generated type
     struct SimulatedStaticMessage {
       let name: String
       let age: Int32
       let email: String
       let isActive: Bool
 
-      // Симуляция Swift Protobuf message interface
+      // Simulating Swift Protobuf message interface
       var textFormatString: String {
         return """
           name: "\(name)"
@@ -83,7 +83,7 @@ struct StaticMessageBridgeExample {
     print("    📧 Email: \(staticMessage.email)")
     print("    ✅ Active: \(staticMessage.isActive)")
 
-    // Создание соответствующего дескриптора для конвертации
+    // Creating corresponding descriptor for conversion
     print("\n  🏗  Creating corresponding dynamic message descriptor...")
 
     var fileDescriptor = FileDescriptor(name: "person.proto", package: "com.example")
@@ -96,15 +96,15 @@ struct StaticMessageBridgeExample {
 
     fileDescriptor.addMessage(personDescriptor)
 
-    // Симуляция конвертации статического сообщения в динамическое
+    // Simulating static to dynamic message conversion
     print("\n  🔄 Converting static → dynamic...")
 
     let conversionTime = ExampleUtils.measureTime {
-      // Симуляция времени на конвертацию
+      // Simulating conversion time
       Thread.sleep(forTimeInterval: 0.002)
     }
 
-    // Создание динамического сообщения с данными из статического
+    // Creating dynamic message with data from static
     let factory = MessageFactory()
     var dynamicMessage = factory.createMessage(from: personDescriptor)
 
@@ -118,7 +118,7 @@ struct StaticMessageBridgeExample {
     print("\n  ✅ Dynamic message created:")
     dynamicMessage.prettyPrint()
 
-    // Валидация конвертации
+    // Validating conversion
     print("\n  🔍 Field Conversion Validation:")
     let validationData = [
       ["Field": "name", "Static Type": "String", "Dynamic Type": "string", "Bidirectional": "✅ Perfect"],
@@ -138,7 +138,7 @@ struct StaticMessageBridgeExample {
 
     print("  🏗  Creating dynamic message...")
 
-    // Создание динамического сообщения
+    // Creating dynamic message
     var fileDescriptor = FileDescriptor(name: "order.proto", package: "com.shop")
     var orderDescriptor = MessageDescriptor(name: "Order", parent: fileDescriptor)
 
@@ -162,14 +162,14 @@ struct StaticMessageBridgeExample {
     print("  📦 Dynamic order created:")
     dynamicOrder.prettyPrint()
 
-    // Симуляция конвертации в статическое сообщение
+    // Simulating conversion to static message
     print("\n  🔄 Converting dynamic → static...")
 
     let conversionTime = ExampleUtils.measureTime {
-      Thread.sleep(forTimeInterval: 0.0015)  // Быстрее чем static → dynamic
+      Thread.sleep(forTimeInterval: 0.0015)  // Faster than static → dynamic
     }
 
-    // Симуляция созданного статического сообщения
+    // Simulating created static message
     struct SimulatedStaticOrder {
       let orderId: String
       let customerId: String
@@ -205,7 +205,7 @@ struct StaticMessageBridgeExample {
     print("\n  ✅ Static order created:")
     print(staticOrder.description.split(separator: "\n").map { "    \($0)" }.joined(separator: "\n"))
 
-    // Валидация обратной конвертации
+    // Validating reverse conversion
     print("\n  🔍 Reverse Conversion Validation:")
     let reverseValidationData = [
       ["Field": "name", "Original": "John Doe", "Round-Trip": "John Doe", "Status": "✅ Identical"],
@@ -226,7 +226,7 @@ struct StaticMessageBridgeExample {
 
     print("  🏗  Creating complex nested message structure...")
 
-    // Сложная структура: Company -> Department -> Employee
+    // Complex structure: Company -> Department -> Employee
     var companyFile = FileDescriptor(name: "company.proto", package: "com.enterprise")
 
     // Employee enum status
@@ -277,7 +277,7 @@ struct StaticMessageBridgeExample {
       )
     )
 
-    // Регистрация всех компонентов
+    // Registering all components
     companyFile.addEnum(statusEnum)
     companyFile.addMessage(addressDescriptor)
     companyFile.addMessage(employeeDescriptor)
@@ -290,18 +290,18 @@ struct StaticMessageBridgeExample {
     print("    🎯 Employee status enum")
     print("    🔄 Repeated fields for collections")
 
-    // Создание динамического сообщения компании
+    // Creating dynamic company message
     print("\n  🏗  Building dynamic company message...")
 
     let factory = MessageFactory()
 
-    // Создание адреса штаб-квартиры
+    // Creating headquarters address
     var hqAddress = factory.createMessage(from: addressDescriptor)
     try hqAddress.set("123 Tech Street", forField: "street")
     try hqAddress.set("San Francisco", forField: "city")
     try hqAddress.set("USA", forField: "country")
 
-    // Создание сотрудника
+    // Creating employee
     var employee1Address = factory.createMessage(from: addressDescriptor)
     try employee1Address.set("456 Developer Ave", forField: "street")
     try employee1Address.set("Palo Alto", forField: "city")
@@ -312,31 +312,31 @@ struct StaticMessageBridgeExample {
     try employee1.set("Alice Johnson", forField: "name")
     try employee1.set("ACTIVE", forField: "status")  // ACTIVE
     try employee1.set(employee1Address, forField: "address")
-    // NOTE: В реальной реализации repeated поля требуют специального API
+    // NOTE: In real implementation, repeated fields require special API
 
-    // Создание департамента
+    // Creating department
     var engineeringDept = factory.createMessage(from: departmentDescriptor)
     try engineeringDept.set("Engineering", forField: "name")
     try engineeringDept.set(Int32(25), forField: "head_count")
 
-    // Создание компании
+    // Creating company
     var company = factory.createMessage(from: companyDescriptor)
     try company.set("TechCorp Inc.", forField: "name")
     try company.set(hqAddress, forField: "headquarters")
 
     print("  ✅ Complex dynamic message structure built")
 
-    // Симуляция конвертации сложной структуры
+    // Simulating complex structure conversion
     print("\n  🔄 Converting complex structure to static format...")
 
     let complexConversionTime = ExampleUtils.measureTime {
-      // Сложные структуры требуют больше времени
-      Thread.sleep(forTimeInterval: 0.005)  // 5ms для сложной структуры
+      // Complex structures require more time
+      Thread.sleep(forTimeInterval: 0.005)  // 5ms for complex structure
     }
 
     ExampleUtils.printTiming("Complex structure conversion", time: complexConversionTime.time)
 
-    // Анализ сложности конвертации
+    // Analyzing conversion complexity
     print("\n  📊 Complex Structure Analysis:")
     let complexityData = [
       ["Component": "Root Message", "Levels": "3", "Static Fields": "4", "Dynamic Navigation": "✅ Full access"],
@@ -365,10 +365,10 @@ struct StaticMessageBridgeExample {
 
     print("  🔗 Testing deep nesting scenarios...")
 
-    // Создание структуры с глубокой вложенностью
+    // Creating structure with deep nesting
     var nestedFile = FileDescriptor(name: "nested.proto", package: "com.nested")
 
-    // Level 4 (самый глубокий)
+    // Level 4 (deepest)
     var level4Descriptor = MessageDescriptor(name: "Level4", parent: nestedFile)
     level4Descriptor.addField(FieldDescriptor(name: "value", number: 1, type: .string))
     level4Descriptor.addField(FieldDescriptor(name: "depth", number: 2, type: .int32))
@@ -386,13 +386,13 @@ struct StaticMessageBridgeExample {
     level2Descriptor.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
     level2Descriptor.addField(FieldDescriptor(name: "level3", number: 2, type: .message, typeName: "com.nested.Level3"))
 
-    // Level 1 (корневой)
+    // Level 1 (root)
     var level1Descriptor = MessageDescriptor(name: "Level1", parent: nestedFile)
     level1Descriptor.addField(FieldDescriptor(name: "root_name", number: 1, type: .string))
     level1Descriptor.addField(FieldDescriptor(name: "level2", number: 2, type: .message, typeName: "com.nested.Level2"))
     level1Descriptor.addField(FieldDescriptor(name: "metadata", number: 3, type: .string, isRepeated: true))
 
-    // Регистрация
+    // Registration
     nestedFile.addMessage(level4Descriptor)
     nestedFile.addMessage(level3Descriptor)
     nestedFile.addMessage(level2Descriptor)
@@ -402,12 +402,12 @@ struct StaticMessageBridgeExample {
     print("    📊 Level 1 → Level 2 → Level 3 → Level 4")
     print("    🔄 Mixed with repeated fields and collections")
 
-    // Создание вложенной структуры
+    // Creating nested structure
     print("\n  🏗  Building deep nested message...")
 
     let factory = MessageFactory()
 
-    // Создание с самого глубокого уровня
+    // Creating from deepest level
     var level4Message = factory.createMessage(from: level4Descriptor)
     try level4Message.set("Deep Value", forField: "value")
     try level4Message.set(Int32(4), forField: "depth")
@@ -426,17 +426,17 @@ struct StaticMessageBridgeExample {
 
     print("  ✅ Deep nested structure built successfully")
 
-    // Тестирование конвертации глубоко вложенной структуры
+    // Testing deeply nested structure conversion
     print("\n  🔄 Converting deep nested structure...")
 
     let deepConversionTime = ExampleUtils.measureTime {
-      // Глубокая вложенность требует recursive обработки
-      Thread.sleep(forTimeInterval: 0.007)  // 7ms для глубокой структуры
+      // Deep nesting requires recursive processing
+      Thread.sleep(forTimeInterval: 0.007)  // 7ms for deep structure
     }
 
     ExampleUtils.printTiming("Deep nested conversion", time: deepConversionTime.time)
 
-    // Навигация по вложенной структуре для валидации
+    // Navigating nested structure for validation
     print("\n  📊 Deep Structure Navigation Test:")
     let navigationData = [
       ["Path": "root.name", "Access Method": "direct", "Performance": "O(1)", "Success": "✅"],
@@ -465,7 +465,7 @@ struct StaticMessageBridgeExample {
 
     print("  🔍 Testing schema compatibility scenarios...")
 
-    // Создание различных версий схем для тестирования совместимости
+    // Creating different schema versions for compatibility testing
     let compatibilityScenarios = [
       ("Perfect Match", true, "Identical schemas"),
       ("Added Field", true, "New optional field added"),
@@ -481,7 +481,7 @@ struct StaticMessageBridgeExample {
       print("\n  🧪 Testing: \(scenario)")
 
       let validationTime = ExampleUtils.measureTime {
-        // Симуляция времени валидации совместимости
+        // Simulating compatibility validation time
         Thread.sleep(forTimeInterval: 0.001)
       }
 
@@ -500,7 +500,7 @@ struct StaticMessageBridgeExample {
 
     ExampleUtils.printDataTable(compatibilityResults, title: "Schema Compatibility Results")
 
-    // Детальный анализ проблем совместимости
+    // Detailed compatibility issues analysis
     print("\n  🔍 Compatibility Analysis:")
 
     print("    ✅ Safe Changes:")
@@ -529,7 +529,7 @@ struct StaticMessageBridgeExample {
 
     print("  📦 Demonstrating batch conversion capabilities...")
 
-    // Создание множественных сообщений для batch конвертации
+    // Creating multiple messages for batch conversion
     var userFile = FileDescriptor(name: "user.proto", package: "com.users")
     var userDescriptor = MessageDescriptor(name: "User", parent: userFile)
 
@@ -541,7 +541,7 @@ struct StaticMessageBridgeExample {
 
     userFile.addMessage(userDescriptor)
 
-    // Создание большого количества динамических сообщений
+    // Creating large number of dynamic messages
     let batchSize = 1000
     print("  🏗  Creating \(batchSize) dynamic user messages...")
 
@@ -563,7 +563,7 @@ struct StaticMessageBridgeExample {
 
     ExampleUtils.printTiming("Creating \(batchSize) dynamic messages", time: userCreationTime.time)
 
-    // Batch конвертация в статические сообщения
+    // Batch conversion to static messages
     print("\n  🔄 Converting \(batchSize) messages to static format...")
 
     struct StaticUser {
@@ -590,7 +590,7 @@ struct StaticMessageBridgeExample {
 
     ExampleUtils.printTiming("Batch conversion (\(batchSize) messages)", time: batchConversionTime.time)
 
-    // Анализ результатов batch конвертации
+    // Analyzing batch conversion results
     print("\n  📊 Batch Processing Results:")
 
     let throughput = Double(batchSize) / batchConversionTime.time
@@ -612,7 +612,7 @@ struct StaticMessageBridgeExample {
 
     ExampleUtils.printDataTable(batchResults, title: "Batch Conversion Metrics")
 
-    // Валидация случайных сообщений из batch
+    // Validating random messages from batch
     print("\n  🔍 Sample Validation (Random Sampling):")
 
     let sampleIndices = [0, batchSize / 4, batchSize / 2, batchSize - 1]
@@ -660,7 +660,7 @@ struct StaticMessageBridgeExample {
     for (name, messageCount, fieldCount) in testScenarios {
       print("\n  🧪 Testing \(name) scenario...")
 
-      // Создание тестовых дескрипторов
+      // Creating test descriptors
       var testFile = FileDescriptor(name: "\(name.lowercased()).proto", package: "com.perf")
 
       for i in 1...messageCount {
@@ -674,21 +674,21 @@ struct StaticMessageBridgeExample {
         testFile.addMessage(message)
       }
 
-      // Измерение Static → Dynamic
+      // Measuring Static → Dynamic
       let staticToDynamicTime = ExampleUtils.measureTime {
         let complexity = Double(messageCount * fieldCount)
         let baseTime = 0.0005  // 0.5ms base
         Thread.sleep(forTimeInterval: baseTime + complexity / 10000.0)
       }
 
-      // Измерение Dynamic → Static
+      // Measuring Dynamic → Static
       let dynamicToStaticTime = ExampleUtils.measureTime {
         let complexity = Double(messageCount * fieldCount)
-        let baseTime = 0.0003  // 0.3ms base (быстрее)
+        let baseTime = 0.0003  // 0.3ms base (faster)
         Thread.sleep(forTimeInterval: baseTime + complexity / 15000.0)
       }
 
-      // Round-trip время
+      // Round-trip time
       let roundTripTime = staticToDynamicTime.time + dynamicToStaticTime.time
 
       performanceResults.append([
@@ -736,11 +736,11 @@ struct StaticMessageBridgeExample {
       print("\n  🧪 Testing: \(scenario)")
 
       let errorHandlingTime = ExampleUtils.measureTime {
-        // Симуляция обработки ошибок
+        // Simulating error processing
         Thread.sleep(forTimeInterval: 0.0005)
       }
 
-      // Симуляция результата обработки ошибки
+      // Simulating error processing result
       let handlingResult: String
       let recoveryResult: String
 

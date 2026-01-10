@@ -1,11 +1,11 @@
 //
 // GoogleConformanceTests.swift
 //
-// Тесты для проверки соответствия официальным тестам Google Protocol Buffers
+// Tests for checking compliance with official Google Protocol Buffers tests
 //
-// Тестовые случаи из плана:
-// - Test-GOOG-001: Адаптация и прохождение официальных тестовых наборов Google Protocol Buffers
-// - Test-GOOG-002: Проверка на соответствие поведению во всех conformance тестах
+// Test cases from plan:
+// - Test-GOOG-001: Adaptation and passing of official Google Protocol Buffers test suites
+// - Test-GOOG-002: Verification of behavior compliance in all conformance tests
 
 import XCTest
 

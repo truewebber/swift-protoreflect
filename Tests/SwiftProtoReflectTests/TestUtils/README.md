@@ -1,19 +1,19 @@
 # Test Utilities
 
-Директория содержит вспомогательные утилиты для тестирования Protocol Buffers:
+The directory contains utility helpers for testing Protocol Buffers:
 
-1. `TestHelpers.swift` - общие вспомогательные функции для тестов
-   - Функции сравнения бинарных данных
-   - Функции сравнения структур сообщений
-   - Утилиты для создания типичных тестовых случаев
+1. `TestHelpers.swift` - common helper functions for tests
+   - Binary data comparison functions
+   - Message structure comparison functions
+   - Utilities for creating typical test cases
 
-2. `CPPBridge.swift` - мост к C++ реализации Protocol Buffers для сравнения
-   - Функции для запуска C++ protoc для генерации эталонных данных
-   - Функции для вызова C++ сериализаторов/десериализаторов
+2. `CPPBridge.swift` - bridge to C++ Protocol Buffers implementation for comparison
+   - Functions to run C++ protoc for generating reference data
+   - Functions to call C++ serializers/deserializers
 
-3. `PerformanceMeasurement.swift` - утилиты для замеров производительности
+3. `PerformanceMeasurement.swift` - performance measurement utilities
 
-4. `TestDescriptors.swift` - готовые дескрипторы для тестов
+4. `TestDescriptors.swift` - ready-made descriptors for tests
 
-Эти утилиты используются в тестах для упрощения тестирования и обеспечения 
-согласованности сравнения с эталонной C++ реализацией. 
+These utilities are used in tests to simplify testing and ensure 
+consistency of comparison with the reference C++ implementation.

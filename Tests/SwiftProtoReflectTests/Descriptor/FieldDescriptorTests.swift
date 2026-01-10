@@ -2,7 +2,7 @@
 // FieldDescriptorTests.swift
 // SwiftProtoReflectTests
 //
-// Создан: 2025-05-18
+// Created: 2025-05-18
 //
 
 import XCTest
@@ -25,14 +25,14 @@ final class FieldDescriptorTests: XCTestCase {
   // MARK: - Tests
 
   func testBasicFieldDescriptor() {
-    // Создаем базовый дескриптор поля
+    // Create basic field descriptor
     let field = FieldDescriptor(
       name: "age",
       number: 1,
       type: .int32
     )
 
-    // Проверяем основные свойства
+    // Verify basic properties
     XCTAssertEqual(field.name, "age")
     XCTAssertEqual(field.jsonName, "age")
     XCTAssertEqual(field.number, 1)
@@ -49,7 +49,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testFieldDescriptorWithAllProperties() {
-    // Создаем детальный дескриптор поля
+    // Create detailed field descriptor
     let field = FieldDescriptor(
       name: "emails",
       number: 2,
@@ -61,7 +61,7 @@ final class FieldDescriptorTests: XCTestCase {
       options: ["packed": true]
     )
 
-    // Проверяем все свойства
+    // Verify all properties
     XCTAssertEqual(field.name, "emails")
     XCTAssertEqual(field.jsonName, "email_addresses")
     XCTAssertEqual(field.number, 2)
@@ -76,7 +76,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testMessageTypeWithTypeName() {
-    // Создаем поле типа message
+    // Create message type field
     let field = FieldDescriptor(
       name: "user",
       number: 3,
@@ -84,7 +84,7 @@ final class FieldDescriptorTests: XCTestCase {
       typeName: "example.User"
     )
 
-    // Проверяем свойства типа
+    // Verify type properties
     XCTAssertEqual(field.type, .message)
     XCTAssertEqual(field.typeName, "example.User")
     XCTAssertEqual(field.getFullTypeName(), "example.User")
@@ -93,7 +93,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testEnumTypeWithTypeName() {
-    // Создаем поле типа enum
+    // Create enum type field
     let field = FieldDescriptor(
       name: "status",
       number: 4,
@@ -101,7 +101,7 @@ final class FieldDescriptorTests: XCTestCase {
       typeName: "example.Status"
     )
 
-    // Проверяем свойства типа
+    // Verify type properties
     XCTAssertEqual(field.type, .enum)
     XCTAssertEqual(field.typeName, "example.Status")
     XCTAssertEqual(field.getFullTypeName(), "example.Status")
@@ -110,16 +110,16 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testMissingTypeNameForMessageFails() {
-    // Проверяем, что отсутствие typeName для message вызывает ошибку
+    // Verify that missing typeName for message causes error
     XCTAssertNoThrow(FieldDescriptor(name: "name", number: 1, type: .string))
 
-    // Для message и enum typeName обязателен
+    // For message and enum typeName is required
     XCTAssertNoThrow(FieldDescriptor(name: "user", number: 2, type: .message, typeName: "example.User"))
     XCTAssertNoThrow(FieldDescriptor(name: "status", number: 3, type: .enum, typeName: "example.Status"))
   }
 
   func testScalarTypeDetection() {
-    // Проверяем определение скалярных типов
+    // Verify scalar type detection
     let scalarTypes: [FieldType] = [
       .double, .float, .int32, .int64, .uint32, .uint64,
       .sint32, .sint64, .fixed32, .fixed64, .sfixed32, .sfixed64,
@@ -128,10 +128,10 @@ final class FieldDescriptorTests: XCTestCase {
 
     for type in scalarTypes {
       let field = FieldDescriptor(name: "field", number: 1, type: type)
-      XCTAssertTrue(field.isScalarType(), "Тип \(type) должен быть определен как скалярный")
+      XCTAssertTrue(field.isScalarType(), "Type \(type) should be detected as scalar")
     }
 
-    // Проверяем нескалярные типы
+    // Verify non-scalar types
     let nonScalarTypes: [FieldType] = [.message, .enum, .group]
 
     for type in nonScalarTypes {
@@ -141,12 +141,12 @@ final class FieldDescriptorTests: XCTestCase {
         type: type,
         typeName: "example.Type"
       )
-      XCTAssertFalse(field.isScalarType(), "Тип \(type) не должен быть определен как скалярный")
+      XCTAssertFalse(field.isScalarType(), "Type \(type) should not be detected as scalar")
     }
   }
 
   func testNumericTypeDetection() {
-    // Проверяем определение числовых типов
+    // Verify numeric type detection
     let numericTypes: [FieldType] = [
       .double, .float, .int32, .int64, .uint32, .uint64,
       .sint32, .sint64, .fixed32, .fixed64, .sfixed32, .sfixed64,
@@ -154,10 +154,10 @@ final class FieldDescriptorTests: XCTestCase {
 
     for type in numericTypes {
       let field = FieldDescriptor(name: "field", number: 1, type: type)
-      XCTAssertTrue(field.isNumericType(), "Тип \(type) должен быть определен как числовой")
+      XCTAssertTrue(field.isNumericType(), "Type \(type) should be detected as numeric")
     }
 
-    // Проверяем нечисловые типы
+    // Verify non-numeric types
     let nonNumericTypes: [FieldType] = [.bool, .string, .bytes, .message, .enum, .group]
 
     for (_, type) in nonNumericTypes.enumerated() {
@@ -167,19 +167,19 @@ final class FieldDescriptorTests: XCTestCase {
         type: type,
         typeName: type == .message || type == .enum || type == .group ? "example.Type" : nil
       )
-      XCTAssertFalse(field.isNumericType(), "Тип \(type) не должен быть определен как числовой")
+      XCTAssertFalse(field.isNumericType(), "Type \(type) should not be detected as numeric")
     }
   }
 
   func testMapFieldCreation() {
-    // Создаем информацию о полях key и value
+    // Create key and value field info
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
 
-    // Создаем MapEntryInfo
+    // Create MapEntryInfo
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
 
-    // Создаем map поле
+    // Create map field
     let mapField = FieldDescriptor(
       name: "counts",
       number: 5,
@@ -189,11 +189,11 @@ final class FieldDescriptorTests: XCTestCase {
       mapEntryInfo: mapEntryInfo
     )
 
-    // Проверяем свойства
+    // Verify properties
     XCTAssertTrue(mapField.isMap)
     XCTAssertNotNil(mapField.mapEntryInfo)
 
-    // Проверяем доступ к информации о ключе и значении
+    // Verify access to key and value information
     if let info = mapField.getMapKeyValueInfo() {
       XCTAssertEqual(info.keyFieldInfo.name, "key")
       XCTAssertEqual(info.keyFieldInfo.type, .string)
@@ -201,12 +201,12 @@ final class FieldDescriptorTests: XCTestCase {
       XCTAssertEqual(info.valueFieldInfo.type, .int32)
     }
     else {
-      XCTFail("getMapKeyValueInfo() должен возвращать информацию о ключе и значении")
+      XCTFail("getMapKeyValueInfo() should return key and value information")
     }
   }
 
   func testMapEntryValidKeyTypes() {
-    // Проверяем допустимые типы ключей для map
+    // Verify valid key types for map
     let validKeyTypes: [FieldType] = [
       .int32, .int64, .uint32, .uint64, .sint32, .sint64,
       .fixed32, .fixed64, .sfixed32, .sfixed64, .bool, .string,
@@ -218,13 +218,13 @@ final class FieldDescriptorTests: XCTestCase {
 
       XCTAssertNoThrow(
         MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo),
-        "Тип \(type) должен быть допустимым для ключа map"
+        "Type \(type) should be valid for map key"
       )
     }
   }
 
   func testMapWithNoMapEntryFails() {
-    // Проверяем требование наличия mapEntryInfo для isMap = true
+    // Verify mapEntryInfo requirement for isMap = true
     XCTAssertNoThrow(
       FieldDescriptor(
         name: "regular",
@@ -252,13 +252,13 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testGetMapKeyValueReturnsNilForNonMapField() {
-    // Проверяем, что getMapKeyValueInfo возвращает nil для не-map полей
+    // Verify that getMapKeyValueInfo returns nil for non-map fields
     let field = FieldDescriptor(name: "name", number: 1, type: .string)
     XCTAssertNil(field.getMapKeyValueInfo())
   }
 
   func testValueFieldInfoWithMessageType() {
-    // Проверяем создание ValueFieldInfo с типом message
+    // Verify ValueFieldInfo creation with message type
     let valueFieldInfo = ValueFieldInfo(
       name: "value",
       number: 2,
@@ -273,7 +273,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testValueFieldInfoWithTypeName() {
-    // Проверяем создание ValueFieldInfo с типом message
+    // Verify ValueFieldInfo creation with message type
     let valueFieldInfo = ValueFieldInfo(
       name: "value",
       number: 2,
@@ -288,7 +288,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testTypenameValidation() {
-    // Создаем FieldDescriptor с корректным typeName для message
+    // Create FieldDescriptor with correct typeName for message
     XCTAssertNoThrow(
       FieldDescriptor(
         name: "user",
@@ -298,7 +298,7 @@ final class FieldDescriptorTests: XCTestCase {
       )
     )
 
-    // Создаем FieldDescriptor с корректным typeName для enum
+    // Create FieldDescriptor with correct typeName for enum
     XCTAssertNoThrow(
       FieldDescriptor(
         name: "status",
@@ -308,37 +308,37 @@ final class FieldDescriptorTests: XCTestCase {
       )
     )
 
-    // Создаем FieldDescriptor с typeName для скалярного типа (необязательно)
+    // Create FieldDescriptor with typeName for scalar type (optional)
     XCTAssertNoThrow(
       FieldDescriptor(
         name: "count",
         number: 3,
         type: .int32,
-        typeName: "some.type"  // не требуется для скалярных типов
+        typeName: "some.type"  // not required for scalar types
       )
     )
   }
 
   func testInvalidKeyTypeForMap() {
-    // Просто отметим, что создание MapEntryInfo с недопустимыми типами ключей должно вызывать ошибку
-    // fatalError не использует throws, и мы не можем напрямую тестировать fatalError
-    // XCTExpectFailure не доступна на Linux, поэтому просто отмечаем что тест ожидает сбой
+    // Note that creating MapEntryInfo with invalid key types should cause error
+    // fatalError doesn't use throws, and we can't directly test fatalError
+    // XCTExpectFailure is not available on Linux, so just note that test expects failure
     #if os(macOS) || os(iOS)
       XCTAssertNoThrow {
-        XCTExpectFailure("MapEntryInfo с недопустимым типом ключа bytes должен вызвать ошибку")
+        XCTExpectFailure("MapEntryInfo with invalid key type bytes should cause error")
       }
 
       XCTAssertNoThrow {
-        XCTExpectFailure("MapEntryInfo с недопустимым типом ключа double должен вызвать ошибку")
+        XCTExpectFailure("MapEntryInfo with invalid key type double should cause error")
       }
     #else
-      // На Linux пропускаем тесты с fatalError из-за отсутствия XCTExpectFailure
-      print("Пропуск тестов fatalError на Linux (XCTExpectFailure недоступна)")
+      // On Linux skip fatalError tests due to missing XCTExpectFailure
+      print("Skipping fatalError tests on Linux (XCTExpectFailure unavailable)")
     #endif
   }
 
   func testMapWithValueTypeMessage() {
-    // Создаем поле со сложным значением для map
+    // Create field with complex value for map
     let keyInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueInfo = ValueFieldInfo(
       name: "value",
@@ -364,7 +364,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testEquatableImplementation() {
-    // Проверяем сравнение разных FieldDescriptor
+    // Verify comparison of different FieldDescriptor
     let field1 = FieldDescriptor(name: "name", number: 1, type: .string)
     let field2 = FieldDescriptor(name: "name", number: 1, type: .string)
     let field3 = FieldDescriptor(name: "age", number: 2, type: .int32)
@@ -372,7 +372,7 @@ final class FieldDescriptorTests: XCTestCase {
     XCTAssertEqual(field1, field2)
     XCTAssertNotEqual(field1, field3)
 
-    // Проверяем сравнение с разными опциями
+    // Verify comparison with different options
     let field4 = FieldDescriptor(
       name: "name",
       number: 1,
@@ -382,7 +382,7 @@ final class FieldDescriptorTests: XCTestCase {
 
     XCTAssertNotEqual(field1, field4)
 
-    // Проверяем сравнение для полей с MapEntryInfo
+    // Verify comparison for fields with MapEntryInfo
     let keyInfo1 = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueInfo1 = ValueFieldInfo(name: "value", number: 2, type: .int32)
     let mapInfo1 = MapEntryInfo(keyFieldInfo: keyInfo1, valueFieldInfo: valueInfo1)
@@ -413,7 +413,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testValueFieldInfoWithEnumType() {
-    // Проверяем создание ValueFieldInfo с типом enum
+    // Verify ValueFieldInfo creation with enum type
     let valueFieldInfo = ValueFieldInfo(
       name: "value",
       number: 2,
@@ -428,7 +428,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testOptionEqualityWithVariousTypes() {
-    // Проверка сравнения разных типов в опциях
+    // Verify comparison of different types in options
     let field1 = FieldDescriptor(
       name: "test",
       number: 1,
@@ -456,7 +456,7 @@ final class FieldDescriptorTests: XCTestCase {
       number: 1,
       type: .string,
       options: [
-        "boolOption": false,  // Разное значение
+        "boolOption": false,  // Different value
         "intOption": 42,
         "stringOption": "value",
       ]
@@ -468,7 +468,7 @@ final class FieldDescriptorTests: XCTestCase {
       type: .string,
       options: [
         "boolOption": true,
-        "intOption": 43,  // Разное значение
+        "intOption": 43,  // Different value
         "stringOption": "value",
       ]
     )
@@ -480,21 +480,21 @@ final class FieldDescriptorTests: XCTestCase {
       options: [
         "boolOption": true,
         "intOption": 42,
-        "stringOption": "different",  // Разное значение
+        "stringOption": "different",  // Different value
       ]
     )
 
-    // Одинаковые опции должны давать равенство
+    // Same options should give equality
     XCTAssertEqual(field1, field2)
 
-    // Разные опции должны давать неравенство
+    // Different options should give inequality
     XCTAssertNotEqual(field1, field3)
     XCTAssertNotEqual(field1, field4)
     XCTAssertNotEqual(field1, field5)
   }
 
   func testEquatableWithDifferentOptionKeySets() {
-    // Проверяем сравнение с разными наборами ключей опций
+    // Verify comparison with different option key sets
     let field1 = FieldDescriptor(
       name: "test",
       number: 1,
@@ -506,14 +506,14 @@ final class FieldDescriptorTests: XCTestCase {
       name: "test",
       number: 1,
       type: .string,
-      options: ["option1": true, "option3": 42]  // Разный набор ключей
+      options: ["option1": true, "option3": 42]  // Different key set
     )
 
     XCTAssertNotEqual(field1, field2)
   }
 
   func testComplexOptionsEquality() {
-    // Проверяем сравнение с более сложными типами опций, где используется строковое представление
+    // Verify comparison with more complex option types using string representation
     let customValue1 = CustomStringType(value: "test")
     let customValue2 = CustomStringType(value: "test")
     let customValue3 = CustomStringType(value: "different")
@@ -539,15 +539,15 @@ final class FieldDescriptorTests: XCTestCase {
       options: ["custom": customValue3]
     )
 
-    // Одинаковые пользовательские значения должны давать равенство
+    // Same custom values should give equality
     XCTAssertEqual(field1, field2)
 
-    // Разные пользовательские значения должны давать неравенство
+    // Different custom values should give inequality
     XCTAssertNotEqual(field1, field3)
   }
 
   func testOneofFieldComparison() {
-    // Проверка полей с oneofIndex
+    // Verify fields with oneofIndex
     let field1 = FieldDescriptor(
       name: "test",
       number: 1,
@@ -566,14 +566,14 @@ final class FieldDescriptorTests: XCTestCase {
       name: "test",
       number: 1,
       type: .string,
-      oneofIndex: 2  // Другой индекс
+      oneofIndex: 2  // Different index
     )
 
     let field4 = FieldDescriptor(
       name: "test",
       number: 1,
       type: .string,
-      oneofIndex: nil  // Без индекса
+      oneofIndex: nil  // Without index
     )
 
     XCTAssertEqual(field1, field2)
@@ -582,7 +582,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testGroupTypeField() {
-    // Создаем поле типа group (устаревший в proto3, но поддерживаемый)
+    // Create group type field (deprecated in proto3 but supported)
     let field = FieldDescriptor(
       name: "group_field",
       number: 10,
@@ -590,7 +590,7 @@ final class FieldDescriptorTests: XCTestCase {
       typeName: "example.GroupType"
     )
 
-    // Проверяем свойства
+    // Verify properties
     XCTAssertEqual(field.type, .group)
     XCTAssertEqual(field.typeName, "example.GroupType")
     XCTAssertFalse(field.isScalarType())
@@ -598,7 +598,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testRequiredField() {
-    // Создаем поле с флагом required (proto2)
+    // Create field with required flag (proto2)
     let field = FieldDescriptor(
       name: "requiredField",
       number: 20,
@@ -606,12 +606,12 @@ final class FieldDescriptorTests: XCTestCase {
       isRequired: true
     )
 
-    // Проверяем флаги
+    // Verify flags
     XCTAssertTrue(field.isRequired)
     XCTAssertFalse(field.isOptional)
     XCTAssertFalse(field.isRepeated)
 
-    // Проверяем, что isOptional и isRequired могут сосуществовать в конструкторе
+    // Verify that isOptional and isRequired can coexist in constructor
     let field2 = FieldDescriptor(
       name: "conflictField",
       number: 21,
@@ -620,13 +620,13 @@ final class FieldDescriptorTests: XCTestCase {
       isRequired: true
     )
 
-    // Проверяем, что оба флага установлены (нет взаимоисключения в реализации)
+    // Verify that both flags are set (no mutual exclusion in implementation)
     XCTAssertTrue(field2.isRequired)
     XCTAssertTrue(field2.isOptional)
   }
 
   func testFieldWithOneOfIndexInitialization() {
-    // Создаем поле, которое является частью oneof группы
+    // Create field that is part of oneof group
     let field = FieldDescriptor(
       name: "oneofField",
       number: 15,
@@ -634,7 +634,7 @@ final class FieldDescriptorTests: XCTestCase {
       oneofIndex: 2
     )
 
-    // Проверяем свойства
+    // Verify properties
     XCTAssertEqual(field.name, "oneofField")
     XCTAssertEqual(field.number, 15)
     XCTAssertEqual(field.type, .string)
@@ -642,7 +642,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testDefaultValue() {
-    // Создаем поле с defaultValue
+    // Create field with defaultValue
     let defaultVal = "default_string_value"
     let field = FieldDescriptor(
       name: "field",
@@ -651,11 +651,11 @@ final class FieldDescriptorTests: XCTestCase {
       defaultValue: defaultVal
     )
 
-    // Проверяем свойства
+    // Verify properties
     XCTAssertEqual(field.defaultValue as? String, defaultVal)
 
-    // Проверяем, что поля с разными defaultValue считаются равными,
-    // так как defaultValue не сравнивается в методе ==
+    // Verify that fields with different defaultValue are considered equal,
+    // since defaultValue is not compared in == method
     let field2 = FieldDescriptor(
       name: "field",
       number: 1,
@@ -663,10 +663,10 @@ final class FieldDescriptorTests: XCTestCase {
       defaultValue: "different_default"
     )
 
-    // Отметим, что хотя defaultValue различается, FieldDescriptor.== не учитывает это
+    // Note that although defaultValue differs, FieldDescriptor.== doesn't consider this
     XCTAssertEqual(field, field2)
 
-    // Поля с defaultValue и без него также считаются равными
+    // Fields with and without defaultValue are also considered equal
     let field3 = FieldDescriptor(
       name: "field",
       number: 1,
@@ -677,7 +677,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testValueFieldInfoWithScalarType() {
-    // Проверяем создание ValueFieldInfo с простым типом
+    // Verify ValueFieldInfo creation with simple type
     let valueInfo = ValueFieldInfo(
       name: "scalar_value",
       number: 2,
@@ -691,7 +691,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testKeyFieldInfoInitialization() {
-    // Проверяем создание и доступ к KeyFieldInfo
+    // Verify KeyFieldInfo creation and access
     let keyInfo = KeyFieldInfo(
       name: "custom_key",
       number: 5,
@@ -704,7 +704,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testMapEntryInfoEquality() {
-    // Создаем два идентичных MapEntryInfo
+    // Create two identical MapEntryInfo
     let keyInfo1 = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueInfo1 = ValueFieldInfo(name: "value", number: 2, type: .int32)
     let mapInfo1 = MapEntryInfo(keyFieldInfo: keyInfo1, valueFieldInfo: valueInfo1)
@@ -713,18 +713,18 @@ final class FieldDescriptorTests: XCTestCase {
     let valueInfo2 = ValueFieldInfo(name: "value", number: 2, type: .int32)
     let mapInfo2 = MapEntryInfo(keyFieldInfo: keyInfo2, valueFieldInfo: valueInfo2)
 
-    // Создаем отличающийся MapEntryInfo
+    // Create different MapEntryInfo
     let keyInfo3 = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueInfo3 = ValueFieldInfo(name: "value", number: 2, type: .double)
     let mapInfo3 = MapEntryInfo(keyFieldInfo: keyInfo3, valueFieldInfo: valueInfo3)
 
-    // Проверяем сравнение
+    // Verify comparison
     XCTAssertEqual(mapInfo1, mapInfo2)
     XCTAssertNotEqual(mapInfo1, mapInfo3)
   }
 
   func testMapEntryComplexValue() {
-    // Создаем MapEntryInfo с complex value
+    // Create MapEntryInfo with complex value
     let keyInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueInfo = ValueFieldInfo(
       name: "value",
@@ -735,7 +735,7 @@ final class FieldDescriptorTests: XCTestCase {
 
     let mapInfo = MapEntryInfo(keyFieldInfo: keyInfo, valueFieldInfo: valueInfo)
 
-    // Проверяем сравнение с другим MapEntryInfo с тем же типом данных, но другим typeName
+    // Verify comparison with another MapEntryInfo with same data type but different typeName
     let anotherValueInfo = ValueFieldInfo(
       name: "value",
       number: 2,
@@ -749,7 +749,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testAllFieldTypesScalarCheck() {
-    // Проверяем метод isScalarType для всех возможных типов полей
+    // Verify isScalarType method for all possible field types
 
     let allFieldTypes: [FieldType] = [
       .double, .float, .int32, .int64, .uint32, .uint64,
@@ -768,16 +768,16 @@ final class FieldDescriptorTests: XCTestCase {
       let field = FieldDescriptor(name: "field", number: 1, type: type, typeName: typeName)
 
       if scalarTypes.contains(type) {
-        XCTAssertTrue(field.isScalarType(), "Тип \(type) должен быть определен как скалярный")
+        XCTAssertTrue(field.isScalarType(), "Type \(type) should be detected as scalar")
       }
       else {
-        XCTAssertFalse(field.isScalarType(), "Тип \(type) не должен быть определен как скалярный")
+        XCTAssertFalse(field.isScalarType(), "Type \(type) should not be detected as scalar")
       }
     }
   }
 
   func testAllFieldTypesNumericCheck() {
-    // Проверяем метод isNumericType для всех возможных типов полей
+    // Verify isNumericType method for all possible field types
 
     let allFieldTypes: [FieldType] = [
       .double, .float, .int32, .int64, .uint32, .uint64,
@@ -795,16 +795,16 @@ final class FieldDescriptorTests: XCTestCase {
       let field = FieldDescriptor(name: "field", number: 1, type: type, typeName: typeName)
 
       if numericTypes.contains(type) {
-        XCTAssertTrue(field.isNumericType(), "Тип \(type) должен быть определен как числовой")
+        XCTAssertTrue(field.isNumericType(), "Type \(type) should be detected as numeric")
       }
       else {
-        XCTAssertFalse(field.isNumericType(), "Тип \(type) не должен быть определен как числовой")
+        XCTAssertFalse(field.isNumericType(), "Type \(type) should not be detected as numeric")
       }
     }
   }
 
   func testDifferentTypesNotEqual() {
-    // Проверяем, что поля с разными типами не равны
+    // Verify that fields with different types are not equal
     let field1 = FieldDescriptor(name: "field", number: 1, type: .string)
     let field2 = FieldDescriptor(name: "field", number: 1, type: .int32)
 
@@ -812,7 +812,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testDifferentTypeNamesNotEqual() {
-    // Проверяем, что поля с разными typeName не равны
+    // Verify that fields with different typeName are not equal
     let field1 = FieldDescriptor(
       name: "field",
       number: 1,
@@ -831,7 +831,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testDifferentJsonNamesNotEqual() {
-    // Проверяем, что поля с разными jsonName не равны
+    // Verify that fields with different jsonName are not equal
     let field1 = FieldDescriptor(
       name: "field",
       number: 1,
@@ -850,7 +850,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testDifferentRepeatedFlagsNotEqual() {
-    // Проверяем, что поля с разными isRepeated не равны
+    // Verify that fields with different isRepeated are not equal
     let field1 = FieldDescriptor(
       name: "field",
       number: 1,
@@ -869,7 +869,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testDifferentOptionalFlagsNotEqual() {
-    // Проверяем, что поля с разными isOptional не равны
+    // Verify that fields with different isOptional are not equal
     let field1 = FieldDescriptor(
       name: "field",
       number: 1,
@@ -888,7 +888,7 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testDifferentRequiredFlagsNotEqual() {
-    // Проверяем, что поля с разными isRequired не равны
+    // Verify that fields with different isRequired are not equal
     let field1 = FieldDescriptor(
       name: "field",
       number: 1,
@@ -907,12 +907,12 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testDifferentMapFlagsNotEqual() {
-    // Подготовим MapEntryInfo для использования с map
+    // Prepare MapEntryInfo for use with map
     let keyInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
     let mapInfo = MapEntryInfo(keyFieldInfo: keyInfo, valueFieldInfo: valueInfo)
 
-    // Проверяем, что поля с разными isMap не равны
+    // Verify that fields with different isMap are not equal
     let field1 = FieldDescriptor(
       name: "field",
       number: 1,
@@ -935,7 +935,7 @@ final class FieldDescriptorTests: XCTestCase {
 
   // MARK: - Helpers
 
-  // Пользовательский тип для тестирования сложных опций
+  // Custom type for testing complex options
   class CustomStringType: CustomStringConvertible {
     let value: String
 
@@ -951,7 +951,7 @@ final class FieldDescriptorTests: XCTestCase {
   // MARK: - Additional Coverage Tests
 
   func testDefaultValueForComplexTypes() {
-    // Тестируем случай, когда defaultValue возвращает nil для сложных типов
+    // Test case when defaultValue returns nil for complex types
     let messageField = FieldDescriptor(
       name: "message_field",
       number: 1,
@@ -973,24 +973,24 @@ final class FieldDescriptorTests: XCTestCase {
       typeName: "example.GroupType"
     )
 
-    // Для сложных типов (message, enum, group) defaultValue должно возвращать nil
+    // For complex types (message, enum, group) defaultValue should return nil
     XCTAssertNil(messageField.defaultValue)
     XCTAssertNil(enumField.defaultValue)
     XCTAssertNil(groupField.defaultValue)
   }
 
   func testDefaultValueForScalarTypes() {
-    // Тестируем, что для скалярных типов без явно заданного defaultValue возвращается nil
+    // Test that scalar types without explicitly set defaultValue return nil
     let stringField = FieldDescriptor(name: "string_field", number: 1, type: .string)
     let boolField = FieldDescriptor(name: "bool_field", number: 2, type: .bool)
     let bytesField = FieldDescriptor(name: "bytes_field", number: 3, type: .bytes)
 
-    // Для скалярных типов без явно заданного defaultValue должно возвращаться nil
+    // For scalar types without explicitly set defaultValue should return nil
     XCTAssertNil(stringField.defaultValue)
     XCTAssertNil(boolField.defaultValue)
     XCTAssertNil(bytesField.defaultValue)
 
-    // Тестируем поля с явно заданными значениями по умолчанию
+    // Test fields with explicitly set default values
     let stringFieldWithDefault = FieldDescriptor(
       name: "string_field_with_default",
       number: 4,
@@ -1010,16 +1010,16 @@ final class FieldDescriptorTests: XCTestCase {
       defaultValue: Data([1, 2, 3])
     )
 
-    // Проверяем, что явно заданные значения по умолчанию возвращаются правильно
+    // Verify that explicitly set default values are returned correctly
     XCTAssertEqual(stringFieldWithDefault.defaultValue as? String, "default_value")
     XCTAssertEqual(boolFieldWithDefault.defaultValue as? Bool, true)
     XCTAssertEqual(bytesFieldWithDefault.defaultValue as? Data, Data([1, 2, 3]))
   }
 
   func testOptionsComparisonEdgeCases() {
-    // Тестируем специальные случаи сравнения опций, чтобы покрыть все ветви в compareOptions
+    // Test special cases of option comparison to cover all branches in compareOptions
 
-    // Создаем поля с опциями разных типов для проверки строкового сравнения
+    // Create fields with options of different types to verify string comparison
     struct CustomType: CustomStringConvertible {
       let id: Int
       var description: String { return "CustomType(\(id))" }
@@ -1052,21 +1052,21 @@ final class FieldDescriptorTests: XCTestCase {
       number: 1,
       type: .string,
       options: [
-        "customType": CustomType(id: 2),  // Разное значение
+        "customType": CustomType(id: 2),  // Different value
         "array": [1, 2, 3] as [Int],
         "dict": ["key": "value"] as [String: String],
       ]
     )
 
-    // Поля с одинаковыми строковыми представлениями опций должны быть равны
+    // Fields with same string representations of options should be equal
     XCTAssertEqual(field1, field2)
 
-    // Поля с разными строковыми представлениями опций должны быть не равны
+    // Fields with different string representations of options should not be equal
     XCTAssertNotEqual(field1, field3)
   }
 
   func testMapEntryValidKeyTypesExtended() {
-    // Тестируем дополнительные валидные типы ключей для map
+    // Test additional valid key types for map
 
     let validKeyTypes: [FieldType] = [
       .int32, .int64, .uint32, .uint64, .sint32, .sint64,
@@ -1077,7 +1077,7 @@ final class FieldDescriptorTests: XCTestCase {
       let keyInfo = KeyFieldInfo(name: "key", number: 1, type: keyType)
       let valueInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
 
-      // Создание MapEntryInfo не должно вызывать fatalError для валидных типов
+      // Creating MapEntryInfo should not cause fatalError for valid types
       let mapInfo = MapEntryInfo(keyFieldInfo: keyInfo, valueFieldInfo: valueInfo)
 
       XCTAssertEqual(mapInfo.keyFieldInfo.type, keyType)
@@ -1086,9 +1086,9 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testKeyFieldInfoAndValueFieldInfoWithComplexTypes() {
-    // Тестируем создание KeyFieldInfo и ValueFieldInfo с типами, требующими typeName
+    // Test creating KeyFieldInfo and ValueFieldInfo with types requiring typeName
 
-    // Для ValueFieldInfo с типом message
+    // For ValueFieldInfo with message type
     let messageValueInfo = ValueFieldInfo(
       name: "message_value",
       number: 2,
@@ -1099,7 +1099,7 @@ final class FieldDescriptorTests: XCTestCase {
     XCTAssertEqual(messageValueInfo.type, .message)
     XCTAssertEqual(messageValueInfo.typeName, "example.MessageType")
 
-    // Для ValueFieldInfo с типом enum
+    // For ValueFieldInfo with enum type
     let enumValueInfo = ValueFieldInfo(
       name: "enum_value",
       number: 3,

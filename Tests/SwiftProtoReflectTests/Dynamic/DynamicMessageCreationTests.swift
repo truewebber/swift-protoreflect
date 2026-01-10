@@ -1,12 +1,12 @@
 //
 // DynamicMessageCreationTests.swift
 //
-// Тесты для проверки создания динамических Protocol Buffers сообщений
+// Tests for checking creation of dynamic Protocol Buffers messages
 //
-// Тестовые случаи из плана:
-// - Test-DYN-001: Создание сообщений из полученных protodescriptor с соответствием поведению C++
-// - Test-DYN-002: Установка и получение значений полей всех типов данных proto3
-// - Test-DYN-003: Проверка создания и манипуляции сложных вложенных структур
+// Test cases from the plan:
+// - Test-DYN-001: Creating messages from received protodescriptor with C++ behavior compliance
+// - Test-DYN-002: Setting and getting values of fields of all proto3 data types
+// - Test-DYN-003: Checking creation and manipulation of complex nested structures
 
 import XCTest
 
@@ -30,30 +30,30 @@ final class DynamicMessageCreationTests: XCTestCase {
     messageFactory = MessageFactory()
     fileDescriptor = FileDescriptor(name: "test_creation.proto", package: "test.creation")
 
-    // Создаем enum для тестирования
+    // Create enum for testing
     enumDescriptor = EnumDescriptor(name: "Status", parent: fileDescriptor)
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0))
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "ACTIVE", number: 1))
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "INACTIVE", number: 2))
     fileDescriptor.addEnum(enumDescriptor)
 
-    // Простое сообщение с базовыми типами
+    // Simple message with basic types
     simpleMessage = MessageDescriptor(name: "SimpleMessage", parent: fileDescriptor)
     simpleMessage.addField(FieldDescriptor(name: "text", number: 1, type: .string))
     simpleMessage.addField(FieldDescriptor(name: "number", number: 2, type: .int32))
     simpleMessage.addField(FieldDescriptor(name: "flag", number: 3, type: .bool))
     fileDescriptor.addMessage(simpleMessage)
 
-    // Вложенное сообщение
+    // Nested message
     nestedMessage = MessageDescriptor(name: "NestedMessage", parent: fileDescriptor)
     nestedMessage.addField(FieldDescriptor(name: "id", number: 1, type: .int64))
     nestedMessage.addField(FieldDescriptor(name: "name", number: 2, type: .string))
     fileDescriptor.addMessage(nestedMessage)
 
-    // Сложное сообщение со всеми типами полей
+    // Complex message with all field types
     complexMessage = MessageDescriptor(name: "ComplexMessage", parent: fileDescriptor)
 
-    // Все скалярные типы proto3
+    // All proto3 scalar types
     complexMessage.addField(FieldDescriptor(name: "double_field", number: 1, type: .double))
     complexMessage.addField(FieldDescriptor(name: "float_field", number: 2, type: .float))
     complexMessage.addField(FieldDescriptor(name: "int32_field", number: 3, type: .int32))
@@ -70,7 +70,7 @@ final class DynamicMessageCreationTests: XCTestCase {
     complexMessage.addField(FieldDescriptor(name: "string_field", number: 14, type: .string))
     complexMessage.addField(FieldDescriptor(name: "bytes_field", number: 15, type: .bytes))
 
-    // Сложные типы
+    // Complex types
     complexMessage.addField(
       FieldDescriptor(
         name: "nested_message",
@@ -88,7 +88,7 @@ final class DynamicMessageCreationTests: XCTestCase {
       )
     )
 
-    // Repeated поля
+    // Repeated fields
     complexMessage.addField(
       FieldDescriptor(
         name: "repeated_strings",
@@ -107,7 +107,7 @@ final class DynamicMessageCreationTests: XCTestCase {
       )
     )
 
-    // Map поля
+    // Map fields
     let stringMapEntry = MapEntryInfo(
       keyFieldInfo: KeyFieldInfo(name: "key", number: 1, type: .string),
       valueFieldInfo: ValueFieldInfo(name: "value", number: 2, type: .string)
@@ -140,7 +140,7 @@ final class DynamicMessageCreationTests: XCTestCase {
       )
     )
 
-    // Oneof поля
+    // Oneof fields
     complexMessage.addField(
       FieldDescriptor(
         name: "option_a",
@@ -171,28 +171,28 @@ final class DynamicMessageCreationTests: XCTestCase {
     super.tearDown()
   }
 
-  // MARK: - Test-DYN-001: Создание сообщений из protodescriptor
+  // MARK: - Test-DYN-001: Creating messages from protodescriptor
 
   func testCreateEmptyMessageFromDescriptor() {
-    // Создание пустого сообщения должно работать как в C++ protobuf
+    // Creating empty message should work like in C++ protobuf
     let message = messageFactory.createMessage(from: simpleMessage)
 
     XCTAssertEqual(message.descriptor.name, "SimpleMessage")
     XCTAssertEqual(message.descriptor.fullName, "test.creation.SimpleMessage")
 
-    // Все поля должны быть не установлены (поведение proto3)
+    // All fields should be unset (proto3 behavior)
     XCTAssertFalse(try message.hasValue(forField: "text"))
     XCTAssertFalse(try message.hasValue(forField: "number"))
     XCTAssertFalse(try message.hasValue(forField: "flag"))
 
-    // Получение значений должно возвращать значения по умолчанию
+    // Getting values should return default values
     XCTAssertNil(try message.get(forField: "text"))
     XCTAssertNil(try message.get(forField: "number"))
     XCTAssertNil(try message.get(forField: "flag"))
   }
 
   func testCreateMessageWithFieldValues() throws {
-    // Создание сообщения с предзаполненными значениями (по именам полей)
+    // Creating message with pre-filled values (by field names)
     let fieldValues: [String: Any] = [
       "text": "Hello World",
       "number": Int32(42),
@@ -212,7 +212,7 @@ final class DynamicMessageCreationTests: XCTestCase {
   }
 
   func testCreateMessageWithFieldNumbers() throws {
-    // Создание сообщения с предзаполненными значениями (по номерам полей)
+    // Creating message with pre-filled values (by field numbers)
     let fieldValues: [Int: Any] = [
       1: "Test Message",
       2: Int32(123),
@@ -227,25 +227,25 @@ final class DynamicMessageCreationTests: XCTestCase {
   }
 
   func testCreateMessageErrorHandling() {
-    // Тестирование ошибок при создании с некорректными данными
+    // Testing errors when creating with incorrect data
     let invalidFieldValues: [String: Any] = [
-      "text": 123,  // Неправильный тип
-      "nonexistent": "value",  // Несуществующее поле
+      "text": 123,  // Wrong type
+      "nonexistent": "value",  // Nonexistent field
     ]
 
     XCTAssertThrowsError(try messageFactory.createMessage(from: simpleMessage, with: invalidFieldValues))
 
     let invalidFieldNumbers: [Int: Any] = [
-      999: "value"  // Несуществующий номер поля
+      999: "value"  // Nonexistent field number
     ]
 
     XCTAssertThrowsError(try messageFactory.createMessage(from: simpleMessage, with: invalidFieldNumbers))
   }
 
-  // MARK: - Test-DYN-002: Все типы данных proto3
+  // MARK: - Test-DYN-002: All proto3 data types
 
   func testAllScalarTypesProto3() throws {
-    // Создание сообщения со всеми скалярными типами proto3
+    // Creating message with all proto3 scalar types
     let scalarValues: [String: Any] = [
       "double_field": 3.14159,
       "float_field": Float(2.718),
@@ -266,7 +266,7 @@ final class DynamicMessageCreationTests: XCTestCase {
 
     let message = try messageFactory.createMessage(from: complexMessage, with: scalarValues)
 
-    // Проверяем все типы
+    // Check all types
     XCTAssertEqual(try message.get(forField: "double_field") as? Double ?? 0.0, 3.14159, accuracy: 0.00001)
     XCTAssertEqual(try message.get(forField: "float_field") as? Float ?? 0.0, Float(2.718), accuracy: Float(0.001))
     XCTAssertEqual(try message.get(forField: "int32_field") as? Int32, -42)
@@ -285,7 +285,7 @@ final class DynamicMessageCreationTests: XCTestCase {
   }
 
   func testComplexTypesCreation() throws {
-    // Создаем вложенное сообщение
+    // Create nested message
     let nestedMsg = try messageFactory.createMessage(
       from: nestedMessage,
       with: [
@@ -294,16 +294,16 @@ final class DynamicMessageCreationTests: XCTestCase {
       ]
     )
 
-    // Создаем сложное сообщение с вложенными типами
+    // Create complex message with nested types
     var complexMsg = messageFactory.createMessage(from: complexMessage)
 
-    // Устанавливаем вложенное сообщение
+    // Set nested message
     try complexMsg.set(nestedMsg, forField: "nested_message")
 
-    // Устанавливаем enum (по номеру и по имени)
+    // Set enum (by number and by name)
     try complexMsg.set(Int32(1), forField: "enum_field")  // ACTIVE
 
-    // Проверяем результат
+    // Check result
     let retrievedNested = try complexMsg.get(forField: "nested_message") as? DynamicMessage
     XCTAssertNotNil(retrievedNested)
     XCTAssertEqual(try retrievedNested?.get(forField: "id") as? Int64, 12345)
@@ -311,13 +311,13 @@ final class DynamicMessageCreationTests: XCTestCase {
 
     XCTAssertEqual(try complexMsg.get(forField: "enum_field") as? Int32, 1)
 
-    // Тестируем enum по имени
+    // Test enum by name
     try complexMsg.set("INACTIVE", forField: "enum_field")
     XCTAssertEqual(try complexMsg.get(forField: "enum_field") as? String, "INACTIVE")
   }
 
   func testRepeatedFieldsCreation() throws {
-    // Создание сообщения с repeated полями
+    // Creating message with repeated fields
     let strings = ["first", "second", "third"]
 
     let nestedMsg1 = try messageFactory.createMessage(
@@ -354,7 +354,7 @@ final class DynamicMessageCreationTests: XCTestCase {
   }
 
   func testMapFieldsCreation() throws {
-    // Создание сообщения с map полями
+    // Creating message with map fields
     let stringMap = ["key1": "value1", "key2": "value2"]
 
     let nestedMsg1 = try messageFactory.createMessage(
@@ -391,12 +391,12 @@ final class DynamicMessageCreationTests: XCTestCase {
     XCTAssertEqual(try retrievedMessageMap?["msg2"]?.get(forField: "name") as? String, "Map Value 2")
   }
 
-  // MARK: - Test-DYN-003: Сложные вложенные структуры
+  // MARK: - Test-DYN-003: Complex nested structures
 
   func testDeepNestedMessageCreation() throws {
-    // Создаем глубоко вложенную структуру
+    // Create deeply nested structure
 
-    // Уровень 3 (самый глубокий) - простое вложенное сообщение
+    // Level 3 (deepest) - simple nested message
     let level3 = try messageFactory.createMessage(
       from: nestedMessage,
       with: [
@@ -405,7 +405,7 @@ final class DynamicMessageCreationTests: XCTestCase {
       ]
     )
 
-    // Уровень 2 - также простое вложенное сообщение, содержащее ссылку на Level 3 в виде строки
+    // Level 2 - also simple nested message containing reference to Level 3 as string
     let level2 = try messageFactory.createMessage(
       from: nestedMessage,
       with: [
@@ -414,18 +414,18 @@ final class DynamicMessageCreationTests: XCTestCase {
       ]
     )
 
-    // Уровень 1 - сложное сообщение, содержащее Level 2
+    // Level 1 - complex message containing Level 2
     var level1 = messageFactory.createMessage(from: complexMessage)
     try level1.set("Level 1", forField: "string_field")
     try level1.set(level2, forField: "nested_message")
 
-    // Проверяем доступ к вложенным данным
+    // Check access to nested data
     let retrievedLevel2 = try level1.get(forField: "nested_message") as? DynamicMessage
     XCTAssertNotNil(retrievedLevel2)
     XCTAssertEqual(try retrievedLevel2?.get(forField: "id") as? Int64, 2)
     XCTAssertEqual(try retrievedLevel2?.get(forField: "name") as? String, "Level 2 -> Level 3")
 
-    // Создаем еще более сложную структуру с repeated полем вложенных сообщений
+    // Create even more complex structure with repeated field of nested messages
     var complexLevel1 = messageFactory.createMessage(from: complexMessage)
     let nestedArray = [level2, level3]
     try complexLevel1.set(nestedArray, forField: "repeated_messages")
@@ -438,9 +438,9 @@ final class DynamicMessageCreationTests: XCTestCase {
   }
 
   func testComplexNestedStructureWithAllFieldTypes() throws {
-    // Создаем сложную структуру с комбинацией всех типов полей
+    // Create complex structure with combination of all field types
 
-    // Вложенные сообщения для repeated поля
+    // Nested messages for repeated field
     let nestedMsg1 = try messageFactory.createMessage(
       from: nestedMessage,
       with: [
@@ -456,7 +456,7 @@ final class DynamicMessageCreationTests: XCTestCase {
       ]
     )
 
-    // Вложенные сообщения для map поля
+    // Nested messages for map field
     let mapNestedMsg1 = try messageFactory.createMessage(
       from: nestedMessage,
       with: [
@@ -472,7 +472,7 @@ final class DynamicMessageCreationTests: XCTestCase {
       ]
     )
 
-    // Основное сообщение для вложения
+    // Main message for nesting
     let mainNestedMsg = try messageFactory.createMessage(
       from: nestedMessage,
       with: [
@@ -481,7 +481,7 @@ final class DynamicMessageCreationTests: XCTestCase {
       ]
     )
 
-    // Создаем комплексное сообщение
+    // Create complex message
     let complexValues: [String: Any] = [
       "double_field": 1.23456789,
       "string_field": "Complex Structure",
@@ -492,16 +492,16 @@ final class DynamicMessageCreationTests: XCTestCase {
       "repeated_messages": [nestedMsg1, nestedMsg2],
       "string_map": ["key1": "value1", "key2": "value2"],
       "message_map": ["nested1": mapNestedMsg1, "nested2": mapNestedMsg2],
-      "option_a": "Oneof option A",  // oneof поле
+      "option_a": "Oneof option A",  // oneof field
     ]
 
     let message = try messageFactory.createMessage(from: complexMessage, with: complexValues)
 
-    // Валидируем результат
+    // Validate result
     let validationResult = messageFactory.validate(message)
     XCTAssertTrue(validationResult.isValid, "Message should be valid: \(validationResult.errors)")
 
-    // Проверяем все компоненты
+    // Check all components
     XCTAssertEqual(try message.get(forField: "double_field") as? Double ?? 0.0, 1.23456789, accuracy: 0.000000001)
     XCTAssertEqual(try message.get(forField: "string_field") as? String, "Complex Structure")
 
@@ -515,13 +515,13 @@ final class DynamicMessageCreationTests: XCTestCase {
     XCTAssertEqual(messageMap?.count, 2)
     XCTAssertEqual(try messageMap?["nested1"]?.get(forField: "id") as? Int64, 10)
 
-    // Проверяем oneof поле
+    // Check oneof field
     XCTAssertEqual(try message.get(forField: "option_a") as? String, "Oneof option A")
     XCTAssertFalse(try message.hasValue(forField: "option_b"))
   }
 
   func testMessageCloning() throws {
-    // Тестируем глубокое клонирование сложных структур
+    // Test deep cloning of complex structures
     let originalNested = try messageFactory.createMessage(
       from: nestedMessage,
       with: [
@@ -541,13 +541,13 @@ final class DynamicMessageCreationTests: XCTestCase {
       ]
     )
 
-    // Клонируем сообщение
+    // Clone message
     let cloned = try messageFactory.clone(original)
 
-    // Проверяем, что клон идентичен оригиналу
+    // Check that clone is identical to original
     XCTAssertEqual(original, cloned)
 
-    // Изменяем клон и проверяем, что оригинал не изменился
+    // Modify clone and check that original hasn't changed
     var mutableCloned = cloned
     try mutableCloned.set("Modified Clone", forField: "string_field")
 
@@ -557,9 +557,9 @@ final class DynamicMessageCreationTests: XCTestCase {
   }
 
   func testMessageValidation() throws {
-    // Тестируем валидацию сложных структур
+    // Test validation of complex structures
 
-    // Создаем валидное сообщение
+    // Create valid message
     let validNested = try messageFactory.createMessage(
       from: nestedMessage,
       with: [
@@ -580,24 +580,24 @@ final class DynamicMessageCreationTests: XCTestCase {
     XCTAssertTrue(validResult.isValid)
     XCTAssertTrue(validResult.errors.isEmpty)
 
-    // Тестируем валидацию с ошибками в вложенных сообщениях
-    // (это более сложный случай, который требует специальной настройки дескрипторов)
+    // Test validation with errors in nested messages
+    // (this is a more complex case that requires special descriptor configuration)
   }
 
   // MARK: - Performance Tests
 
   func testMessageCreationPerformance() {
-    // Тестируем производительность создания сообщений
+    // Test performance of message creation
     measure {
       for _ in 0..<1000 {
         let message = messageFactory.createMessage(from: simpleMessage)
-        _ = message.descriptor.name  // Используем результат
+        _ = message.descriptor.name  // Use result
       }
     }
   }
 
   func testComplexMessageCreationPerformance() throws {
-    // Тестируем производительность создания сложных сообщений
+    // Test performance of complex message creation
     let nestedMsg = try messageFactory.createMessage(
       from: nestedMessage,
       with: [
@@ -617,7 +617,7 @@ final class DynamicMessageCreationTests: XCTestCase {
       for _ in 0..<100 {
         do {
           let message = try messageFactory.createMessage(from: complexMessage, with: complexValues)
-          _ = try message.get(forField: "string_field")  // Используем результат
+          _ = try message.get(forField: "string_field")  // Use result
         }
         catch {
           XCTFail("Performance test failed: \(error)")

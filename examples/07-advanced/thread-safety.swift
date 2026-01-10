@@ -65,7 +65,7 @@ struct ThreadSafetyExample {
       }
     }
 
-    // Создание тестового сообщения
+    // Creating test message
     var testFile = FileDescriptor(name: "thread_test.proto", package: "com.thread")
     var counterDescriptor = MessageDescriptor(name: "Counter", parent: testFile)
 
@@ -79,7 +79,7 @@ struct ThreadSafetyExample {
     let baseMessage = factory.createMessage(from: counterDescriptor)
     let threadSafeMessage = ThreadSafeMessage(baseMessage)
 
-    // Инициализация
+    // Initialization
     try threadSafeMessage.write(Int64(0), field: "value")
     try threadSafeMessage.write("ThreadSafeCounter", field: "name")
 
@@ -92,19 +92,19 @@ struct ThreadSafetyExample {
       let group = DispatchGroup()
       let concurrentQueue = DispatchQueue(label: "test.concurrent", attributes: .concurrent)
 
-      // Запуск параллельных операций
+      // Starting parallel operations
       for threadId in 0..<threadCount {
         group.enter()
         concurrentQueue.async {
           for _ in 0..<(operationCount / threadCount) {
             do {
-              // Читаем текущее значение
+              // Read current value
               let currentValue: Int64 = try threadSafeMessage.read(field: "value") ?? 0
 
-              // Записываем новое значение
+              // Write new value
               try threadSafeMessage.write(currentValue + 1, field: "value")
 
-              // Обновляем timestamp
+              // Update timestamp
               try threadSafeMessage.write(Int64(Date().timeIntervalSince1970), field: "timestamp")
 
             }
@@ -124,7 +124,7 @@ struct ThreadSafetyExample {
       time: concurrentTime.time
     )
 
-    // Проверка результатов
+    // Check results
     let finalValue: Int64 = try threadSafeMessage.read(field: "value") ?? 0
     let expectedValue = Int64(operationCount)
 
@@ -168,7 +168,7 @@ struct ThreadSafetyExample {
       }
     }
 
-    // Создание дескриптора для тестирования
+    // Creating descriptor for testing
     var factoryFile = FileDescriptor(name: "factory_test.proto", package: "com.factory")
     var userDescriptor = MessageDescriptor(name: "User", parent: factoryFile)
 
@@ -230,7 +230,7 @@ struct ThreadSafetyExample {
             }
           }
 
-          // Thread-safe добавление в общий массив
+          // Thread-safe addition to shared array
           messageContainer.append(contentsOf: threadMessages)
 
           group.leave()
@@ -244,7 +244,7 @@ struct ThreadSafetyExample {
 
     ExampleUtils.printTiming("Concurrent message creation (\(messageCount) messages)", time: creationTime.time)
 
-    // Валидация результатов
+    // Validation of results
     let uniqueThreadIds = Set(allMessages.compactMap { try? $0.get(forField: "thread_id") as? Int32 })
     let throughput = Double(allMessages.count) / creationTime.time
 
@@ -318,7 +318,7 @@ struct ThreadSafetyExample {
       let group = DispatchGroup()
       let concurrentQueue = DispatchQueue(label: "registry.concurrent", attributes: .concurrent)
 
-      // Регистрация файлов
+      // Register files
       for threadId in 0..<threadCount {
         group.enter()
         concurrentQueue.async {
@@ -348,7 +348,7 @@ struct ThreadSafetyExample {
 
     ExampleUtils.printTiming("Concurrent registry operations", time: registrationTime.time)
 
-    // Тестирование concurrent чтения
+    // Testing concurrent reading
     print("\n  🔍 Testing concurrent lookups...")
 
     let lookupCount = 1000
@@ -404,7 +404,7 @@ struct ThreadSafetyExample {
 
     ExampleUtils.printTiming("Concurrent lookups (\(lookupCount) operations)", time: lookupTime.time)
 
-    // Результаты
+    // Results
     let registeredMessages = concurrentRegistry.messageCount
     let lookupSuccessRate = Double(successfulLookups) / Double(lookupCount) * 100
 
@@ -473,10 +473,10 @@ struct ThreadSafetyExample {
       }
     }
 
-    // 3. OSAtomic strategy (симуляция)
+    // 3. OSAtomic strategy (simulation)
     final class AtomicCounter: @unchecked Sendable {
       private var value: Int64 = 0
-      private let lock = NSLock()  // Симуляция atomic operations
+      private let lock = NSLock()  // Simulating atomic operations
 
       func increment() {
         lock.lock()
@@ -491,7 +491,7 @@ struct ThreadSafetyExample {
       }
     }
 
-    // Тестирование NSLock
+    // Testing NSLock
     print("\n  🧪 Testing NSLock strategy...")
     let nsLockCounter = NSLockCounter()
 
@@ -512,7 +512,7 @@ struct ThreadSafetyExample {
       group.wait()
     }
 
-    // Тестирование DispatchQueue
+    // Testing DispatchQueue
     print("  🧪 Testing DispatchQueue strategy...")
     let dispatchCounter = DispatchQueueCounter()
 
@@ -533,7 +533,7 @@ struct ThreadSafetyExample {
       group.wait()
     }
 
-    // Тестирование Atomic
+    // Testing Atomic
     print("  🧪 Testing Atomic strategy...")
     let atomicCounter = AtomicCounter()
 
@@ -554,7 +554,7 @@ struct ThreadSafetyExample {
       group.wait()
     }
 
-    // Сравнение результатов
+    // Comparing results
     print("\n  📊 Locking Strategy Comparison:")
     ExampleUtils.printDataTable(
       [
@@ -639,7 +639,7 @@ struct ThreadSafetyExample {
       }
     }
 
-    // Создание тестового сценария
+    // Creating test scenario
     var atomicFile = FileDescriptor(name: "atomic.proto", package: "com.atomic")
     var taskDescriptor = MessageDescriptor(name: "Task", parent: atomicFile)
 
@@ -675,7 +675,7 @@ struct ThreadSafetyExample {
               try task.set(Int32.random(in: 1...10), forField: "priority")
               try task.set("Task data \(threadId).\(i)", forField: "data")
 
-              // Симуляция обработки
+              // Simulating processing
               Thread.sleep(forTimeInterval: Double.random(in: 0.0001...0.0005))
 
               let processingTime = Date().timeIntervalSince1970 - startTime
@@ -694,7 +694,7 @@ struct ThreadSafetyExample {
 
     ExampleUtils.printTiming("Atomic operations (\(taskCount) tasks)", time: atomicTime.time)
 
-    // Анализ статистики
+    // Statistics analysis
     print("\n  📊 Atomic Operations Results:")
     ExampleUtils.printDataTable(
       [
@@ -723,21 +723,21 @@ struct ThreadSafetyExample {
 
     print("  🏁 Demonstrating race condition prevention...")
 
-    // Демонстрация потенциальной race condition
+    // Demonstrating potential race condition
     final class UnsafeCounter: @unchecked Sendable {
       private var value: Int = 0
 
       func increment() {
-        // ОПАСНО: race condition возможна
+        // DANGER: race condition possible
         let temp = value
-        Thread.sleep(forTimeInterval: 0.00001)  // Симуляция задержки
+        Thread.sleep(forTimeInterval: 0.00001)  // Simulating delay
         value = temp + 1
       }
 
       func getValue() -> Int { value }
     }
 
-    // Безопасная версия
+    // Safe version
     final class SafeCounter: @unchecked Sendable {
       private var value: Int = 0
       private let lock = NSLock()
@@ -745,7 +745,7 @@ struct ThreadSafetyExample {
       func increment() {
         lock.lock()
         let temp = value
-        Thread.sleep(forTimeInterval: 0.00001)  // Та же задержка, но в критической секции
+        Thread.sleep(forTimeInterval: 0.00001)  // Same delay but in critical section
         value = temp + 1
         lock.unlock()
       }
@@ -760,7 +760,7 @@ struct ThreadSafetyExample {
     let testOperations = 500
     let testThreads = 10
 
-    // Тест небезопасной версии
+    // Testing unsafe version
     print("\n  ⚠️  Testing unsafe counter (race condition possible)...")
     let unsafeCounter = UnsafeCounter()
 
@@ -781,7 +781,7 @@ struct ThreadSafetyExample {
       group.wait()
     }
 
-    // Тест безопасной версии
+    // Testing safe version
     print("  🛡  Testing safe counter (race condition prevented)...")
     let safeCounter = SafeCounter()
 
@@ -802,7 +802,7 @@ struct ThreadSafetyExample {
       group.wait()
     }
 
-    // Анализ результатов
+    // Results analysis
     let unsafeResult = unsafeCounter.getValue()
     let safeResult = safeCounter.getValue()
     let expectedResult = testOperations

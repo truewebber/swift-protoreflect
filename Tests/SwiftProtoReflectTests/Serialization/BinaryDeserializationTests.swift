@@ -1,13 +1,13 @@
 //
 // BinaryDeserializationTests.swift
 //
-// Тесты для проверки бинарной десериализации Protocol Buffers
+// Tests for binary deserialization of Protocol Buffers
 //
-// Тестовые случаи из плана:
-// - Test-BIN-006: Десериализация всех скалярных типов из данных, созданных C++ protoc
-// - Test-BIN-007: Десериализация сообщений с неизвестными полями (должны быть сохранены)
-// - Test-BIN-008: Десериализация сообщений с поврежденными данными (проверка обработки ошибок)
-// - Test-BIN-009: Десериализация сообщений разных версий протокола для проверки обратной совместимости
+// Test cases from the plan:
+// - Test-BIN-006: Deserialization of all scalar types from data created by C++ protoc
+// - Test-BIN-007: Deserialization of messages with unknown fields (should be preserved)
+// - Test-BIN-008: Deserialization of messages with corrupted data (error handling verification)
+// - Test-BIN-009: Deserialization of messages from different protocol versions for backward compatibility
 
 import XCTest
 
@@ -40,7 +40,7 @@ final class BinaryDeserializationTests: XCTestCase {
   // MARK: - Round-trip Tests for Scalar Types (Test-BIN-006)
 
   func testRoundTripAllScalarTypes() throws {
-    // Создаем сообщение со всеми скалярными типами
+    // Create message with all scalar types
     var scalarMessage = MessageDescriptor(name: "ScalarMessage", parent: fileDescriptor)
 
     scalarMessage.addField(FieldDescriptor(name: "double_field", number: 1, type: .double))
@@ -61,15 +61,15 @@ final class BinaryDeserializationTests: XCTestCase {
 
     fileDescriptor.addMessage(scalarMessage)
 
-    // Создаем исходные данные
+    // Create source data
     let originalValues: [String: Any] = [
       "double_field": 3.14159,
       "float_field": Float(2.718),
       "int32_field": Int32(-42),
       "int64_field": Int64(-9_223_372_036_854_775_000),
-      "uint32_field": UInt32(4_294_967_000),  // Уменьшили для безопасности
-      "uint64_field": UInt64(18_446_744_073_709_551_000),  // Уменьшили для безопасности
-      "sint32_field": Int32(-2_147_483_000),  // Уменьшили для безопасности
+      "uint32_field": UInt32(4_294_967_000),  // Reduced for safety
+      "uint64_field": UInt64(18_446_744_073_709_551_000),  // Reduced for safety
+      "sint32_field": Int32(-2_147_483_000),  // Reduced for safety
       "sint64_field": Int64(-9_223_372_036_854_775_000),
       "fixed32_field": UInt32(123_456_789),
       "fixed64_field": UInt64(987_654_321_012_345),
@@ -80,12 +80,12 @@ final class BinaryDeserializationTests: XCTestCase {
       "bytes_field": Data([0x01, 0x02, 0x03, 0xFF, 0xAB]),
     ]
 
-    // Round-trip тест
+    // Round-trip test
     let originalMessage = try messageFactory.createMessage(from: scalarMessage, with: originalValues)
     let serializedData = try serializer.serialize(originalMessage)
     let deserializedMessage = try deserializer.deserialize(serializedData, using: scalarMessage)
 
-    // Проверяем все поля
+    // Verify all fields
     XCTAssertEqual(try deserializedMessage.get(forField: "double_field") as? Double, 3.14159)
     XCTAssertEqual(try deserializedMessage.get(forField: "float_field") as? Float, Float(2.718))
     XCTAssertEqual(try deserializedMessage.get(forField: "int32_field") as? Int32, Int32(-42))
@@ -120,13 +120,13 @@ final class BinaryDeserializationTests: XCTestCase {
     message.addField(FieldDescriptor(name: "value", number: 1, type: .bool))
     fileDescriptor.addMessage(message)
 
-    // Тестируем true
+    // Test true
     let trueMessage = try messageFactory.createMessage(from: message, with: ["value": true])
     let trueData = try serializer.serialize(trueMessage)
     let deserializedTrue = try deserializer.deserialize(trueData, using: message)
     XCTAssertEqual(try deserializedTrue.get(forField: "value") as? Bool, true)
 
-    // Тестируем false
+    // Test false
     let falseMessage = try messageFactory.createMessage(from: message, with: ["value": false])
     let falseData = try serializer.serialize(falseMessage)
     let deserializedFalse = try deserializer.deserialize(falseData, using: message)
@@ -138,10 +138,10 @@ final class BinaryDeserializationTests: XCTestCase {
     message.addField(FieldDescriptor(name: "value", number: 1, type: .string))
     fileDescriptor.addMessage(message)
 
-    // Тестируем различные строки
+    // Test various strings
     let testStrings = [
       "Hello World",
-      "Привет, мир!",
+      "Hello, world!",
       "你好世界",
       "🌍🚀✨",
       "",
@@ -162,10 +162,10 @@ final class BinaryDeserializationTests: XCTestCase {
     fileDescriptor.addMessage(message)
 
     let testBytes = [
-      Data(),  // Пустые данные
-      Data([0x01]),  // Один байт
-      Data([0x01, 0x02, 0x03, 0xFF, 0xAB]),  // Несколько байтов
-      Data(repeating: 0xAA, count: 1000),  // Большой массив
+      Data(),  // Empty data
+      Data([0x01]),  // One byte
+      Data([0x01, 0x02, 0x03, 0xFF, 0xAB]),  // Several bytes
+      Data(repeating: 0xAA, count: 1000),  // Large array
     ]
 
     for bytes in testBytes {
@@ -179,7 +179,7 @@ final class BinaryDeserializationTests: XCTestCase {
   // MARK: - ZigZag Decoding Tests
 
   func testZigZagDecoding() {
-    // Тестируем ZigZag декодирование для sint32
+    // Test ZigZag decoding for sint32
     XCTAssertEqual(BinaryDeserializer.zigzagDecode32(0), 0)
     XCTAssertEqual(BinaryDeserializer.zigzagDecode32(1), -1)
     XCTAssertEqual(BinaryDeserializer.zigzagDecode32(2), 1)
@@ -187,7 +187,7 @@ final class BinaryDeserializationTests: XCTestCase {
     XCTAssertEqual(BinaryDeserializer.zigzagDecode32(4_294_967_294), 2_147_483_647)
     XCTAssertEqual(BinaryDeserializer.zigzagDecode32(4_294_967_295), -2_147_483_648)
 
-    // Тестируем ZigZag декодирование для sint64 (более консервативные значения)
+    // Test ZigZag decoding for sint64 (more conservative values)
     XCTAssertEqual(BinaryDeserializer.zigzagDecode64(0), 0)
     XCTAssertEqual(BinaryDeserializer.zigzagDecode64(1), -1)
     XCTAssertEqual(BinaryDeserializer.zigzagDecode64(2), 1)
@@ -248,7 +248,7 @@ final class BinaryDeserializationTests: XCTestCase {
       "values": [Int32(1), Int32(2), Int32(3), Int32(4), Int32(5)]
     ]
 
-    // Тестируем с packed encoding
+    // Test with packed encoding
     let packedSerializer = BinarySerializer(options: SerializationOptions(usePackedRepeated: true))
 
     let original = try messageFactory.createMessage(from: message, with: values)
@@ -301,7 +301,7 @@ final class BinaryDeserializationTests: XCTestCase {
   // MARK: - Enum Tests
 
   func testRoundTripEnumField() throws {
-    // Создаем enum
+    // Create enum
     var enumDescriptor = EnumDescriptor(name: "Status", parent: fileDescriptor)
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0))
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "ACTIVE", number: 1))
@@ -329,18 +329,18 @@ final class BinaryDeserializationTests: XCTestCase {
   // MARK: - Unknown Fields Tests (Test-BIN-007)
 
   func testDeserializationWithUnknownFields() throws {
-    // Создаем сообщение с полем номер 1 и 10
+    // Create message with field numbers 1 and 10
     var originalMessage = MessageDescriptor(name: "OriginalMessage", parent: fileDescriptor)
     originalMessage.addField(FieldDescriptor(name: "known_field", number: 1, type: .string))
-    // Это поле будет "неизвестным"
+    // This field will be "unknown"
     originalMessage.addField(FieldDescriptor(name: "unknown_field", number: 10, type: .int32))
     fileDescriptor.addMessage(originalMessage)
 
-    // Создаем "новую версию" сообщения без поля 10
+    // Create "new version" of message without field 10
     var newMessage = MessageDescriptor(name: "NewMessage", parent: fileDescriptor)
     newMessage.addField(FieldDescriptor(name: "known_field", number: 1, type: .string))
 
-    // Сериализуем с полным сообщением
+    // Serialize with full message
     let fullMessage = try messageFactory.createMessage(
       from: originalMessage,
       with: [
@@ -350,7 +350,7 @@ final class BinaryDeserializationTests: XCTestCase {
     )
     let data = try serializer.serialize(fullMessage)
 
-    // Десериализуем с урезанным дескриптором (неизвестное поле должно быть пропущено)
+    // Deserialize with truncated descriptor (unknown field should be skipped)
     let partialMessage = try deserializer.deserialize(data, using: newMessage)
 
     XCTAssertEqual(try partialMessage.get(forField: "known_field") as? String, "test")
@@ -360,23 +360,23 @@ final class BinaryDeserializationTests: XCTestCase {
   // MARK: - Error Handling Tests (Test-BIN-008)
 
   func testDeserializationErrorHandling() {
-    // Тест с пустыми данными
+    // Test with empty data
     var emptyMessage = MessageDescriptor(name: "EmptyMessage", parent: fileDescriptor)
-    // Изменили на int32 для соответствия tag 0x08
+    // Changed to int32 to match tag 0x08
     emptyMessage.addField(FieldDescriptor(name: "field", number: 1, type: .int32))
 
     let emptyData = Data()
     XCTAssertNoThrow(try deserializer.deserialize(emptyData, using: emptyMessage))
 
-    // Тест с обрезанными данными (tag для поля 1, wire type varint, но нет значения)
-    let truncatedData = Data([0x08])  // Tag для поля 1, wire type 0 (varint), но нет данных varint
+    // Test with truncated data (tag for field 1, wire type varint, but no value)
+    let truncatedData = Data([0x08])  // Tag for field 1, wire type 0 (varint), but no varint data
     XCTAssertThrowsError(try deserializer.deserialize(truncatedData, using: emptyMessage)) { error in
       XCTAssertTrue(error is DeserializationError)
       if case .truncatedVarint = error as? DeserializationError {
-        // Ожидаемая ошибка
+        // Expected error
       }
       else {
-        XCTFail("Ожидалась ошибка truncatedVarint, получена: \(error)")
+        XCTFail("Expected truncatedVarint error, got: \(error)")
       }
     }
   }
@@ -386,20 +386,20 @@ final class BinaryDeserializationTests: XCTestCase {
     message.addField(FieldDescriptor(name: "value", number: 1, type: .string))
     fileDescriptor.addMessage(message)
 
-    // Создаем данные с невалидной UTF-8 строкой вручную
+    // Create data with invalid UTF-8 string manually
     var invalidData = Data()
-    invalidData.append(0x0A)  // Tag для поля 1, wire type 2 (length-delimited)
-    invalidData.append(0x02)  // Длина 2 байта
-    invalidData.append(0xFF)  // Невалидный UTF-8 байт
-    invalidData.append(0xFE)  // Невалидный UTF-8 байт
+    invalidData.append(0x0A)  // Tag for field 1, wire type 2 (length-delimited)
+    invalidData.append(0x02)  // Length 2 bytes
+    invalidData.append(0xFF)  // Invalid UTF-8 byte
+    invalidData.append(0xFE)  // Invalid UTF-8 byte
 
     XCTAssertThrowsError(try deserializer.deserialize(invalidData, using: message)) { error in
       XCTAssertTrue(error is DeserializationError)
       if case .invalidUTF8String = error as? DeserializationError {
-        // Ожидаемая ошибка
+        // Expected error
       }
       else {
-        XCTFail("Ожидалась ошибка invalidUTF8String")
+        XCTFail("Expected invalidUTF8String error")
       }
     }
   }
@@ -407,7 +407,7 @@ final class BinaryDeserializationTests: XCTestCase {
   // MARK: - Deserialization Options Tests
 
   func testDeserializationOptions() {
-    // Тестируем опции десериализации
+    // Test deserialization options
     let preservingOptions = DeserializationOptions(preserveUnknownFields: true)
     let discardingOptions = DeserializationOptions(preserveUnknownFields: false)
 
@@ -465,7 +465,7 @@ final class BinaryDeserializationTests: XCTestCase {
   // MARK: - Performance Tests
 
   func testDeserializationPerformance() throws {
-    // Создаем сообщение с множеством полей
+    // Create message with many fields
     var message = MessageDescriptor(name: "LargeMessage", parent: fileDescriptor)
 
     for i in 1...100 {
@@ -473,7 +473,7 @@ final class BinaryDeserializationTests: XCTestCase {
     }
     fileDescriptor.addMessage(message)
 
-    // Создаем данные для теста
+    // Create test data
     var fieldValues: [String: Any] = [:]
     for i in 1...100 {
       fieldValues["field_\(i)"] = Int32(i)
@@ -482,7 +482,7 @@ final class BinaryDeserializationTests: XCTestCase {
     let originalMessage = try messageFactory.createMessage(from: message, with: fieldValues)
     let data = try serializer.serialize(originalMessage)
 
-    // Тестируем производительность десериализации
+    // Test deserialization performance
     measure {
       for _ in 0..<1000 {
         _ = try? deserializer.deserialize(data, using: message)
@@ -506,7 +506,7 @@ final class BinaryDeserializationTests: XCTestCase {
 
   func testDeserializeMessageWithLargeFieldNumbers() throws {
     var message = MessageDescriptor(name: "LargeFieldMessage", parent: fileDescriptor)
-    // Большой номер поля, но безопасный
+    // Large field number, but safe
     message.addField(FieldDescriptor(name: "field_large", number: 1000, type: .int32))
     fileDescriptor.addMessage(message)
 

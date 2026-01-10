@@ -2,7 +2,7 @@
 // DynamicMessageTests.swift
 // SwiftProtoReflectTests
 //
-// Создан: 2025-05-23
+// Created: 2025-05-23
 //
 
 import XCTest
@@ -12,7 +12,7 @@ import XCTest
 final class DynamicMessageTests: XCTestCase {
   // MARK: - Properties
 
-  // Тестовые дескрипторы
+  // Test descriptors
   private var fileDescriptor: FileDescriptor!
   private var personMessage: MessageDescriptor!
   private var addressMessage: MessageDescriptor!
@@ -23,19 +23,19 @@ final class DynamicMessageTests: XCTestCase {
   override func setUp() {
     super.setUp()
 
-    // Создаем тестовый файловый дескриптор
+    // Create test file descriptor
     fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
 
-    // Создаем дескриптор перечисления PhoneType
+    // Create enum descriptor PhoneType
     enumDescriptor = EnumDescriptor(name: "PhoneType", parent: fileDescriptor)
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "MOBILE", number: 0))
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "HOME", number: 1))
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "WORK", number: 2))
 
-    // Добавляем перечисление в файл
+    // Add enum to file
     fileDescriptor.addEnum(enumDescriptor)
 
-    // Создаем дескриптор сообщения Address
+    // Create message descriptor Address
     addressMessage = MessageDescriptor(name: "Address", parent: fileDescriptor)
     addressMessage.addField(
       FieldDescriptor(
@@ -59,13 +59,13 @@ final class DynamicMessageTests: XCTestCase {
       )
     )
 
-    // Добавляем сообщение Address в файл
+    // Add Address message to file
     fileDescriptor.addMessage(addressMessage)
 
-    // Создаем дескриптор сообщения Person
+    // Create message descriptor Person
     personMessage = MessageDescriptor(name: "Person", parent: fileDescriptor)
 
-    // Добавляем простые поля
+    // Add simple fields
     personMessage.addField(
       FieldDescriptor(
         name: "name",
@@ -89,7 +89,7 @@ final class DynamicMessageTests: XCTestCase {
       )
     )
 
-    // Добавляем поле для вложенного сообщения
+    // Add field for nested message
     personMessage.addField(
       FieldDescriptor(
         name: "address",
@@ -99,7 +99,7 @@ final class DynamicMessageTests: XCTestCase {
       )
     )
 
-    // Добавляем поле enum
+    // Add enum field
     personMessage.addField(
       FieldDescriptor(
         name: "phone_type",
@@ -109,7 +109,7 @@ final class DynamicMessageTests: XCTestCase {
       )
     )
 
-    // Добавляем repeated поле
+    // Add repeated field
     personMessage.addField(
       FieldDescriptor(
         name: "phone_numbers",
@@ -119,7 +119,7 @@ final class DynamicMessageTests: XCTestCase {
       )
     )
 
-    // Добавляем map поле
+    // Add map field
     let keyInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyInfo, valueFieldInfo: valueInfo)
@@ -136,7 +136,7 @@ final class DynamicMessageTests: XCTestCase {
       )
     )
 
-    // Добавляем oneof поля
+    // Add oneof fields
     personMessage.addField(
       FieldDescriptor(
         name: "work_email",
@@ -154,7 +154,7 @@ final class DynamicMessageTests: XCTestCase {
       )
     )
 
-    // Добавляем сообщение Person в файл
+    // Add Person message to file
     fileDescriptor.addMessage(personMessage)
   }
 
@@ -169,14 +169,14 @@ final class DynamicMessageTests: XCTestCase {
   // MARK: - Initialization Tests
 
   func testInitialization() {
-    // Создаем экземпляр DynamicMessage
+    // Create DynamicMessage instance
     let message = DynamicMessage(descriptor: personMessage)
 
-    // Проверяем, что дескриптор установлен правильно
+    // Check that descriptor is set correctly
     XCTAssertEqual(message.descriptor.name, "Person")
     XCTAssertEqual(message.descriptor.fullName, "test.Person")
 
-    // Проверяем, что значения пусты
+    // Check that values are empty
     XCTAssertFalse(try message.hasValue(forField: "name"))
     XCTAssertNil(try message.get(forField: "name"))
   }
@@ -186,24 +186,24 @@ final class DynamicMessageTests: XCTestCase {
   func testSetAndGetScalarFields() {
     var message = DynamicMessage(descriptor: personMessage)
 
-    // Устанавливаем и получаем строковое поле
+    // Set and get string field
     do {
       try message.set("John Doe", forField: "name")
       XCTAssertTrue(try message.hasValue(forField: "name"))
       XCTAssertEqual(try message.get(forField: "name") as? String, "John Doe")
 
-      // Устанавливаем и получаем числовое поле
+      // Set and get numeric field
       try message.set(Int32(123), forField: "id")
       XCTAssertTrue(try message.hasValue(forField: "id"))
       XCTAssertEqual(try message.get(forField: "id") as? Int32, 123)
 
-      // Используем номер поля вместо имени
+      // Use field number instead of name
       try message.set("john.doe@example.com", forField: 3)  // email
       XCTAssertTrue(try message.hasValue(forField: 3))
       XCTAssertEqual(try message.get(forField: 3) as? String, "john.doe@example.com")
     }
     catch {
-      XCTFail("Не должно быть исключений при установке/получении полей: \(error)")
+      XCTFail("Should not have exceptions when setting/getting fields: \(error)")
     }
   }
 
@@ -212,18 +212,18 @@ final class DynamicMessageTests: XCTestCase {
     var addressMsg = DynamicMessage(descriptor: addressMessage)
 
     do {
-      // Заполняем адрес
+      // Fill address
       try addressMsg.set("123 Main St", forField: "street")
       try addressMsg.set("Anytown", forField: "city")
       try addressMsg.set("12345", forField: "zip_code")
 
-      // Устанавливаем адрес в Person
+      // Set address in Person
       try message.set(addressMsg, forField: "address")
 
-      // Проверяем, что адрес установлен
+      // Check that address is set
       XCTAssertTrue(try message.hasValue(forField: "address"))
 
-      // Получаем и проверяем адрес
+      // Get and check address
       let retrievedAddress = try message.get(forField: "address") as? DynamicMessage
       XCTAssertNotNil(retrievedAddress)
       XCTAssertEqual(try retrievedAddress?.get(forField: "street") as? String, "123 Main St")
@@ -231,7 +231,7 @@ final class DynamicMessageTests: XCTestCase {
       XCTAssertEqual(try retrievedAddress?.get(forField: "zip_code") as? String, "12345")
     }
     catch {
-      XCTFail("Не должно быть исключений при работе с вложенными сообщениями: \(error)")
+      XCTFail("Should not have exceptions when working with nested messages: \(error)")
     }
   }
 
@@ -239,18 +239,18 @@ final class DynamicMessageTests: XCTestCase {
     var message = DynamicMessage(descriptor: personMessage)
 
     do {
-      // Устанавливаем enum по номеру
+      // Set enum by number
       try message.set(Int32(1), forField: "phone_type")  // HOME
       XCTAssertTrue(try message.hasValue(forField: "phone_type"))
       XCTAssertEqual(try message.get(forField: "phone_type") as? Int32, 1)
 
-      // Устанавливаем enum по имени
+      // Set enum by name
       try message.set("WORK", forField: "phone_type")
       XCTAssertTrue(try message.hasValue(forField: "phone_type"))
       XCTAssertEqual(try message.get(forField: "phone_type") as? String, "WORK")
     }
     catch {
-      XCTFail("Не должно быть исключений при работе с enum полями: \(error)")
+      XCTFail("Should not have exceptions when working with enum fields: \(error)")
     }
   }
 
@@ -258,25 +258,25 @@ final class DynamicMessageTests: XCTestCase {
     var message = DynamicMessage(descriptor: personMessage)
 
     do {
-      // Добавляем телефонные номера по одному
+      // Add phone numbers one by one
       try message.addRepeatedValue("+1-555-1234", forField: "phone_numbers")
       try message.addRepeatedValue("+1-555-5678", forField: "phone_numbers")
 
-      // Проверяем, что поле установлено
+      // Check that field is set
       XCTAssertTrue(try message.hasValue(forField: "phone_numbers"))
 
-      // Получаем массив и проверяем его содержимое
+      // Get array and check its contents
       let phoneNumbers = try message.get(forField: "phone_numbers") as? [String]
       XCTAssertNotNil(phoneNumbers)
       XCTAssertEqual(phoneNumbers?.count, 2)
       XCTAssertEqual(phoneNumbers?[0], "+1-555-1234")
       XCTAssertEqual(phoneNumbers?[1], "+1-555-5678")
 
-      // Устанавливаем массив целиком
+      // Set entire array
       let newNumbers = ["+1-555-9876", "+1-555-4321"]
       try message.set(newNumbers, forField: "phone_numbers")
 
-      // Проверяем обновленный массив
+      // Check updated array
       let updatedNumbers = try message.get(forField: "phone_numbers") as? [String]
       XCTAssertNotNil(updatedNumbers)
       XCTAssertEqual(updatedNumbers?.count, 2)
@@ -284,7 +284,7 @@ final class DynamicMessageTests: XCTestCase {
       XCTAssertEqual(updatedNumbers?[1], "+1-555-4321")
     }
     catch {
-      XCTFail("Не должно быть исключений при работе с repeated полями: \(error)")
+      XCTFail("Should not have exceptions when working with repeated fields: \(error)")
     }
   }
 
@@ -292,25 +292,25 @@ final class DynamicMessageTests: XCTestCase {
     var message = DynamicMessage(descriptor: personMessage)
 
     do {
-      // Добавляем записи в map по одной
+      // Add entries to map one by one
       try message.setMapEntry("Developer", forKey: "role", inField: "attributes")
       try message.setMapEntry("John", forKey: "first_name", inField: "attributes")
 
-      // Проверяем, что поле установлено
+      // Check that field is set
       XCTAssertTrue(try message.hasValue(forField: "attributes"))
 
-      // Получаем map и проверяем его содержимое
+      // Get map and check its contents
       let attributes = try message.get(forField: "attributes") as? [String: String]
       XCTAssertNotNil(attributes)
       XCTAssertEqual(attributes?.count, 2)
       XCTAssertEqual(attributes?["role"], "Developer")
       XCTAssertEqual(attributes?["first_name"], "John")
 
-      // Устанавливаем map целиком
+      // Set entire map
       let newAttributes = ["department": "Engineering", "level": "Senior"]
       try message.set(newAttributes, forField: "attributes")
 
-      // Проверяем обновленный map
+      // Check updated map
       let updatedAttributes = try message.get(forField: "attributes") as? [String: String]
       XCTAssertNotNil(updatedAttributes)
       XCTAssertEqual(updatedAttributes?.count, 2)
@@ -318,7 +318,7 @@ final class DynamicMessageTests: XCTestCase {
       XCTAssertEqual(updatedAttributes?["level"], "Senior")
     }
     catch {
-      XCTFail("Не должно быть исключений при работе с map полями: \(error)")
+      XCTFail("Should not have exceptions when working with map fields: \(error)")
     }
   }
 
@@ -326,25 +326,25 @@ final class DynamicMessageTests: XCTestCase {
     var message = DynamicMessage(descriptor: personMessage)
 
     do {
-      // Устанавливаем первый oneof
+      // Set first oneof
       try message.set("work@example.com", forField: "work_email")
       XCTAssertTrue(try message.hasValue(forField: "work_email"))
       XCTAssertFalse(try message.hasValue(forField: "personal_email"))
       XCTAssertEqual(try message.get(forField: "work_email") as? String, "work@example.com")
 
-      // Устанавливаем второй oneof - должен очистить первый
+      // Set second oneof - should clear first
       try message.set("personal@example.com", forField: "personal_email")
       XCTAssertFalse(try message.hasValue(forField: "work_email"))
       XCTAssertTrue(try message.hasValue(forField: "personal_email"))
       XCTAssertEqual(try message.get(forField: "personal_email") as? String, "personal@example.com")
 
-      // Очищаем oneof поле
+      // Clear oneof field
       try message.clearField("personal_email")
       XCTAssertFalse(try message.hasValue(forField: "personal_email"))
       XCTAssertFalse(try message.hasValue(forField: "work_email"))
     }
     catch {
-      XCTFail("Не должно быть исключений при работе с oneof полями: \(error)")
+      XCTFail("Should not have exceptions when working with oneof fields: \(error)")
     }
   }
 
@@ -352,28 +352,28 @@ final class DynamicMessageTests: XCTestCase {
     var message = DynamicMessage(descriptor: personMessage)
 
     do {
-      // Устанавливаем значения
+      // Set values
       try message.set("John Doe", forField: "name")
       try message.set(Int32(123), forField: "id")
 
-      // Проверяем, что значения установлены
+      // Check that values are set
       XCTAssertTrue(try message.hasValue(forField: "name"))
       XCTAssertTrue(try message.hasValue(forField: "id"))
 
-      // Очищаем одно поле
+      // Clear one field
       try message.clearField("name")
 
-      // Проверяем результат
+      // Check result
       XCTAssertFalse(try message.hasValue(forField: "name"))
       XCTAssertTrue(try message.hasValue(forField: "id"))
 
-      // Устанавливаем значение снова
+      // Set value again
       try message.set("Jane Doe", forField: "name")
       XCTAssertTrue(try message.hasValue(forField: "name"))
       XCTAssertEqual(try message.get(forField: "name") as? String, "Jane Doe")
     }
     catch {
-      XCTFail("Не должно быть исключений при очистке полей: \(error)")
+      XCTFail("Should not have exceptions when clearing fields: \(error)")
     }
   }
 
@@ -382,10 +382,10 @@ final class DynamicMessageTests: XCTestCase {
   func testTypeValidation() {
     var message = DynamicMessage(descriptor: personMessage)
 
-    // Проверяем ошибку при установке значения с неправильным типом
+    // Check error when setting value with incorrect type
     XCTAssertThrowsError(try message.set(123, forField: "name")) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -394,15 +394,15 @@ final class DynamicMessageTests: XCTestCase {
         XCTAssertEqual(expectedType, "String")
       }
       else {
-        XCTFail("Ожидалась ошибка typeMismatch")
+        XCTFail("Expected typeMismatch")
       }
     }
 
-    // Проверяем ошибку при установке неправильного типа вложенного сообщения
-    let wrongMessage = DynamicMessage(descriptor: personMessage)  // Person вместо Address
+    // Check error when setting incorrect nested message type
+    let wrongMessage = DynamicMessage(descriptor: personMessage)  // Person instead of Address
     XCTAssertThrowsError(try message.set(wrongMessage, forField: "address")) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -412,7 +412,7 @@ final class DynamicMessageTests: XCTestCase {
         XCTAssertEqual(actualType, "test.Person")
       }
       else {
-        XCTFail("Ожидалась ошибка messageMismatch")
+        XCTFail("Expected messageMismatch")
       }
     }
   }
@@ -420,10 +420,10 @@ final class DynamicMessageTests: XCTestCase {
   func testNonExistentFieldAccess() {
     let message = DynamicMessage(descriptor: personMessage)
 
-    // Проверяем ошибку при доступе к несуществующему полю по имени
+    // Check error when accessing non-existent field by name
     XCTAssertThrowsError(try message.get(forField: "non_existent")) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -431,14 +431,14 @@ final class DynamicMessageTests: XCTestCase {
         XCTAssertEqual(fieldName, "non_existent")
       }
       else {
-        XCTFail("Ожидалась ошибка fieldNotFound")
+        XCTFail("Expected fieldNotFound")
       }
     }
 
-    // Проверяем ошибку при доступе к несуществующему полю по номеру
+    // Check error when accessing non-existent field by number
     XCTAssertThrowsError(try message.get(forField: 999)) { error in
       guard let dynamicError = error as? DynamicMessageError else {
-        XCTFail("Ожидалась ошибка DynamicMessageError")
+        XCTFail("Expected DynamicMessageError")
         return
       }
 
@@ -446,7 +446,7 @@ final class DynamicMessageTests: XCTestCase {
         XCTAssertEqual(fieldNumber, 999)
       }
       else {
-        XCTFail("Ожидалась ошибка fieldNotFoundByNumber")
+        XCTFail("Expected fieldNotFoundByNumber")
       }
     }
   }
@@ -457,41 +457,41 @@ final class DynamicMessageTests: XCTestCase {
     var message1 = DynamicMessage(descriptor: personMessage)
     var message2 = DynamicMessage(descriptor: personMessage)
 
-    // Пустые сообщения должны быть равны
+    // Empty messages should be equal
     XCTAssertEqual(message1, message2)
 
     do {
-      // Добавляем одинаковые данные
+      // Add same data
       try message1.set("John Doe", forField: "name")
       try message2.set("John Doe", forField: "name")
 
-      // Сообщения с одинаковыми данными должны быть равны
+      // Messages with same data should be equal
       XCTAssertEqual(message1, message2)
 
-      // Изменяем одно поле в message2
+      // Change one field in message2
       try message2.set("Jane Doe", forField: "name")
 
-      // Сообщения с разными данными не должны быть равны
+      // Messages with different data should not be equal
       XCTAssertNotEqual(message1, message2)
 
-      // Устанавливаем одинаковые данные снова
+      // Set same data again
       try message2.set("John Doe", forField: "name")
       XCTAssertEqual(message1, message2)
 
-      // Добавляем дополнительное поле в message1
+      // Add additional field to message1
       try message1.set(Int32(123), forField: "id")
 
-      // Сообщения должны отличаться, если у одного есть поле, а у другого нет
+      // Messages should differ if one has field and other doesn't
       XCTAssertNotEqual(message1, message2)
 
-      // Добавляем то же поле в message2
+      // Add same field to message2
       try message2.set(Int32(123), forField: "id")
 
-      // Сообщения должны быть равны снова
+      // Messages should be equal again
       XCTAssertEqual(message1, message2)
     }
     catch {
-      XCTFail("Не должно быть исключений при тестировании Equatable: \(error)")
+      XCTFail("Should not have exceptions when testing Equatable: \(error)")
     }
   }
 
@@ -500,7 +500,7 @@ final class DynamicMessageTests: XCTestCase {
     var message2 = DynamicMessage(descriptor: personMessage)
 
     do {
-      // Настраиваем сложные поля
+      // Setup complex fields
       var address1 = DynamicMessage(descriptor: addressMessage)
       try address1.set("123 Main St", forField: "street")
       try address1.set("Anytown", forField: "city")
@@ -509,48 +509,48 @@ final class DynamicMessageTests: XCTestCase {
       try address2.set("123 Main St", forField: "street")
       try address2.set("Anytown", forField: "city")
 
-      // Устанавливаем адреса
+      // Set addresses
       try message1.set(address1, forField: "address")
       try message2.set(address2, forField: "address")
 
-      // Сообщения с одинаковыми вложенными сообщениями должны быть равны
+      // Messages with identical nested messages should be equal
       XCTAssertEqual(message1, message2)
 
-      // Изменяем одно поле в address2
+      // Modify one field in address2
       try address2.set("456 Oak St", forField: "street")
 
-      // Обновляем address в message2
+      // Update address in message2
       try message2.set(address2, forField: "address")
 
-      // Сообщения с разными вложенными сообщениями не должны быть равны
+      // Messages with different nested messages should not be equal
       XCTAssertNotEqual(message1, message2)
 
-      // Устанавливаем одинаковые repeated поля
+      // Set identical repeated fields
       let phoneNumbers = ["+1-555-1234", "+1-555-5678"]
       try message1.set(phoneNumbers, forField: "phone_numbers")
       try message2.set(phoneNumbers, forField: "phone_numbers")
 
-      // Сообщения все еще не должны быть равны из-за разных адресов
+      // Messages should still not be equal due to different addresses
       XCTAssertNotEqual(message1, message2)
 
-      // Исправляем адрес в message2
+      // Fix address in message2
       address2 = DynamicMessage(descriptor: addressMessage)
       try address2.set("123 Main St", forField: "street")
       try address2.set("Anytown", forField: "city")
       try message2.set(address2, forField: "address")
 
-      // Теперь сообщения должны быть равны
+      // Now messages should be equal
       XCTAssertEqual(message1, message2)
     }
     catch {
-      XCTFail("Не должно быть исключений при тестировании Equatable для сложных полей: \(error)")
+      XCTFail("Should not have exceptions when testing Equatable for complex fields: \(error)")
     }
   }
 
   // MARK: - Comprehensive Type Tests
 
   func testAllScalarTypes() {
-    // Создаем сообщение со всеми скалярными типами полей
+    // Create message with all scalar type fields
     var message = MessageDescriptor(name: "AllTypes", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "double_value", number: 1, type: .double))
     message.addField(FieldDescriptor(name: "float_value", number: 2, type: .float))
@@ -573,7 +573,7 @@ final class DynamicMessageTests: XCTestCase {
     var dynamicMessage = DynamicMessage(descriptor: message)
 
     do {
-      // Устанавливаем значения всех типов
+      // Set values of all types
       try dynamicMessage.set(Double(3.14159), forField: "double_value")
       try dynamicMessage.set(Float(2.71828), forField: "float_value")
       try dynamicMessage.set(Int32(42), forField: "int32_value")
@@ -590,7 +590,7 @@ final class DynamicMessageTests: XCTestCase {
       try dynamicMessage.set("Hello, world!", forField: "string_value")
       try dynamicMessage.set(Data("binary data".utf8), forField: "bytes_value")
 
-      // Проверяем все установленные значения
+      // Check all set values
       XCTAssertEqual(try dynamicMessage.get(forField: "double_value") as? Double, 3.14159)
       XCTAssertEqual(try dynamicMessage.get(forField: "float_value") as? Float, 2.71828)
       XCTAssertEqual(try dynamicMessage.get(forField: "int32_value") as? Int32, 42)
@@ -607,21 +607,21 @@ final class DynamicMessageTests: XCTestCase {
       XCTAssertEqual(try dynamicMessage.get(forField: "string_value") as? String, "Hello, world!")
       XCTAssertEqual(try dynamicMessage.get(forField: "bytes_value") as? Data, Data("binary data".utf8))
 
-      // Проверяем преобразование Int в Int32/Int64 типы
+      // Check conversion from Int to Int32/Int64 types
       try dynamicMessage.set(Int(42), forField: "int32_value")
       XCTAssertEqual(try dynamicMessage.get(forField: "int32_value") as? Int32, 42)
 
       try dynamicMessage.set(Int(42), forField: "int64_value")
       XCTAssertEqual(try dynamicMessage.get(forField: "int64_value") as? Int64, 42)
 
-      // Проверяем преобразование UInt в UInt32/UInt64 типы
+      // Check conversion from UInt to UInt32/UInt64 types
       try dynamicMessage.set(UInt(42), forField: "uint32_value")
       XCTAssertEqual(try dynamicMessage.get(forField: "uint32_value") as? UInt32, 42)
 
       try dynamicMessage.set(UInt(42), forField: "uint64_value")
       XCTAssertEqual(try dynamicMessage.get(forField: "uint64_value") as? UInt64, 42)
 
-      // Проверяем NSNumber для числовых типов
+      // Check NSNumber for numeric types
       let doubleNumber = NSNumber(value: 3.14159)
       try dynamicMessage.set(doubleNumber, forField: "double_value")
       XCTAssertEqual(try dynamicMessage.get(forField: "double_value") as? Double, 3.14159)
@@ -631,10 +631,10 @@ final class DynamicMessageTests: XCTestCase {
       XCTAssertEqual(try dynamicMessage.get(forField: "float_value") as? Float, 2.71828)
     }
     catch {
-      XCTFail("Не должно быть исключений при работе со скалярными типами: \(error)")
+      XCTFail("Should not have exceptions when working with scalar types: \(error)")
     }
 
-    // Проверяем ошибки типов для разных полей
+    // Check type errors for different fields
     XCTAssertThrowsError(try dynamicMessage.set("not a number", forField: "double_value"))
     XCTAssertThrowsError(try dynamicMessage.set("not a number", forField: "float_value"))
     XCTAssertThrowsError(try dynamicMessage.set("not a number", forField: "int32_value"))
@@ -645,16 +645,16 @@ final class DynamicMessageTests: XCTestCase {
     XCTAssertThrowsError(try dynamicMessage.set(42, forField: "string_value"))
     XCTAssertThrowsError(try dynamicMessage.set("not binary data", forField: "bytes_value"))
 
-    // Проверяем ошибки для значений Int32 выходящих за диапазон
+    // Check errors for Int32 values out of range
     XCTAssertThrowsError(try dynamicMessage.set(Int(Int32.max) + 1, forField: "int32_value"))
     XCTAssertThrowsError(try dynamicMessage.set(Int(Int32.min) - 1, forField: "int32_value"))
 
-    // Проверяем ошибки для значений UInt32 выходящих за диапазон
+    // Check errors for UInt32 values out of range
     XCTAssertThrowsError(try dynamicMessage.set(UInt(UInt32.max) + 1, forField: "uint32_value"))
   }
 
   func testComplexMapFieldOperations() {
-    // Создаем сообщение с различными типами map полей
+    // Create message with different types of map fields
     var messageDesc = MessageDescriptor(name: "MapTypes", parent: fileDescriptor)
 
     // Map string -> string
@@ -710,7 +710,7 @@ final class DynamicMessageTests: XCTestCase {
     var message = DynamicMessage(descriptor: messageDesc)
 
     do {
-      // Проверяем операции с string -> string map
+      // Check operations with string -> string map
       try message.setMapEntry("value1", forKey: "key1", inField: "string_map")
       try message.setMapEntry("value2", forKey: "key2", inField: "string_map")
 
@@ -718,22 +718,22 @@ final class DynamicMessageTests: XCTestCase {
       XCTAssertEqual(stringMap?["key1"], "value1")
       XCTAssertEqual(stringMap?["key2"], "value2")
 
-      // Перезаписываем значение
+      // Overwrite value
       try message.setMapEntry("new_value", forKey: "key1", inField: "string_map")
       let updatedStringMap = try message.get(forField: "string_map") as? [String: String]
       XCTAssertEqual(updatedStringMap?["key1"], "new_value")
 
-      // Проверяем операции с int32 -> string map
+      // Check operations with int32 -> string map
       try message.setMapEntry("value1", forKey: Int32(1), inField: "int32_map")
       try message.setMapEntry("value2", forKey: Int32(2), inField: "int32_map")
-      try message.setMapEntry("value3", forKey: 3, inField: "int32_map")  // Используем Int вместо Int32
+      try message.setMapEntry("value3", forKey: 3, inField: "int32_map")  // Use Int instead of Int32
 
       let int32Map = try message.get(forField: "int32_map") as? [AnyHashable: String]
       XCTAssertEqual(int32Map?[Int32(1)] as? String, "value1")
       XCTAssertEqual(int32Map?[Int32(2)] as? String, "value2")
       XCTAssertEqual(int32Map?[Int32(3)] as? String, "value3")
 
-      // Проверяем операции с bool -> int32 map
+      // Check operations with bool -> int32 map
       try message.setMapEntry(Int32(100), forKey: true, inField: "bool_map")
       try message.setMapEntry(Int32(200), forKey: false, inField: "bool_map")
 
@@ -741,11 +741,11 @@ final class DynamicMessageTests: XCTestCase {
       XCTAssertEqual(boolMap?[true], 100)
       XCTAssertEqual(boolMap?[false], 200)
 
-      // Очищаем map поле
+      // Clear map field
       try message.clearField("string_map")
       XCTAssertFalse(try message.hasValue(forField: "string_map"))
 
-      // Устанавливаем целый словарь
+      // Set entire dictionary
       let newMap = ["new1": "value1", "new2": "value2", "new3": "value3"]
       try message.set(newMap, forField: "string_map")
 
@@ -757,20 +757,20 @@ final class DynamicMessageTests: XCTestCase {
 
     }
     catch {
-      XCTFail("Не должно быть исключений при работе с map полями: \(error)")
+      XCTFail("Should not have exceptions when working with map fields: \(error)")
     }
 
-    // Проверяем ошибки типов для map полей
+    // Check type errors for map fields
     XCTAssertThrowsError(try message.setMapEntry(42, forKey: "key", inField: "string_map"))
     XCTAssertThrowsError(try message.setMapEntry("value", forKey: 42, inField: "string_map"))
     XCTAssertThrowsError(try message.setMapEntry("value", forKey: true, inField: "string_map"))
     XCTAssertThrowsError(try message.setMapEntry("value", forKey: "key", inField: "non_existent_map"))
     XCTAssertThrowsError(try message.set("not a map", forField: "string_map"))
-    XCTAssertThrowsError(try message.setMapEntry("value", forKey: "key", inField: "name"))  // не map поле
+    XCTAssertThrowsError(try message.setMapEntry("value", forKey: "key", inField: "name"))  // not a map field
   }
 
   func testRepeatedFieldOperations() {
-    // Сообщение с разными repeated полями
+    // Message with different repeated fields
     var messageDesc = MessageDescriptor(name: "RepeatedTypes", parent: fileDescriptor)
     messageDesc.addField(
       FieldDescriptor(
@@ -803,7 +803,7 @@ final class DynamicMessageTests: XCTestCase {
     var message = DynamicMessage(descriptor: messageDesc)
 
     do {
-      // Добавляем строковые элементы
+      // Add string elements
       try message.addRepeatedValue("first", forField: "repeated_string")
       try message.addRepeatedValue("second", forField: "repeated_string")
       try message.addRepeatedValue("third", forField: "repeated_string")
@@ -814,7 +814,7 @@ final class DynamicMessageTests: XCTestCase {
       XCTAssertEqual(strings?[1], "second")
       XCTAssertEqual(strings?[2], "third")
 
-      // Заменяем массив целиком
+      // Replace entire array
       let newStrings = ["new1", "new2"]
       try message.set(newStrings, forField: "repeated_string")
 
@@ -823,17 +823,17 @@ final class DynamicMessageTests: XCTestCase {
       XCTAssertEqual(strings?[0], "new1")
       XCTAssertEqual(strings?[1], "new2")
 
-      // Добавляем Int32 элементы
+      // Add Int32 elements
       try message.addRepeatedValue(Int32(10), forField: "repeated_int32")
       try message.addRepeatedValue(Int32(20), forField: "repeated_int32")
-      try message.addRepeatedValue(Int(30), forField: "repeated_int32")  // Используем Int вместо Int32
+      try message.addRepeatedValue(Int(30), forField: "repeated_int32")  // Use Int instead of Int32
 
       let repeatedInt32 = try message.get(forField: "repeated_int32") as? [Any]
       XCTAssertEqual(repeatedInt32?.count, 3)
       XCTAssertEqual(repeatedInt32?[0] as? Int32, 10)
       XCTAssertEqual(repeatedInt32?[1] as? Int32, 20)
 
-      // Int может сохраняться как Int или Int32, проверяем оба варианта
+      // Int can be stored as Int or Int32, check both variants
       if let value = repeatedInt32?[2] as? Int32 {
         XCTAssertEqual(value, 30)
       }
@@ -841,10 +841,10 @@ final class DynamicMessageTests: XCTestCase {
         XCTAssertEqual(value, 30)
       }
       else {
-        XCTFail("Значение должно быть Int32 или Int")
+        XCTFail("Value should be Int32 or Int")
       }
 
-      // Добавляем вложенные сообщения
+      // Add nested messages
       var address1 = DynamicMessage(descriptor: addressMessage)
       try address1.set("123 Main St", forField: "street")
       try address1.set("New York", forField: "city")
@@ -867,31 +867,31 @@ final class DynamicMessageTests: XCTestCase {
       XCTAssertEqual(try addr2?.get(forField: "street") as? String, "456 Oak Ave")
       XCTAssertEqual(try addr2?.get(forField: "city") as? String, "San Francisco")
 
-      // Очищаем repeated поле
+      // Clear repeated field
       try message.clearField("repeated_string")
       XCTAssertFalse(try message.hasValue(forField: "repeated_string"))
 
     }
     catch {
-      XCTFail("Не должно быть исключений при работе с repeated полями: \(error)")
+      XCTFail("Should not have exceptions when working with repeated fields: \(error)")
     }
 
-    // Проверяем ошибки типов для repeated полей
+    // Check type errors for repeated fields
     XCTAssertThrowsError(try message.addRepeatedValue(42, forField: "repeated_string"))
     XCTAssertThrowsError(try message.addRepeatedValue("string", forField: "repeated_int32"))
     XCTAssertThrowsError(
       try message.addRepeatedValue(DynamicMessage(descriptor: personMessage), forField: "repeated_message")
     )
-    XCTAssertThrowsError(try message.addRepeatedValue("value", forField: "name"))  // не repeated поле
+    XCTAssertThrowsError(try message.addRepeatedValue("value", forField: "name"))  // not a repeated field
     XCTAssertThrowsError(try message.set("not an array", forField: "repeated_string"))
 
-    // Проверяем ошибки типов элементов в массиве
+    // Check type errors for array elements
     let mixedArray: [Any] = ["string", 42, true]
     XCTAssertThrowsError(try message.set(mixedArray, forField: "repeated_string"))
   }
 
   func testDefaultValues() {
-    // Создаем сообщение с полями со значениями по умолчанию
+    // Create message with fields with default values
     var messageDesc = MessageDescriptor(name: "DefaultValues", parent: fileDescriptor)
     messageDesc.addField(
       FieldDescriptor(
@@ -930,7 +930,7 @@ final class DynamicMessageTests: XCTestCase {
     let message = DynamicMessage(descriptor: messageDesc)
 
     do {
-      // Получаем значения по умолчанию
+      // Get default values
       if let defaultStr = try message.get(forField: "string_with_default") as? String {
         XCTAssertEqual(defaultStr, "default")
       }
@@ -943,22 +943,22 @@ final class DynamicMessageTests: XCTestCase {
         XCTAssertEqual(defaultBool, true)
       }
 
-      // Поле без значения по умолчанию должно вернуть nil
+      // Field without default value should return nil
       XCTAssertNil(try message.get(forField: "string_without_default"))
 
-      // hasValue должно вернуть false, так как значение не было явно установлено
+      // hasValue should return false since value was not explicitly set
       XCTAssertFalse(try message.hasValue(forField: "string_with_default"))
       XCTAssertFalse(try message.hasValue(forField: "int32_with_default"))
       XCTAssertFalse(try message.hasValue(forField: "bool_with_default"))
       XCTAssertFalse(try message.hasValue(forField: "string_without_default"))
     }
     catch {
-      XCTFail("Не должно быть исключений при работе со значениями по умолчанию: \(error)")
+      XCTFail("Should not have exceptions when working with default values: \(error)")
     }
   }
 
   func testComprehensiveEquatable() {
-    // Создаем тест для метода areValuesEqual и сравнения разных типов полей
+    // Create test for areValuesEqual method and comparison of different field types
     var message = MessageDescriptor(name: "EquatableTest", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "double_value", number: 1, type: .double))
     message.addField(FieldDescriptor(name: "float_value", number: 2, type: .float))
@@ -1079,7 +1079,7 @@ final class DynamicMessageTests: XCTestCase {
       try msg2.set(data1, forField: "bytes_value")
       XCTAssertEqual(msg1, msg2)
 
-      // Enum (как число)
+      // Enum (as number)
       try msg1.set(Int32(0), forField: "enum_value")
       try msg2.set(Int32(0), forField: "enum_value")
       XCTAssertEqual(msg1, msg2)
@@ -1090,7 +1090,7 @@ final class DynamicMessageTests: XCTestCase {
       try msg2.set(Int32(0), forField: "enum_value")
       XCTAssertEqual(msg1, msg2)
 
-      // Enum (как строка)
+      // Enum (as string)
       try msg1.set("MOBILE", forField: "enum_value")
       try msg2.set("MOBILE", forField: "enum_value")
       XCTAssertEqual(msg1, msg2)
@@ -1101,18 +1101,18 @@ final class DynamicMessageTests: XCTestCase {
       try msg2.set("MOBILE", forField: "enum_value")
       XCTAssertEqual(msg1, msg2)
 
-      // Сравнение разных типов enum - должны быть не равны
+      // Comparison of different enum types - should not be equal
       try msg1.set(Int32(0), forField: "enum_value")
       try msg2.set("MOBILE", forField: "enum_value")
       XCTAssertNotEqual(msg1, msg2)
     }
     catch {
-      XCTFail("Не должно быть исключений при проверке Equatable: \(error)")
+      XCTFail("Should not have exceptions when checking Equatable: \(error)")
     }
   }
 
   func testErrorDescriptions() {
-    // Проверка локализованных описаний ошибок
+    // Check localized error descriptions
     let fieldNameError = DynamicMessageError.fieldNotFound(fieldName: "test_field")
     XCTAssertEqual(fieldNameError.errorDescription, "Field with name 'test_field' not found")
 

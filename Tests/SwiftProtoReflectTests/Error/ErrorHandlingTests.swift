@@ -1,15 +1,15 @@
 //
 // ErrorHandlingTests.swift
 //
-// Тесты для проверки обработки ошибок в Protocol Buffers
+// Tests for error handling in Protocol Buffers
 //
-// Тестовые случаи из плана:
-// - Test-ERR-001: Обработка некорректных дескрипторов сообщений
-// - Test-ERR-002: Обработка некорректных бинарных данных
-// - Test-ERR-003: Обработка некорректных JSON-данных
-// - Test-ERR-004: Проверка устойчивости к циклическим зависимостям в сообщениях
-// - Test-ERR-005: Поведение при нехватке памяти (для больших сообщений)
-// - Test-ERR-006: Обработка сообщений, превышающих максимально допустимый размер
+// Test cases from plan:
+// - Test-ERR-001: Handling incorrect message descriptors
+// - Test-ERR-002: Handling incorrect binary data
+// - Test-ERR-003: Handling incorrect JSON data
+// - Test-ERR-004: Check resilience to circular dependencies in messages
+// - Test-ERR-005: Behavior with memory shortage (for large messages)
+// - Test-ERR-006: Handling messages exceeding maximum allowed size
 
 import XCTest
 

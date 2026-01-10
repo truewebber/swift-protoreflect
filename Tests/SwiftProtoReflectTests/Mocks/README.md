@@ -1,18 +1,18 @@
 # Mocks
 
-Директория содержит мок-объекты для тестирования Protocol Buffers:
+The directory contains mock objects for testing Protocol Buffers:
 
-1. `MockDescriptors.swift` - моки для дескрипторов сообщений
-   - Заглушки для различных типов дескрипторов
-   - Моки с определенным поведением для тестов
+1. `MockDescriptors.swift` - mocks for message descriptors
+   - Stubs for various descriptor types
+   - Mocks with specific behavior for tests
 
-2. `MockMessages.swift` - моки для сообщений
-   - Заглушки для динамических сообщений
-   - Моки с предопределенными данными
+2. `MockMessages.swift` - mocks for messages
+   - Stubs for dynamic messages
+   - Mocks with predefined data
 
-3. `MockSerializer.swift` - моки для сериализаторов/десериализаторов
-   - Заглушки для тестирования обработки ошибок
-   - Моки с предопределенными результатами
+3. `MockSerializer.swift` - mocks for serializers/deserializers
+   - Stubs for testing error handling
+   - Mocks with predefined results
 
-Эти моки позволяют изолированно тестировать различные компоненты библиотеки,
-имитируя определенное поведение других компонентов. 
+These mocks allow isolated testing of various library components by
+simulating specific behavior of other components. 

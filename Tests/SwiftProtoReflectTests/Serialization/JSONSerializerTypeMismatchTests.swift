@@ -2,8 +2,8 @@
 // JSONSerializerTypeMismatchTests.swift
 // SwiftProtoReflectTests
 //
-// Тесты type mismatch errors для JSONSerializer
-// Покрывают все непокрытые error paths в convertValueToJSON и convertMapKeyToJSONString
+// Type mismatch error tests for JSONSerializer
+// Cover all uncovered error paths in convertValueToJSON and convertMapKeyToJSONString
 //
 
 import XCTest
@@ -28,8 +28,8 @@ final class JSONSerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - convertValueToJSON Method Tests
 
-  /// Тестирует convertValueToJSON напрямую для покрытия type mismatch paths
-  /// Используем тестовое расширение JSONSerializer для доступа к private методам
+  /// Tests convertValueToJSON directly to cover type mismatch paths
+  /// Uses JSONSerializer test extension to access private methods
 
   // MARK: - Double Field Type Mismatch Tests (Line 151)
 
@@ -382,7 +382,7 @@ final class JSONSerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Helper Methods
 
-  /// Проверяет valueTypeMismatch ошибку с правильными типами.
+  /// Verifies valueTypeMismatch error with correct types.
   private func assertValueTypeMismatch(
     _ error: Error,
     expected: String,
@@ -410,12 +410,12 @@ final class JSONSerializerTypeMismatchTests: XCTestCase {
 
 extension JSONSerializer {
 
-  /// ТОЛЬКО ДЛЯ ТЕСТИРОВАНИЯ: Предоставляет доступ к private методу convertValueToJSON.
+  /// FOR TESTING ONLY: Provides access to private method convertValueToJSON.
   func testConvertValueToJSON(_ value: Any, type: FieldType, typeName: String?) throws -> Any {
     return try self.convertValueToJSON(value, type: type, typeName: typeName)
   }
 
-  /// ТОЛЬКО ДЛЯ ТЕСТИРОВАНИЯ: Предоставляет доступ к private методу convertMapKeyToJSONString.
+  /// FOR TESTING ONLY: Provides access to private method convertMapKeyToJSONString.
   func testConvertMapKeyToJSONString(_ key: Any, keyType: FieldType) throws -> String {
     return try self.convertMapKeyToJSONString(key, keyType: keyType)
   }

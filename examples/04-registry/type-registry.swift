@@ -25,11 +25,11 @@ struct TypeRegistryExample {
   static func run() throws {
     ExampleUtils.printHeader("Type Registry Management")
 
-    try step1_basicTypeCreationAndLookup()
-    try step2_dynamicMessageCreation()
-    try step3_typeIntrospectionAnalysis()
-    try step4_registryOperationsDemo()
-    try step5_messageFactoryPatterns()
+    try step1BasicTypeCreationAndLookup()
+    try step2DynamicMessageCreation()
+    try step3TypeIntrospectionAnalysis()
+    try step4RegistryOperationsDemo()
+    try step5MessageFactoryPatterns()
 
     print("\n🎉 Type Registry management successfully explored!")
 
@@ -39,7 +39,7 @@ struct TypeRegistryExample {
     print("  • Advanced: schema-validation.swift - schema validation")
   }
 
-  private static func step1_basicTypeCreationAndLookup() throws {
+  private static func step1BasicTypeCreationAndLookup() throws {
     ExampleUtils.printStep(1, "Basic type creation and lookup")
 
     print("  🏗 Creating types and basic Registry operations...")
@@ -94,12 +94,12 @@ struct TypeRegistryExample {
     }
   }
 
-  private static func step2_dynamicMessageCreation() throws {
+  private static func step2DynamicMessageCreation() throws {
     ExampleUtils.printStep(2, "Dynamic message creation")
 
-    print("  🎯 Динамическое создание сообщений по типам...")
+    print("  🎯 Dynamic message creation by types...")
 
-    let _ = TypeRegistry()  // Registry для демонстрации
+    let _ = TypeRegistry()  // Registry for demonstration
     let factory = MessageFactory()
 
     // Create types for demonstration
@@ -155,10 +155,10 @@ struct TypeRegistryExample {
     print("    Creation rate: \(String(format: "%.1f", creationRate)) messages/sec")
   }
 
-  private static func step3_typeIntrospectionAnalysis() throws {
+  private static func step3TypeIntrospectionAnalysis() throws {
     ExampleUtils.printStep(3, "Type introspection and analysis")
 
-    print("  🔬 Глубокий анализ структуры типов...")
+    print("  🔬 Deep type structure analysis...")
 
     let businessTypes = try createBusinessTypes()
     let allMessages = businessTypes.flatMap { $0.messages }
@@ -224,10 +224,10 @@ struct TypeRegistryExample {
     }
   }
 
-  private static func step4_registryOperationsDemo() throws {
+  private static func step4RegistryOperationsDemo() throws {
     ExampleUtils.printStep(4, "Registry operations demonstration")
 
-    print("  🗂 Демонстрация операций с реестром типов...")
+    print("  🗂 Demonstrating type registry operations...")
 
     // Create sample type collection
     let typeCollection = try createExtendedTypeCollection()
@@ -241,7 +241,7 @@ struct TypeRegistryExample {
         print("      • \(type.name)")
       }
       if types.count > 3 {
-        print("      ... и ещё \(types.count - 3)")
+        print("      ... and \(types.count - 3) more")
       }
     }
 
@@ -287,10 +287,10 @@ struct TypeRegistryExample {
     print("    Processing rate: \(String(format: "%.1f", processingRate)) types/sec")
   }
 
-  private static func step5_messageFactoryPatterns() throws {
+  private static func step5MessageFactoryPatterns() throws {
     ExampleUtils.printStep(5, "Message factory patterns")
 
-    print("  🏭 Продвинутые паттерны Message Factory...")
+    print("  🏭 Advanced Message Factory patterns...")
 
     let factory = MessageFactory()
     let businessTypes = try createBusinessTypes()

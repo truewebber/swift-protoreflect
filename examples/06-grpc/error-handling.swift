@@ -484,7 +484,7 @@ class RetryManager {
       }
     }
 
-    // Если все попытки исчерпаны, бросаем последнюю ошибку или RetryExhaustedError
+    // If all retries exhausted, throw last error or RetryExhaustedError
     throw lastError ?? RetryExhaustedError(attemptsMade: policy.maxAttempts)
   }
 }

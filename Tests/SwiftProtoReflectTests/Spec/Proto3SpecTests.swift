@@ -1,16 +1,16 @@
 //
 // Proto3SpecTests.swift
 //
-// Тесты для проверки соответствия спецификации proto3
+// Tests for verifying proto3 specification compliance
 //
-// Тестовые случаи из плана:
-// - Test-SPEC-001: Проверка поведения значений по умолчанию для всех типов (нулевые значения в proto3)
-// - Test-SPEC-002: Проверка отсутствия сериализации полей со значениями по умолчанию
-// - Test-SPEC-003: Поведение при работе с неизвестными enum значениями (должны сохраняться, как в C++)
-// - Test-SPEC-004: Обработка полей с опцией [deprecated=true] аналогично C++ реализации
-// - Test-SPEC-005: Соответствие строгим правилам именования полей и проверок C++ protoc
-// - Test-SPEC-006: Правильная обработка Well-known types (google.protobuf.Timestamp, Duration и др.)
-// - Test-SPEC-007: Соответствие поведению Wrappers (google.protobuf.StringValue и т.д.)
+// Test cases from the plan:
+// - Test-SPEC-001: Verification of default value behavior for all types (zero values in proto3)
+// - Test-SPEC-002: Verification that fields with default values are not serialized
+// - Test-SPEC-003: Behavior when working with unknown enum values (should be preserved, as in C++)
+// - Test-SPEC-004: Handling of fields with [deprecated=true] option similar to C++ implementation
+// - Test-SPEC-005: Compliance with strict field naming rules and C++ protoc checks
+// - Test-SPEC-006: Correct handling of Well-known types (google.protobuf.Timestamp, Duration, etc.)
+// - Test-SPEC-007: Compliance with Wrappers behavior (google.protobuf.StringValue, etc.)
 
 import XCTest
 

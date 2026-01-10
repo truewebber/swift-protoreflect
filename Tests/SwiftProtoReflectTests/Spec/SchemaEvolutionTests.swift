@@ -1,12 +1,12 @@
 //
 // SchemaEvolutionTests.swift
 //
-// Тесты для проверки совместимости при эволюции схемы Protocol Buffers
+// Tests for verifying compatibility during Protocol Buffers schema evolution
 //
-// Тестовые случаи из плана:
-// - Test-EVOL-001: Тесты на добавление новых полей (старый код должен игнорировать новые поля)
-// - Test-EVOL-002: Тесты на удаление существующих полей (новый код должен игнорировать отсутствующие поля)
-// - Test-EVOL-003: Тесты на изменение типов полей в соответствии с правилами совместимости
+// Test cases from the plan:
+// - Test-EVOL-001: Tests for adding new fields (old code should ignore new fields)
+// - Test-EVOL-002: Tests for removing existing fields (new code should ignore missing fields)
+// - Test-EVOL-003: Tests for changing field types according to compatibility rules
 
 import XCTest
 

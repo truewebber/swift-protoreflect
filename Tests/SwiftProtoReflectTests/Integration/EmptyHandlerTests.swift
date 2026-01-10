@@ -2,7 +2,7 @@
  * EmptyHandlerTests.swift
  * SwiftProtoReflectTests
  *
- * Тесты для EmptyHandler
+ * Tests for EmptyHandler
  */
 
 import Foundation
@@ -15,11 +15,11 @@ final class EmptyHandlerTests: XCTestCase {
   // MARK: - EmptyValue Tests
 
   func testEmptyValueInitialization() {
-    // Базовая инициализация
+    // Basic initialization
     let empty1 = EmptyHandler.EmptyValue()
     let empty2 = EmptyHandler.EmptyValue()
 
-    // Все экземпляры EmptyValue должны быть равны
+    // All EmptyValue instances should be equal
     XCTAssertEqual(empty1, empty2)
   }
 
@@ -27,14 +27,14 @@ final class EmptyHandlerTests: XCTestCase {
     let singleton = EmptyHandler.EmptyValue.instance
     let manual = EmptyHandler.EmptyValue()
 
-    // Singleton и обычный экземпляр должны быть равны
+    // Singleton and regular instance should be equal
     XCTAssertEqual(singleton, manual)
   }
 
   func testEmptyValueDescription() {
     let empty = EmptyHandler.EmptyValue()
 
-    // Проверяем описание
+    // Check description
     XCTAssertEqual(empty.description, "Empty")
   }
 
@@ -43,7 +43,7 @@ final class EmptyHandlerTests: XCTestCase {
     let empty2 = EmptyHandler.EmptyValue()
     let singleton = EmptyHandler.EmptyValue.instance
 
-    // Все EmptyValue должны быть равны между собой
+    // All EmptyValue should be equal to each other
     XCTAssertEqual(empty1, empty2)
     XCTAssertEqual(empty1, singleton)
     XCTAssertEqual(empty2, singleton)
@@ -57,10 +57,10 @@ final class EmptyHandlerTests: XCTestCase {
   }
 
   func testCreateSpecializedFromMessage() throws {
-    // Создаем empty сообщение
+    // Create empty message
     let emptyMessage = try createEmptyMessage()
 
-    // Конвертируем в специализированный тип
+    // Convert to specialized type
     let specialized = try EmptyHandler.createSpecialized(from: emptyMessage)
 
     guard let empty = specialized as? EmptyHandler.EmptyValue else {
@@ -68,12 +68,12 @@ final class EmptyHandlerTests: XCTestCase {
       return
     }
 
-    // Проверяем, что получили правильный экземпляр
+    // Check that we got the correct instance
     XCTAssertEqual(empty, EmptyHandler.EmptyValue.instance)
   }
 
   func testCreateSpecializedFromInvalidMessage() throws {
-    // Создаем сообщение неправильного типа
+    // Create message of wrong type
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "NotEmpty", parent: fileDescriptor)
     fileDescriptor.addMessage(messageDescriptor)
@@ -95,11 +95,11 @@ final class EmptyHandlerTests: XCTestCase {
 
     let dynamicMessage = try EmptyHandler.createDynamic(from: empty)
 
-    // Проверяем, что создалось правильное сообщение
+    // Check that the correct message was created
     XCTAssertEqual(dynamicMessage.descriptor.fullName, "google.protobuf.Empty")
     XCTAssertEqual(dynamicMessage.descriptor.name, "Empty")
 
-    // Empty сообщение не должно иметь полей
+    // Empty message should not have fields
     XCTAssertEqual(dynamicMessage.descriptor.fields.count, 0)
   }
 
@@ -117,14 +117,14 @@ final class EmptyHandlerTests: XCTestCase {
   }
 
   func testValidate() throws {
-    // Валидные значения
+    // Valid values
     let validEmpty = EmptyHandler.EmptyValue()
     let validSingleton = EmptyHandler.EmptyValue.instance
 
     XCTAssertTrue(EmptyHandler.validate(validEmpty))
     XCTAssertTrue(EmptyHandler.validate(validSingleton))
 
-    // Невалидные значения
+    // Invalid values
     XCTAssertFalse(EmptyHandler.validate("not empty"))
     XCTAssertFalse(EmptyHandler.validate(123))
     XCTAssertFalse(EmptyHandler.validate(Date()))
@@ -149,23 +149,23 @@ final class EmptyHandlerTests: XCTestCase {
   // MARK: - Convenience Extensions Tests
 
   func testDynamicMessageEmptyExtension() throws {
-    // Создаем Empty сообщение через convenience method
+    // Create Empty message through convenience method
     let emptyMessage = try DynamicMessage.emptyMessage()
 
     XCTAssertEqual(emptyMessage.descriptor.fullName, "google.protobuf.Empty")
     XCTAssertTrue(emptyMessage.isEmpty())
 
-    // Конвертируем обратно в EmptyValue
+    // Convert back to EmptyValue
     let empty = try emptyMessage.toEmpty()
     XCTAssertEqual(empty, EmptyHandler.EmptyValue.instance)
   }
 
   func testDynamicMessageIsEmpty() throws {
-    // Empty сообщение
+    // Empty message
     let emptyMessage = try DynamicMessage.emptyMessage()
     XCTAssertTrue(emptyMessage.isEmpty())
 
-    // Не-Empty сообщение
+    // Non-Empty message
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "NotEmpty", parent: fileDescriptor)
     fileDescriptor.addMessage(messageDescriptor)
@@ -194,16 +194,16 @@ final class EmptyHandlerTests: XCTestCase {
   // MARK: - Unit Type Integration Tests
 
   func testVoidIntegration() {
-    // Создание из Void
+    // Create from Void
     let emptyFromVoid = EmptyHandler.EmptyValue.from(())
     XCTAssertEqual(emptyFromVoid, EmptyHandler.EmptyValue.instance)
 
-    // Конвертация в Void
+    // Convert to Void
     let empty = EmptyHandler.EmptyValue()
     empty.toVoid()
 
-    // Void тип не имеет значений для сравнения, поэтому просто проверяем что метод выполнился без ошибок
-    XCTAssertTrue(true)  // Если дошли до этой точки, значит все работает
+    // Void type has no values to compare, so just check that method executed without errors
+    XCTAssertTrue(true)  // If we reached this point, everything works
   }
 
   func testVoidRoundTrip() {
@@ -211,7 +211,7 @@ final class EmptyHandlerTests: XCTestCase {
     let empty = EmptyHandler.EmptyValue.from(originalVoid)
     empty.toVoid()
 
-    // Опять же, Void нельзя сравнить, но проверяем что операции выполнились
+    // Again, Void cannot be compared, but check that operations executed
     XCTAssertEqual(empty, EmptyHandler.EmptyValue.instance)
   }
 
@@ -220,12 +220,12 @@ final class EmptyHandlerTests: XCTestCase {
   func testRegistryIntegration() throws {
     let registry = WellKnownTypesRegistry.shared
 
-    // Проверяем что EmptyHandler зарегистрирован
+    // Check that EmptyHandler is registered
     let handler = registry.getHandler(for: WellKnownTypeNames.empty)
     XCTAssertNotNil(handler)
     XCTAssertTrue(handler is EmptyHandler.Type)
 
-    // Проверяем что зарегистрированные типы включают Empty
+    // Check that registered types include Empty
     let registeredTypes = registry.getRegisteredTypes()
     XCTAssertTrue(registeredTypes.contains(WellKnownTypeNames.empty))
   }
@@ -266,7 +266,7 @@ final class EmptyHandlerTests: XCTestCase {
     let empty1 = try DynamicMessage.emptyMessage()
     let empty2 = try DynamicMessage.emptyMessage()
 
-    // Хотя это разные объекты DynamicMessage, их specialized представления должны быть равны
+    // Although these are different DynamicMessage objects, their specialized representations should be equal
     let specialized1 = try EmptyHandler.createSpecialized(from: empty1) as! EmptyHandler.EmptyValue
     let specialized2 = try EmptyHandler.createSpecialized(from: empty2) as! EmptyHandler.EmptyValue
 
@@ -276,10 +276,10 @@ final class EmptyHandlerTests: XCTestCase {
   func testEmptyMessageFieldAccess() throws {
     var emptyMessage = try DynamicMessage.emptyMessage()
 
-    // Empty сообщение не должно иметь полей
+    // Empty message should not have fields
     XCTAssertEqual(emptyMessage.descriptor.fields.count, 0)
 
-    // Попытка доступа к несуществующему полю должна вызывать ошибку
+    // Attempt to access non-existent field should throw error
     XCTAssertThrowsError(try emptyMessage.get(forField: "nonexistent"))
     XCTAssertThrowsError(try emptyMessage.set("value", forField: "nonexistent"))
     XCTAssertThrowsError(try emptyMessage.hasValue(forField: "nonexistent"))
@@ -329,23 +329,23 @@ final class EmptyHandlerTests: XCTestCase {
   // MARK: - Error Handling Tests
 
   func testCreateSpecializedWithNilMessage() throws {
-    // Этот тест проверяет граничные случаи, хотя такой сценарий не должен происходить в реальности
-    // поскольку DynamicMessage не может быть nil в типизированной системе Swift
+    // This test checks edge cases, although such scenario should not happen in reality
+    // since DynamicMessage cannot be nil in Swift's typed system
   }
 
   func testValidateWithNil() {
-    // Проверяем валидацию с nil (которая должна вернуть false)
+    // Check validation with nil (which should return false)
     let nilValue: Any? = nil
     if let value = nilValue {
       XCTAssertFalse(EmptyHandler.validate(value))
     }
-    // Если nil, то тест все равно проходит, так как мы не можем передать nil в validate
+    // If nil, test still passes since we can't pass nil to validate
   }
 
   // MARK: - Helper Methods
 
   private func createEmptyMessage() throws -> DynamicMessage {
-    // Создаем дескриптор для Empty
+    // Create descriptor for Empty
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/empty.proto",
       package: "google.protobuf"
@@ -356,10 +356,10 @@ final class EmptyHandlerTests: XCTestCase {
       parent: fileDescriptor
     )
 
-    // Empty сообщение не имеет полей
+    // Empty message has no fields
     fileDescriptor.addMessage(messageDescriptor)
 
-    // Создаем сообщение
+    // Create message
     let factory = MessageFactory()
     let message = factory.createMessage(from: messageDescriptor)
 

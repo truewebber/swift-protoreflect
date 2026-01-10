@@ -12,7 +12,7 @@
  * - Dynamic service registry construction
  * - Service capability detection
  * - Reflection-based service exploration
- * - Service health checking и availability
+ * - Service health checking and availability
  *
  * Run:
  *   swift run ServiceDiscovery
@@ -48,7 +48,7 @@ struct ServiceDiscoveryExample {
 
     let serviceRegistry = ServiceRegistry()
 
-    // Register множественные сервисы
+    // Register multiple services
     let services = try createSampleServices()
 
     for service in services {

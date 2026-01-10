@@ -2,8 +2,8 @@
 // DynamicMessageEquatableTests.swift
 // SwiftProtoReflectTests
 //
-// Создан: 2025-05-23
-// Дополнительные тесты для полного покрытия Equatable функциональности DynamicMessage
+// Created: 2025-05-23
+// Additional tests for full coverage of Equatable functionality of DynamicMessage
 //
 
 import XCTest
@@ -23,10 +23,10 @@ final class DynamicMessageEquatableTests: XCTestCase {
   override func setUp() {
     super.setUp()
 
-    // Создаем тестовый файловый дескриптор
+    // Create test file descriptor
     fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
 
-    // Создаем дескриптор перечисления PhoneType
+    // Create PhoneType enum descriptor
     enumDescriptor = EnumDescriptor(name: "PhoneType", parent: fileDescriptor)
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "MOBILE", number: 0))
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "HOME", number: 1))
@@ -34,7 +34,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
     fileDescriptor.addEnum(enumDescriptor)
 
-    // Создаем дескриптор сообщения Address
+    // Create Address message descriptor
     addressMessage = MessageDescriptor(name: "Address", parent: fileDescriptor)
     addressMessage.addField(
       FieldDescriptor(
@@ -53,7 +53,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
     fileDescriptor.addMessage(addressMessage)
 
-    // Создаем дескриптор сообщения Person
+    // Create Person message descriptor
     personMessage = MessageDescriptor(name: "Person", parent: fileDescriptor)
     personMessage.addField(
       FieldDescriptor(
@@ -92,7 +92,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
   // MARK: - Equatable with Different Descriptors Tests
 
   func testEquatableWithDifferentDescriptors() {
-    // Создаем два разных дескриптора с одинаковыми именами но разными fullName
+    // Create two different descriptors with same names but different fullName
     var fileDescriptor1 = FileDescriptor(name: "test1.proto", package: "package1")
     var messageDescriptor1 = MessageDescriptor(name: "TestMessage", parent: fileDescriptor1)
     messageDescriptor1.addField(FieldDescriptor(name: "field1", number: 1, type: .string))
@@ -110,18 +110,18 @@ final class DynamicMessageEquatableTests: XCTestCase {
       try message1.set("value", forField: "field1")
       try message2.set("value", forField: "field1")
 
-      // Сообщения с разными дескрипторами не должны быть равны, даже если содержимое одинаковое
+      // Messages with different descriptors should not be equal, even if content is the same
       XCTAssertNotEqual(message1, message2)
     }
     catch {
-      XCTFail("Не должно быть исключений при тестировании разных дескрипторов: \(error)")
+      XCTFail("Should not have exceptions when testing different descriptors: \(error)")
     }
   }
 
   // MARK: - Equatable with Map Fields Tests
 
   func testEquatableWithMapFields() {
-    // Создаем сообщение с map полем
+    // Create message with map field
     var messageDesc = MessageDescriptor(name: "MapTestMessage", parent: fileDescriptor)
 
     // String -> String map
@@ -140,7 +140,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
       )
     )
 
-    // Int32 -> Int32 map для тестирования areValuesEqual с Int32
+    // Int32 -> Int32 map for testing areValuesEqual with Int32
     let int32KeyInfo = KeyFieldInfo(name: "key", number: 1, type: .int32)
     let int32ValueInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
     let int32MapEntryInfo = MapEntryInfo(keyFieldInfo: int32KeyInfo, valueFieldInfo: int32ValueInfo)
@@ -162,7 +162,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
     var message2 = DynamicMessage(descriptor: messageDesc)
 
     do {
-      // Тестируем одинаковые map поля
+      // Test equal map fields
       try message1.setMapEntry("value1", forKey: "key1", inField: "string_map")
       try message1.setMapEntry("value2", forKey: "key2", inField: "string_map")
 
@@ -171,15 +171,15 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
       XCTAssertEqual(message1, message2)
 
-      // Тестируем map с разным количеством элементов
+      // Test map with different number of elements
       try message1.setMapEntry("value3", forKey: "key3", inField: "string_map")
       XCTAssertNotEqual(message1, message2)
 
-      // Восстанавливаем равенство
+      // Restore equality
       try message2.setMapEntry("value3", forKey: "key3", inField: "string_map")
       XCTAssertEqual(message1, message2)
 
-      // Тестируем map с разными ключами
+      // Test map with different keys
       var message3 = DynamicMessage(descriptor: messageDesc)
       try message3.setMapEntry("value1", forKey: "different_key1", inField: "string_map")
       try message3.setMapEntry("value2", forKey: "key2", inField: "string_map")
@@ -187,7 +187,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
       XCTAssertNotEqual(message1, message3)
 
-      // Тестируем map с разными значениями
+      // Test map with different values
       var message4 = DynamicMessage(descriptor: messageDesc)
       try message4.setMapEntry("different_value", forKey: "key1", inField: "string_map")
       try message4.setMapEntry("value2", forKey: "key2", inField: "string_map")
@@ -195,7 +195,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
       XCTAssertNotEqual(message1, message4)
 
-      // Тестируем int32 map для покрытия areValuesEqual с Int32 типом
+      // Test int32 map for coverage of areValuesEqual with Int32 type
       try message1.setMapEntry(Int32(100), forKey: Int32(1), inField: "int32_map")
       try message2.setMapEntry(Int32(100), forKey: Int32(1), inField: "int32_map")
 
@@ -206,14 +206,14 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
     }
     catch {
-      XCTFail("Не должно быть исключений при тестировании map полей в Equatable: \(error)")
+      XCTFail("Should not have exceptions when testing map fields in Equatable: \(error)")
     }
   }
 
   // MARK: - Equatable with Repeated Fields Tests
 
   func testEquatableWithRepeatedFields() {
-    // Создаем сообщение с repeated полями
+    // Create message with repeated fields
     var messageDesc = MessageDescriptor(name: "RepeatedTestMessage", parent: fileDescriptor)
     messageDesc.addField(
       FieldDescriptor(
@@ -247,7 +247,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
     var message2 = DynamicMessage(descriptor: messageDesc)
 
     do {
-      // Тестируем одинаковые repeated поля
+      // Test equal repeated fields
       try message1.addRepeatedValue("first", forField: "repeated_string")
       try message1.addRepeatedValue("second", forField: "repeated_string")
 
@@ -256,15 +256,15 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
       XCTAssertEqual(message1, message2)
 
-      // Тестируем repeated поля с разным количеством элементов
+      // Test repeated fields with different number of elements
       try message1.addRepeatedValue("third", forField: "repeated_string")
       XCTAssertNotEqual(message1, message2)
 
-      // Восстанавливаем равенство
+      // Restore equality
       try message2.addRepeatedValue("third", forField: "repeated_string")
       XCTAssertEqual(message1, message2)
 
-      // Тестируем repeated поля с разными значениями
+      // Test repeated fields with different values
       var message3 = DynamicMessage(descriptor: messageDesc)
       try message3.addRepeatedValue("different", forField: "repeated_string")
       try message3.addRepeatedValue("second", forField: "repeated_string")
@@ -272,7 +272,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
       XCTAssertNotEqual(message1, message3)
 
-      // Тестируем repeated int32 для покрытия areValuesEqual с Int32
+      // Test repeated int32 for coverage of areValuesEqual with Int32
       try message1.addRepeatedValue(Int32(100), forField: "repeated_int32")
       try message1.addRepeatedValue(Int32(200), forField: "repeated_int32")
 
@@ -284,7 +284,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
       try message2.addRepeatedValue(Int32(300), forField: "repeated_int32")
       XCTAssertNotEqual(message1, message2)
 
-      // Тестируем repeated сообщения
+      // Test repeated messages
       var addr1 = DynamicMessage(descriptor: addressMessage)
       try addr1.set("Street 1", forField: "street")
 
@@ -304,17 +304,17 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
     }
     catch {
-      XCTFail("Не должно быть исключений при тестировании repeated полей в Equatable: \(error)")
+      XCTFail("Should not have exceptions when testing repeated fields in Equatable: \(error)")
     }
   }
 
   // MARK: - Equatable Error Handling Tests
 
   func testEquatableWithErrorHandling() {
-    // Создаем сообщение с полем, которое может вызвать ошибку при сравнении
+    // Create message with field that can cause error during comparison
     var messageDesc = MessageDescriptor(name: "ErrorTestMessage", parent: fileDescriptor)
 
-    // Добавляем поле, которое потенциально может вызвать проблемы
+    // Add field that potentially can cause problems
     messageDesc.addField(
       FieldDescriptor(
         name: "test_field",
@@ -328,20 +328,20 @@ final class DynamicMessageEquatableTests: XCTestCase {
     let message1 = DynamicMessage(descriptor: messageDesc)
     let message2 = DynamicMessage(descriptor: messageDesc)
 
-    // Тестируем случай, когда сравниваются сообщения с правильными дескрипторами
+    // Test case when comparing messages with correct descriptors
     XCTAssertEqual(message1, message2)
 
-    // Создаем ситуацию с поврежденным дескриптором для тестирования catch блока
-    // Это сложно протестировать без внутреннего доступа, но мы покрыли основную логику
+    // Create situation with corrupted descriptor for testing catch block
+    // This is difficult to test without internal access, but we covered main logic
   }
 
   // MARK: - areValuesEqual Unknown Type Tests
 
   func testAreValuesEqualWithUnknownType() {
-    // Создаем сообщение с типом, который не обрабатывается в areValuesEqual
+    // Create message with type that is not handled in areValuesEqual
     var messageDesc = MessageDescriptor(name: "UnknownTypeTest", parent: fileDescriptor)
 
-    // Добавляем поле с group типом (редко используется)
+    // Add field with group type (rarely used)
     messageDesc.addField(
       FieldDescriptor(
         name: "group_field",
@@ -351,12 +351,12 @@ final class DynamicMessageEquatableTests: XCTestCase {
       )
     )
 
-    // Добавляем еще одно поле для тестирования fallback логики
+    // Add another field for testing fallback logic
     messageDesc.addField(
       FieldDescriptor(
         name: "unknown_field",
         number: 2,
-        type: .string  // Намеренно устанавливаем nil в типе через reflection не получится в Swift
+        type: .string  // Intentionally set nil in type via reflection is not possible in Swift
       )
     )
 
@@ -366,7 +366,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
     var message2 = DynamicMessage(descriptor: messageDesc)
 
     do {
-      // Устанавливаем group сообщения
+      // Set group messages
       var groupMessage1 = DynamicMessage(descriptor: addressMessage)
       try groupMessage1.set("Street 1", forField: "street")
 
@@ -379,23 +379,23 @@ final class DynamicMessageEquatableTests: XCTestCase {
       try message1.set(groupMessage1, forField: "group_field")
       try message2.set(groupMessage2, forField: "group_field")
 
-      // Group сообщения с одинаковым содержимым должны быть равны
+      // Group messages with same content should be equal
       XCTAssertEqual(message1, message2)
 
-      // Group сообщения с разным содержимым не должны быть равны
+      // Group messages with different content should not be equal
       try message2.set(differentGroupMessage, forField: "group_field")
       XCTAssertNotEqual(message1, message2)
 
     }
     catch {
-      XCTFail("Не должно быть исключений при тестировании group полей: \(error)")
+      XCTFail("Should not have exceptions when testing group fields: \(error)")
     }
   }
 
   // MARK: - Map with Missing Key Tests
 
   func testMapComparisonWithMissingKey() {
-    // Создаем сообщение с map полем для тестирования отсутствующих ключей
+    // Create message with map field for testing missing keys
     var messageDesc = MessageDescriptor(name: "MapMissingKeyTest", parent: fileDescriptor)
 
     let stringKeyInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
@@ -419,31 +419,31 @@ final class DynamicMessageEquatableTests: XCTestCase {
     var message2 = DynamicMessage(descriptor: messageDesc)
 
     do {
-      // Создаем map с одним ключом в message1
+      // Create map with one key in message1
       try message1.setMapEntry("value1", forKey: "key1", inField: "test_map")
 
-      // Создаем map с другим ключом в message2
+      // Create map with different key in message2
       try message2.setMapEntry("value1", forKey: "key2", inField: "test_map")
 
-      // Map с разными ключами не должны быть равны
+      // Maps with different keys should not be equal
       XCTAssertNotEqual(message1, message2)
 
-      // Добавляем ключ в message2, но с другим значением
+      // Add key to message2, but with different value
       try message2.setMapEntry("different_value", forKey: "key1", inField: "test_map")
 
-      // Map с одинаковыми ключами но разными значениями не должны быть равны
+      // Maps with same keys but different values should not be equal
       XCTAssertNotEqual(message1, message2)
 
     }
     catch {
-      XCTFail("Не должно быть исключений при тестировании map с отсутствующими ключами: \(error)")
+      XCTFail("Should not have exceptions when testing map with missing keys: \(error)")
     }
   }
 
   // MARK: - Array vs Non-Array Tests
 
   func testRepeatedFieldComparisonFailures() {
-    // Создаем сообщение с repeated полем
+    // Create message with repeated field
     var messageDesc = MessageDescriptor(name: "RepeatedFailureTest", parent: fileDescriptor)
     messageDesc.addField(
       FieldDescriptor(
@@ -460,7 +460,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
     var message2 = DynamicMessage(descriptor: messageDesc)
 
     do {
-      // Устанавливаем repeated поля с одинаковыми значениями
+      // Set repeated fields with equal values
       try message1.addRepeatedValue("value1", forField: "repeated_field")
       try message1.addRepeatedValue("value2", forField: "repeated_field")
 
@@ -469,7 +469,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
       XCTAssertEqual(message1, message2)
 
-      // Создаем третье сообщение с меньшим количеством элементов
+      // Create third message with fewer elements
       var message3 = DynamicMessage(descriptor: messageDesc)
       try message3.addRepeatedValue("value1", forField: "repeated_field")
 
@@ -477,7 +477,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
     }
     catch {
-      XCTFail("Не должно быть исключений при тестировании repeated полей: \(error)")
+      XCTFail("Should not have exceptions when testing repeated fields: \(error)")
     }
   }
 }

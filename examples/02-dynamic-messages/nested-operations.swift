@@ -26,11 +26,11 @@ struct NestedOperationsExample {
   static func main() throws {
     ExampleUtils.printHeader("Advanced Operations with Nested Messages")
 
-    try step1_deepTraversal()
-    try step2_batchNestedOperations()
-    try step3_conditionalTransforms()
-    try step4_pathNavigation()
-    try step5_performanceOptimizations()
+    try step1DeepTraversal()
+    try step2BatchNestedOperations()
+    try step3ConditionalTransforms()
+    try step4PathNavigation()
+    try step5PerformanceOptimizations()
 
     ExampleUtils.printSuccess("You've mastered advanced operations with nested structures!")
 
@@ -41,7 +41,7 @@ struct NestedOperationsExample {
     ])
   }
 
-  private static func step1_deepTraversal() throws {
+  private static func step1DeepTraversal() throws {
     ExampleUtils.printStep(1, "Deep navigation through nested structures")
 
     let fileDescriptor = try createCompanyStructure()
@@ -113,7 +113,7 @@ struct NestedOperationsExample {
     )
   }
 
-  private static func step2_batchNestedOperations() throws {
+  private static func step2BatchNestedOperations() throws {
     ExampleUtils.printStep(2, "Batch operations with nested elements")
 
     let fileDescriptor = try createBlogStructure()
@@ -161,16 +161,16 @@ struct NestedOperationsExample {
     try category2.set(posts2, forField: "posts")
     try blog.set([category1, category2], forField: "categories")
 
-    print("  📝 Создан блог с вложенной структурой:")
+    print("  📝 Created blog with nested structure:")
     let blogStats = try analyzeBlogStructure(blog)
     ExampleUtils.printTable(blogStats, title: "Blog Statistics")
 
     // Demonstrate batch operations
     let updatedPosts = try performBatchTitleUpdates(blog, suffix: " [Updated]")
-    print("  🔄 Обновлено заголовков: \(updatedPosts)")
+    print("  🔄 Updated titles: \(updatedPosts)")
   }
 
-  private static func step3_conditionalTransforms() throws {
+  private static func step3ConditionalTransforms() throws {
     ExampleUtils.printStep(3, "Conditional transformations of nested data")
 
     let fileDescriptor = try createProductStructure()
@@ -188,26 +188,26 @@ struct NestedOperationsExample {
     let categories = try createProductCatalog(factory: factory, fileDescriptor: fileDescriptor)
     try store.set(categories, forField: "categories")
 
-    print("  🛍️ Создан интернет-магазин:")
+    print("  🛍️ Created online store:")
     let initialStats = try analyzeStoreInventory(store)
     ExampleUtils.printTable(initialStats, title: "Initial Inventory")
 
     // Apply conditional transformations
-    print("\n  🔄 Применение условных трансформаций:")
+    print("\n  🔄 Applying Conditional Transformations:")
 
     // 1. Apply discount to expensive items
     let discountedCount = try applyDiscountToExpensiveItems(store, threshold: 500.0, discount: 0.15)
-    print("    💸 Применена скидка к \(discountedCount) товарам")
+    print("    💸 Applied discount to \(discountedCount) items")
 
     // 2. Update stock for low inventory
     let restockedCount = try restockLowInventoryItems(store, threshold: 5)
-    print("    📦 Пополнен запас \(restockedCount) товаров")
+    print("    📦 Restocked \(restockedCount) items")
 
     let finalStats = try analyzeStoreInventory(store)
     ExampleUtils.printTable(finalStats, title: "After Transformations")
   }
 
-  private static func step4_pathNavigation() throws {
+  private static func step4PathNavigation() throws {
     ExampleUtils.printStep(4, "Navigation through complex paths")
 
     let fileDescriptor = try createUniversityStructure()
@@ -225,31 +225,31 @@ struct NestedOperationsExample {
     let faculties = try createFacultiesWithStudents(factory: factory, fileDescriptor: fileDescriptor)
     try university.set(faculties, forField: "faculties")
 
-    print("  🎓 Создана структура университета:")
+    print("  🎓 Created university structure:")
     try printUniversityStructure(university)
 
     // Complex path navigation examples
-    print("\n  🗺️ Навигация по сложным путям:")
+    print("\n  🗺️ Complex Path Navigation:")
 
     // Navigate to specific student
     let studentGPA = try navigateToStudentGPA(university, facultyIndex: 0, studentIndex: 0)
-    print("    📊 GPA первого студента: \(studentGPA)")
+    print("    📊 First student GPA: \(studentGPA)")
 
     // Count all students across all faculties
     let totalStudents = try countAllStudents(university)
-    print("    👥 Общее количество студентов: \(totalStudents)")
+    print("    👥 Total students: \(totalStudents)")
 
     // Find honors students
     let honorsStudents = try findHonorsStudents(university, gradeThreshold: 3.5)
-    print("    🏆 Студенты с отличием: \(honorsStudents.count)")
+    print("    🏆 Honors students: \(honorsStudents.count)")
 
     // Update all grades
     try updateAllGrades(university, increment: 0.1)
-    print("    ⬆️ Все оценки увеличены на 0.1")
+    print("    ⬆️ All grades increased by 0.1")
   }
 
-  private static func step5_performanceOptimizations() throws {
-    ExampleUtils.printStep(5, "Performance optimization of operations")
+  private static func step5PerformanceOptimizations() throws {
+    ExampleUtils.printStep(5, "Performance Optimization of Operations")
 
     let fileDescriptor = try createTreeStructure()
     let factory = MessageFactory()
@@ -257,30 +257,30 @@ struct NestedOperationsExample {
     // Create large nested tree for performance testing
     let tree = try createLargeTree(factory: factory, fileDescriptor: fileDescriptor, depth: 4)
 
-    print("  ⚡ Создано дерево для тестирования производительности:")
+    print("  ⚡ Created tree for performance testing:")
     let treeStats = try analyzeTreeStructure(tree)
     ExampleUtils.printTable(treeStats, title: "Tree Metrics")
 
     // Performance optimization techniques
-    print("\n  🚀 Техники оптимизации производительности:")
+    print("\n  🚀 Performance Optimization Techniques:")
 
     // 1. Lazy traversal vs eager traversal
     let (lazyResult, lazyTime) = try ExampleUtils.measureTime {
       return try performLazyTraversal(tree)
     }
-    print("    🐌 Ленивый обход: \(lazyResult) узлов за \(String(format: "%.4f", lazyTime))с")
+    print("    🐌 Lazy traversal: \(lazyResult) nodes in \(String(format: "%.4f", lazyTime))s")
 
     // 2. Batch operations vs individual operations
     let (batchResult, batchTime) = try ExampleUtils.measureTime {
       return try performBatchUpdates(tree)
     }
-    print("    📦 Batch обновления: \(batchResult) изменений за \(String(format: "%.4f", batchTime))с")
+    print("    📦 Batch updates: \(batchResult) changes in \(String(format: "%.4f", batchTime))s")
 
     // 3. Memory-efficient operations
     let memoryResult = try performMemoryEfficientOperations(tree)
-    print("    💾 Эффективные операции: обработано \(memoryResult) элементов")
+    print("    💾 Efficient operations: processed \(memoryResult) elements")
 
-    ExampleUtils.printInfo("Демонстрирует оптимизированные подходы для работы с большими вложенными структурами")
+    ExampleUtils.printInfo("Demonstrates optimized approaches for working with large nested structures")
   }
 
   // MARK: - Structure Creation Methods
@@ -812,7 +812,7 @@ struct NestedOperationsExample {
   private static func printUniversityStructure(_ university: DynamicMessage) throws {
     let name = try university.get(forField: "name") as? String ?? "Unknown"
     let established = try university.get(forField: "established") as? Int32 ?? 0
-    print("    🎓 \(name) (основан в \(established))")
+    print("    🎓 \(name) (established in \(established))")
   }
 
   private static func navigateToStudentGPA(_ university: DynamicMessage, facultyIndex: Int, studentIndex: Int) throws
@@ -866,7 +866,7 @@ struct NestedOperationsExample {
 
   private static func updateAllGrades(_ university: DynamicMessage, increment: Double) throws {
     // Simplified implementation for demonstration
-    print("    (демонстрация обновления оценок)")
+    print("    (grade update demonstration)")
   }
 
   private static func createLargeTree(factory: MessageFactory, fileDescriptor: FileDescriptor, depth: Int) throws

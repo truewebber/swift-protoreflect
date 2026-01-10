@@ -25,7 +25,7 @@ import SwiftProtoReflect
 @main
 struct MessageCloningExample {
   static func main() throws {
-    ExampleUtils.printHeader("Клонирование и копирование динамических сообщений")
+    ExampleUtils.printHeader("Cloning and Copying Dynamic Messages")
 
     try step1UbasicCloning()
     try step2UdeepVsShallowCopy()
@@ -34,7 +34,7 @@ struct MessageCloningExample {
     try step5UperformanceOptimizedCloning()
     try step6UcustomCloningStrategies()
 
-    ExampleUtils.printSuccess("Вы освоили все техники клонирования сообщений!")
+    ExampleUtils.printSuccess("You've mastered all message cloning techniques!")
 
     ExampleUtils.printNext([
       "Next: conditional-logic.swift - conditional logic based on types",
@@ -44,39 +44,39 @@ struct MessageCloningExample {
   }
 
   private static func step1UbasicCloning() throws {
-    ExampleUtils.printStep(1, "Основы клонирования сообщений")
+    ExampleUtils.printStep(1, "Message Cloning Basics")
 
     let fileDescriptor = try createPersonStructure()
     let factory = MessageFactory()
     let personDescriptor = fileDescriptor.messages.values.first { $0.name == "Person" }!
 
-    // Создание оригинального сообщения
+    // Creating original message
     var originalPerson = factory.createMessage(from: personDescriptor)
     try populatePersonData(&originalPerson)
 
-    print("  👤 Оригинальное сообщение:")
+    print("  👤 Original Message:")
     originalPerson.prettyPrint()
 
-    // Базовое клонирование (создание независимой копии)
-    print("\n  📋 Создание простой копии:")
+    // Basic cloning (creating independent copy)
+    print("\n  📋 Creating Simple Copy:")
     let (clonedPerson, cloneTime) = try ExampleUtils.measureTime {
       try createBasicClone(originalPerson, factory: factory)
     }
     ExampleUtils.printTiming("Basic cloning", time: cloneTime)
 
-    print("    🔍 Проверка независимости копии:")
+    print("    🔍 Verifying Copy Independence:")
     try verifyIndependence(original: originalPerson, clone: clonedPerson)
 
-    // Демонстрация изменений в копии
-    print("\n  ✏️  Изменение данных в копии:")
+    // Demonstrating changes in copy
+    print("\n  ✏️  Modifying Data in Copy:")
     var mutableClone = clonedPerson
     try mutableClone.set("Jane Smith (Modified)", forField: "name")
     try mutableClone.set(Int32(35), forField: "age")
 
-    print("    Оригинал после изменения копии:")
+    print("    Original after modifying copy:")
     originalPerson.prettyPrint()
 
-    print("\n    Измененная копия:")
+    print("\n    Modified copy:")
     mutableClone.prettyPrint()
 
     // Verification
@@ -84,7 +84,7 @@ struct MessageCloningExample {
     let cloneName = try mutableClone.get(forField: "name") as? String
 
     let success = originalName != cloneName
-    print("\n    ✅ Независимость подтверждена: \(success)")
+    print("\n    ✅ Independence confirmed: \(success)")
   }
 
   private static func step2UdeepVsShallowCopy() throws {
@@ -94,33 +94,33 @@ struct MessageCloningExample {
     let factory = MessageFactory()
     let teamDescriptor = fileDescriptor.messages.values.first { $0.name == "Team" }!
 
-    // Создание команды с участниками
+    // Creating team with members
     var originalTeam = factory.createMessage(from: teamDescriptor)
     try populateTeamData(&originalTeam, factory: factory, fileDescriptor: fileDescriptor)
 
-    print("  👥 Оригинальная команда:")
+    print("  👥 Original Team:")
     originalTeam.prettyPrint()
 
-    // Shallow copy (ссылки на те же вложенные объекты)
+    // Shallow copy (references to same nested objects)
     print("\n  📄 Shallow Copy:")
     let (shallowCopy, shallowTime) = try ExampleUtils.measureTime {
       try createShallowCopy(originalTeam, factory: factory)
     }
     ExampleUtils.printTiming("Shallow copy", time: shallowTime)
 
-    // Deep copy (полное клонирование всех вложенных объектов)
+    // Deep copy (full cloning of all nested objects)
     print("\n  📚 Deep Copy:")
     let (deepCopy, deepTime) = try ExampleUtils.measureTime {
       try createDeepCopy(originalTeam, factory: factory)
     }
     ExampleUtils.printTiming("Deep copy", time: deepTime)
 
-    // Демонстрация различий
-    print("\n  🔍 Демонстрация различий при изменении вложенных объектов:")
+    // Demonstrating differences
+    print("\n  🔍 Demonstrating Differences When Modifying Nested Objects:")
     try demonstrateCopyDifferences(original: originalTeam, shallow: shallowCopy, deep: deepCopy)
 
     // Performance comparison
-    print("\n  ⚡ Сравнение производительности:")
+    print("\n  ⚡ Performance Comparison:")
     ExampleUtils.printTable(
       [
         "Shallow Copy": String(format: "%.3f ms", shallowTime * 1000),
@@ -132,7 +132,7 @@ struct MessageCloningExample {
   }
 
   private static func step3UpartialCopying() throws {
-    ExampleUtils.printStep(3, "Partial copying (выборочное копирование)")
+    ExampleUtils.printStep(3, "Partial Copying (Selective Field Copying)")
 
     let fileDescriptor = try createUserProfileStructure()
     let factory = MessageFactory()
@@ -141,11 +141,11 @@ struct MessageCloningExample {
     var fullProfile = factory.createMessage(from: profileDescriptor)
     try populateFullProfile(&fullProfile)
 
-    print("  📊 Полный профиль пользователя:")
+    print("  📊 Full User Profile:")
     fullProfile.prettyPrint()
 
-    // Копирование только базовой информации
-    print("\n  👤 Partial Copy: только базовая информация")
+    // Copying only basic information
+    print("\n  👤 Partial Copy: basic information only")
     let basicFields = ["name", "email", "age"]
     let (basicProfile, basicTime) = try ExampleUtils.measureTime {
       try createPartialCopy(fullProfile, fields: basicFields, factory: factory)
@@ -153,8 +153,8 @@ struct MessageCloningExample {
     ExampleUtils.printTiming("Basic fields copy", time: basicTime)
     basicProfile.prettyPrint()
 
-    // Копирование только контактной информации
-    print("\n  📞 Partial Copy: только контактная информация")
+    // Copying only contact information
+    print("\n  📞 Partial Copy: contact information only")
     let contactFields = ["name", "email", "phone", "address"]
     let (contactProfile, contactTime) = try ExampleUtils.measureTime {
       try createPartialCopy(fullProfile, fields: contactFields, factory: factory)
@@ -162,8 +162,8 @@ struct MessageCloningExample {
     ExampleUtils.printTiming("Contact fields copy", time: contactTime)
     contactProfile.prettyPrint()
 
-    // Копирование с исключениями (все кроме указанных полей)
-    print("\n  🚫 Partial Copy: исключить чувствительные данные")
+    // Copying with exclusions (all except specified fields)
+    print("\n  🚫 Partial Copy: exclude sensitive data")
     let excludedFields = ["ssn", "credit_card", "password_hash"]
     let (publicProfile, publicTime) = try ExampleUtils.measureTime {
       try createCopyExcluding(fullProfile, excludedFields: excludedFields, factory: factory)
@@ -171,8 +171,8 @@ struct MessageCloningExample {
     ExampleUtils.printTiming("Public profile copy", time: publicTime)
     publicProfile.prettyPrint()
 
-    // Анализ размеров
-    print("\n  📏 Анализ размеров различных копий:")
+    // Size analysis
+    print("\n  📏 Size Analysis of Different Copies:")
     try analyzeProfileSizes(
       full: fullProfile,
       basic: basicProfile,
@@ -182,7 +182,7 @@ struct MessageCloningExample {
   }
 
   private static func step4UnestedStructureCloning() throws {
-    ExampleUtils.printStep(4, "Клонирование сложных вложенных структур")
+    ExampleUtils.printStep(4, "Cloning Complex Nested Structures")
 
     let fileDescriptor = try createOrganizationStructure()
     let factory = MessageFactory()
@@ -191,45 +191,45 @@ struct MessageCloningExample {
     var organization = factory.createMessage(from: orgDescriptor)
     try populateOrganizationData(&organization, factory: factory, fileDescriptor: fileDescriptor)
 
-    print("  🏢 Сложная организационная структура:")
+    print("  🏢 Complex Organizational Structure:")
     try printOrganizationSummary(organization)
 
-    // Клонирование с сохранением структуры
-    print("\n  🔄 Полное клонирование организации:")
+    // Cloning while preserving structure
+    print("\n  🔄 Full Organization Cloning:")
     let (clonedOrg, cloneTime) = try ExampleUtils.measureTime {
       try cloneComplexOrganization(organization, factory: factory, fileDescriptor: fileDescriptor)
     }
     ExampleUtils.printTiming("Complex organization cloning", time: cloneTime)
 
     // Verification of structural integrity
-    print("\n  ✅ Проверка целостности клонированной структуры:")
+    print("\n  ✅ Verifying Cloned Structure Integrity:")
     try verifyOrganizationIntegrity(original: organization, cloned: clonedOrg)
 
-    // Клонирование с реструктуризацией
-    print("\n  🔧 Клонирование с реструктуризацией:")
+    // Cloning with restructuring
+    print("\n  🔧 Cloning with Restructuring:")
     let (restructuredOrg, restructureTime) = try ExampleUtils.measureTime {
       try cloneAndRestructure(organization, factory: factory, fileDescriptor: fileDescriptor)
     }
     ExampleUtils.printTiming("Clone with restructuring", time: restructureTime)
 
-    print("    Реструктурированная организация:")
+    print("    Restructured Organization:")
     try printOrganizationSummary(restructuredOrg)
   }
 
   private static func step5UperformanceOptimizedCloning() throws {
-    ExampleUtils.printStep(5, "Performance-оптимизированное клонирование")
+    ExampleUtils.printStep(5, "Performance-Optimized Cloning")
 
     let fileDescriptor = try createDatasetStructure()
     let factory = MessageFactory()
     let recordDescriptor = fileDescriptor.messages.values.first { $0.name == "DataRecord" }!
 
-    // Создание большого dataset'а для тестирования
-    print("  📊 Создание большого dataset'а для тестирования:")
+    // Creating large dataset for testing
+    print("  📊 Creating Large Dataset for Testing:")
     let (largeDataset, createTime) = try ExampleUtils.measureTime {
       try createLargeDataset(count: 1000, factory: factory, descriptor: recordDescriptor)
     }
     ExampleUtils.printTiming("Large dataset creation", time: createTime)
-    print("    Создано \(largeDataset.count) записей")
+    print("    Created \(largeDataset.count) records")
 
     // Naive bulk cloning
     print("\n  🐌 Naive bulk cloning:")
@@ -253,7 +253,7 @@ struct MessageCloningExample {
     ExampleUtils.printTiming("Parallel cloning", time: parallelTime)
 
     // Performance comparison
-    print("\n  📈 Сравнение производительности:")
+    print("\n  📈 Performance Comparison:")
     ExampleUtils.printTable(
       [
         "Naive Approach": String(format: "%.0f ms", naiveTime * 1000),
@@ -271,7 +271,7 @@ struct MessageCloningExample {
   }
 
   private static func step6UcustomCloningStrategies() throws {
-    ExampleUtils.printStep(6, "Custom стратегии клонирования")
+    ExampleUtils.printStep(6, "Custom Cloning Strategies")
 
     let fileDescriptor = try createConfigurationStructure()
     let factory = MessageFactory()
@@ -280,11 +280,11 @@ struct MessageCloningExample {
     var config = factory.createMessage(from: configDescriptor)
     try populateConfiguration(&config)
 
-    print("  ⚙️  Исходная конфигурация:")
+    print("  ⚙️  Original Configuration:")
     config.prettyPrint()
 
     // Strategy 1: Version-aware cloning
-    print("\n  📋 Стратегия 1: Version-aware cloning")
+    print("\n  📋 Strategy 1: Version-aware cloning")
     let (versionedClone, versionTime) = try ExampleUtils.measureTime {
       try createVersionAwareClone(config, targetVersion: "2.0", factory: factory, descriptor: configDescriptor)
     }
@@ -292,7 +292,7 @@ struct MessageCloningExample {
     versionedClone.prettyPrint()
 
     // Strategy 2: Environment-specific cloning
-    print("\n  🌍 Стратегия 2: Environment-specific cloning")
+    print("\n  🌍 Strategy 2: Environment-specific cloning")
     let environments = ["development", "staging", "production"]
     for env in environments {
       let (envClone, envTime) = try ExampleUtils.measureTime {
@@ -308,7 +308,7 @@ struct MessageCloningExample {
     }
 
     // Strategy 3: Template-based cloning
-    print("\n  📝 Стратегия 3: Template-based cloning")
+    print("\n  📝 Strategy 3: Template-based cloning")
     let templates = ["minimal", "standard", "enterprise"]
     for template in templates {
       let (templateClone, templateTime) = try ExampleUtils.measureTime {
@@ -320,7 +320,7 @@ struct MessageCloningExample {
     }
 
     // Strategy 4: Incremental cloning (only changes)
-    print("\n  📈 Стратегия 4: Incremental cloning")
+    print("\n  📈 Strategy 4: Incremental cloning")
     var modifiedConfig = try createBasicClone(config, factory: factory)
     try modifiedConfig.set("Modified Config", forField: "name")
     try modifiedConfig.set(true, forField: "debug_enabled")
@@ -335,10 +335,10 @@ struct MessageCloningExample {
     }
     ExampleUtils.printTiming("Incremental cloning", time: incrementalTime)
 
-    print("    Incremental clone (только изменения):")
+    print("    Incremental clone (only changes):")
     incrementalClone.prettyPrint()
 
-    ExampleUtils.printInfo("Custom стратегии позволяют адаптировать клонирование под конкретные needs")
+    ExampleUtils.printInfo("Custom strategies allow adapting cloning to specific needs")
   }
 
   // MARK: - Structure Creation Methods

@@ -25,11 +25,11 @@ struct FileLoadingExample {
   static func run() throws {
     ExampleUtils.printHeader("File Descriptor Loading")
 
-    try step1_basicFileCreationAndStructure()
-    try step2_descriptorParsingAndValidation()
-    try step3_dependencyResolutionDemo()
-    try step4_batchLoadingAndCaching()
-    try step5_errorHandlingAndRecovery()
+    try step1BasicFileCreationAndStructure()
+    try step2DescriptorParsingAndValidation()
+    try step3DependencyResolutionDemo()
+    try step4BatchLoadingAndCaching()
+    try step5ErrorHandlingAndRecovery()
 
     print("\n🎉 File descriptor loading successfully explored!")
 
@@ -39,7 +39,7 @@ struct FileLoadingExample {
     print("  • Return to: type-registry.swift - type registry management")
   }
 
-  private static func step1_basicFileCreationAndStructure() throws {
+  private static func step1BasicFileCreationAndStructure() throws {
     ExampleUtils.printStep(1, "Basic file creation and structure")
 
     print("  📁 Creating and analyzing descriptor file structures...")
@@ -97,7 +97,7 @@ struct FileLoadingExample {
     }
   }
 
-  private static func step2_descriptorParsingAndValidation() throws {
+  private static func step2DescriptorParsingAndValidation() throws {
     ExampleUtils.printStep(2, "Descriptor parsing and validation")
 
     print("  🔬 Parsing and validating descriptors...")
@@ -171,10 +171,10 @@ struct FileLoadingExample {
     }
   }
 
-  private static func step3_dependencyResolutionDemo() throws {
+  private static func step3DependencyResolutionDemo() throws {
     ExampleUtils.printStep(3, "Dependency resolution demonstration")
 
-    print("  🧩 Демонстрация разрешения зависимостей...")
+    print("  🧩 Demonstrating dependency resolution...")
 
     // Create files with explicit dependencies
     let dependentFiles = try createDependentFileCollection()
@@ -238,10 +238,10 @@ struct FileLoadingExample {
     }
   }
 
-  private static func step4_batchLoadingAndCaching() throws {
+  private static func step4BatchLoadingAndCaching() throws {
     ExampleUtils.printStep(4, "Batch loading and caching")
 
-    print("  🚀 Batch loading и caching стратегии...")
+    print("  🚀 Batch loading and caching strategies...")
 
     // Create large file collection for performance testing
     let largeFileCollection = try createLargeFileCollection()
@@ -312,10 +312,10 @@ struct FileLoadingExample {
     print("      Memory usage: \(ExampleUtils.formatDataSize(cacheStats.memoryUsage))")
   }
 
-  private static func step5_errorHandlingAndRecovery() throws {
+  private static func step5ErrorHandlingAndRecovery() throws {
     ExampleUtils.printStep(5, "Error handling and recovery")
 
-    print("  🛠 Error handling и recovery strategies...")
+    print("  🛠 Error handling and recovery strategies...")
 
     // Create problematic files for error testing
     let problematicFiles = createProblematicFiles()

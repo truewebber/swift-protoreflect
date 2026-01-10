@@ -31,11 +31,11 @@ struct StreamingExample {
   static func main() throws {
     ExampleUtils.printHeader("Streaming Protocol Buffers Processing")
 
-    try step1_memoryEfficientSerialization()
-    try step2_batchProcessing()
-    try step3_largeDatasetStreaming()
-    try step4_producerConsumerPattern()
-    try step5_memoryOptimizationTechniques()
+    try step1MemoryEfficientSerialization()
+    try step2BatchProcessing()
+    try step3LargeDatasetStreaming()
+    try step4ProducerConsumerPattern()
+    try step5MemoryOptimizationTechniques()
 
     ExampleUtils.printSuccess("Streaming data processing successfully explored!")
 
@@ -48,7 +48,7 @@ struct StreamingExample {
 
   // MARK: - Implementation Steps
 
-  private static func step1_memoryEfficientSerialization() throws {
+  private static func step1MemoryEfficientSerialization() throws {
     ExampleUtils.printStep(1, "Memory-efficient serialization")
 
     print("  💾 Creating large dataset simulation...")
@@ -139,7 +139,7 @@ struct StreamingExample {
     _ = ExampleUtils.writeToTempFile("Streaming file path: \(streamingFile)", filename: "streaming_output_info.txt")
   }
 
-  private static func step2_batchProcessing() throws {
+  private static func step2BatchProcessing() throws {
     ExampleUtils.printStep(2, "Batch processing and deserialization")
 
     // Read back the streaming file we created
@@ -218,7 +218,7 @@ struct StreamingExample {
     print("    Processing rate: \(String(format: "%.1f", Double(recordsProcessed) / processingTime)) records/sec")
   }
 
-  private static func step3_largeDatasetStreaming() throws {
+  private static func step3LargeDatasetStreaming() throws {
     ExampleUtils.printStep(3, "Large dataset streaming simulation")
 
     print("  🏔 Simulating very large dataset processing...")
@@ -270,7 +270,7 @@ struct StreamingExample {
     print("    Projected real processing time: \(String(format: "%.1f", projectedRealTime))s")
   }
 
-  private static func step4_producerConsumerPattern() throws {
+  private static func step4ProducerConsumerPattern() throws {
     ExampleUtils.printStep(4, "Producer-Consumer streaming pattern")
 
     print("  🔄 Demonstrating Producer-Consumer pattern for streaming...")
@@ -386,7 +386,7 @@ struct StreamingExample {
     print("    Processing rate: \(String(format: "%.1f", Double(consumedCounter.value) / patternTime)) records/sec")
   }
 
-  private static func step5_memoryOptimizationTechniques() throws {
+  private static func step5MemoryOptimizationTechniques() throws {
     ExampleUtils.printStep(5, "Memory optimization techniques")
 
     print("  🧠 Memory optimization strategies demonstration...")

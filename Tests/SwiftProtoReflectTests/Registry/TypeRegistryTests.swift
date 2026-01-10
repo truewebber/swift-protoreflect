@@ -2,7 +2,7 @@
 // TypeRegistryTests.swift
 // SwiftProtoReflectTests
 //
-// Создан: 2025-05-24
+// Created: 2025-05-24
 //
 
 import XCTest
@@ -24,7 +24,7 @@ final class TypeRegistryTests: XCTestCase {
     super.setUp()
     typeRegistry = TypeRegistry()
 
-    // Создаем тестовые дескрипторы
+    // Create test descriptors
     setupTestDescriptors()
   }
 
@@ -38,23 +38,23 @@ final class TypeRegistryTests: XCTestCase {
   }
 
   private func setupTestDescriptors() {
-    // Создаем файловый дескриптор
+    // Create file descriptor
     fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
 
-    // Создаем дескриптор перечисления
+    // Create enum descriptor
     var tempEnum = EnumDescriptor(name: "Status", parent: fileDescriptor)
     tempEnum.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0))
     tempEnum.addValue(EnumDescriptor.EnumValue(name: "SUCCESS", number: 1))
     enumDescriptor = tempEnum
 
-    // Создаем дескриптор сообщения
+    // Create message descriptor
     var tempMessage = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     tempMessage.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
     tempMessage.addField(FieldDescriptor(name: "name", number: 2, type: .string))
     tempMessage.addField(FieldDescriptor(name: "status", number: 3, type: .enum, typeName: enumDescriptor.fullName))
     messageDescriptor = tempMessage
 
-    // Создаем дескриптор сервиса
+    // Create service descriptor
     var tempService = ServiceDescriptor(name: "TestService", parent: fileDescriptor)
     tempService.addMethod(
       ServiceDescriptor.MethodDescriptor(
@@ -65,7 +65,7 @@ final class TypeRegistryTests: XCTestCase {
     )
     serviceDescriptor = tempService
 
-    // Добавляем типы в файл
+    // Add types to file
     fileDescriptor.addMessage(messageDescriptor)
     fileDescriptor.addEnum(enumDescriptor)
     fileDescriptor.addService(serviceDescriptor)
@@ -86,11 +86,11 @@ final class TypeRegistryTests: XCTestCase {
   func testRegisterFile() throws {
     try typeRegistry.registerFile(fileDescriptor)
 
-    // Проверяем, что файл зарегистрирован
+    // Check that file is registered
     XCTAssertTrue(typeRegistry.hasFile(named: "test.proto"))
     XCTAssertNotNil(typeRegistry.findFile(named: "test.proto"))
 
-    // Проверяем, что все типы из файла автоматически зарегистрированы
+    // Check that all types from file are automatically registered
     XCTAssertTrue(typeRegistry.hasMessage(named: "test.TestMessage"))
     XCTAssertTrue(typeRegistry.hasEnum(named: "test.Status"))
     XCTAssertTrue(typeRegistry.hasService(named: "test.TestService"))
@@ -99,17 +99,17 @@ final class TypeRegistryTests: XCTestCase {
   func testRegisterFileDuplicate() throws {
     try typeRegistry.registerFile(fileDescriptor)
 
-    // Попытка зарегистрировать тот же файл должна вызвать ошибку
+    // Attempting to register the same file should throw an error
     XCTAssertThrowsError(try typeRegistry.registerFile(fileDescriptor)) { error in
       XCTAssertEqual(error as? RegistryError, .duplicateFile("test.proto"))
     }
   }
 
   func testRegisterFileWithNestedTypes() throws {
-    // Создаем новый файл с вложенными типами
+    // Create new file with nested types
     var nestedFile = FileDescriptor(name: "nested.proto", package: "nested")
 
-    // Создаем файл с вложенными типами
+    // Create file with nested types
     var outerMessage = MessageDescriptor(name: "OuterMessage", parent: nestedFile)
     var innerMessage = MessageDescriptor(name: "InnerMessage", parent: outerMessage)
     innerMessage.addField(FieldDescriptor(name: "value", number: 1, type: .string))
@@ -123,7 +123,7 @@ final class TypeRegistryTests: XCTestCase {
 
     try typeRegistry.registerFile(nestedFile)
 
-    // Проверяем регистрацию вложенных типов
+    // Check nested types registration
     XCTAssertTrue(typeRegistry.hasMessage(named: "nested.OuterMessage"))
     XCTAssertTrue(typeRegistry.hasMessage(named: "nested.OuterMessage.InnerMessage"))
     XCTAssertTrue(typeRegistry.hasEnum(named: "nested.OuterMessage.InnerEnum"))
@@ -173,7 +173,7 @@ final class TypeRegistryTests: XCTestCase {
 
     try typeRegistry.registerMessage(message1)
 
-    // Регистрация дубликата должна вызвать ошибку
+    // Registering duplicate should throw an error
     XCTAssertThrowsError(try typeRegistry.registerMessage(message2)) { error in
       XCTAssertEqual(error as? RegistryError, .duplicateType("test.Message"))
     }
@@ -184,7 +184,7 @@ final class TypeRegistryTests: XCTestCase {
   func testFindTypes() throws {
     try typeRegistry.registerFile(fileDescriptor)
 
-    // Тестируем поиск всех типов
+    // Test finding all types
     let foundFile = typeRegistry.findFile(named: "test.proto")
     XCTAssertNotNil(foundFile)
     XCTAssertEqual(foundFile?.name, "test.proto")
@@ -203,7 +203,7 @@ final class TypeRegistryTests: XCTestCase {
   }
 
   func testFindNonExistentTypes() {
-    // Поиск несуществующих типов должен возвращать nil
+    // Finding non-existent types should return nil
     XCTAssertNil(typeRegistry.findFile(named: "nonexistent.proto"))
     XCTAssertNil(typeRegistry.findMessage(named: "nonexistent.Message"))
     XCTAssertNil(typeRegistry.findEnum(named: "nonexistent.Enum"))
@@ -238,17 +238,17 @@ final class TypeRegistryTests: XCTestCase {
   }
 
   func testMultipleFilesEnumeration() throws {
-    // Регистрируем первый файл
+    // Register first file
     try typeRegistry.registerFile(fileDescriptor)
 
-    // Создаем и регистрируем второй файл
+    // Create and register second file
     var secondFile = FileDescriptor(name: "second.proto", package: "second")
     let secondMessage = MessageDescriptor(name: "SecondMessage", parent: secondFile)
     secondFile.addMessage(secondMessage)
 
     try typeRegistry.registerFile(secondFile)
 
-    // Проверяем, что все файлы и типы учтены
+    // Check that all files and types are accounted for
     XCTAssertEqual(typeRegistry.allFiles().count, 2)
     XCTAssertEqual(typeRegistry.allMessages().count, 2)
     XCTAssertEqual(typeRegistry.allEnums().count, 1)
@@ -258,7 +258,7 @@ final class TypeRegistryTests: XCTestCase {
   // MARK: - Dependency Resolution Tests
 
   func testResolveDependencies() throws {
-    // Создаем структуру с зависимостями
+    // Create structure with dependencies
     var dependentFile = FileDescriptor(name: "dependent.proto", package: "dependent")
 
     var addressMessage = MessageDescriptor(name: "Address", parent: dependentFile)
@@ -274,7 +274,7 @@ final class TypeRegistryTests: XCTestCase {
 
     try typeRegistry.registerFile(dependentFile)
 
-    // Проверяем разрешение зависимостей
+    // Check dependency resolution
     let dependencies = try typeRegistry.resolveDependencies(for: "dependent.Person")
     XCTAssertTrue(dependencies.contains("dependent.Address"))
   }
@@ -286,7 +286,7 @@ final class TypeRegistryTests: XCTestCase {
   }
 
   func testResolveDependenciesWithNestedTypes() throws {
-    // Создаем структуру с вложенными типами и зависимостями
+    // Create structure with nested types and dependencies
     var complexFile = FileDescriptor(name: "complex.proto", package: "complex")
 
     var outerMessage = MessageDescriptor(name: "OuterMessage", parent: complexFile)
@@ -315,14 +315,14 @@ final class TypeRegistryTests: XCTestCase {
   func testClear() throws {
     try typeRegistry.registerFile(fileDescriptor)
 
-    // Проверяем, что типы зарегистрированы
+    // Check that types are registered
     XCTAssertEqual(typeRegistry.allFiles().count, 1)
     XCTAssertEqual(typeRegistry.allMessages().count, 1)
 
-    // Очищаем реестр
+    // Clear registry
     typeRegistry.clear()
 
-    // Проверяем, что все типы удалены
+    // Check that all types are removed
     XCTAssertEqual(typeRegistry.allFiles().count, 0)
     XCTAssertEqual(typeRegistry.allMessages().count, 0)
     XCTAssertEqual(typeRegistry.allEnums().count, 0)
@@ -332,15 +332,15 @@ final class TypeRegistryTests: XCTestCase {
   func testRemoveFile() throws {
     try typeRegistry.registerFile(fileDescriptor)
 
-    // Проверяем исходное состояние
+    // Check initial state
     XCTAssertTrue(typeRegistry.hasFile(named: "test.proto"))
     XCTAssertTrue(typeRegistry.hasMessage(named: "test.TestMessage"))
 
-    // Удаляем файл
+    // Remove file
     let removed = typeRegistry.removeFile(named: "test.proto")
     XCTAssertTrue(removed)
 
-    // Проверяем, что файл и все связанные типы удалены
+    // Check that file and all associated types are removed
     XCTAssertFalse(typeRegistry.hasFile(named: "test.proto"))
     XCTAssertFalse(typeRegistry.hasMessage(named: "test.TestMessage"))
     XCTAssertFalse(typeRegistry.hasEnum(named: "test.Status"))
@@ -358,12 +358,12 @@ final class TypeRegistryTests: XCTestCase {
     let expectation = XCTestExpectation(description: "Concurrent operations complete")
     expectation.expectedFulfillmentCount = 4
 
-    // Регистрируем исходный файл
+    // Register initial file
     try typeRegistry.registerFile(fileDescriptor)
 
     let queue = DispatchQueue.global(qos: .default)
 
-    // Параллельные операции чтения
+    // Parallel read operations
     queue.async {
       for _ in 0..<100 {
         _ = self.typeRegistry.hasMessage(named: "test.TestMessage")
@@ -380,7 +380,7 @@ final class TypeRegistryTests: XCTestCase {
       expectation.fulfill()
     }
 
-    // Параллельная операция регистрации новых типов
+    // Parallel operation registering new types
     queue.async {
       do {
         for i in 0..<10 {
@@ -389,12 +389,12 @@ final class TypeRegistryTests: XCTestCase {
         }
       }
       catch {
-        // Может возникнуть ошибка дубликата, это нормально в параллельной среде
+        // Duplicate error may occur, this is normal in parallel environment
       }
       expectation.fulfill()
     }
 
-    // Параллельная операция разрешения зависимостей
+    // Parallel dependency resolution operation
     queue.async {
       do {
         for _ in 0..<50 {
@@ -402,7 +402,7 @@ final class TypeRegistryTests: XCTestCase {
         }
       }
       catch {
-        // Ошибки возможны, но не должны вызывать краш
+        // Errors are possible but should not cause crash
       }
       expectation.fulfill()
     }
@@ -453,7 +453,7 @@ final class TypeRegistryTests: XCTestCase {
   }
 
   func testLookupPerformance() throws {
-    // Подготавливаем данные
+    // Prepare data
     for i in 0..<1000 {
       let message = MessageDescriptor(name: "Message\(i)", fullName: "test.Message\(i)")
       try typeRegistry.registerMessage(message)

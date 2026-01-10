@@ -2,7 +2,7 @@
 // DescriptorPoolTests.swift
 // SwiftProtoReflectTests
 //
-// Создан: 2025-05-24
+// Created: 2025-05-24
 //
 
 import XCTest
@@ -23,13 +23,13 @@ final class DescriptorPoolTests: XCTestCase {
   override func setUp() {
     super.setUp()
 
-    // Создаем дескриптор файла для тестов
+    // Create file descriptor for tests
     fileDescriptor = FileDescriptor(
       name: "test.proto",
       package: "test"
     )
 
-    // Создаем сообщение
+    // Create message
     messageDescriptor = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     messageDescriptor.addField(
       FieldDescriptor(
@@ -46,12 +46,12 @@ final class DescriptorPoolTests: XCTestCase {
       )
     )
 
-    // Создаем перечисление
+    // Create enum
     enumDescriptor = EnumDescriptor(name: "Status", parent: fileDescriptor)
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0))
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "ACTIVE", number: 1))
 
-    // Создаем сервис
+    // Create service
     serviceDescriptor = ServiceDescriptor(name: "TestService", parent: fileDescriptor)
     serviceDescriptor.addMethod(
       ServiceDescriptor.MethodDescriptor(
@@ -61,7 +61,7 @@ final class DescriptorPoolTests: XCTestCase {
       )
     )
 
-    // Добавляем все в файл
+    // Add everything to file
     fileDescriptor.addMessage(messageDescriptor)
     fileDescriptor.addEnum(enumDescriptor)
     fileDescriptor.addService(serviceDescriptor)
@@ -85,7 +85,7 @@ final class DescriptorPoolTests: XCTestCase {
     // Assert
     XCTAssertNotNil(descriptorPool)
 
-    // Проверяем, что встроенные типы добавлены
+    // Check that builtin types are added
     let builtinFile = descriptorPool.findFileDescriptor(named: "google/protobuf/descriptor.proto")
     XCTAssertNotNil(builtinFile)
 
@@ -103,7 +103,7 @@ final class DescriptorPoolTests: XCTestCase {
     // Assert
     XCTAssertNotNil(descriptorPool)
 
-    // Проверяем, что встроенных типов нет
+    // Check that there are no builtin types
     let builtinFile = descriptorPool.findFileDescriptor(named: "google/protobuf/descriptor.proto")
     XCTAssertNil(builtinFile)
 
@@ -149,7 +149,7 @@ final class DescriptorPoolTests: XCTestCase {
     // Act
     try descriptorPool.addFileDescriptor(fileDescriptor)
 
-    // Assert - проверяем что все дескрипторы извлечены
+    // Assert - check that all descriptors are extracted
     XCTAssertNotNil(descriptorPool.findMessageDescriptor(named: "test.TestMessage"))
     XCTAssertNotNil(descriptorPool.findEnumDescriptor(named: "test.Status"))
     XCTAssertNotNil(descriptorPool.findServiceDescriptor(named: "test.TestService"))
@@ -322,7 +322,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertNotNil(message)
     XCTAssertEqual(message?.descriptor.fullName, "test.TestMessage")
 
-    // Проверяем установленные значения
+    // Check set values
     XCTAssertEqual(try message?.get(forField: "id") as? Int32, 42)
     XCTAssertEqual(try message?.get(forField: "name") as? String, "Test Name")
 
@@ -408,7 +408,7 @@ final class DescriptorPoolTests: XCTestCase {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
 
-    // Создаем сообщение с зависимостями
+    // Create message with dependencies
     var dependentMessage = MessageDescriptor(name: "DependentMessage", parent: fileDescriptor)
     dependentMessage.addField(
       FieldDescriptor(
@@ -484,7 +484,7 @@ final class DescriptorPoolTests: XCTestCase {
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: true)
     try descriptorPool.addFileDescriptor(fileDescriptor)
 
-    // Проверяем что дескрипторы есть
+    // Check that descriptors exist
     XCTAssertNotNil(descriptorPool.findFileDescriptor(named: "test.proto"))
     XCTAssertNotNil(descriptorPool.findMessageDescriptor(named: "test.TestMessage"))
     XCTAssertNotNil(descriptorPool.findMessageDescriptor(named: "google.protobuf.Any"))
@@ -554,7 +554,7 @@ final class DescriptorPoolTests: XCTestCase {
     let expectation = XCTestExpectation(description: "Concurrent access completed")
     expectation.expectedFulfillmentCount = 10
 
-    // Act - множественные одновременные операции чтения
+    // Act - multiple concurrent read operations
     for i in 0..<10 {
       DispatchQueue.global().async {
         let found = self.descriptorPool.findMessageDescriptor(named: "test.TestMessage")

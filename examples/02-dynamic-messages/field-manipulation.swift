@@ -25,7 +25,7 @@ import SwiftProtoReflect
 @main
 struct FieldManipulationExample {
   static func main() throws {
-    ExampleUtils.printHeader("Продвинутые манипуляции полей динамических сообщений")
+    ExampleUtils.printHeader("Advanced Field Manipulations of Dynamic Messages")
 
     try step1UfieldIntrospection()
     try step2UbatchFieldOperations()
@@ -34,7 +34,7 @@ struct FieldManipulationExample {
     try step5UfieldTransformations()
     try step6UadvancedFieldPatterns()
 
-    ExampleUtils.printSuccess("Вы освоили продвинутые техники работы с полями!")
+    ExampleUtils.printSuccess("You've mastered advanced field manipulation techniques!")
 
     ExampleUtils.printNext([
       "Next: message-cloning.swift - message cloning and copying",
@@ -44,7 +44,7 @@ struct FieldManipulationExample {
   }
 
   private static func step1UfieldIntrospection() throws {
-    ExampleUtils.printStep(1, "Динамическое исследование структуры полей")
+    ExampleUtils.printStep(1, "Dynamic Field Structure Introspection")
 
     let fileDescriptor = try createComplexPersonStructure()
     let factory = MessageFactory()
@@ -53,24 +53,24 @@ struct FieldManipulationExample {
     var person = factory.createMessage(from: personDescriptor)
     try populatePersonWithSampleData(&person)
 
-    print("  🔍 Анализ структуры полей:")
+    print("  🔍 Field Structure Analysis:")
     try analyzeFieldStructure(personDescriptor)
 
-    print("\n  📊 Состояние полей в сообщении:")
+    print("\n  📊 Field States in Message:")
     try analyzeFieldStates(person)
 
-    print("\n  🏷  Метаданные полей:")
+    print("\n  🏷  Field Metadata:")
     try printFieldMetadata(personDescriptor)
   }
 
   private static func step2UbatchFieldOperations() throws {
-    ExampleUtils.printStep(2, "Массовые операции с полями")
+    ExampleUtils.printStep(2, "Batch Field Operations")
 
     let fileDescriptor = try createComplexPersonStructure()
     let factory = MessageFactory()
     let personDescriptor = fileDescriptor.messages.values.first { $0.name == "Person" }!
 
-    // Создание множественных сообщений для batch обработки
+    // Creating multiple messages for batch processing
     var persons: [DynamicMessage] = []
     for i in 1...5 {
       var person = factory.createMessage(from: personDescriptor)
@@ -80,25 +80,25 @@ struct FieldManipulationExample {
       persons.append(person)
     }
 
-    print("  📦 Создано \(persons.count) сообщений для batch обработки")
+    print("  📦 Created \(persons.count) messages for batch processing")
 
     // Batch validation
-    print("\n  ✅ Batch валидация:")
+    print("\n  ✅ Batch Validation:")
     let validationResults = try performBatchValidation(persons)
     ExampleUtils.printTable(validationResults, title: "Batch Validation Results")
 
     // Batch updates
-    print("\n  🔄 Batch обновления:")
+    print("\n  🔄 Batch Updates:")
     try performBatchUpdates(&persons)
 
     // Batch field analysis
-    print("\n  📈 Batch анализ полей:")
+    print("\n  📈 Batch Field Analysis:")
     let fieldStats = try analyzeBatchFieldStats(persons)
     ExampleUtils.printTable(fieldStats, title: "Field Statistics")
   }
 
   private static func step3UconditionalUpdates() throws {
-    ExampleUtils.printStep(3, "Условные обновления на основе типов и значений")
+    ExampleUtils.printStep(3, "Conditional Updates Based on Types and Values")
 
     let fileDescriptor = try createMixedTypesStructure()
     let factory = MessageFactory()
@@ -107,10 +107,10 @@ struct FieldManipulationExample {
     var record = factory.createMessage(from: recordDescriptor)
     try populateDataRecord(&record)
 
-    print("  🎯 Начальное состояние записи:")
+    print("  🎯 Initial Record State:")
     record.prettyPrint()
 
-    print("\n  🔄 Применение условных обновлений:")
+    print("\n  🔄 Applying Conditional Updates:")
 
     // Conditional updates based on field types
     try applyTypeBasedUpdates(&record, descriptor: recordDescriptor)
@@ -121,12 +121,12 @@ struct FieldManipulationExample {
     // Smart defaults for empty fields
     try applySmartDefaults(&record, descriptor: recordDescriptor)
 
-    print("\n  ✨ Результат после условных обновлений:")
+    print("\n  ✨ Result After Conditional Updates:")
     record.prettyPrint()
   }
 
   private static func step4UfieldValidationConstraints() throws {
-    ExampleUtils.printStep(4, "Валидация полей с constraints")
+    ExampleUtils.printStep(4, "Field Validation with Constraints")
 
     let fileDescriptor = try createConstrainedStructure()
     let factory = MessageFactory()
@@ -134,7 +134,7 @@ struct FieldManipulationExample {
 
     var user = factory.createMessage(from: userDescriptor)
 
-    print("  📏 Тестирование constraints:")
+    print("  📏 Constraints Testing:")
 
     // Test various constraint scenarios
     let testCases = [
@@ -160,14 +160,14 @@ struct FieldManipulationExample {
       }
     }
 
-    print("\n  🔒 Применение автоматических исправлений:")
+    print("\n  🔒 Applying Automatic Fixes:")
     try applyConstraintFixes(&user)
-    print("    Пользователь после исправлений:")
+    print("    User After Fixes:")
     user.prettyPrint()
   }
 
   private static func step5UfieldTransformations() throws {
-    ExampleUtils.printStep(5, "Трансформация и конвертация полей")
+    ExampleUtils.printStep(5, "Field Transformation and Conversion")
 
     let fileDescriptor = try createTransformableStructure()
     let factory = MessageFactory()
@@ -176,37 +176,37 @@ struct FieldManipulationExample {
     var document = factory.createMessage(from: documentDescriptor)
     try populateDocumentForTransformation(&document)
 
-    print("  📄 Исходный документ:")
+    print("  📄 Original Document:")
     document.prettyPrint()
 
-    print("\n  🔄 Применение трансформаций:")
+    print("\n  🔄 Applying Transformations:")
 
     // String transformations
     try applyStringTransformations(&document)
-    print("    ✨ Трансформации строк применены")
+    print("    ✨ String transformations applied")
 
     // Numeric transformations
     try applyNumericTransformations(&document)
-    print("    ✨ Числовые трансформации применены")
+    print("    ✨ Numeric transformations applied")
 
     // Array transformations
     try applyArrayTransformations(&document)
-    print("    ✨ Трансформации массивов применены")
+    print("    ✨ Array transformations applied")
 
     // Custom business logic transformations
     try applyBusinessLogicTransformations(&document)
-    print("    ✨ Бизнес-логика применена")
+    print("    ✨ Business logic applied")
 
-    print("\n  📄 Документ после трансформаций:")
+    print("\n  📄 Document After Transformations:")
     document.prettyPrint()
 
     // Demonstrate rollback capability
-    print("\n  ↩️  Демонстрация отката изменений:")
+    print("\n  ↩️  Rollback Demonstration:")
     try demonstrateRollback(document, factory: factory)
   }
 
   private static func step6UadvancedFieldPatterns() throws {
-    ExampleUtils.printStep(6, "Продвинутые паттерны работы с полями")
+    ExampleUtils.printStep(6, "Advanced Field Patterns")
 
     let fileDescriptor = try createAdvancedPatternsStructure()
     let factory = MessageFactory()
@@ -215,26 +215,26 @@ struct FieldManipulationExample {
     var config = factory.createMessage(from: configDescriptor)
     try populateConfiguration(&config)
 
-    print("  🎛  Конфигурация для демонстрации паттернов:")
+    print("  🎛  Configuration for Pattern Demonstration:")
     config.prettyPrint()
 
     // Pattern 1: Field proxies and virtual fields
-    print("\n  🔗 Паттерн 1: Виртуальные поля и прокси")
+    print("\n  🔗 Pattern 1: Virtual Fields and Proxies")
     try demonstrateFieldProxies(config)
 
     // Pattern 2: Field versioning and migration
-    print("\n  📼 Паттерн 2: Версионирование и миграция полей")
+    print("\n  📼 Pattern 2: Field Versioning and Migration")
     try demonstrateFieldMigration(&config, factory: factory)
 
     // Pattern 3: Dynamic field discovery and auto-configuration
-    print("\n  🔍 Паттерн 3: Динамическое обнаружение полей")
+    print("\n  🔍 Pattern 3: Dynamic Field Discovery")
     try demonstrateDynamicFieldDiscovery(config)
 
     // Pattern 4: Field interception and middleware
-    print("\n  🔧 Паттерн 4: Перехват операций с полями")
+    print("\n  🔧 Pattern 4: Field Operation Interception")
     try demonstrateFieldInterception(&config)
 
-    ExampleUtils.printInfo("Продвинутые паттерны позволяют создавать гибкие, расширяемые системы")
+    ExampleUtils.printInfo("Advanced patterns enable flexible, extensible systems")
   }
 
   // MARK: - Structure Creation Methods
@@ -367,7 +367,7 @@ struct FieldManipulationExample {
       return "nil"
     }
 
-    // Попытаемся определить реальный тип на основе типа поля
+    // Try to determine the actual type based on field type
     switch field.type {
     case .string:
       if field.isRepeated {

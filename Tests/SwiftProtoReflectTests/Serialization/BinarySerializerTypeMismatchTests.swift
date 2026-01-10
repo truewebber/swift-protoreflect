@@ -2,8 +2,8 @@
 // BinarySerializerTypeMismatchTests.swift
 // SwiftProtoReflectTests
 //
-// Тесты type mismatch errors для BinarySerializer
-// Покрывают все непокрытые error paths в encodeValue методе и field validation
+// Type mismatch error tests for BinarySerializer
+// Cover all uncovered error paths in encodeValue method and field validation
 //
 
 import XCTest
@@ -34,7 +34,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Helper Methods
 
-  /// Создает сообщение с полем правильного типа, но устанавливает значение неправильного типа.
+  /// Creates a message with a field of correct type but sets value of wrong type.
   private func createMessageWithTypeMismatch(
     fieldType: FieldType,
     wrongValue: Any,
@@ -56,7 +56,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     return message
   }
 
-  /// Тестирует encodeValue напрямую с неправильным типом.
+  /// Tests encodeValue directly with wrong type.
   private func testEncodeValueTypeMismatch(
     fieldType: FieldType,
     wrongValue: Any,
@@ -69,7 +69,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     XCTAssertThrowsError(
       try serializer.testTypeMismatchError(fieldType: fieldType, wrongValue: wrongValue, typeName: typeName)
     ) { error in
-      // Проверяем что получили правильную ошибку
+      // Verify that we got the correct error
       if let serializationError = error as? SerializationError,
         case .valueTypeMismatch(let expected, let actual) = serializationError
       {
@@ -84,7 +84,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
       else if let dynamicMessageError = error as? DynamicMessageError,
         case .typeMismatch(_, let expected, let actualValue) = dynamicMessageError
       {
-        // Также принимаем DynamicMessageError
+        // Also accept DynamicMessageError
         XCTAssertEqual(expected, expectedType, file: file, line: line)
         let actualType = String(describing: type(of: actualValue))
         XCTAssertTrue(
@@ -720,7 +720,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Field Validation Error Tests
 
-  /// Тестирует missing field value error - создаем ситуацию где поле должно быть, но его нет.
+  /// Tests missing field value error - create situation where field should be present but it's not.
   func testSerialize_missingFieldValue() throws {
     var messageDescriptor = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     messageDescriptor.addField(FieldDescriptor(name: "test_field", number: 1, type: .string))
@@ -728,13 +728,13 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
     let message = messageFactory.createMessage(from: messageDescriptor)
 
-    // Пустое сообщение должно сериализоваться без ошибок (proto3 семантика)
-    // Этот тест проверяет что отсутствующие поля не вызывают ошибок
+    // Empty message should serialize without errors (proto3 semantics)
+    // This test verifies that missing fields don't cause errors
     let data = try serializer.serialize(message)
-    XCTAssertEqual(data.count, 0)  // Пустые поля не сериализуются
+    XCTAssertEqual(data.count, 0)  // Empty fields are not serialized
   }
 
-  /// Тестирует invalid repeated field type error - пытаемся установить не-массив в repeated поле.
+  /// Tests invalid repeated field type error - try to set non-array to repeated field.
   func testSerialize_invalidRepeatedFieldType() throws {
     var messageDescriptor = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     messageDescriptor.addField(
@@ -749,9 +749,9 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
     var message = messageFactory.createMessage(from: messageDescriptor)
 
-    // Пытаемся установить не-массив в repeated поле
+    // Try to set non-array to repeated field
     XCTAssertThrowsError(try message.set("not_an_array", forField: "repeated_field")) { error in
-      // Ожидаем DynamicMessageError.typeMismatch
+      // Expect DynamicMessageError.typeMismatch
       guard let dynamicMessageError = error as? DynamicMessageError,
         case .typeMismatch(_, let expectedType, _) = dynamicMessageError
       else {
@@ -762,31 +762,31 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     }
   }
 
-  /// Тестирует missing map entry info error - создаем map поле без mapEntryInfo.
+  /// Tests missing map entry info error - create map field without mapEntryInfo.
   func testSerialize_missingMapEntryInfo() throws {
     var messageDescriptor = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
 
-    // Создаем обычное message поле (не map), чтобы избежать fatal error
+    // Create regular message field (not map) to avoid fatal error
     let messageField = FieldDescriptor(
       name: "message_field",
       number: 1,
       type: .message,
       typeName: "test.NestedMessage"
-        // Это обычное message поле, не map
+        // This is a regular message field, not map
     )
     messageDescriptor.addField(messageField)
     fileDescriptor.addMessage(messageDescriptor)
 
     var message = messageFactory.createMessage(from: messageDescriptor)
 
-    // Пытаемся установить словарь в обычное message поле
+    // Try to set dictionary to regular message field
     XCTAssertThrowsError(try message.set(["key": "value"], forField: "message_field")) { error in
-      // Ожидаем DynamicMessageError.typeMismatch
+      // Expect DynamicMessageError.typeMismatch
       XCTAssertTrue(error is DynamicMessageError)
     }
   }
 
-  /// Тестирует invalid map field type error - пытаемся установить не-словарь в map поле.
+  /// Tests invalid map field type error - try to set non-dictionary to map field.
   func testSerialize_invalidMapFieldType() throws {
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
@@ -807,9 +807,9 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
     var message = messageFactory.createMessage(from: messageDescriptor)
 
-    // Пытаемся установить не-словарь в map поле
+    // Try to set non-dictionary to map field
     XCTAssertThrowsError(try message.set("not_a_dictionary", forField: "map_field")) { error in
-      // Ожидаем DynamicMessageError.typeMismatch
+      // Expect DynamicMessageError.typeMismatch
       guard let dynamicMessageError = error as? DynamicMessageError,
         case .typeMismatch(_, let expectedType, _) = dynamicMessageError
       else {
@@ -824,9 +824,9 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 // MARK: - BinarySerializer Testing Extension
 
 extension BinarySerializer {
-  /// ТОЛЬКО ДЛЯ ТЕСТИРОВАНИЯ: Создает специальное сообщение для тестирования type mismatch.
+  /// FOR TESTING ONLY: Creates special message for testing type mismatch.
   func testTypeMismatchError(fieldType: FieldType, wrongValue: Any, typeName: String? = nil) throws {
-    // Создаем временный дескриптор и сообщение
+    // Create temporary descriptor and message
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     var messageDescriptor = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     messageDescriptor.addField(
@@ -842,17 +842,17 @@ extension BinarySerializer {
     let messageFactory = MessageFactory()
     var message = messageFactory.createMessage(from: messageDescriptor)
 
-    // Пытаемся установить неправильное значение
-    // Это должно вызвать ошибку уже на этапе set, но если нет - то при сериализации
+    // Try to set wrong value
+    // This should cause error at set stage, but if not - then during serialization
     do {
       try message.set(wrongValue, forField: "test_field")
-      // Если set прошел успешно, пытаемся сериализовать
+      // If set succeeds, try to serialize
       _ = try self.serialize(message)
-      // Если дошли сюда, то ошибки не было - это неожиданно
+      // If we got here, there was no error - this is unexpected
       throw TestError.unexpectedSuccess
     }
     catch let error as DynamicMessageError {
-      // Преобразуем DynamicMessageError в SerializationError для единообразия
+      // Convert DynamicMessageError to SerializationError for uniformity
       if case .typeMismatch(_, let expectedType, let actualValue) = error {
         throw SerializationError.valueTypeMismatch(
           expected: expectedType,
@@ -864,7 +864,7 @@ extension BinarySerializer {
   }
 }
 
-/// Вспомогательная ошибка для тестирования.
+/// Helper error for testing.
 enum TestError: Error {
   case unexpectedSuccess
 }

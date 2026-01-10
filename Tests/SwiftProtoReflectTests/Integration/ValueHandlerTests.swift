@@ -2,7 +2,7 @@
  * ValueHandlerTests.swift
  * SwiftProtoReflectTests
  *
- * Comprehensive тесты для ValueHandler - google.protobuf.Value поддержка
+ * Comprehensive tests for ValueHandler - google.protobuf.Value support
  */
 
 import XCTest

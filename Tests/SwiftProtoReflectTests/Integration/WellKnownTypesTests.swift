@@ -2,7 +2,7 @@
  * WellKnownTypesTests.swift
  * SwiftProtoReflectTests
  *
- * Тесты для модуля WellKnownTypes
+ * Tests for WellKnownTypes module
  */
 
 import XCTest
@@ -26,7 +26,7 @@ final class WellKnownTypesTests: XCTestCase {
   }
 
   func testTypeCollections() {
-    // All types должен содержать все типы
+    // All types should contain all types
     XCTAssertEqual(WellKnownTypeNames.allTypes.count, 9)
     XCTAssertTrue(WellKnownTypeNames.allTypes.contains(WellKnownTypeNames.timestamp))
     XCTAssertTrue(WellKnownTypeNames.allTypes.contains(WellKnownTypeNames.duration))
@@ -52,7 +52,7 @@ final class WellKnownTypesTests: XCTestCase {
   }
 
   func testCollectionsDoNotOverlap() {
-    // Проверяем, что коллекции не пересекаются
+    // Check that collections do not overlap
     let criticalAndImportant = WellKnownTypeNames.criticalTypes.intersection(WellKnownTypeNames.importantTypes)
     XCTAssertTrue(criticalAndImportant.isEmpty)
 
@@ -177,10 +177,10 @@ final class WellKnownTypesTests: XCTestCase {
   func testRegistryInitialization() {
     let registry = WellKnownTypesRegistry.shared
 
-    // Проверяем, что registry инициализирован
+    // Check that registry is initialized
     XCTAssertNotNil(registry)
 
-    // Проверяем, что TimestampHandler зарегистрирован по умолчанию
+    // Check that TimestampHandler is registered by default
     let registeredTypes = registry.getRegisteredTypes()
     XCTAssertTrue(registeredTypes.contains("google.protobuf.Timestamp"))
   }
@@ -190,14 +190,14 @@ final class WellKnownTypesTests: XCTestCase {
     let expectation = self.expectation(description: "Thread safety test")
     expectation.expectedFulfillmentCount = 10
 
-    // Запускаем несколько потоков
+    // Start several threads
     for _ in 0..<10 {
       DispatchQueue.global().async {
-        // Выполняем операции с registry
+        // Perform operations with registry
         let types = registry.getRegisteredTypes()
         XCTAssertFalse(types.isEmpty)
 
-        // Попытка получить обработчик
+        // Attempt to get handler
         let handler = registry.getHandler(for: "google.protobuf.Timestamp")
         XCTAssertNotNil(handler)
 
@@ -211,12 +211,12 @@ final class WellKnownTypesTests: XCTestCase {
   func testGetHandler() {
     let registry = WellKnownTypesRegistry.shared
 
-    // Получаем зарегистрированный обработчик
+    // Get registered handler
     let timestampHandler = registry.getHandler(for: "google.protobuf.Timestamp")
     XCTAssertNotNil(timestampHandler)
     XCTAssertTrue(timestampHandler is TimestampHandler.Type)
 
-    // Несуществующий обработчик
+    // Non-existent handler
     let unknownHandler = registry.getHandler(for: "unknown.type")
     XCTAssertNil(unknownHandler)
   }
@@ -224,10 +224,10 @@ final class WellKnownTypesTests: XCTestCase {
   func testRegistryCreateSpecializedSuccess() {
     let registry = WellKnownTypesRegistry.shared
 
-    // Создаем timestamp сообщение для тестирования
+    // Create timestamp message for testing
     let timestampMessage = try! createTestTimestampMessage(seconds: 1_234_567_890, nanos: 123_456_789)
 
-    // Тестируем успешное создание specialized объекта
+    // Test successful creation of specialized object
     do {
       let specialized = try registry.createSpecialized(from: timestampMessage, typeName: "google.protobuf.Timestamp")
       XCTAssertTrue(specialized is TimestampHandler.TimestampValue)
@@ -245,7 +245,7 @@ final class WellKnownTypesTests: XCTestCase {
   func testRegistryCreateSpecializedHandlerNotFound() {
     let registry = WellKnownTypesRegistry.shared
 
-    // Создаем произвольное сообщение
+    // Create arbitrary message
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     fileDescriptor.addMessage(messageDescriptor)
@@ -253,7 +253,7 @@ final class WellKnownTypesTests: XCTestCase {
     let factory = MessageFactory()
     let testMessage = factory.createMessage(from: messageDescriptor)
 
-    // Тестируем ошибку handler not found
+    // Test handler not found error
     XCTAssertThrowsError(try registry.createSpecialized(from: testMessage, typeName: "unknown.Type")) { error in
       guard case WellKnownTypeError.handlerNotFound(let typeName) = error else {
         XCTFail("Expected handlerNotFound error")
@@ -266,10 +266,10 @@ final class WellKnownTypesTests: XCTestCase {
   func testRegistryCreateDynamicSuccess() {
     let registry = WellKnownTypesRegistry.shared
 
-    // Создаем TimestampValue для тестирования
+    // Create TimestampValue for testing
     let timestampValue = try! TimestampHandler.TimestampValue(seconds: 1_234_567_890, nanos: 123_456_789)
 
-    // Тестируем успешное создание dynamic сообщения
+    // Test successful creation of dynamic message
     do {
       let dynamicMessage = try registry.createDynamic(from: timestampValue, typeName: "google.protobuf.Timestamp")
       XCTAssertEqual(dynamicMessage.descriptor.fullName, "google.protobuf.Timestamp")
@@ -290,7 +290,7 @@ final class WellKnownTypesTests: XCTestCase {
 
     let testSpecialized = "not a well-known type"
 
-    // Тестируем ошибку handler not found
+    // Test handler not found error
     XCTAssertThrowsError(try registry.createDynamic(from: testSpecialized, typeName: "unknown.Type")) { error in
       guard case WellKnownTypeError.handlerNotFound(let typeName) = error else {
         XCTFail("Expected handlerNotFound error")
@@ -301,30 +301,30 @@ final class WellKnownTypesTests: XCTestCase {
   }
 
   func testRegistryClear() {
-    // Создаем новый registry для изолированного тестирования
-    // Поскольку WellKnownTypesRegistry - singleton, мы протестируем clear() косвенно
+    // Create new registry for isolated testing
+    // Since WellKnownTypesRegistry is a singleton, we test clear() indirectly
     let registry = WellKnownTypesRegistry.shared
 
-    // Проверяем, что есть зарегистрированные типы
+    // Check that there are registered types
     let typesBeforeClear = registry.getRegisteredTypes()
     XCTAssertFalse(typesBeforeClear.isEmpty)
     XCTAssertTrue(typesBeforeClear.contains("google.protobuf.Timestamp"))
 
-    // Очищаем registry
+    // Clear registry
     registry.clear()
 
-    // Проверяем, что registry пуст
+    // Check that registry is empty
     let typesAfterClear = registry.getRegisteredTypes()
     XCTAssertTrue(typesAfterClear.isEmpty)
 
-    // Проверяем, что handler больше не найден
+    // Check that handler is no longer found
     let handler = registry.getHandler(for: "google.protobuf.Timestamp")
     XCTAssertNil(handler)
 
-    // Восстанавливаем состояние registry для других тестов
+    // Restore registry state for other tests
     registry.register(TimestampHandler.self)
 
-    // Проверяем восстановление
+    // Check restoration
     let restoredTypes = registry.getRegisteredTypes()
     XCTAssertFalse(restoredTypes.isEmpty)
     XCTAssertTrue(restoredTypes.contains("google.protobuf.Timestamp"))
@@ -333,7 +333,7 @@ final class WellKnownTypesTests: XCTestCase {
   func testRegistryConversionWithHandlerErrors() {
     let registry = WellKnownTypesRegistry.shared
 
-    // Создаем неправильное сообщение для timestamp handler
+    // Create wrong message for timestamp handler
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "WrongMessage", parent: fileDescriptor)
     fileDescriptor.addMessage(messageDescriptor)
@@ -341,7 +341,7 @@ final class WellKnownTypesTests: XCTestCase {
     let factory = MessageFactory()
     let wrongMessage = factory.createMessage(from: messageDescriptor)
 
-    // Тестируем ошибку в handler.createSpecialized
+    // Test error in handler.createSpecialized
     XCTAssertThrowsError(try registry.createSpecialized(from: wrongMessage, typeName: "google.protobuf.Timestamp")) {
       error in
       guard case WellKnownTypeError.invalidData = error else {
@@ -350,7 +350,7 @@ final class WellKnownTypesTests: XCTestCase {
       }
     }
 
-    // Тестируем ошибку в handler.createDynamic
+    // Test error in handler.createDynamic
     let wrongSpecialized = "not a timestamp value"
     XCTAssertThrowsError(try registry.createDynamic(from: wrongSpecialized, typeName: "google.protobuf.Timestamp")) {
       error in
@@ -411,7 +411,7 @@ struct MockWellKnownTypeHandler: WellKnownTypeHandler {
   }
 
   static func createDynamic(from specialized: Any) throws -> DynamicMessage {
-    // Создаем простой mock дескриптор для тестирования
+    // Create simple mock descriptor for testing
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "MockType", parent: fileDescriptor)
     fileDescriptor.addMessage(messageDescriptor)

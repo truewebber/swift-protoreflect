@@ -2,7 +2,7 @@
 // ServiceDescriptorTests.swift
 // SwiftProtoReflectTests
 //
-// Создан: 2025-05-23
+// Created: 2025-05-23
 //
 
 import XCTest
@@ -12,7 +12,7 @@ import XCTest
 final class ServiceDescriptorTests: XCTestCase {
   // MARK: - Properties
 
-  // Тестовые данные
+  // Test data
   let serviceName = "UserService"
   let serviceFullName = "example.UserService"
   let methodName = "GetUser"
@@ -23,11 +23,11 @@ final class ServiceDescriptorTests: XCTestCase {
 
   override func setUp() {
     super.setUp()
-    // Настройка тестов
+    // Test setup
   }
 
   override func tearDown() {
-    // Очистка после тестов
+    // Cleanup after tests
     super.tearDown()
   }
 
@@ -167,7 +167,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertEqual(retrievedMethod?.clientStreaming, true)
     XCTAssertEqual(retrievedMethod?.serverStreaming, false)
 
-    // Проверка несуществующего метода
+    // Check for non-existent method
     XCTAssertNil(service.method(named: "NonExistentMethod"))
   }
 
@@ -331,7 +331,7 @@ final class ServiceDescriptorTests: XCTestCase {
       name: methodName,
       inputType: inputType,
       outputType: outputType,
-      clientStreaming: false,  // Разное значение
+      clientStreaming: false,  // Different value
       serverStreaming: false
     )
 
@@ -339,9 +339,9 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertNotEqual(method1, method2)
   }
 
-  // MARK: Дополнительные тесты для повышения покрытия кода
+  // MARK: Additional tests for code coverage improvement
 
-  // MARK: Дополнительные тесты для MethodDescriptor
+  // MARK: Additional tests for MethodDescriptor
 
   func testMethodDescriptorDifferentOptions() {
     // Arrange
@@ -364,7 +364,7 @@ final class ServiceDescriptorTests: XCTestCase {
   }
 
   func testMethodDescriptorOptionsWithDifferentTypes() {
-    // Проверка различных типов опций
+    // Check different types of options
 
     // Boolean options
     let method1 = ServiceDescriptor.MethodDescriptor(
@@ -438,7 +438,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertNotEqual(method7, method8)
   }
 
-  // MARK: Дополнительные тесты для ServiceDescriptor
+  // MARK: Additional tests for ServiceDescriptor
 
   func testServiceDescriptorDifferentMethodCount() {
     // Arrange
@@ -461,7 +461,7 @@ final class ServiceDescriptorTests: XCTestCase {
     service1.addMethod(method2)
     service2.addMethod(method1)
 
-    // Assert - разное количество методов
+    // Assert - different number of methods
     XCTAssertNotEqual(service1, service2)
   }
 
@@ -542,9 +542,9 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertNotEqual(service7, service8)
   }
 
-  // Тест для покрытия сравнения сложных типов в опциях
+  // Test for coverage of complex type comparison in options
   func testServiceDescriptorComplexOptionsComparison() {
-    // Используем класс для создания сложного типа данных
+    // Use class to create complex data type
     class ComplexValue: CustomStringConvertible {
       let value: String
 
@@ -552,13 +552,13 @@ final class ServiceDescriptorTests: XCTestCase {
         self.value = value
       }
 
-      // Реализация протокола CustomStringConvertible
+      // Implementation of CustomStringConvertible protocol
       var description: String {
         return "ComplexValue(\(value))"
       }
     }
 
-    // Создаем два сервиса с разными сложными опциями
+    // Create two services with different complex options
     let complex1 = ComplexValue(value: "value1")
     let complex2 = ComplexValue(value: "value2")
 
@@ -574,10 +574,10 @@ final class ServiceDescriptorTests: XCTestCase {
       options: ["complexOption": complex2]
     )
 
-    // Эти сервисы должны быть разными из-за разных значений сложной опции
+    // These services should be different due to different complex option values
     XCTAssertNotEqual(service1, service2)
 
-    // Проверяем, что сервисы с одинаковыми сложными опциями равны
+    // Verify that services with the same complex options are equal
     let complex3 = ComplexValue(value: "value1")
     let service3 = ServiceDescriptor(
       name: serviceName,
@@ -585,7 +585,7 @@ final class ServiceDescriptorTests: XCTestCase {
       options: ["complexOption": complex3]
     )
 
-    // Они должны быть равны, потому что description одинаковый
+    // They should be equal because description is the same
     XCTAssertEqual(service1, service3)
   }
 }

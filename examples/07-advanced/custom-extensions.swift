@@ -25,8 +25,8 @@ struct CustomExtensionsExample {
 
     ExampleUtils.printSuccess("Custom extensions demonstration completed!")
     ExampleUtils.printNext([
-      "Категория 07-advanced завершена! ✅",
-      "Переходите к 08-real-world для реальных сценариев использования",
+      "Category 07-advanced completed! ✅",
+      "Proceed to 08-real-world for real-world usage scenarios",
     ])
   }
 
@@ -37,7 +37,7 @@ struct CustomExtensionsExample {
 
     print("  🔧 Creating convenience extensions for DynamicMessage...")
 
-    // Создание тестового дескриптора
+    // Creating test descriptor
     var testFile = FileDescriptor(name: "extensions.proto", package: "com.extensions")
     var personDescriptor = MessageDescriptor(name: "Person", parent: testFile)
 
@@ -52,10 +52,10 @@ struct CustomExtensionsExample {
     let factory = MessageFactory()
     var person = factory.createMessage(from: personDescriptor)
 
-    // Демонстрация использования extensions
+    // Demonstrating extension usage
     print("  📝 Using convenience extensions...")
 
-    // Использование subscript extension
+    // Using subscript extension
     person["id"] = "PERSON-001"
     person["name"] = "John Doe"
     person["age"] = Int32(30)
@@ -63,7 +63,7 @@ struct CustomExtensionsExample {
 
     print("  ✅ Set values using subscript syntax")
 
-    // Использование typed getters
+    // Using typed getters
     let personId: String = person.getString("id") ?? ""
     let personAge: Int32 = person.getInt32("age") ?? 0
     let personName: String = person.getString("name") ?? ""
@@ -73,7 +73,7 @@ struct CustomExtensionsExample {
     print("    Name: \(personName)")
     print("    Age: \(personAge)")
 
-    // Использование validation extension
+    // Using validation extension
     let validationResult = person.validate()
     print("  🔍 Validation result: \(validationResult.isValid ? "✅ Valid" : "❌ Invalid")")
 
@@ -81,11 +81,11 @@ struct CustomExtensionsExample {
       print("    Errors: \(validationResult.errors.joined(separator: ", "))")
     }
 
-    // Использование serialization convenience
+    // Using serialization convenience
     let summary = person.summary()
     print("  📊 Message summary: \(summary)")
 
-    // Демонстрация field enumeration
+    // Demonstrating field enumeration
     print("\n  📋 All fields with values:")
     for (fieldName, value) in person.allFieldsWithValues() {
       print("    \(fieldName): \(value)")
@@ -140,7 +140,7 @@ struct CustomExtensionsExample {
       }
     }
 
-    // Создание дескриптора для демонстрации
+    // Creating descriptor for demonstration
     var builderFile = FileDescriptor(name: "builder.proto", package: "com.builder")
     var productDescriptor = MessageDescriptor(name: "Product", parent: builderFile)
 
@@ -169,7 +169,7 @@ struct CustomExtensionsExample {
     print("  ✅ Product built successfully:")
     product.prettyPrint()
 
-    // Демонстрация conditional building
+    // Demonstrating conditional building
     print("\n  🔄 Conditional building example...")
 
     let conditionalData: [String: Any?] = [
@@ -191,7 +191,7 @@ struct CustomExtensionsExample {
     print("  🎯 Conditional product (category skipped):")
     conditionalProduct.prettyPrint()
 
-    // Статистика builder pattern
+    // Builder pattern statistics
     print("\n  📊 Builder Pattern Benefits:")
     ExampleUtils.printDataTable(
       [
@@ -334,7 +334,7 @@ struct CustomExtensionsExample {
       }
     }
 
-    // Создание тестового сообщения
+    // Creating test message
     var validationFile = FileDescriptor(name: "validation.proto", package: "com.validation")
     var userDescriptor = MessageDescriptor(name: "User", parent: validationFile)
 
@@ -345,7 +345,7 @@ struct CustomExtensionsExample {
 
     validationFile.addMessage(userDescriptor)
 
-    // Создание validator
+    // Creating validator
     let validator = MessageValidator()
       .required("username")
       .minLength("username", 3)
@@ -357,7 +357,7 @@ struct CustomExtensionsExample {
 
     let factory = MessageFactory()
 
-    // Тест 1: Валидное сообщение
+    // Test 1: Valid message
     print("\n  ✅ Test 1: Valid message")
     var validUser = factory.createMessage(from: userDescriptor)
     try validUser.set("john_doe", forField: "username")
@@ -368,7 +368,7 @@ struct CustomExtensionsExample {
     let validResult = validator.validate(validUser)
     print("    Result: \(validResult.isValid ? "✅ Valid" : "❌ Invalid")")
 
-    // Тест 2: Невалидное сообщение
+    // Test 2: Invalid message
     print("\n  ❌ Test 2: Invalid message")
     var invalidUser = factory.createMessage(from: userDescriptor)
     try invalidUser.set("jo", forField: "username")  // Too short
@@ -384,7 +384,7 @@ struct CustomExtensionsExample {
       }
     }
 
-    // Тест 3: Пустое сообщение
+    // Test 3: Empty message
     print("\n  🔍 Test 3: Empty message")
     let emptyUser = factory.createMessage(from: userDescriptor)
     let emptyResult = validator.validate(emptyUser)
@@ -396,7 +396,7 @@ struct CustomExtensionsExample {
       }
     }
 
-    // Статистика валидации
+    // Validation statistics
     print("\n  📊 Validation System Results:")
     ExampleUtils.printDataTable(
       [
@@ -527,7 +527,7 @@ struct CustomExtensionsExample {
       var all: [DynamicMessage] { messages }
     }
 
-    // Создание тестовых данных
+    // Creating test data
     var queryFile = FileDescriptor(name: "query.proto", package: "com.query")
     var employeeDescriptor = MessageDescriptor(name: "Employee", parent: queryFile)
 
@@ -542,7 +542,7 @@ struct CustomExtensionsExample {
     let collection = MessageCollection()
     let factory = MessageFactory()
 
-    // Создание тестового dataset
+    // Creating test dataset
     let employeeData = [
       ("EMP-001", "Alice Johnson", "Engineering", 95000.0, 5),
       ("EMP-002", "Bob Smith", "Marketing", 65000.0, 3),
@@ -567,25 +567,25 @@ struct CustomExtensionsExample {
 
     print("  📊 Created dataset with \(collection.count) employees")
 
-    // Демонстрация запросов
+    // Demonstrating queries
     print("\n  🔍 Query Examples:")
 
-    // Запрос 1: Engineering department
+    // Query 1: Engineering department
     let engineeringEmployees = collection.whereField("department", equals: "Engineering")
     print("    Engineering employees: \(engineeringEmployees.count)")
 
-    // Запрос 2: High salary employees
+    // Query 2: High salary employees
     let highSalaryEmployees = collection.whereField("salary", greaterThan: 90000.0)
     print("    High salary (>$90k): \(highSalaryEmployees.count)")
 
-    // Запрос 3: Complex query - Engineering with high salary
+    // Query 3: Complex query - Engineering with high salary
     let seniorEngineers =
       collection
       .whereField("department", equals: "Engineering")
       .whereField("salary", greaterThan: 90000.0)
     print("    Senior engineers: \(seniorEngineers.count)")
 
-    // Запрос 4: Top 3 by experience
+    // Query 4: Top 3 by experience
     let topByExperience =
       collection
       .orderBy("years_experience", ascending: false)
@@ -598,7 +598,7 @@ struct CustomExtensionsExample {
       print("      Most experienced: \(name) (\(experience) years)")
     }
 
-    // Запрос 5: Group by department
+    // Query 5: Group by department
     let byDepartment: [String: [DynamicMessage]] = collection.groupBy("department")
     print("    Departments:")
     for (dept, employees) in byDepartment.sorted(by: { $0.key < $1.key }) {
@@ -607,7 +607,7 @@ struct CustomExtensionsExample {
       print("      \(dept): \(employees.count) employees, avg salary: $\(String(format: "%.0f", avgSalary))")
     }
 
-    // Запрос 6: Select specific fields
+    // Query 6: Select specific fields
     let allNames: [String] = collection.select("name")
     let _: [Double] = collection.select("salary")
 
@@ -716,7 +716,7 @@ struct CustomExtensionsExample {
       var unwrapped: DynamicMessage { message }
     }
 
-    // Создание тестового сообщения
+    // Creating test message
     var functionalFile = FileDescriptor(name: "functional.proto", package: "com.functional")
     var dataDescriptor = MessageDescriptor(name: "DataRecord", parent: functionalFile)
 
@@ -819,7 +819,7 @@ struct CustomExtensionsExample {
 
     print("  📝 Creating SwiftProtoReflect DSL...")
 
-    // DSL Builder для создания дескрипторов
+    // DSL Builder for creating descriptors
     @resultBuilder
     struct MessageBuilder {
       static func buildBlock(_ components: FieldDescriptor...) -> [FieldDescriptor] {
@@ -851,7 +851,7 @@ struct CustomExtensionsExample {
       }
     }
 
-    // DSL функции для создания полей
+    // DSL functions for creating fields
     func stringField(_ name: String, number: Int, repeated: Bool = false) -> FieldDescriptor {
       return FieldDescriptor(name: name, number: number, type: .string, isRepeated: repeated)
     }
@@ -872,7 +872,7 @@ struct CustomExtensionsExample {
       return FieldDescriptor(name: name, number: number, type: .message, typeName: typeName, isRepeated: repeated)
     }
 
-    // DSL для создания сообщений
+    // DSL for creating messages
     func createMessage(name: String, package: String, @MessageBuilder fields: () -> [FieldDescriptor]) -> (
       FileDescriptor, MessageDescriptor
     ) {
@@ -887,7 +887,7 @@ struct CustomExtensionsExample {
       return (file, message)
     }
 
-    // DSL для инициализации сообщений
+    // DSL for message initialization
     func initializeMessage(_ message: inout DynamicMessage, @ArrayBuilder<(String, Any)> values: () -> [(String, Any)])
       throws
     {
@@ -903,7 +903,7 @@ struct CustomExtensionsExample {
       }
     }
 
-    // Демонстрация DSL
+    // Demonstrating DSL
     print("  🏗  Building message using DSL...")
 
     let (orderFile, orderMessage) = createMessage(name: "Order", package: "com.dsl") {
@@ -920,7 +920,7 @@ struct CustomExtensionsExample {
     print("    📋 Message: \(orderMessage.name)")
     print("    🏷  Fields: \(orderMessage.fields.count)")
 
-    // Создание и инициализация экземпляра
+    // Creating and initializing instance
     let factory = MessageFactory()
     var order = factory.createMessage(from: orderMessage)
 
@@ -957,7 +957,7 @@ struct CustomExtensionsExample {
 
     var productMessage = productMessageTemp
 
-    // Добавляем условные поля после создания
+    // Adding conditional fields after creation
     for field in conditionalFields {
       productMessage.addField(field)
     }
@@ -966,7 +966,7 @@ struct CustomExtensionsExample {
     print("    🏷  Total fields: \(productMessage.fields.count)")
     print("    ❓ Optional fields included: \(includeOptionalFields ? "Yes" : "No")")
 
-    // DSL статистика
+    // DSL statistics
     print("\n  📊 DSL Benefits Analysis:")
     ExampleUtils.printDataTable(
       [
@@ -1109,8 +1109,8 @@ extension DynamicMessage {
 
 extension FieldDescriptor {
   var isRequired: Bool {
-    // В Proto3 все поля optional по умолчанию
-    // Это упрощенная логика для демонстрации
+    // In Proto3, all fields are optional by default
+    // This is simplified logic for demonstration
     return false
   }
 }

@@ -36,7 +36,7 @@ struct ConfigurationSystemExample {
 
     print("  ⚙️ Setting up application configuration schema...")
 
-    // Создание конфигурационных дескрипторов
+    // Creating configuration descriptors
     var configFile = FileDescriptor(name: "app_config.proto", package: "com.app.config")
 
     // Database configuration
@@ -70,7 +70,7 @@ struct ConfigurationSystemExample {
     )
     appConfigDescriptor.addField(FieldDescriptor(name: "feature_flags", number: 7, type: .string, isRepeated: true))
 
-    // Регистрация дескрипторов
+    // Registering descriptors
     configFile.addMessage(dbConfigDescriptor)
     configFile.addMessage(serverConfigDescriptor)
     configFile.addMessage(appConfigDescriptor)
@@ -157,7 +157,7 @@ struct ConfigurationSystemExample {
       case missingDescriptor(String)
     }
 
-    // Создание и загрузка конфигурации
+    // Creating and loading configuration
     let configManager = ConfigurationManager(appConfigDescriptor: appConfigDescriptor, configFile: configFile)
 
     let productionConfig: [String: Any] = [

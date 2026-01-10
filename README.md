@@ -128,7 +128,7 @@ Examples are organized by topic:
 
 ## Documentation
 
-- **[Architecture Guide](ARCHITECTURE.md)**: Technical implementation details
+- **[Architecture Guide](docs/ARCHITECTURE.md)**: Technical implementation details
 - **[Migration Guide](MIGRATION_GUIDE.md)**: Migrating from static Swift Protobuf
 
 ## Use Cases

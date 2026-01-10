@@ -2,7 +2,7 @@
  * DurationHandlerTests.swift
  * SwiftProtoReflectTests
  *
- * Тесты для DurationHandler
+ * Tests for DurationHandler
  */
 
 import Foundation
@@ -15,18 +15,18 @@ final class DurationHandlerTests: XCTestCase {
   // MARK: - DurationValue Tests
 
   func testDurationValueInitialization() {
-    // Валидная инициализация
+    // Valid initialization
     XCTAssertNoThrow(try DurationHandler.DurationValue(seconds: 1_234_567_890, nanos: 123_456_789))
     XCTAssertNoThrow(try DurationHandler.DurationValue(seconds: 0, nanos: 0))
     XCTAssertNoThrow(try DurationHandler.DurationValue(seconds: -1, nanos: -999_999_999))
     XCTAssertNoThrow(try DurationHandler.DurationValue(seconds: 5, nanos: 0))
     XCTAssertNoThrow(try DurationHandler.DurationValue(seconds: 0, nanos: 123_456_789))
 
-    // Валидная инициализация с одинаковыми знаками
+    // Valid initialization with same signs
     XCTAssertNoThrow(try DurationHandler.DurationValue(seconds: 1, nanos: 500_000_000))
     XCTAssertNoThrow(try DurationHandler.DurationValue(seconds: -1, nanos: -500_000_000))
 
-    // Невалидные наносекунды (вне диапазона)
+    // Invalid nanoseconds (out of range)
     XCTAssertThrowsError(try DurationHandler.DurationValue(seconds: 0, nanos: 1_000_000_000)) { error in
       guard case WellKnownTypeError.invalidData(let typeName, let reason) = error else {
         XCTFail("Expected invalidData error")
@@ -43,7 +43,7 @@ final class DurationHandlerTests: XCTestCase {
       }
     }
 
-    // Невалидная комбинация знаков
+    // Invalid sign combination
     XCTAssertThrowsError(try DurationHandler.DurationValue(seconds: 1, nanos: -500_000_000)) { error in
       guard case WellKnownTypeError.invalidData(let typeName, let reason) = error else {
         XCTFail("Expected invalidData error")
@@ -62,25 +62,25 @@ final class DurationHandlerTests: XCTestCase {
   }
 
   func testDurationValueFromTimeInterval() {
-    // Положительный интервал
+    // Positive interval
     let positiveInterval: TimeInterval = 123.456789
     let positiveDuration = DurationHandler.DurationValue(from: positiveInterval)
     XCTAssertEqual(positiveDuration.seconds, 123)
-    // Проверяем наносекунды с некоторой толерантностью
+    // Check nanoseconds with some tolerance
     XCTAssertTrue(abs(positiveDuration.nanos - 456_789_000) < 1000)
 
-    // Отрицательный интервал
+    // Negative interval
     let negativeInterval: TimeInterval = -123.456789
     let negativeDuration = DurationHandler.DurationValue(from: negativeInterval)
     XCTAssertEqual(negativeDuration.seconds, -123)
     XCTAssertTrue(abs(negativeDuration.nanos + 456_789_000) < 1000)
 
-    // Нулевой интервал
+    // Zero interval
     let zeroDuration = DurationHandler.DurationValue(from: 0.0)
     XCTAssertEqual(zeroDuration.seconds, 0)
     XCTAssertEqual(zeroDuration.nanos, 0)
 
-    // Только дробная часть
+    // Only fractional part
     let fractionalDuration = DurationHandler.DurationValue(from: 0.123)
     XCTAssertEqual(fractionalDuration.seconds, 0)
     XCTAssertTrue(abs(fractionalDuration.nanos - 123_000_000) < 1000)
@@ -88,21 +88,21 @@ final class DurationHandlerTests: XCTestCase {
 
   func testDurationValueToTimeInterval() {
     do {
-      // Положительная длительность
+      // Positive duration
       let positiveDuration = try DurationHandler.DurationValue(seconds: 123, nanos: 456_789_000)
       let positiveInterval = positiveDuration.toTimeInterval()
       XCTAssertEqual(positiveInterval, 123.456789, accuracy: 0.001)
 
-      // Отрицательная длительность
+      // Negative duration
       let negativeDuration = try DurationHandler.DurationValue(seconds: -123, nanos: -456_789_000)
       let negativeInterval = negativeDuration.toTimeInterval()
       XCTAssertEqual(negativeInterval, -123.456789, accuracy: 0.001)
 
-      // Нулевая длительность
+      // Zero duration
       let zeroDuration = try DurationHandler.DurationValue(seconds: 0, nanos: 0)
       XCTAssertEqual(zeroDuration.toTimeInterval(), 0.0)
 
-      // Только наносекунды
+      // Only nanoseconds
       let nanosDuration = try DurationHandler.DurationValue(seconds: 0, nanos: 500_000_000)
       XCTAssertEqual(nanosDuration.toTimeInterval(), 0.5, accuracy: 0.001)
     }
@@ -128,7 +128,7 @@ final class DurationHandlerTests: XCTestCase {
       let duration = DurationHandler.DurationValue(from: originalInterval)
       let convertedInterval = duration.toTimeInterval()
 
-      // Должны быть близки с точностью до микросекунд
+      // Should be close within microseconds
       XCTAssertEqual(
         originalInterval,
         convertedInterval,
@@ -147,25 +147,25 @@ final class DurationHandlerTests: XCTestCase {
 
   func testDurationValueAbs() {
     do {
-      // Положительная длительность остается положительной
+      // Positive duration stays positive
       let positive = try DurationHandler.DurationValue(seconds: 5, nanos: 123_456_789)
       let positiveAbs = positive.abs()
       XCTAssertEqual(positiveAbs.seconds, 5)
       XCTAssertEqual(positiveAbs.nanos, 123_456_789)
 
-      // Отрицательная длительность становится положительной
+      // Negative duration becomes positive
       let negative = try DurationHandler.DurationValue(seconds: -5, nanos: -123_456_789)
       let negativeAbs = negative.abs()
       XCTAssertEqual(negativeAbs.seconds, 5)
       XCTAssertEqual(negativeAbs.nanos, 123_456_789)
 
-      // Нулевая остается нулевой
+      // Zero stays zero
       let zero = DurationHandler.DurationValue.zero()
       let zeroAbs = zero.abs()
       XCTAssertEqual(zeroAbs.seconds, 0)
       XCTAssertEqual(zeroAbs.nanos, 0)
 
-      // Отрицательные только наносекунды
+      // Only negative nanoseconds
       let negativeNanos = try DurationHandler.DurationValue(seconds: 0, nanos: -123_456_789)
       let negativeNanosAbs = negativeNanos.abs()
       XCTAssertEqual(negativeNanosAbs.seconds, 0)
@@ -178,19 +178,19 @@ final class DurationHandlerTests: XCTestCase {
 
   func testDurationValueNegated() {
     do {
-      // Положительная становится отрицательной
+      // Positive becomes negative
       let positive = try DurationHandler.DurationValue(seconds: 5, nanos: 123_456_789)
       let negated = positive.negated()
       XCTAssertEqual(negated.seconds, -5)
       XCTAssertEqual(negated.nanos, -123_456_789)
 
-      // Отрицательная становится положительной
+      // Negative becomes positive
       let negative = try DurationHandler.DurationValue(seconds: -5, nanos: -123_456_789)
       let negatedNegative = negative.negated()
       XCTAssertEqual(negatedNegative.seconds, 5)
       XCTAssertEqual(negatedNegative.nanos, 123_456_789)
 
-      // Двойное отрицание возвращает к оригиналу
+      // Double negation returns to original
       let doubleNegated = negated.negated()
       XCTAssertEqual(doubleNegated.seconds, positive.seconds)
       XCTAssertEqual(doubleNegated.nanos, positive.nanos)
@@ -202,23 +202,23 @@ final class DurationHandlerTests: XCTestCase {
 
   func testDurationValueDescription() {
     do {
-      // Нулевая длительность
+      // Zero duration
       let zero = DurationHandler.DurationValue.zero()
       XCTAssertEqual(zero.description, "0s")
 
-      // Положительная длительность в секундах
+      // Positive duration in seconds
       let positive = try DurationHandler.DurationValue(seconds: 5, nanos: 123_456_789)
       XCTAssertTrue(positive.description.contains("5.123s"))
 
-      // Отрицательная длительность
+      // Negative duration
       let negative = try DurationHandler.DurationValue(seconds: -5, nanos: -123_456_789)
       XCTAssertTrue(negative.description.contains("-5.123s"))
 
-      // Миллисекунды
+      // Milliseconds
       let millis = try DurationHandler.DurationValue(seconds: 0, nanos: 123_456_789)
       XCTAssertTrue(millis.description.contains("ms") || millis.description.contains("s"))
 
-      // Очень маленькие значения (наносекунды)
+      // Very small values (nanoseconds)
       let nanos = try DurationHandler.DurationValue(seconds: 0, nanos: 123)
       XCTAssertTrue(nanos.description.contains("ns") || nanos.description.contains("ms"))
     }
@@ -251,10 +251,10 @@ final class DurationHandlerTests: XCTestCase {
   }
 
   func testCreateSpecializedFromMessage() throws {
-    // Создаем duration сообщение
+    // Create duration message
     let durationMessage = try createDurationMessage(seconds: 5, nanos: 123_456_789)
 
-    // Конвертируем в специализированный тип
+    // Convert to specialized type
     let specialized = try DurationHandler.createSpecialized(from: durationMessage)
 
     guard let duration = specialized as? DurationHandler.DurationValue else {
@@ -267,7 +267,7 @@ final class DurationHandlerTests: XCTestCase {
   }
 
   func testCreateSpecializedFromMessageWithMissingFields() throws {
-    // Создаем сообщение только с seconds
+    // Create message with only seconds
     let durationMessage = try createDurationMessage(seconds: 5, nanos: nil)
 
     let specialized = try DurationHandler.createSpecialized(from: durationMessage)
@@ -278,11 +278,11 @@ final class DurationHandlerTests: XCTestCase {
     }
 
     XCTAssertEqual(duration.seconds, 5)
-    XCTAssertEqual(duration.nanos, 0)  // Должно быть значение по умолчанию
+    XCTAssertEqual(duration.nanos, 0)  // Should have default value
   }
 
   func testCreateSpecializedFromMessageWithNegativeValues() throws {
-    // Создаем отрицательное сообщение
+    // Create negative message
     let negativeDurationMessage = try createDurationMessage(seconds: -5, nanos: -123_456_789)
 
     let specialized = try DurationHandler.createSpecialized(from: negativeDurationMessage)
@@ -297,7 +297,7 @@ final class DurationHandlerTests: XCTestCase {
   }
 
   func testCreateSpecializedFromInvalidMessage() throws {
-    // Создаем сообщение неправильного типа
+    // Create message of wrong type
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "NotDuration", parent: fileDescriptor)
     fileDescriptor.addMessage(messageDescriptor)
@@ -354,7 +354,7 @@ final class DurationHandlerTests: XCTestCase {
   }
 
   func testValidate() throws {
-    // Валидные значения
+    // Valid values
     let validDuration = try DurationHandler.DurationValue(seconds: 5, nanos: 123_456_789)
     XCTAssertTrue(DurationHandler.validate(validDuration))
 
@@ -364,7 +364,7 @@ final class DurationHandlerTests: XCTestCase {
     let zeroDuration = DurationHandler.DurationValue.zero()
     XCTAssertTrue(DurationHandler.validate(zeroDuration))
 
-    // Невалидные значения
+    // Invalid values
     XCTAssertFalse(DurationHandler.validate("not a duration"))
     XCTAssertFalse(DurationHandler.validate(123))
     XCTAssertFalse(DurationHandler.validate(Date()))
@@ -452,25 +452,25 @@ final class DurationHandlerTests: XCTestCase {
   // MARK: - Edge Cases Tests
 
   func testExtremeDurations() throws {
-    // Очень большая положительная длительность
+    // Very large positive duration
     let largeDuration = try DurationHandler.DurationValue(seconds: Int64.max / 2, nanos: 999_999_999)
     XCTAssertTrue(largeDuration.toTimeInterval() > 0)
 
-    // Очень большая отрицательная длительность
+    // Very large negative duration
     let largeNegativeDuration = try DurationHandler.DurationValue(seconds: Int64.min / 2, nanos: -999_999_999)
     XCTAssertTrue(largeNegativeDuration.toTimeInterval() < 0)
 
-    // Максимальные наносекунды
+    // Maximum nanoseconds
     let maxNanos = try DurationHandler.DurationValue(seconds: 0, nanos: 999_999_999)
     XCTAssertEqual(maxNanos.nanos, 999_999_999)
 
-    // Минимальные наносекунды
+    // Minimum nanoseconds
     let minNanos = try DurationHandler.DurationValue(seconds: 0, nanos: -999_999_999)
     XCTAssertEqual(minNanos.nanos, -999_999_999)
   }
 
   func testBoundaryNanos() throws {
-    // Тестируем граничные значения наносекунд
+    // Test boundary nanoseconds values
     let boundaries: [Int32] = [
       -999_999_999, -500_000_000, -1, 0, 1, 500_000_000, 999_999_999,
     ]
@@ -482,7 +482,7 @@ final class DurationHandlerTests: XCTestCase {
       )
     }
 
-    // Тестируем значения за границами
+    // Test out-of-bounds values
     let outOfBounds: [Int32] = [-1_000_000_000, 1_000_000_000]
 
     for nanos in outOfBounds {
@@ -494,7 +494,7 @@ final class DurationHandlerTests: XCTestCase {
   }
 
   func testMixedSignValidation() throws {
-    // Валидные комбинации (одинаковые знаки или один ноль)
+    // Valid combinations (same signs or one zero)
     let validCombinations: [(Int64, Int32)] = [
       (0, 0),
       (1, 0),
@@ -512,7 +512,7 @@ final class DurationHandlerTests: XCTestCase {
       )
     }
 
-    // Невалидные комбинации (разные знаки)
+    // Invalid combinations (different signs)
     let invalidCombinations: [(Int64, Int32)] = [
       (1, -123_456_789),
       (-1, 123_456_789),
@@ -573,12 +573,12 @@ final class DurationHandlerTests: XCTestCase {
   func testRegistryIntegration() throws {
     let registry = WellKnownTypesRegistry.shared
 
-    // Проверяем что DurationHandler зарегистрирован
+    // Check that DurationHandler is registered
     let handler = registry.getHandler(for: WellKnownTypeNames.duration)
     XCTAssertNotNil(handler)
     XCTAssertTrue(handler is DurationHandler.Type)
 
-    // Тестируем через registry
+    // Test through registry
     let duration = try DurationHandler.DurationValue(seconds: 5, nanos: 123_456_789)
     let dynamicMessage = try DurationHandler.createDynamic(from: duration)
 
@@ -598,7 +598,7 @@ final class DurationHandlerTests: XCTestCase {
   // MARK: - Helper Methods
 
   private func createDurationMessage(seconds: Int64, nanos: Int32?) throws -> DynamicMessage {
-    // Создаем дескриптор для Duration
+    // Create descriptor for Duration
     var fileDescriptor = FileDescriptor(
       name: "google/protobuf/duration.proto",
       package: "google.protobuf"
@@ -625,11 +625,11 @@ final class DurationHandlerTests: XCTestCase {
 
     fileDescriptor.addMessage(messageDescriptor)
 
-    // Создаем сообщение
+    // Create message
     let factory = MessageFactory()
     var message = factory.createMessage(from: messageDescriptor)
 
-    // Устанавливаем поля
+    // Set fields
     try message.set(seconds, forField: "seconds")
     if let nanos = nanos {
       try message.set(nanos, forField: "nanos")

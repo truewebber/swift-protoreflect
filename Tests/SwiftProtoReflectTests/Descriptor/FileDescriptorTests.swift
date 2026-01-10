@@ -2,21 +2,21 @@
 // FileDescriptorTests.swift
 // SwiftProtoReflectTests
 //
-// Создан: 2025-05-17
+// Created: 2025-05-17
 //
 
 import XCTest
 
 @testable import SwiftProtoReflect
 
-/// Тесты для компонента FileDescriptor.
+/// Tests for FileDescriptor component.
 ///
-/// Покрывает все основные функции включая:
-/// - Проверку свойств вложенных объектов (все атрибуты)
-/// - Корректность полного пути для вложенных типов
-/// - Работу с OneOf полями
-/// - Циклические зависимости между сообщениями
-/// - Обработку импортированных типов
+/// Covers all main functions including:
+/// - Verification of nested object properties (all attributes)
+/// - Correctness of full path for nested types
+/// - Working with OneOf fields
+/// - Circular dependencies between messages
+/// - Handling imported types
 final class FileDescriptorTests: XCTestCase {
   // MARK: - Properties
 
@@ -65,9 +65,9 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(descriptor.package, "")
   }
 
-  /// Тестирует добавление сообщения в файл.
+  /// Tests adding message to file.
   ///
-  /// Проверяет типы полей сообщения, номера полей и опции полей.
+  /// Verifies message field types, field numbers and field options.
   func testAddMessage() {
     let personMessage = MessageDescriptor(name: "Person")
     fileDescriptor.addMessage(personMessage)
@@ -76,7 +76,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertTrue(fileDescriptor.hasMessage(named: "Person"))
     XCTAssertEqual(fileDescriptor.messages["Person"]?.name, "Person")
 
-    // Проверяем типы полей сообщения
+    // Verify message field types
     var retrievedMessage = fileDescriptor.messages["Person"]!
 
     let nameField = FieldDescriptor(
@@ -98,48 +98,48 @@ final class FileDescriptorTests: XCTestCase {
     retrievedMessage.addField(nameField)
     retrievedMessage.addField(ageField)
 
-    // Обновляем сообщение в файле
+    // Update message in file
     fileDescriptor.addMessage(retrievedMessage)
 
     let finalMessage = fileDescriptor.messages["Person"]!
 
-    // Проверяем номера полей
+    // Verify field numbers
     XCTAssertEqual(finalMessage.field(number: 1)?.number, 1)
     XCTAssertEqual(finalMessage.field(number: 2)?.number, 2)
 
-    // Проверяем типы полей
+    // Verify field types
     XCTAssertEqual(finalMessage.field(number: 1)?.type, .string)
     XCTAssertEqual(finalMessage.field(number: 2)?.type, .int32)
 
-    // Проверяем опции полей
+    // Verify field options
     XCTAssertEqual(finalMessage.field(number: 1)?.options["deprecated"] as? Bool, false)
     XCTAssertEqual(finalMessage.field(number: 2)?.options["packed"] as? Bool, true)
 
-    // Проверяем флаги полей
+    // Verify field flags
     XCTAssertTrue(finalMessage.field(number: 1)?.isOptional ?? false)
     XCTAssertFalse(finalMessage.field(number: 2)?.isOptional ?? true)
   }
 
   func testAddMessageReplacement() {
-    // Добавляем первое сообщение
+    // Add first message
     let personMessage1 = MessageDescriptor(name: "Person")
     fileDescriptor.addMessage(personMessage1)
 
-    // Добавляем второе сообщение с тем же именем
+    // Add second message with same name
     let personMessage2 = MessageDescriptor(name: "Person")
     fileDescriptor.addMessage(personMessage2)
 
-    // Проверяем, что количество сообщений не изменилось (произошла замена)
+    // Verify that message count hasn't changed (replacement occurred)
     XCTAssertEqual(fileDescriptor.messages.count, 1)
   }
 
-  /// Тестирует добавление перечисления в файл.
+  /// Tests adding enum to file.
   ///
-  /// Проверяет значения перечисления, опции перечисления и опции для отдельных значений.
+  /// Verifies enum values, enum options and options for individual values.
   func testAddEnum() {
     var genderEnum = EnumDescriptor(name: "Gender", options: ["deprecated": false])
 
-    // Добавляем значения перечисления с опциями
+    // Add enum values with options
     genderEnum.addValue(
       EnumDescriptor.EnumValue(
         name: "UNKNOWN",
@@ -170,7 +170,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertTrue(fileDescriptor.hasEnum(named: "Gender"))
     XCTAssertEqual(fileDescriptor.enums["Gender"]?.name, "Gender")
 
-    // Проверяем значения перечисления
+    // Verify enum values
     let retrievedEnum = fileDescriptor.enums["Gender"]!
     XCTAssertEqual(retrievedEnum.allValues().count, 3)
 
@@ -182,10 +182,10 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertTrue(retrievedEnum.hasValue(number: 1))
     XCTAssertTrue(retrievedEnum.hasValue(number: 2))
 
-    // Проверяем опции перечисления
+    // Verify enum options
     XCTAssertEqual(retrievedEnum.options["deprecated"] as? Bool, false)
 
-    // Проверяем опции для отдельных значений
+    // Verify options for individual values
     let unknownValue = retrievedEnum.value(named: "UNKNOWN")
     XCTAssertEqual(unknownValue?.options["deprecated"] as? Bool, true)
 
@@ -195,28 +195,28 @@ final class FileDescriptorTests: XCTestCase {
     let femaleValue = retrievedEnum.value(named: "FEMALE")
     XCTAssertEqual(femaleValue?.options["custom_option"] as? String, "female_value")
 
-    // Проверяем номера значений
+    // Verify value numbers
     XCTAssertEqual(unknownValue?.number, 0)
     XCTAssertEqual(maleValue?.number, 1)
     XCTAssertEqual(femaleValue?.number, 2)
   }
 
   func testAddEnumReplacement() {
-    // Добавляем первое перечисление
+    // Add first enum
     let enum1 = EnumDescriptor(name: "Status")
     fileDescriptor.addEnum(enum1)
 
-    // Добавляем второе перечисление с тем же именем
+    // Add second enum with same name
     let enum2 = EnumDescriptor(name: "Status")
     fileDescriptor.addEnum(enum2)
 
-    // Проверяем, что количество перечислений не изменилось (произошла замена)
+    // Verify that enum count hasn't changed (replacement occurred)
     XCTAssertEqual(fileDescriptor.enums.count, 1)
   }
 
-  /// Тестирует добавление сервиса в файл.
+  /// Tests adding service to file.
   ///
-  /// Проверяет методы сервиса, типы входных и выходных параметров, а также опции сервиса и методов.
+  /// Verifies service methods, input and output parameter types, as well as service and method options.
   func testAddService() {
     var personService = ServiceDescriptor(
       name: "PersonService",
@@ -224,7 +224,7 @@ final class FileDescriptorTests: XCTestCase {
       options: ["deprecated": false]
     )
 
-    // Добавляем методы сервиса с опциями
+    // Add service methods with options
     personService.addMethod(
       ServiceDescriptor.MethodDescriptor(
         name: "GetPerson",
@@ -262,7 +262,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertTrue(fileDescriptor.hasService(named: "PersonService"))
     XCTAssertEqual(fileDescriptor.services["PersonService"]?.name, "PersonService")
 
-    // Проверяем методы сервиса
+    // Verify service methods
     let retrievedService = fileDescriptor.services["PersonService"]!
     XCTAssertEqual(retrievedService.allMethods().count, 3)
 
@@ -270,7 +270,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertTrue(retrievedService.hasMethod(named: "CreatePerson"))
     XCTAssertTrue(retrievedService.hasMethod(named: "StreamPersons"))
 
-    // Проверяем типы входных и выходных параметров
+    // Verify input and output parameter types
     let getPersonMethod = retrievedService.method(named: "GetPerson")
     XCTAssertEqual(getPersonMethod?.inputType, "example.person.GetPersonRequest")
     XCTAssertEqual(getPersonMethod?.outputType, "example.person.GetPersonResponse")
@@ -287,90 +287,90 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertFalse(streamPersonsMethod?.clientStreaming ?? true)
     XCTAssertTrue(streamPersonsMethod?.serverStreaming ?? false)
 
-    // Проверяем опции сервиса
+    // Verify service options
     XCTAssertEqual(retrievedService.options["deprecated"] as? Bool, false)
 
-    // Проверяем опции методов
+    // Verify method options
     XCTAssertEqual(getPersonMethod?.options["idempotency_level"] as? String, "IDEMPOTENT")
     XCTAssertEqual(createPersonMethod?.options["method_signature"] as? String, "person")
     XCTAssertEqual(streamPersonsMethod?.options["deprecated"] as? Bool, true)
   }
 
   func testAddServiceReplacement() {
-    // Добавляем первый сервис
+    // Add first service
     let service1 = ServiceDescriptor(name: "DataService", parent: fileDescriptor)
     fileDescriptor.addService(service1)
 
-    // Добавляем второй сервис с тем же именем
+    // Add second service with same name
     let service2 = ServiceDescriptor(name: "DataService", parent: fileDescriptor)
     fileDescriptor.addService(service2)
 
-    // Проверяем, что количество сервисов не изменилось (произошла замена)
+    // Verify that service count hasn't changed (replacement occurred)
     XCTAssertEqual(fileDescriptor.services.count, 1)
   }
 
   func testHasMessage() {
-    // Проверяем отсутствие сообщения
+    // Verify message absence
     XCTAssertFalse(fileDescriptor.hasMessage(named: "Person"))
 
-    // Добавляем сообщение
+    // Add message
     let personMessage = MessageDescriptor(name: "Person")
     fileDescriptor.addMessage(personMessage)
 
-    // Проверяем наличие сообщения
+    // Verify message presence
     XCTAssertTrue(fileDescriptor.hasMessage(named: "Person"))
 
-    // Проверяем отсутствие другого сообщения
+    // Verify absence of other message
     XCTAssertFalse(fileDescriptor.hasMessage(named: "Address"))
   }
 
   func testHasEnum() {
-    // Проверяем отсутствие перечисления
+    // Verify enum absence
     XCTAssertFalse(fileDescriptor.hasEnum(named: "Gender"))
 
-    // Добавляем перечисление
+    // Add enum
     let genderEnum = EnumDescriptor(name: "Gender")
     fileDescriptor.addEnum(genderEnum)
 
-    // Проверяем наличие перечисления
+    // Verify enum presence
     XCTAssertTrue(fileDescriptor.hasEnum(named: "Gender"))
 
-    // Проверяем отсутствие другого перечисления
+    // Verify absence of other enum
     XCTAssertFalse(fileDescriptor.hasEnum(named: "Status"))
   }
 
   func testHasService() {
-    // Проверяем отсутствие сервиса
+    // Verify service absence
     XCTAssertFalse(fileDescriptor.hasService(named: "PersonService"))
 
-    // Добавляем сервис
+    // Add service
     let personService = ServiceDescriptor(name: "PersonService", parent: fileDescriptor)
     fileDescriptor.addService(personService)
 
-    // Проверяем наличие сервиса
+    // Verify service presence
     XCTAssertTrue(fileDescriptor.hasService(named: "PersonService"))
 
-    // Проверяем отсутствие другого сервиса
+    // Verify absence of other service
     XCTAssertFalse(fileDescriptor.hasService(named: "AddressService"))
   }
 
-  /// Тестирует получение полного имени типа.
+  /// Tests getting full type name.
   ///
-  /// Проверяет получение имени для вложенных типов и поведение для импортированных типов.
+  /// Verifies getting name for nested types and behavior for imported types.
   func testGetFullName() {
     XCTAssertEqual(fileDescriptor.getFullName(for: "Person"), "example.person.Person")
 
     let emptyPackageFileDescriptor = FileDescriptor(name: "test.proto", package: "")
     XCTAssertEqual(emptyPackageFileDescriptor.getFullName(for: "Test"), "Test")
 
-    // Проверяем получение имени для вложенных типов
+    // Verify getting name for nested types
     XCTAssertEqual(fileDescriptor.getFullName(for: "Person.Address"), "example.person.Person.Address")
     XCTAssertEqual(
       fileDescriptor.getFullName(for: "Person.ContactInfo.Phone"),
       "example.person.Person.ContactInfo.Phone"
     )
 
-    // Проверяем поведение для импортированных типов
+    // Verify behavior for imported types
     let fileWithImports = FileDescriptor(
       name: "service.proto",
       package: "example.service",
@@ -381,16 +381,16 @@ final class FileDescriptorTests: XCTestCase {
       ]
     )
 
-    // Локальные типы должны получать полный путь с пакетом
+    // Local types should get full path with package
     XCTAssertEqual(fileWithImports.getFullName(for: "UserService"), "example.service.UserService")
     XCTAssertEqual(fileWithImports.getFullName(for: "Request"), "example.service.Request")
     XCTAssertEqual(fileWithImports.getFullName(for: "Response"), "example.service.Response")
 
-    // Вложенные типы в локальном пакете
+    // Nested types in local package
     XCTAssertEqual(fileWithImports.getFullName(for: "UserService.Config"), "example.service.UserService.Config")
     XCTAssertEqual(fileWithImports.getFullName(for: "Request.Headers"), "example.service.Request.Headers")
 
-    // Проверяем файл с очень длинным пакетом
+    // Verify file with very long package
     let deepPackageFile = FileDescriptor(
       name: "deep.proto",
       package: "com.example.very.deep.package.structure"
@@ -406,22 +406,22 @@ final class FileDescriptorTests: XCTestCase {
       "com.example.very.deep.package.structure.DeepType.NestedType"
     )
 
-    // Проверяем файл с пакетом, содержащим только одну часть
+    // Verify file with package containing only one part
     let simplePackageFile = FileDescriptor(name: "simple.proto", package: "simple")
     XCTAssertEqual(simplePackageFile.getFullName(for: "SimpleType"), "simple.SimpleType")
 
-    // Проверяем что пустые типы обрабатываются корректно
+    // Verify that empty types are handled correctly
     XCTAssertEqual(emptyPackageFileDescriptor.getFullName(for: ""), "")
     XCTAssertEqual(fileDescriptor.getFullName(for: ""), "example.person.")
   }
 
   func testFluentInterface() {
-    // Проверяем методы отдельно, так как они mutating и не могут вызываться цепочкой
+    // Verify methods separately as they are mutating and cannot be called in chain
     let personMessage = MessageDescriptor(name: "Person")
     let genderEnum = EnumDescriptor(name: "Gender")
     let personService = ServiceDescriptor(name: "PersonService", parent: fileDescriptor)
 
-    // Вызываем методы последовательно
+    // Call methods sequentially
     fileDescriptor.addMessage(personMessage)
     fileDescriptor.addEnum(genderEnum)
     fileDescriptor.addService(personService)
@@ -433,19 +433,19 @@ final class FileDescriptorTests: XCTestCase {
 
   // MARK: - Business Tests
 
-  /// Проверяет свойства вложенных объектов (не только имени, но и других атрибутов).
+  /// Verifies nested object properties (not just name, but other attributes too).
   func testNestedObjectProperties() {
-    // Создаем основное сообщение
+    // Create main message
     var personMessage = MessageDescriptor(name: "Person", parent: fileDescriptor)
 
-    // Создаем вложенное сообщение со всеми атрибутами
+    // Create nested message with all attributes
     var addressMessage = MessageDescriptor(
       name: "Address",
       parent: personMessage,
       options: ["deprecated": false, "custom_option": "address_value"]
     )
 
-    // Добавляем поля во вложенное сообщение
+    // Add fields to nested message
     let streetField = FieldDescriptor(
       name: "street",
       number: 1,
@@ -465,7 +465,7 @@ final class FileDescriptorTests: XCTestCase {
     addressMessage.addField(streetField)
     addressMessage.addField(zipCodeField)
 
-    // Создаем вложенное перечисление
+    // Create nested enum
     var countryEnum = EnumDescriptor(
       name: "Country",
       options: ["allow_alias": true]
@@ -487,31 +487,31 @@ final class FileDescriptorTests: XCTestCase {
       )
     )
 
-    // Добавляем вложенные типы
+    // Add nested types
     personMessage.addNestedMessage(addressMessage)
     personMessage.addNestedEnum(countryEnum)
 
     fileDescriptor.addMessage(personMessage)
 
-    // Проверяем основное сообщение
+    // Verify main message
     let retrievedPerson = fileDescriptor.messages["Person"]!
     XCTAssertEqual(retrievedPerson.name, "Person")
     XCTAssertEqual(retrievedPerson.fullName, "example.person.Person")
     XCTAssertEqual(retrievedPerson.fileDescriptorPath, "person.proto")
     XCTAssertNil(retrievedPerson.parentMessageFullName)
 
-    // Проверяем все атрибуты вложенного сообщения
+    // Verify all attributes of nested message
     let retrievedAddress = retrievedPerson.nestedMessage(named: "Address")!
     XCTAssertEqual(retrievedAddress.name, "Address")
     XCTAssertEqual(retrievedAddress.fullName, "example.person.Person.Address")
     XCTAssertEqual(retrievedAddress.fileDescriptorPath, "person.proto")
     XCTAssertEqual(retrievedAddress.parentMessageFullName, "example.person.Person")
 
-    // Проверяем опции вложенного сообщения
+    // Verify nested message options
     XCTAssertEqual(retrievedAddress.options["deprecated"] as? Bool, false)
     XCTAssertEqual(retrievedAddress.options["custom_option"] as? String, "address_value")
 
-    // Проверяем поля вложенного сообщения
+    // Verify nested message fields
     XCTAssertEqual(retrievedAddress.fields.count, 2)
 
     let retrievedStreetField = retrievedAddress.field(number: 1)!
@@ -526,12 +526,12 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertFalse(retrievedZipField.isRequired)
     XCTAssertEqual(retrievedZipField.options["pattern"] as? String, "\\d{5}")
 
-    // Проверяем все атрибуты вложенного перечисления
+    // Verify all attributes of nested enum
     let retrievedCountry = retrievedPerson.nestedEnum(named: "Country")!
     XCTAssertEqual(retrievedCountry.name, "Country")
     XCTAssertEqual(retrievedCountry.options["allow_alias"] as? Bool, true)
 
-    // Проверяем значения перечисления
+    // Verify enum values
     XCTAssertEqual(retrievedCountry.allValues().count, 2)
 
     let unknownValue = retrievedCountry.value(named: "UNKNOWN")!
@@ -543,15 +543,15 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(usaValue.options["country_code"] as? String, "US")
   }
 
-  /// Проверяет корректность полного пути для вложенных типов.
+  /// Verifies correctness of full paths for nested types.
   func testNestedTypeFullPaths() {
-    // Создаем многоуровневую структуру
+    // Create multi-level structure
     var companyMessage = MessageDescriptor(name: "Company", parent: fileDescriptor)
     var departmentMessage = MessageDescriptor(name: "Department", parent: companyMessage)
     var teamMessage = MessageDescriptor(name: "Team", parent: departmentMessage)
     var employeeMessage = MessageDescriptor(name: "Employee", parent: teamMessage)
 
-    // Создаем поле, которое ссылается на глубоко вложенный тип
+    // Create field that references deeply nested type
     let managerField = FieldDescriptor(
       name: "manager",
       number: 1,
@@ -561,13 +561,13 @@ final class FileDescriptorTests: XCTestCase {
 
     employeeMessage.addField(managerField)
 
-    // Собираем структуру
+    // Assemble structure
     teamMessage.addNestedMessage(employeeMessage)
     departmentMessage.addNestedMessage(teamMessage)
     companyMessage.addNestedMessage(departmentMessage)
     fileDescriptor.addMessage(companyMessage)
 
-    // Проверяем полные пути
+    // Verify full paths
     var retrievedCompany = fileDescriptor.messages["Company"]!
     XCTAssertEqual(retrievedCompany.fullName, "example.person.Company")
 
@@ -583,34 +583,34 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(retrievedEmployee.fullName, "example.person.Company.Department.Team.Employee")
     XCTAssertEqual(retrievedEmployee.parentMessageFullName, "example.person.Company.Department.Team")
 
-    // Проверяем поле с ссылкой на глубоко вложенный тип
+    // Verify field with reference to deeply nested type
     let retrievedManagerField = retrievedEmployee.field(number: 1)!
     XCTAssertEqual(retrievedManagerField.typeName, "example.person.Company.Department.Team.Employee")
 
-    // Проверяем файловые пути
+    // Verify file paths
     XCTAssertEqual(retrievedCompany.fileDescriptorPath, "person.proto")
     XCTAssertEqual(retrievedDepartment.fileDescriptorPath, "person.proto")
     XCTAssertEqual(retrievedTeam.fileDescriptorPath, "person.proto")
     XCTAssertEqual(retrievedEmployee.fileDescriptorPath, "person.proto")
 
-    // Создаем перечисление на разных уровнях вложенности
+    // Create enums at different nesting levels
     var statusEnum = EnumDescriptor(name: "Status")
     statusEnum.addValue(EnumDescriptor.EnumValue(name: "ACTIVE", number: 1))
 
     var priorityEnum = EnumDescriptor(name: "Priority")
     priorityEnum.addValue(EnumDescriptor.EnumValue(name: "HIGH", number: 1))
 
-    // Добавляем перечисления на разных уровнях - нужно пересоздать всю структуру
+    // Add enums at different levels - need to recreate entire structure
     retrievedEmployee.addNestedEnum(priorityEnum)
     retrievedTeam.addNestedMessage(retrievedEmployee)
     retrievedDepartment.addNestedMessage(retrievedTeam)
     retrievedCompany.addNestedEnum(statusEnum)
     retrievedCompany.addNestedMessage(retrievedDepartment)
 
-    // Обновляем сообщение в файле
+    // Update message in file
     fileDescriptor.addMessage(retrievedCompany)
 
-    // Проверяем финальные пути после обновления
+    // Verify final paths after update
     let finalCompany = fileDescriptor.messages["Company"]!
     let finalEmployee =
       finalCompany
@@ -622,12 +622,12 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertTrue(finalEmployee.hasNestedEnum(named: "Priority"))
   }
 
-  /// Проверяет работу с OneOf полями в контексте файлового дескриптора.
+  /// Verifies working with OneOf fields in file descriptor context.
   func testOneOfFieldsInFileContext() {
-    // Создаем сообщение с OneOf полями
+    // Create message with OneOf fields
     var paymentMessage = MessageDescriptor(name: "Payment", parent: fileDescriptor)
 
-    // Создаем OneOf группу для типа платежа
+    // Create OneOf group for payment type
     let creditCardField = FieldDescriptor(
       name: "credit_card",
       number: 1,
@@ -652,7 +652,7 @@ final class FileDescriptorTests: XCTestCase {
       oneofIndex: 0
     )
 
-    // Создаем другую OneOf группу для валюты
+    // Create another OneOf group for currency
     let usdField = FieldDescriptor(
       name: "usd_amount",
       number: 4,
@@ -667,7 +667,7 @@ final class FileDescriptorTests: XCTestCase {
       oneofIndex: 1
     )
 
-    // Обычное поле (не OneOf)
+    // Regular field (not OneOf)
     let idField = FieldDescriptor(
       name: "payment_id",
       number: 6,
@@ -683,10 +683,10 @@ final class FileDescriptorTests: XCTestCase {
 
     fileDescriptor.addMessage(paymentMessage)
 
-    // Проверяем OneOf поля
+    // Verify OneOf fields
     let retrievedPayment = fileDescriptor.messages["Payment"]!
 
-    // Группа 0 - тип платежа
+    // Group 0 - payment type
     let retrievedCreditCard = retrievedPayment.field(number: 1)!
     let retrievedPaypal = retrievedPayment.field(number: 2)!
     let retrievedCash = retrievedPayment.field(number: 3)!
@@ -695,18 +695,18 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(retrievedPaypal.oneofIndex, 0)
     XCTAssertEqual(retrievedCash.oneofIndex, 0)
 
-    // Группа 1 - валюта
+    // Group 1 - currency
     let retrievedUsd = retrievedPayment.field(number: 4)!
     let retrievedEur = retrievedPayment.field(number: 5)!
 
     XCTAssertEqual(retrievedUsd.oneofIndex, 1)
     XCTAssertEqual(retrievedEur.oneofIndex, 1)
 
-    // Обычное поле
+    // Regular field
     let retrievedId = retrievedPayment.field(number: 6)!
     XCTAssertNil(retrievedId.oneofIndex)
 
-    // Проверяем типы полей
+    // Verify field types
     XCTAssertEqual(retrievedCreditCard.type, .message)
     XCTAssertEqual(retrievedPaypal.type, .message)
     XCTAssertEqual(retrievedCash.type, .message)
@@ -714,23 +714,23 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(retrievedEur.type, .double)
     XCTAssertEqual(retrievedId.type, .string)
 
-    // Проверяем имена типов для message полей
+    // Verify type names for message fields
     XCTAssertEqual(retrievedCreditCard.typeName, "example.person.CreditCard")
     XCTAssertEqual(retrievedPaypal.typeName, "example.person.PayPal")
     XCTAssertEqual(retrievedCash.typeName, "example.person.Cash")
 
-    // Проверяем что у скалярных полей нет typeName
+    // Verify that scalar fields don't have typeName
     XCTAssertNil(retrievedUsd.typeName)
     XCTAssertNil(retrievedEur.typeName)
     XCTAssertNil(retrievedId.typeName)
   }
 
-  /// Тестирует циклические зависимости между сообщениями в контексте файла.
+  /// Tests cyclic dependencies between messages in file context.
   func testCyclicDependenciesInFileContext() {
-    // Создаем граф узлов с циклическими ссылками
+    // Create node graph with cyclic references
     var nodeMessage = MessageDescriptor(name: "GraphNode", parent: fileDescriptor)
 
-    // Самоссылка
+    // Self-reference
     let parentField = FieldDescriptor(
       name: "parent",
       number: 1,
@@ -750,7 +750,7 @@ final class FileDescriptorTests: XCTestCase {
     nodeMessage.addField(parentField)
     nodeMessage.addField(childrenField)
 
-    // Создаем взаимно ссылающиеся сообщения
+    // Create mutually referencing messages
     var userMessage = MessageDescriptor(name: "User", parent: fileDescriptor)
     var groupMessage = MessageDescriptor(name: "Group", parent: fileDescriptor)
 
@@ -770,7 +770,7 @@ final class FileDescriptorTests: XCTestCase {
       isRepeated: true
     )
 
-    // Также добавляем владельца группы
+    // Also add group owner
     let groupOwnerField = FieldDescriptor(
       name: "owner",
       number: 2,
@@ -783,12 +783,12 @@ final class FileDescriptorTests: XCTestCase {
     groupMessage.addField(groupUsersField)
     groupMessage.addField(groupOwnerField)
 
-    // Добавляем все сообщения в файл
+    // Add all messages to file
     fileDescriptor.addMessage(nodeMessage)
     fileDescriptor.addMessage(userMessage)
     fileDescriptor.addMessage(groupMessage)
 
-    // Проверяем самоссылающиеся поля
+    // Verify self-referencing fields
     let retrievedNode = fileDescriptor.messages["GraphNode"]!
 
     let retrievedParentField = retrievedNode.field(number: 1)!
@@ -801,7 +801,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertFalse(retrievedChildrenField.isOptional)
     XCTAssertTrue(retrievedChildrenField.isRepeated)
 
-    // Проверяем взаимные ссылки
+    // Verify mutual references
     let retrievedUser = fileDescriptor.messages["User"]!
     let retrievedGroup = fileDescriptor.messages["Group"]!
 
@@ -817,21 +817,21 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(retrievedGroupOwnerField.typeName, "example.person.User")
     XCTAssertTrue(retrievedGroupOwnerField.isOptional)
 
-    // Проверяем, что все сообщения имеют корректные полные имена
+    // Verify that all messages have correct full names
     XCTAssertEqual(retrievedNode.fullName, "example.person.GraphNode")
     XCTAssertEqual(retrievedUser.fullName, "example.person.User")
     XCTAssertEqual(retrievedGroup.fullName, "example.person.Group")
 
-    // Проверяем количество добавленных сообщений
+    // Verify count of added messages
     XCTAssertEqual(fileDescriptor.messages.count, 3)
     XCTAssertTrue(fileDescriptor.hasMessage(named: "GraphNode"))
     XCTAssertTrue(fileDescriptor.hasMessage(named: "User"))
     XCTAssertTrue(fileDescriptor.hasMessage(named: "Group"))
   }
 
-  /// Проверяет обработку импортированных типов в контексте файла.
+  /// Verifies handling of imported types in file context.
   func testImportedTypesInFileContext() {
-    // Создаем файл с множественными импортами
+    // Create file with multiple imports
     var apiFile = FileDescriptor(
       name: "api.proto",
       package: "example.api.v1",
@@ -846,10 +846,10 @@ final class FileDescriptorTests: XCTestCase {
       ]
     )
 
-    // Создаем сервис с импортированными типами
+    // Create service with imported types
     var apiService = ServiceDescriptor(name: "PaymentAPI", parent: apiFile)
 
-    // Методы с различными импортированными типами
+    // Methods with various imported types
     apiService.addMethod(
       ServiceDescriptor.MethodDescriptor(
         name: "CreatePayment",
@@ -874,7 +874,7 @@ final class FileDescriptorTests: XCTestCase {
       )
     )
 
-    // Создаем сообщения с импортированными полями
+    // Create messages with imported fields
     var paymentMessage = MessageDescriptor(name: "Payment", parent: apiFile)
 
     let idField = FieldDescriptor(
@@ -925,7 +925,7 @@ final class FileDescriptorTests: XCTestCase {
       isRepeated: true
     )
 
-    // Map поле с импортированным типом в значении
+    // Map field with imported type in value
     let mapKeyInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let mapValueInfo = ValueFieldInfo(
       name: "value",
@@ -956,7 +956,7 @@ final class FileDescriptorTests: XCTestCase {
     apiFile.addService(apiService)
     apiFile.addMessage(paymentMessage)
 
-    // Проверяем зависимости файла
+    // Verify file dependencies
     XCTAssertEqual(apiFile.dependencies.count, 7)
     XCTAssertTrue(apiFile.dependencies.contains("google/protobuf/timestamp.proto"))
     XCTAssertTrue(apiFile.dependencies.contains("google/protobuf/duration.proto"))
@@ -966,17 +966,17 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertTrue(apiFile.dependencies.contains("example/common/types.proto"))
     XCTAssertTrue(apiFile.dependencies.contains("example/auth/user.proto"))
 
-    // Проверяем сервис с импортированными типами
+    // Verify service with imported types
     let retrievedService = apiFile.services["PaymentAPI"]!
     XCTAssertEqual(retrievedService.allMethods().count, 3)
 
     let deleteMethod = retrievedService.method(named: "DeletePayment")!
     XCTAssertEqual(deleteMethod.outputType, "google.protobuf.Empty")
 
-    // Проверяем сообщение с импортированными полями
+    // Verify message with imported fields
     let retrievedPayment = apiFile.messages["Payment"]!
 
-    // Google типы
+    // Google types
     let retrievedAmountField = retrievedPayment.field(number: 2)!
     XCTAssertEqual(retrievedAmountField.typeName, "google.type.Money")
     XCTAssertEqual(retrievedAmountField.type, .message)
@@ -987,7 +987,7 @@ final class FileDescriptorTests: XCTestCase {
     let retrievedDurationField = retrievedPayment.field(number: 4)!
     XCTAssertEqual(retrievedDurationField.typeName, "google.protobuf.Duration")
 
-    // Пользовательские импортированные типы
+    // Custom imported types
     let retrievedUserField = retrievedPayment.field(number: 5)!
     XCTAssertEqual(retrievedUserField.typeName, "example.auth.User")
     XCTAssertEqual(retrievedUserField.type, .message)
@@ -996,7 +996,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(retrievedStatusField.typeName, "example.common.PaymentStatus")
     XCTAssertEqual(retrievedStatusField.type, .enum)
 
-    // Map поле с импортированным типом
+    // Map field with imported type
     let retrievedMetadataField = retrievedPayment.field(number: 8)!
     XCTAssertTrue(retrievedMetadataField.isMap)
 
@@ -1005,12 +1005,12 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(metadataMapInfo.valueFieldInfo.type, .message)
     XCTAssertEqual(metadataMapInfo.valueFieldInfo.typeName, "example.common.Metadata")
 
-    // Проверяем генерацию полных имен для локальных типов
+    // Verify generation of full names for local types
     XCTAssertEqual(apiFile.getFullName(for: "LocalRequest"), "example.api.v1.LocalRequest")
     XCTAssertEqual(apiFile.getFullName(for: "LocalResponse"), "example.api.v1.LocalResponse")
     XCTAssertEqual(apiFile.getFullName(for: "Payment.Detail"), "example.api.v1.Payment.Detail")
 
-    // Проверяем что у всех объектов корректные пакеты
+    // Verify that all objects have correct packages
     XCTAssertEqual(retrievedService.fullName, "example.api.v1.PaymentAPI")
     XCTAssertEqual(retrievedPayment.fullName, "example.api.v1.Payment")
   }

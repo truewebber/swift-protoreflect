@@ -1,11 +1,11 @@
 //
 // ValidationTests.swift
 //
-// Тесты для проверки валидации формата proto3
+// Tests for validating proto3 format
 //
-// Тестовые случаи из плана:
-// - Test-VAL-001: Проверка корректности валидационных правил proto3 (например, отсутствие required полей)
-// - Test-VAL-002: Тесты на корректность обработки синтаксиса proto3 (включая новые возможности, такие как 'optional')
+// Test cases from the plan:
+// - Test-VAL-001: Verification of proto3 validation rules correctness (e.g., absence of required fields)
+// - Test-VAL-002: Tests for correct handling of proto3 syntax (including new features such as 'optional')
 
 import XCTest
 

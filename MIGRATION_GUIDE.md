@@ -2,7 +2,7 @@
 
 **Migrating to runtime Protocol Buffers has never been easier!** This guide helps you transition from static Swift Protobuf code generation to dynamic message manipulation with SwiftProtoReflect.
 
-## 🎯 Migration Overview
+## Migration Overview
 
 | Static Swift Protobuf | Dynamic SwiftProtoReflect | Benefits |
 |----------------------|---------------------------|-----------|
@@ -11,7 +11,7 @@
 | **Type-safe but Rigid** | **Type-safe and Flexible** | ✅ Schema evolution support |
 | **Per-proto Compilation** | **Universal Message Handling** | ✅ Generic tools possible |
 
-## 🚀 Quick Migration Examples
+## Quick Migration Examples
 
 ### Basic Message Creation
 
@@ -74,7 +74,7 @@ if person.hasField("email") {
 }
 ```
 
-## 🔄 Hybrid Approach - Best of Both Worlds
+## Hybrid Approach - Best of Both Worlds
 
 You don't have to migrate everything at once! SwiftProtoReflect seamlessly integrates with existing Swift Protobuf code:
 
@@ -114,7 +114,7 @@ let processedMessages = try dynamicMessages.map { message in
 let finalStaticMessages: [Person] = try StaticMessageBridge.convertToStatic(processedMessages)
 ```
 
-## 📋 Migration Strategies
+## Migration Strategies
 
 ### Strategy 1: Gradual Migration (Recommended)
 
@@ -148,7 +148,7 @@ let finalStaticMessages: [Person] = try StaticMessageBridge.convertToStatic(proc
 3. **Migrate all message handling** - Use dynamic throughout
 4. **Add runtime schema loading** - Load schemas from files/network
 
-## 🛠️ Common Migration Patterns
+## Common Migration Patterns
 
 ### Pattern 1: Message Validation
 
@@ -236,7 +236,7 @@ func processUnknownMessage(data: Data, schema: MessageDescriptor) throws -> Data
 }
 ```
 
-## 🎯 Well-Known Types Migration
+## Well-Known Types Migration
 
 SwiftProtoReflect provides seamless migration for Google's Well-Known Types:
 
@@ -291,7 +291,7 @@ let structMessage = try data.toStructMessage()
 try message.set("metadata", value: data)  // Automatic Struct conversion
 ```
 
-## 🚨 Migration Gotchas & Solutions
+## Migration Gotchas & Solutions
 
 ### Gotcha 1: Field Access Type Safety
 
@@ -371,7 +371,7 @@ extension DynamicMessage {
 | **Runtime Schema Loading** | ❌ Not possible | ✅ Full support |
 | **Interoperability** | ➖ Static only | ✅ Static + Dynamic |
 
-## 🎭 Migration Examples by Use Case
+## Migration Examples by Use Case
 
 ### API Gateway Migration
 
@@ -433,7 +433,7 @@ class ConfigManager {
 }
 ```
 
-## 🚀 Advanced Migration Patterns
+## Advanced Migration Patterns
 
 ### Schema Registry Pattern
 
@@ -488,84 +488,11 @@ class MessageFactory {
 }
 ```
 
-## 📝 Migration Checklist
-
-### Pre-Migration Assessment
-
-- [ ] **Identify static protobuf usage** - Find all generated .pb.swift files
-- [ ] **Catalog message types** - List all protobuf messages in use
-- [ ] **Analyze performance requirements** - Identify performance-critical paths
-- [ ] **Map integration points** - Where static protobuf interacts with other systems
-- [ ] **Plan schema management** - How will you handle schema distribution
-
-### Migration Execution
-
-- [ ] **Set up SwiftProtoReflect** - Add dependency and basic setup
-- [ ] **Create schema registry** - Centralized schema management
-- [ ] **Implement hybrid conversion** - Static ↔ Dynamic conversion utilities
-- [ ] **Migrate non-critical components first** - Testing, logging, utilities
-- [ ] **Add performance monitoring** - Track migration impact
-- [ ] **Update build process** - Remove/modify code generation steps
-- [ ] **Train team** - Ensure everyone understands dynamic patterns
-
-### Post-Migration Validation
-
-- [ ] **Verify wire format compatibility** - Ensure binary compatibility
-- [ ] **Performance benchmarking** - Compare before/after performance
-- [ ] **Test schema evolution** - Verify forward/backward compatibility
-- [ ] **Update documentation** - Reflect new dynamic patterns
-- [ ] **Monitor production** - Watch for issues in live environment
-
-## 🎯 Getting Started with Migration
-
-### Step 1: Try the Examples
-
-```bash
-git clone https://github.com/truewebber/swift-protoreflect.git
-cd swift-protoreflect/examples
-
-# Try migration-specific examples
-swift run StaticToDynamic      # Basic conversion patterns
-swift run HybridApproach       # Using both static and dynamic
-swift run ConfigMigration      # Configuration system migration
-swift run ApiGatewayMigration  # API gateway patterns
-```
-
-### Step 2: Start Small
-
-Pick a simple, non-critical component for your first migration:
-
-```swift
-// Start with something like this:
-class LogMessageFormatter {
-    func formatLogEntry(_ entry: DynamicMessage) throws -> String {
-        let timestamp: Date = try entry.get("timestamp")
-        let level: String = try entry.get("level")
-        let message: String = try entry.get("message")
-        
-        return "[\(timestamp)] \(level): \(message)"
-    }
-}
-```
-
-### Step 3: Expand Gradually
-
-Once comfortable, tackle larger components:
-
-- Data transformation pipelines
-- API gateways and proxies  
-- Configuration systems
-- Testing and debugging tools
-
-### Step 4: Consider Full Migration
-
-For maximum flexibility, eliminate static generation entirely and embrace dynamic schemas.
-
 ## 🤝 Need Help?
 
 **Migration Questions?**
 - Check our [43 comprehensive examples](examples/)
-- Read the [Architecture Guide](ARCHITECTURE.md)
+- Read the [Architecture Guide](docs/ARCHITECTURE.md)
 - Open a GitHub Issue for specific migration challenges
 
 **Found an Issue?**

@@ -47,11 +47,11 @@ struct DescriptorBridgeExample {
   private static func demonstrateBasicConversion() throws {
     ExampleUtils.printStep(1, "Basic Descriptor Conversion")
 
-    // Создание простого файлового дескриптора SwiftProtoReflect
+    // Creating simple SwiftProtoReflect file descriptor
     print("  📁 Creating SwiftProtoReflect FileDescriptor...")
     var fileDescriptor = FileDescriptor(name: "example.proto", package: "com.example")
 
-    // Простое сообщение Person
+    // Simple Person message
     var personDescriptor = MessageDescriptor(name: "Person", parent: fileDescriptor)
     personDescriptor.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     personDescriptor.addField(FieldDescriptor(name: "age", number: 2, type: .int32))
@@ -65,19 +65,19 @@ struct DescriptorBridgeExample {
     print("    📋 Messages: \(fileDescriptor.messages.count)")
     print("    🏷  Fields in Person: \(personDescriptor.fields.count)")
 
-    // ПРИМЕЧАНИЕ: В реальной библиотеке здесь была бы конвертация через DescriptorBridge
-    // Для демонстрации симулируем результат
+    // NOTE: In real library, conversion via DescriptorBridge would happen here
+    // For demonstration, simulating result
 
     print("\n  🔄 Converting to Swift Protobuf format...")
     let conversionTime = ExampleUtils.measureTime {
-      // Симуляция конвертации
-      Thread.sleep(forTimeInterval: 0.001)  // 1ms delay для реалистичности
+      // Simulating conversion
+      Thread.sleep(forTimeInterval: 0.001)  // 1ms delay for realism
     }
 
     ExampleUtils.printTiming("Descriptor conversion", time: conversionTime.time)
     print("  ✅ Conversion completed successfully")
 
-    // Симуляция результата конвертации
+    // Simulating conversion result
     print("\n  📊 Conversion Results:")
     let conversionData = [
       ["Component": "File Name", "Original": fileDescriptor.name, "Converted": "example.proto", "Status": "✅ Match"],
@@ -95,23 +95,23 @@ struct DescriptorBridgeExample {
 
     print("  🏗  Creating complex nested message structure...")
 
-    // Файл с компанией и сотрудниками
+    // File with company and employees
     var companyFile = FileDescriptor(name: "company.proto", package: "com.company")
 
-    // Enum для статуса
+    // Enum for status
     var statusEnum = EnumDescriptor(name: "EmployeeStatus", parent: companyFile)
     statusEnum.addValue(EnumDescriptor.EnumValue(name: "ACTIVE", number: 0))
     statusEnum.addValue(EnumDescriptor.EnumValue(name: "INACTIVE", number: 1))
     statusEnum.addValue(EnumDescriptor.EnumValue(name: "ON_LEAVE", number: 2))
 
-    // Вложенное сообщение Address
+    // Nested Address message
     var addressDescriptor = MessageDescriptor(name: "Address", parent: companyFile)
     addressDescriptor.addField(FieldDescriptor(name: "street", number: 1, type: .string))
     addressDescriptor.addField(FieldDescriptor(name: "city", number: 2, type: .string))
     addressDescriptor.addField(FieldDescriptor(name: "country", number: 3, type: .string))
     addressDescriptor.addField(FieldDescriptor(name: "postal_code", number: 4, type: .string))
 
-    // Основное сообщение Employee
+    // Main Employee message
     var employeeDescriptor = MessageDescriptor(name: "Employee", parent: companyFile)
     employeeDescriptor.addField(FieldDescriptor(name: "id", number: 1, type: .int64))
     employeeDescriptor.addField(FieldDescriptor(name: "name", number: 2, type: .string))
@@ -141,7 +141,7 @@ struct DescriptorBridgeExample {
       )
     )
 
-    // Регистрация компонентов
+    // Registering components
     companyFile.addEnum(statusEnum)
     companyFile.addMessage(addressDescriptor)
     companyFile.addMessage(employeeDescriptor)
@@ -152,17 +152,17 @@ struct DescriptorBridgeExample {
     print("    📋 Messages: \(companyFile.messages.count)")
     print("    🏷  Total fields: \(companyFile.messages.values.reduce(0) { $0 + $1.fields.count })")
 
-    // Конвертация сложной структуры
+    // Converting complex structure
     print("\n  🔄 Converting complex structure...")
 
     let complexConversionTime = ExampleUtils.measureTime {
-      // Симуляция времени на конвертацию сложной структуры
-      Thread.sleep(forTimeInterval: 0.003)  // 3ms для сложной структуры
+      // Simulating time for complex structure conversion
+      Thread.sleep(forTimeInterval: 0.003)  // 3ms for complex structure
     }
 
     ExampleUtils.printTiming("Complex structure conversion", time: complexConversionTime.time)
 
-    // Детальная валидация
+    // Detailed validation
     print("\n  🔍 Detailed Conversion Analysis:")
     let analysisData = [
       ["Component": "Enums", "Count": "\(companyFile.enums.count)", "Converted": "1", "Integrity": "✅ Preserved"],
@@ -198,23 +198,23 @@ struct DescriptorBridgeExample {
 
     var protoFile = FileDescriptor(name: "enums.proto", package: "com.enums")
 
-    // Простой enum
+    // Simple enum
     var simpleEnum = EnumDescriptor(name: "Color", parent: protoFile)
     simpleEnum.addValue(EnumDescriptor.EnumValue(name: "RED", number: 0))
     simpleEnum.addValue(EnumDescriptor.EnumValue(name: "GREEN", number: 1))
     simpleEnum.addValue(EnumDescriptor.EnumValue(name: "BLUE", number: 2))
 
-    // Enum с нестандартными значениями
+    // Enum with non-standard values
     var statusEnum = EnumDescriptor(name: "HttpStatus", parent: protoFile)
     statusEnum.addValue(EnumDescriptor.EnumValue(name: "OK", number: 200))
     statusEnum.addValue(EnumDescriptor.EnumValue(name: "NOT_FOUND", number: 404))
     statusEnum.addValue(EnumDescriptor.EnumValue(name: "SERVER_ERROR", number: 500))
 
-    // Enum с alias (одинаковые числовые значения)
+    // Enum with alias (same numeric values)
     var aliasEnum = EnumDescriptor(name: "Priority", parent: protoFile)
     aliasEnum.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0))
     aliasEnum.addValue(EnumDescriptor.EnumValue(name: "LOW", number: 1))
-    aliasEnum.addValue(EnumDescriptor.EnumValue(name: "NORMAL", number: 1))  // Alias для LOW
+    aliasEnum.addValue(EnumDescriptor.EnumValue(name: "NORMAL", number: 1))  // Alias for LOW
     aliasEnum.addValue(EnumDescriptor.EnumValue(name: "HIGH", number: 2))
 
     protoFile.addEnum(simpleEnum)
@@ -226,17 +226,17 @@ struct DescriptorBridgeExample {
     print("    🌐 HTTP Status enum: \(statusEnum.allValues().count) values")
     print("    🔄 Alias enum (Priority): \(aliasEnum.allValues().count) values")
 
-    // Конвертация enum'ов
+    // Converting enums
     print("\n  🔄 Converting enum descriptors...")
 
     let enumConversionTime = ExampleUtils.measureTime {
-      // Симуляция обработки различных enum patterns
+      // Simulating processing of various enum patterns
       Thread.sleep(forTimeInterval: 0.002)
     }
 
     ExampleUtils.printTiming("Enum conversion", time: enumConversionTime.time)
 
-    // Детальный анализ enum конвертации
+    // Detailed enum conversion analysis
     print("\n  📊 Enum Conversion Analysis:")
     let enumAnalysis = [
       ["Enum Type": "Color", "Values": "3", "Number Range": "0-2", "Special Features": "Sequential"],
@@ -246,7 +246,7 @@ struct DescriptorBridgeExample {
 
     ExampleUtils.printDataTable(enumAnalysis, title: "Enum Pattern Analysis")
 
-    // Валидация alias handling
+    // Validating alias handling
     print("\n  🔍 Alias Handling Validation:")
     print("    • LOW (1) and NORMAL (1) - both map to same value ✅")
     print("    • Reverse lookup strategies preserved ✅")
@@ -262,7 +262,7 @@ struct DescriptorBridgeExample {
 
     var serviceFile = FileDescriptor(name: "user_service.proto", package: "com.service")
 
-    // Request/Response сообщения
+    // Request/Response messages
     var getUserRequest = MessageDescriptor(name: "GetUserRequest", parent: serviceFile)
     getUserRequest.addField(FieldDescriptor(name: "user_id", number: 1, type: .string))
 
@@ -275,7 +275,7 @@ struct DescriptorBridgeExample {
     createUserRequest.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     createUserRequest.addField(FieldDescriptor(name: "email", number: 2, type: .string))
 
-    // Сервис
+    // Service
     var userService = ServiceDescriptor(name: "UserService", parent: serviceFile)
     userService.addMethod(
       ServiceDescriptor.MethodDescriptor(
@@ -299,7 +299,7 @@ struct DescriptorBridgeExample {
       )
     )
 
-    // Регистрация компонентов
+    // Registering components
     serviceFile.addMessage(getUserRequest)
     serviceFile.addMessage(userResponse)
     serviceFile.addMessage(createUserRequest)
@@ -311,17 +311,17 @@ struct DescriptorBridgeExample {
     print("    📨 Request types: 2 distinct")
     print("    📬 Response types: 2 distinct")
 
-    // Конвертация сервиса
+    // Converting service
     print("\n  🔄 Converting service descriptor...")
 
     let serviceConversionTime = ExampleUtils.measureTime {
-      // Симуляция конвертации сервиса с методами
+      // Simulating service conversion with methods
       Thread.sleep(forTimeInterval: 0.0025)
     }
 
     ExampleUtils.printTiming("Service conversion", time: serviceConversionTime.time)
 
-    // Детальный анализ сервиса
+    // Detailed service analysis
     print("\n  📊 Service Conversion Details:")
     let serviceData = [
       [
@@ -354,15 +354,15 @@ struct DescriptorBridgeExample {
 
     print("  🔄 Testing bidirectional conversion fidelity...")
 
-    // Создание комплексного дескриптора для тестирования
+    // Creating complex descriptor for testing
     var originalFile = FileDescriptor(name: "roundtrip.proto", package: "com.test")
 
-    // Enum для тестирования
+    // Enum for testing
     var testEnum = EnumDescriptor(name: "TestEnum", parent: originalFile)
     testEnum.addValue(EnumDescriptor.EnumValue(name: "ZERO", number: 0))
     testEnum.addValue(EnumDescriptor.EnumValue(name: "ONE", number: 1))
 
-    // Сообщение со всеми типами полей
+    // Message with all field types
     var testMessage = MessageDescriptor(name: "TestMessage", parent: originalFile)
     testMessage.addField(FieldDescriptor(name: "string_field", number: 1, type: .string))
     testMessage.addField(FieldDescriptor(name: "int32_field", number: 2, type: .int32))
@@ -373,7 +373,7 @@ struct DescriptorBridgeExample {
     originalFile.addEnum(testEnum)
     originalFile.addMessage(testMessage)
 
-    // Симуляция round-trip конвертации
+    // Simulating round-trip conversion
     print("  1️⃣ SwiftProtoReflect → Swift Protobuf...")
     let toProtobuf = ExampleUtils.measureTime {
       Thread.sleep(forTimeInterval: 0.001)
@@ -386,7 +386,7 @@ struct DescriptorBridgeExample {
     }
     ExampleUtils.printTiming("Swift Protobuf → SPR", time: toSPR.time)
 
-    // Валидация fidelity
+    // Validating fidelity
     print("\n  🔍 Fidelity Validation:")
     let fidelityData = [
       [
@@ -424,7 +424,7 @@ struct DescriptorBridgeExample {
 
     print("  📊 Measuring conversion performance across different descriptor sizes...")
 
-    // Создание дескрипторов различных размеров
+    // Creating descriptors of various sizes
     let testScenarios = [
       ("Small", 1, 3),  // 1 message, 3 fields
       ("Medium", 5, 10),  // 5 messages, 10 fields each
@@ -437,7 +437,7 @@ struct DescriptorBridgeExample {
     for (name, messageCount, fieldCount) in testScenarios {
       print("\n  🧪 Testing \(name) scenario (\(messageCount) messages, \(fieldCount) fields each)...")
 
-      // Создание тестового дескриптора
+      // Creating test descriptor
       var testFile = FileDescriptor(name: "\(name.lowercased()).proto", package: "com.test")
 
       for i in 1...messageCount {
@@ -451,12 +451,12 @@ struct DescriptorBridgeExample {
         testFile.addMessage(message)
       }
 
-      // Измерение времени конвертации
+      // Measuring conversion time
       let conversionTime = ExampleUtils.measureTime {
-        // Симуляция времени конвертации пропорционально размеру
+        // Simulating conversion time proportional to size
         let complexity = Double(messageCount * fieldCount)
         let baseTime = 0.001  // 1ms base
-        let scalingFactor = complexity / 1000.0  // Масштабирование
+        let scalingFactor = complexity / 1000.0  // Scaling
         Thread.sleep(forTimeInterval: baseTime + scalingFactor * 0.01)
       }
 
@@ -491,7 +491,7 @@ struct DescriptorBridgeExample {
 
     print("  📦 Demonstrating batch conversion capabilities...")
 
-    // Создание набора файлов для batch конвертации
+    // Creating file set for batch conversion
     var fileSet: [FileDescriptor] = []
 
     let packages = ["com.user", "com.order", "com.product", "com.payment", "com.shipping"]
@@ -500,11 +500,11 @@ struct DescriptorBridgeExample {
       let fileName = "\(package.split(separator: ".").last!).proto"
       var file = FileDescriptor(name: fileName, package: package)
 
-      // Создание основного сообщения для каждого пакета
+      // Creating main message for each batch
       let messageName = String(package.split(separator: ".").last!.capitalized)
       var message = MessageDescriptor(name: messageName, parent: file)
 
-      // Добавление полей в зависимости от типа
+      // Adding fields depending on type
       switch package {
       case "com.user":
         message.addField(FieldDescriptor(name: "id", number: 1, type: .string))
@@ -539,17 +539,17 @@ struct DescriptorBridgeExample {
     print("    📋 Total messages: \(fileSet.map { $0.messages.count }.reduce(0, +))")
     print("    🏷  Total fields: \(fileSet.flatMap { $0.messages.values }.map { $0.fields.count }.reduce(0, +))")
 
-    // Batch конвертация
+    // Batch conversion
     print("\n  🔄 Performing batch conversion...")
 
     let batchTime = ExampleUtils.measureTime {
-      // Симуляция batch конвертации всех файлов
+      // Simulating batch conversion of all files
       Thread.sleep(forTimeInterval: Double(fileSet.count) * 0.002)  // 2ms per file
     }
 
     ExampleUtils.printTiming("Batch conversion (\(fileSet.count) files)", time: batchTime.time)
 
-    // Результаты batch операции
+    // Batch operation results
     print("\n  📊 Batch Conversion Results:")
     let batchResults = [
       ["Metric": "Files Processed", "Value": "\(fileSet.count)", "Performance": "100% success"],

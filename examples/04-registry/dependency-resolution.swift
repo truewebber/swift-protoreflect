@@ -35,7 +35,7 @@ struct DependencyResolutionExample {
   private static func step1UcomplexDependencyGraphAnalysis() throws {
     ExampleUtils.printStep(1, "Complex dependency graph analysis")
 
-    print("  🧩 Анализ сложного графа зависимостей...")
+    print("  🧩 Analyzing complex dependency graph...")
 
     // Create complex dependency structure
     let dependencyGraph = try createComplexDependencyGraph()
@@ -63,7 +63,7 @@ struct DependencyResolutionExample {
   private static func step2UcircularDependencyDetection() throws {
     ExampleUtils.printStep(2, "Circular dependency detection")
 
-    print("  🔄 Поиск циклических зависимостей...")
+    print("  🔄 Detecting circular dependencies...")
 
     // Create graph with circular dependencies
     let circularGraph = createGraphWithCircularDependencies()
@@ -100,7 +100,7 @@ struct DependencyResolutionExample {
   private static func step3UtopologicalSorting() throws {
     ExampleUtils.printStep(3, "Topological sorting")
 
-    print("  📋 Топологическая сортировка для порядка загрузки...")
+    print("  📋 Topological sorting for loading order...")
 
     let dependencyGraph = try createComplexDependencyGraph()
 
@@ -130,7 +130,7 @@ struct DependencyResolutionExample {
   private static func step4UconditionalDependencies() throws {
     ExampleUtils.printStep(4, "Conditional dependencies")
 
-    print("  ⚡ Условные зависимости и optional imports...")
+    print("  ⚡ Conditional dependencies and optional imports...")
 
     let conditionalGraph = createConditionalDependencyGraph()
 
@@ -164,7 +164,7 @@ struct DependencyResolutionExample {
   private static func step5UperformanceOptimization() throws {
     ExampleUtils.printStep(5, "Performance optimization")
 
-    print("  🚀 Оптимизация производительности разрешения зависимостей...")
+    print("  🚀 Dependency resolution performance optimization...")
 
     // Test with large dependency graph
     let largeGraph = createLargeDependencyGraph(nodeCount: 100)

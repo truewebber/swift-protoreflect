@@ -2,7 +2,7 @@
 // FieldAccessorTests.swift
 // SwiftProtoReflectTests
 //
-// Создан: 2025-05-24
+// Created: 2025-05-24
 //
 
 import XCTest
@@ -22,13 +22,13 @@ final class FieldAccessorTests: XCTestCase {
   override func setUp() {
     super.setUp()
 
-    // Создаем дескриптор файла
+    // Create file descriptor
     fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
 
-    // Создаем дескриптор сообщения Person
+    // Create message descriptor Person
     messageDescriptor = MessageDescriptor(name: "Person", parent: fileDescriptor)
 
-    // Добавляем поля
+    // Add fields
     messageDescriptor.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     messageDescriptor.addField(FieldDescriptor(name: "age", number: 2, type: .int32))
     messageDescriptor.addField(FieldDescriptor(name: "height", number: 3, type: .double))
@@ -39,12 +39,12 @@ final class FieldAccessorTests: XCTestCase {
     messageDescriptor.addField(FieldDescriptor(name: "score", number: 8, type: .uint32))
     messageDescriptor.addField(FieldDescriptor(name: "total_score", number: 9, type: .uint64))
 
-    // Repeated поля
+    // Repeated fields
     messageDescriptor.addField(FieldDescriptor(name: "tags", number: 10, type: .string, isRepeated: true))
     messageDescriptor.addField(FieldDescriptor(name: "numbers", number: 11, type: .int32, isRepeated: true))
     messageDescriptor.addField(FieldDescriptor(name: "scores", number: 12, type: .int64, isRepeated: true))
 
-    // Map поля
+    // Map fields
     let stringMapField = FieldDescriptor(
       name: "attributes",
       number: 13,
@@ -69,7 +69,7 @@ final class FieldAccessorTests: XCTestCase {
     )
     messageDescriptor.addField(stringToInt32MapField)
 
-    // Nested message поле
+    // Nested message field
     var addressDescriptor = MessageDescriptor(name: "Address", parent: fileDescriptor)
     addressDescriptor.addField(FieldDescriptor(name: "street", number: 1, type: .string))
     addressDescriptor.addField(FieldDescriptor(name: "city", number: 2, type: .string))
@@ -77,7 +77,7 @@ final class FieldAccessorTests: XCTestCase {
     let addressField = FieldDescriptor(name: "address", number: 15, type: .message, typeName: "test.Address")
     messageDescriptor.addField(addressField)
 
-    // Repeated messages поле
+    // Repeated messages field
     var phoneDescriptor = MessageDescriptor(name: "Phone", parent: fileDescriptor)
     phoneDescriptor.addField(FieldDescriptor(name: "number", number: 1, type: .string))
     phoneDescriptor.addField(FieldDescriptor(name: "type", number: 2, type: .string))
@@ -91,7 +91,7 @@ final class FieldAccessorTests: XCTestCase {
     )
     messageDescriptor.addField(phonesField)
 
-    // Map with message values поле
+    // Map with message values field
     let messageMapField = FieldDescriptor(
       name: "contacts",
       number: 17,
@@ -105,19 +105,19 @@ final class FieldAccessorTests: XCTestCase {
     )
     messageDescriptor.addField(messageMapField)
 
-    // Создаем пустое сообщение
+    // Create empty message
     personMessage = DynamicMessage(descriptor: messageDescriptor)
   }
 
   // MARK: - Basic Field Access Tests
 
   func testStringFieldAccess() throws {
-    // Тестируем получение несуществующего поля
+    // Test getting non-existent field
     let accessor = personMessage.fieldAccessor
     XCTAssertNil(accessor.getString("name"))
     XCTAssertNil(accessor.getString(1))
 
-    // Устанавливаем значение и проверяем получение
+    // Set value and check retrieval
     try personMessage.set("John Doe", forField: "name")
 
     let updatedAccessor = personMessage.fieldAccessor
@@ -223,7 +223,7 @@ final class FieldAccessorTests: XCTestCase {
   }
 
   func testMessageFieldAccess() throws {
-    // Создаем адрес
+    // Create address
     var addressDescriptor = MessageDescriptor(name: "Address", parent: fileDescriptor)
     addressDescriptor.addField(FieldDescriptor(name: "street", number: 1, type: .string))
     addressDescriptor.addField(FieldDescriptor(name: "city", number: 2, type: .string))
@@ -290,7 +290,7 @@ final class FieldAccessorTests: XCTestCase {
   }
 
   func testMessageArrayFieldAccess() throws {
-    // Создаем телефоны
+    // Create phones
     var phoneDescriptor = MessageDescriptor(name: "Phone", parent: fileDescriptor)
     phoneDescriptor.addField(FieldDescriptor(name: "number", number: 1, type: .string))
     phoneDescriptor.addField(FieldDescriptor(name: "type", number: 2, type: .string))
@@ -345,7 +345,7 @@ final class FieldAccessorTests: XCTestCase {
   }
 
   func testStringToMessageMapFieldAccess() throws {
-    // Создаем телефон для map
+    // Create phone for map
     var phoneDescriptor = MessageDescriptor(name: "Phone", parent: fileDescriptor)
     phoneDescriptor.addField(FieldDescriptor(name: "number", number: 1, type: .string))
     phoneDescriptor.addField(FieldDescriptor(name: "type", number: 2, type: .string))
@@ -358,7 +358,7 @@ final class FieldAccessorTests: XCTestCase {
     try homePhone.set("098-765-4321", forField: "number")
     try homePhone.set("home", forField: "type")
 
-    // Создаем map с телефонами
+    // Create map with phones
     try personMessage.setMapEntry(mobilePhone, forKey: "mobile", inField: "contacts")
     try personMessage.setMapEntry(homePhone, forKey: "home", inField: "contacts")
 
@@ -379,18 +379,18 @@ final class FieldAccessorTests: XCTestCase {
   func testHasValueMethods() throws {
     let accessor = personMessage.fieldAccessor
 
-    // Проверяем, что поля изначально не установлены
+    // Check that fields are initially not set
     XCTAssertFalse(accessor.hasValue("name"))
     XCTAssertFalse(accessor.hasValue(1))
 
-    // Устанавливаем значение и проверяем
+    // Set value and check
     try personMessage.set("John", forField: "name")
 
     let updatedAccessor = personMessage.fieldAccessor
     XCTAssertTrue(updatedAccessor.hasValue("name"))
     XCTAssertTrue(updatedAccessor.hasValue(1))
 
-    // Проверяем несуществующее поле
+    // Check non-existent field
     XCTAssertFalse(updatedAccessor.hasValue("nonexistent"))
     XCTAssertFalse(updatedAccessor.hasValue(999))
   }
@@ -398,13 +398,13 @@ final class FieldAccessorTests: XCTestCase {
   func testFieldExistsMethods() {
     let accessor = personMessage.fieldAccessor
 
-    // Проверяем существующие поля
+    // Check existing fields
     XCTAssertTrue(accessor.fieldExists("name"))
     XCTAssertTrue(accessor.fieldExists(1))
     XCTAssertTrue(accessor.fieldExists("age"))
     XCTAssertTrue(accessor.fieldExists(2))
 
-    // Проверяем несуществующие поля
+    // Check non-existent fields
     XCTAssertFalse(accessor.fieldExists("nonexistent"))
     XCTAssertFalse(accessor.fieldExists(999))
   }
@@ -412,7 +412,7 @@ final class FieldAccessorTests: XCTestCase {
   func testGetFieldTypeMethods() {
     let accessor = personMessage.fieldAccessor
 
-    // Проверяем типы существующих полей
+    // Check types of existing fields
     XCTAssertEqual(accessor.getFieldType("name"), .string)
     XCTAssertEqual(accessor.getFieldType(1), .string)
     XCTAssertEqual(accessor.getFieldType("age"), .int32)
@@ -420,7 +420,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(accessor.getFieldType("height"), .double)
     XCTAssertEqual(accessor.getFieldType(3), .double)
 
-    // Проверяем несуществующие поля
+    // Check non-existent fields
     XCTAssertNil(accessor.getFieldType("nonexistent"))
     XCTAssertNil(accessor.getFieldType(999))
   }
@@ -430,18 +430,18 @@ final class FieldAccessorTests: XCTestCase {
   func testGenericValueAccess() throws {
     let accessor = personMessage.fieldAccessor
 
-    // Проверяем получение несуществующих значений
+    // Check getting non-existent values
     XCTAssertNil(accessor.getValue("name", as: String.self))
     XCTAssertNil(accessor.getValue(1, as: String.self))
 
-    // Устанавливаем значения разных типов
+    // Set values of different types
     try personMessage.set("John", forField: "name")
     try personMessage.set(Int32(25), forField: "age")
     try personMessage.set(true, forField: "is_active")
 
     let updatedAccessor = personMessage.fieldAccessor
 
-    // Проверяем получение с правильными типами
+    // Check getting with correct types
     XCTAssertEqual(updatedAccessor.getValue("name", as: String.self), "John")
     XCTAssertEqual(updatedAccessor.getValue(1, as: String.self), "John")
     XCTAssertEqual(updatedAccessor.getValue("age", as: Int32.self), 25)
@@ -449,7 +449,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getValue("is_active", as: Bool.self), true)
     XCTAssertEqual(updatedAccessor.getValue(5, as: Bool.self), true)
 
-    // Проверяем получение с неправильными типами
+    // Check getting with incorrect types
     XCTAssertNil(updatedAccessor.getValue("name", as: Int32.self))
     XCTAssertNil(updatedAccessor.getValue("age", as: String.self))
     XCTAssertNil(updatedAccessor.getValue("is_active", as: Float.self))
@@ -458,12 +458,12 @@ final class FieldAccessorTests: XCTestCase {
   // MARK: - Type Safety Tests
 
   func testTypeSafetyForWrongTypes() throws {
-    // Устанавливаем строковое значение
+    // Set string value
     try personMessage.set("John", forField: "name")
 
     let accessor = personMessage.fieldAccessor
 
-    // Пытаемся получить строку как числовые типы
+    // Try to get string as numeric types
     XCTAssertNil(accessor.getInt32("name"))
     XCTAssertNil(accessor.getInt64("name"))
     XCTAssertNil(accessor.getUInt32("name"))
@@ -474,7 +474,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertNil(accessor.getData("name"))
     XCTAssertNil(accessor.getMessage("name"))
 
-    // Устанавливаем число и пытаемся получить как строку
+    // Set number and try to get as string
     try personMessage.set(Int32(25), forField: "age")
 
     let updatedAccessor = personMessage.fieldAccessor
@@ -482,17 +482,17 @@ final class FieldAccessorTests: XCTestCase {
   }
 
   func testTypeSafetyForRepeatedFields() throws {
-    // Устанавливаем repeated строки
+    // Set repeated strings
     try personMessage.set(["tag1", "tag2"], forField: "tags")
 
     let accessor = personMessage.fieldAccessor
 
-    // Пытаемся получить repeated строки как другие типы
+    // Try to get repeated strings as other types
     XCTAssertNil(accessor.getInt32Array("tags"))
     XCTAssertNil(accessor.getInt64Array("tags"))
     XCTAssertNil(accessor.getMessageArray("tags"))
 
-    // Устанавливаем repeated числа и пытаемся получить как строки
+    // Set repeated numbers and try to get as strings
     try personMessage.set([Int32(1), Int32(2)], forField: "numbers")
 
     let updatedAccessor = personMessage.fieldAccessor
@@ -500,16 +500,16 @@ final class FieldAccessorTests: XCTestCase {
   }
 
   func testTypeSafetyForMapFields() throws {
-    // Устанавливаем string->string map
+    // Set string->string map
     try personMessage.set(["key": "value"], forField: "attributes")
 
     let accessor = personMessage.fieldAccessor
 
-    // Пытаемся получить string->string map как string->int32 map
+    // Try to get string->string map as string->int32 map
     XCTAssertNil(accessor.getStringToInt32Map("attributes"))
     XCTAssertNil(accessor.getStringToMessageMap("attributes"))
 
-    // Устанавливаем string->int32 map и пытаемся получить как string->string map
+    // Set string->int32 map and try to get as string->string map
     try personMessage.set(["count": Int32(5)], forField: "counters")
 
     let updatedAccessor = personMessage.fieldAccessor
@@ -519,17 +519,17 @@ final class FieldAccessorTests: XCTestCase {
   // MARK: - Mixed Type Arrays Safety Tests
 
   func testMixedTypeArraySafety() throws {
-    // Создаем массив с mixed типами (это не должно произойти в реальности,
-    // но тестируем безопасность)
+    // Create array with mixed types (this should not happen in reality,
+    // but testing safety)
     let mixedArray: [Any] = ["string", Int32(42), true]
 
-    // Пытаемся установить mixed array - DynamicMessage должен это предотвратить
+    // Try to set mixed array - DynamicMessage should prevent this
     do {
       try personMessage.set(mixedArray, forField: "tags")
-      XCTFail("Ожидалась ошибка при установке mixed array")
+      XCTFail("Expected error when setting mixed array")
     }
     catch {
-      // Ожидаемое поведение - ошибка валидации типа
+      // Expected behavior - type validation error
     }
   }
 
@@ -539,30 +539,30 @@ final class FieldAccessorTests: XCTestCase {
     var mutableMessage = personMessage!
     var mutableAccessor = mutableMessage.mutableFieldAccessor()
 
-    // Тестируем установку строкового значения
+    // Test setting string value
     XCTAssertTrue(mutableAccessor.setString("Alice", forField: "name"))
     XCTAssertTrue(mutableAccessor.setString("Bob", forField: 1))
 
-    // Тестируем установку числовых значений
+    // Test setting numeric values
     XCTAssertTrue(mutableAccessor.setInt32(30, forField: "age"))
     XCTAssertTrue(mutableAccessor.setInt32(35, forField: 2))
 
-    // Тестируем установку булевых значений
+    // Test setting boolean values
     XCTAssertTrue(mutableAccessor.setBool(true, forField: "is_active"))
     XCTAssertTrue(mutableAccessor.setBool(false, forField: 5))
 
-    // Получаем обновленное сообщение
+    // Get updated message
     let updatedMessage = mutableAccessor.updatedMessage()
     let readAccessor = updatedMessage.fieldAccessor
 
-    // Проверяем установленные значения
-    XCTAssertEqual(readAccessor.getString("name"), "Bob")  // Последнее установленное значение
-    XCTAssertEqual(readAccessor.getInt32("age"), 35)  // Последнее установленное значение
-    XCTAssertEqual(readAccessor.getBool("is_active"), false)  // Последнее установленное значение
+    // Check set values
+    XCTAssertEqual(readAccessor.getString("name"), "Bob")  // Last set value
+    XCTAssertEqual(readAccessor.getInt32("age"), 35)  // Last set value
+    XCTAssertEqual(readAccessor.getBool("is_active"), false)  // Last set value
   }
 
   func testMutableFieldAccessorWithNestedMessage() throws {
-    // Создаем адрес
+    // Create address
     var addressDescriptor = MessageDescriptor(name: "Address", parent: fileDescriptor)
     addressDescriptor.addField(FieldDescriptor(name: "street", number: 1, type: .string))
     addressDescriptor.addField(FieldDescriptor(name: "city", number: 2, type: .string))
@@ -574,11 +574,11 @@ final class FieldAccessorTests: XCTestCase {
     var mutableMessage = personMessage!
     var mutableAccessor = mutableMessage.mutableFieldAccessor()
 
-    // Устанавливаем nested message
+    // Set nested message
     XCTAssertTrue(mutableAccessor.setMessage(address, forField: "address"))
     XCTAssertTrue(mutableAccessor.setMessage(address, forField: 15))
 
-    // Проверяем установленное значение
+    // Check set value
     let updatedMessage = mutableAccessor.updatedMessage()
     let readAccessor = updatedMessage.fieldAccessor
 
@@ -591,33 +591,33 @@ final class FieldAccessorTests: XCTestCase {
     var mutableMessage = personMessage!
     var mutableAccessor = mutableMessage.mutableFieldAccessor()
 
-    // Пытаемся установить значение в несуществующее поле
+    // Try to set value in non-existent field
     XCTAssertFalse(mutableAccessor.setString("test", forField: "nonexistent"))
     XCTAssertFalse(mutableAccessor.setString("test", forField: 999))
 
-    // Пытаемся установить неправильный тип (это должно быть обработано DynamicMessage)
-    // Создаем fake nested message для поля, которое ожидает строку
+    // Try to set incorrect type (this should be handled by DynamicMessage)
+    // Create fake nested message for field that expects string
     let fakeDescriptor = MessageDescriptor(name: "Fake", parent: fileDescriptor)
     let fakeMessage = DynamicMessage(descriptor: fakeDescriptor)
 
-    // Попытка установить message в string поле должна завершиться неудачей
+    // Attempt to set message in string field should fail
     XCTAssertFalse(mutableAccessor.setMessage(fakeMessage, forField: "name"))
   }
 
   // MARK: - Convenience Extension Tests
 
   func testConvenienceExtensions() {
-    // Тестируем fieldAccessor extension
+    // Test fieldAccessor extension
     let readAccessor = personMessage.fieldAccessor
     XCTAssertNotNil(readAccessor)
     XCTAssertFalse(readAccessor.hasValue("name"))
 
-    // Тестируем mutableFieldAccessor extension
+    // Test mutableFieldAccessor extension
     var mutableMessage = personMessage!
     var mutableAccessor = mutableMessage.mutableFieldAccessor()
     XCTAssertTrue(mutableAccessor.setString("Test", forField: "name"))
 
-    // Проверяем, что изменение отражено в исходном сообщении
+    // Check that change is reflected in original message
     let updatedMessage = mutableAccessor.updatedMessage()
     XCTAssertEqual(updatedMessage.fieldAccessor.getString("name"), "Test")
   }
@@ -625,25 +625,25 @@ final class FieldAccessorTests: XCTestCase {
   // MARK: - Edge Cases Tests
 
   func testEmptyRepeatedFields() throws {
-    // Устанавливаем пустые repeated поля
+    // Set empty repeated fields
     try personMessage.set([String](), forField: "tags")
     try personMessage.set([Int32](), forField: "numbers")
 
     let accessor = personMessage.fieldAccessor
 
-    // Проверяем, что мы получаем пустые массивы, а не nil
+    // Check that we get empty arrays, not nil
     XCTAssertEqual(accessor.getStringArray("tags"), [])
     XCTAssertEqual(accessor.getInt32Array("numbers"), [])
   }
 
   func testEmptyMapFields() throws {
-    // Устанавливаем пустые map поля
+    // Set empty map fields
     try personMessage.set([String: String](), forField: "attributes")
     try personMessage.set([String: Int32](), forField: "counters")
 
     let accessor = personMessage.fieldAccessor
 
-    // Проверяем, что мы получаем пустые словари, а не nil
+    // Check that we get empty dictionaries, not nil
     XCTAssertEqual(accessor.getStringMap("attributes"), [:])
     XCTAssertEqual(accessor.getStringToInt32Map("counters"), [:])
   }
@@ -651,7 +651,7 @@ final class FieldAccessorTests: XCTestCase {
   func testNilDefaultValues() {
     let accessor = personMessage.fieldAccessor
 
-    // Все методы должны возвращать nil для неустановленных полей
+    // All methods should return nil for unset fields
     XCTAssertNil(accessor.getString("name"))
     XCTAssertNil(accessor.getInt32("age"))
     XCTAssertNil(accessor.getInt64("user_id"))

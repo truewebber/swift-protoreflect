@@ -1,13 +1,13 @@
 //
 // DynamicFieldAccessTests.swift
 //
-// Тесты для проверки доступа к полям динамических Protocol Buffers сообщений
+// Tests for checking access to fields of dynamic Protocol Buffers messages
 //
-// Тестовые случаи из плана:
-// - Test-DYN-004: Манипуляция repeated полями (добавление, удаление, изменение элементов)
-// - Test-DYN-005: Манипуляция map полями со всеми допустимыми типами ключей и значений
-// - Test-DYN-006: Работа с oneof полями (установка, проверка, переключение между вариантами)
-// - Test-DYN-007: Обработка enum-значений, включая неизвестные значения
+// Test cases from the plan:
+// - Test-DYN-004: Manipulation of repeated fields (adding, removing, modifying elements)
+// - Test-DYN-005: Manipulation of map fields with all valid key and value types
+// - Test-DYN-006: Working with oneof fields (setting, checking, switching between variants)
+// - Test-DYN-007: Handling enum values, including unknown values
 
 import XCTest
 
@@ -30,26 +30,26 @@ final class DynamicFieldAccessTests: XCTestCase {
     messageFactory = MessageFactory()
     fileDescriptor = FileDescriptor(name: "test_field_access.proto", package: "test.access")
 
-    // Создаем enum для тестирования
+    // Create enum for testing
     enumDescriptor = EnumDescriptor(name: "Color", parent: fileDescriptor)
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN_COLOR", number: 0))
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "RED", number: 1))
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "GREEN", number: 2))
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "BLUE", number: 3))
-    enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "CUSTOM", number: 999))  // Нестандартное значение
+    enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "CUSTOM", number: 999))  // Non-standard value
     fileDescriptor.addEnum(enumDescriptor)
 
-    // Вложенное сообщение для тестирования
+    // Nested message for testing
     nestedMessage = MessageDescriptor(name: "NestedItem", parent: fileDescriptor)
     nestedMessage.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
     nestedMessage.addField(FieldDescriptor(name: "label", number: 2, type: .string))
     nestedMessage.addField(FieldDescriptor(name: "value", number: 3, type: .double))
     fileDescriptor.addMessage(nestedMessage)
 
-    // Основное сообщение для тестирования всех типов полей
+    // Main message for testing all field types
     testMessage = MessageDescriptor(name: "FieldAccessTestMessage", parent: fileDescriptor)
 
-    // Repeated поля всех основных типов
+    // Repeated fields of all basic types
     testMessage.addField(FieldDescriptor(name: "repeated_strings", number: 1, type: .string, isRepeated: true))
     testMessage.addField(FieldDescriptor(name: "repeated_int32", number: 2, type: .int32, isRepeated: true))
     testMessage.addField(FieldDescriptor(name: "repeated_int64", number: 3, type: .int64, isRepeated: true))
@@ -78,7 +78,7 @@ final class DynamicFieldAccessTests: XCTestCase {
       )
     )
 
-    // Map поля с различными типами ключей и значений
+    // Map fields with different key and value types
     // String -> String map
     let stringStringMapEntry = MapEntryInfo(
       keyFieldInfo: KeyFieldInfo(name: "key", number: 1, type: .string),
@@ -198,7 +198,7 @@ final class DynamicFieldAccessTests: XCTestCase {
       )
     )
 
-    // Oneof поля с разными типами
+    // Oneof fields with different types
     testMessage.addField(FieldDescriptor(name: "oneof_string", number: 30, type: .string, oneofIndex: 1))
     testMessage.addField(FieldDescriptor(name: "oneof_int32", number: 31, type: .int32, oneofIndex: 1))
     testMessage.addField(FieldDescriptor(name: "oneof_bool", number: 32, type: .bool, oneofIndex: 1))
@@ -221,11 +221,11 @@ final class DynamicFieldAccessTests: XCTestCase {
       )
     )
 
-    // Второй oneof для тестирования множественных oneof групп
+    // Second oneof for testing multiple oneof groups
     testMessage.addField(FieldDescriptor(name: "second_oneof_a", number: 40, type: .string, oneofIndex: 2))
     testMessage.addField(FieldDescriptor(name: "second_oneof_b", number: 41, type: .int64, oneofIndex: 2))
 
-    // Enum поля разных типов
+    // Enum fields of different types
     testMessage.addField(
       FieldDescriptor(
         name: "single_enum",
@@ -256,17 +256,17 @@ final class DynamicFieldAccessTests: XCTestCase {
     super.tearDown()
   }
 
-  // MARK: - Test-DYN-004: Манипуляция repeated полями
+  // MARK: - Test-DYN-004: Manipulation of repeated fields
 
   func testRepeatedFieldAddition() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Добавляем элементы в repeated строковое поле
+    // Add elements to repeated string field
     try message.addRepeatedValue("first", forField: "repeated_strings")
     try message.addRepeatedValue("second", forField: "repeated_strings")
     try message.addRepeatedValue("third", forField: "repeated_strings")
 
-    // Проверяем через FieldAccessor
+    // Check via FieldAccessor
     let accessor = FieldAccessor(message)
     let strings = accessor.getStringArray("repeated_strings")
     XCTAssertEqual(strings?.count, 3)
@@ -274,7 +274,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(strings?[1], "second")
     XCTAssertEqual(strings?[2], "third")
 
-    // Добавляем числовые значения
+    // Add numeric values
     try message.addRepeatedValue(Int32(10), forField: "repeated_int32")
     try message.addRepeatedValue(Int32(20), forField: "repeated_int32")
 
@@ -284,7 +284,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(int32Array?[0], 10)
     XCTAssertEqual(int32Array?[1], 20)
 
-    // Добавляем булевы значения
+    // Add boolean values
     try message.addRepeatedValue(true, forField: "repeated_bool")
     try message.addRepeatedValue(false, forField: "repeated_bool")
     try message.addRepeatedValue(true, forField: "repeated_bool")
@@ -299,14 +299,14 @@ final class DynamicFieldAccessTests: XCTestCase {
   func testRepeatedFieldReplacement() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Устанавливаем массив целиком
+    // Set array entirely
     let originalStrings = ["a", "b", "c"]
     try message.set(originalStrings, forField: "repeated_strings")
 
     let accessor = FieldAccessor(message)
     XCTAssertEqual(accessor.getStringArray("repeated_strings"), originalStrings)
 
-    // Заменяем массив новым
+    // Replace array with new one
     let newStrings = ["x", "y", "z", "w"]
     try message.set(newStrings, forField: "repeated_strings")
 
@@ -318,14 +318,14 @@ final class DynamicFieldAccessTests: XCTestCase {
   func testRepeatedFieldClearing() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Добавляем элементы
+    // Add elements
     try message.addRepeatedValue(Int64(100), forField: "repeated_int64")
     try message.addRepeatedValue(Int64(200), forField: "repeated_int64")
 
     let accessor = FieldAccessor(message)
     XCTAssertEqual(accessor.getInt64Array("repeated_int64")?.count, 2)
 
-    // Очищаем поле
+    // Clear field
     try message.clearField("repeated_int64")
 
     let clearedAccessor = FieldAccessor(message)
@@ -336,7 +336,7 @@ final class DynamicFieldAccessTests: XCTestCase {
   func testRepeatedMessageFields() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Создаем вложенные сообщения
+    // Create nested messages
     let nested1 = try messageFactory.createMessage(
       from: nestedMessage,
       with: [
@@ -354,7 +354,7 @@ final class DynamicFieldAccessTests: XCTestCase {
       ]
     )
 
-    // Добавляем по одному
+    // Add one by one
     try message.addRepeatedValue(nested1, forField: "repeated_messages")
     try message.addRepeatedValue(nested2, forField: "repeated_messages")
 
@@ -364,7 +364,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(try messages?[0].get(forField: "id") as? Int32, 1)
     XCTAssertEqual(try messages?[1].get(forField: "label") as? String, "Second")
 
-    // Добавляем еще одно и проверяем, что массив увеличился
+    // Add one more and verify that array increased
     let nested3 = try messageFactory.createMessage(
       from: nestedMessage,
       with: [
@@ -382,7 +382,7 @@ final class DynamicFieldAccessTests: XCTestCase {
   func testRepeatedFieldsAllNumericTypes() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Тестируем все числовые типы
+    // Test all numeric types
     try message.set([UInt32(1), UInt32(2), UInt32(3)], forField: "repeated_uint32")
     try message.set([UInt64(10), UInt64(20), UInt64(30)], forField: "repeated_uint64")
     try message.set([Float(1.1), Float(2.2), Float(3.3)], forField: "repeated_float")
@@ -419,7 +419,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(String(data: bytesArray?[0] ?? Data(), encoding: .utf8), "hello")
   }
 
-  // MARK: - Test-DYN-005: Манипуляция map полями
+  // MARK: - Test-DYN-005: Manipulation of map fields
 
   func testMapFieldsAllKeyTypes() throws {
     var message = messageFactory.createMessage(from: testMessage)
@@ -474,7 +474,7 @@ final class DynamicFieldAccessTests: XCTestCase {
   func testMapFieldsWithMessages() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Создаем вложенные сообщения для map
+    // Create nested messages for map
     let nested1 = try messageFactory.createMessage(
       from: nestedMessage,
       with: [
@@ -492,7 +492,7 @@ final class DynamicFieldAccessTests: XCTestCase {
       ]
     )
 
-    // Добавляем в map по одному
+    // Add to map one by one
     try message.setMapEntry(nested1, forKey: "first", inField: "string_to_message_map")
     try message.setMapEntry(nested2, forKey: "second", inField: "string_to_message_map")
 
@@ -502,7 +502,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(try messageMap?["first"]?.get(forField: "id") as? Int32, 1)
     XCTAssertEqual(try messageMap?["second"]?.get(forField: "label") as? String, "Map Value 2")
 
-    // Устанавливаем map целиком
+    // Set map entirely
     let nested3 = try messageFactory.createMessage(
       from: nestedMessage,
       with: [
@@ -524,9 +524,9 @@ final class DynamicFieldAccessTests: XCTestCase {
   func testMapFieldsWithEnums() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Добавляем enum значения в map
+    // Add enum values to map
     try message.setMapEntry(Int32(1), forKey: "red", inField: "string_to_enum_map")  // RED
-    try message.setMapEntry("GREEN", forKey: "green", inField: "string_to_enum_map")  // По имени
+    try message.setMapEntry("GREEN", forKey: "green", inField: "string_to_enum_map")  // By name
     try message.setMapEntry(Int32(3), forKey: "blue", inField: "string_to_enum_map")  // BLUE
 
     let enumMap = try message.get(forField: "string_to_enum_map") as? [String: Any]
@@ -539,23 +539,23 @@ final class DynamicFieldAccessTests: XCTestCase {
   func testMapFieldModification() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Создаем начальный map
+    // Create initial map
     try message.setMapEntry("original", forKey: "key1", inField: "string_to_string_map")
     try message.setMapEntry("value2", forKey: "key2", inField: "string_to_string_map")
 
     let accessor = FieldAccessor(message)
     XCTAssertEqual(accessor.getStringMap("string_to_string_map")?.count, 2)
 
-    // Изменяем существующий ключ
+    // Modify existing key
     try message.setMapEntry("modified", forKey: "key1", inField: "string_to_string_map")
 
     let updatedAccessor = FieldAccessor(message)
     let updatedMap = updatedAccessor.getStringMap("string_to_string_map")
-    XCTAssertEqual(updatedMap?.count, 2)  // Количество не изменилось
+    XCTAssertEqual(updatedMap?.count, 2)  // Count hasn't changed
     XCTAssertEqual(updatedMap?["key1"], "modified")
     XCTAssertEqual(updatedMap?["key2"], "value2")
 
-    // Добавляем новый ключ
+    // Add new key
     try message.setMapEntry("new_value", forKey: "key3", inField: "string_to_string_map")
 
     let finalAccessor = FieldAccessor(message)
@@ -565,14 +565,14 @@ final class DynamicFieldAccessTests: XCTestCase {
   func testMapFieldClearing() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Добавляем данные в map
+    // Add data to map
     try message.setMapEntry("value1", forKey: "key1", inField: "string_to_string_map")
     try message.setMapEntry("value2", forKey: "key2", inField: "string_to_string_map")
 
     let accessor = FieldAccessor(message)
     XCTAssertEqual(accessor.getStringMap("string_to_string_map")?.count, 2)
 
-    // Очищаем map поле
+    // Clear map field
     try message.clearField("string_to_string_map")
 
     let clearedAccessor = FieldAccessor(message)
@@ -580,12 +580,12 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertFalse(try message.hasValue(forField: "string_to_string_map"))
   }
 
-  // MARK: - Test-DYN-006: Работа с oneof полями
+  // MARK: - Test-DYN-006: Working with oneof fields
 
   func testOneofFieldSwitching() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Изначально все oneof поля не установлены
+    // Initially all oneof fields are not set
     let initialAccessor = FieldAccessor(message)
     XCTAssertFalse(initialAccessor.hasValue("oneof_string"))
     XCTAssertFalse(initialAccessor.hasValue("oneof_int32"))
@@ -593,21 +593,21 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertFalse(initialAccessor.hasValue("oneof_message"))
     XCTAssertFalse(initialAccessor.hasValue("oneof_enum"))
 
-    // Устанавливаем string вариант
+    // Set string variant
     try message.set("oneof_value", forField: "oneof_string")
     let stringAccessor = FieldAccessor(message)
     XCTAssertTrue(stringAccessor.hasValue("oneof_string"))
     XCTAssertFalse(stringAccessor.hasValue("oneof_int32"))
     XCTAssertEqual(stringAccessor.getString("oneof_string"), "oneof_value")
 
-    // Переключаемся на int32 - должен очистить string
+    // Switch to int32 - should clear string
     try message.set(Int32(42), forField: "oneof_int32")
     let updatedAccessor = FieldAccessor(message)
     XCTAssertFalse(updatedAccessor.hasValue("oneof_string"))
     XCTAssertTrue(updatedAccessor.hasValue("oneof_int32"))
     XCTAssertEqual(updatedAccessor.getInt32("oneof_int32"), 42)
 
-    // Переключаемся на bool
+    // Switch to bool
     try message.set(true, forField: "oneof_bool")
     let boolAccessor = FieldAccessor(message)
     XCTAssertFalse(boolAccessor.hasValue("oneof_string"))
@@ -619,7 +619,7 @@ final class DynamicFieldAccessTests: XCTestCase {
   func testOneofFieldWithMessage() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Создаем вложенное сообщение для oneof
+    // Create nested message for oneof
     let nestedMsg = try messageFactory.createMessage(
       from: nestedMessage,
       with: [
@@ -629,7 +629,7 @@ final class DynamicFieldAccessTests: XCTestCase {
       ]
     )
 
-    // Устанавливаем message вариант
+    // Set message variant
     try message.set(nestedMsg, forField: "oneof_message")
 
     let accessor = FieldAccessor(message)
@@ -641,7 +641,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(try retrievedMessage?.get(forField: "id") as? Int32, 123)
     XCTAssertEqual(try retrievedMessage?.get(forField: "label") as? String, "Oneof Message")
 
-    // Переключаемся на string - должен очистить message
+    // Switch to string - should clear message
     try message.set("new_string", forField: "oneof_string")
 
     let switchedAccessor = FieldAccessor(message)
@@ -653,21 +653,21 @@ final class DynamicFieldAccessTests: XCTestCase {
   func testOneofFieldWithEnum() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Устанавливаем enum вариант по номеру
+    // Set enum variant by number
     try message.set(Int32(2), forField: "oneof_enum")  // GREEN
 
     let accessor = FieldAccessor(message)
     XCTAssertTrue(accessor.hasValue("oneof_enum"))
     XCTAssertEqual(try message.get(forField: "oneof_enum") as? Int32, 2)
 
-    // Переключаемся на enum по имени
+    // Switch to enum by name
     try message.set("BLUE", forField: "oneof_enum")
 
     let nameAccessor = FieldAccessor(message)
     XCTAssertTrue(nameAccessor.hasValue("oneof_enum"))
     XCTAssertEqual(try message.get(forField: "oneof_enum") as? String, "BLUE")
 
-    // Переключаемся на другое поле oneof
+    // Switch to another oneof field
     try message.set("back_to_string", forField: "oneof_string")
 
     let finalAccessor = FieldAccessor(message)
@@ -678,10 +678,10 @@ final class DynamicFieldAccessTests: XCTestCase {
   func testMultipleOneofGroups() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Устанавливаем поля из первой oneof группы
+    // Set fields from first oneof group
     try message.set("first_group", forField: "oneof_string")
 
-    // Устанавливаем поля из второй oneof группы
+    // Set fields from second oneof group
     try message.set("second_group", forField: "second_oneof_a")
 
     let accessor = FieldAccessor(message)
@@ -690,20 +690,20 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(accessor.getString("oneof_string"), "first_group")
     XCTAssertEqual(accessor.getString("second_oneof_a"), "second_group")
 
-    // Переключаем первую группу - вторая не должна измениться
+    // Switch first group - second should not change
     try message.set(Int32(99), forField: "oneof_int32")
 
     let switchedAccessor = FieldAccessor(message)
     XCTAssertFalse(switchedAccessor.hasValue("oneof_string"))
     XCTAssertTrue(switchedAccessor.hasValue("oneof_int32"))
-    XCTAssertTrue(switchedAccessor.hasValue("second_oneof_a"))  // Не изменилось
+    XCTAssertTrue(switchedAccessor.hasValue("second_oneof_a"))  // Not changed
     XCTAssertEqual(switchedAccessor.getInt32("oneof_int32"), 99)
 
-    // Переключаем вторую группу - первая не должна измениться
+    // Switch second group - first should not change
     try message.set(Int64(777), forField: "second_oneof_b")
 
     let finalAccessor = FieldAccessor(message)
-    XCTAssertTrue(finalAccessor.hasValue("oneof_int32"))  // Не изменилось
+    XCTAssertTrue(finalAccessor.hasValue("oneof_int32"))  // Not changed
     XCTAssertFalse(finalAccessor.hasValue("second_oneof_a"))
     XCTAssertTrue(finalAccessor.hasValue("second_oneof_b"))
     XCTAssertEqual(finalAccessor.getValue("second_oneof_b", as: Int64.self), 777)
@@ -712,13 +712,13 @@ final class DynamicFieldAccessTests: XCTestCase {
   func testOneofFieldClearing() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Устанавливаем oneof поле
+    // Set oneof field
     try message.set("test_value", forField: "oneof_string")
 
     let accessor = FieldAccessor(message)
     XCTAssertTrue(accessor.hasValue("oneof_string"))
 
-    // Очищаем oneof поле
+    // Clear oneof field
     try message.clearField("oneof_string")
 
     let clearedAccessor = FieldAccessor(message)
@@ -727,12 +727,12 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertFalse(clearedAccessor.hasValue("oneof_bool"))
   }
 
-  // MARK: - Test-DYN-007: Обработка enum-значений
+  // MARK: - Test-DYN-007: Handling enum values
 
   func testEnumByNumber() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Устанавливаем enum значения по номеру
+    // Set enum values by number
     try message.set(Int32(0), forField: "single_enum")  // UNKNOWN_COLOR
     XCTAssertEqual(try message.get(forField: "single_enum") as? Int32, 0)
 
@@ -745,7 +745,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     try message.set(Int32(3), forField: "single_enum")  // BLUE
     XCTAssertEqual(try message.get(forField: "single_enum") as? Int32, 3)
 
-    // Нестандартное значение
+    // Non-standard value
     try message.set(Int32(999), forField: "single_enum")  // CUSTOM
     XCTAssertEqual(try message.get(forField: "single_enum") as? Int32, 999)
   }
@@ -753,7 +753,7 @@ final class DynamicFieldAccessTests: XCTestCase {
   func testEnumByName() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Устанавливаем enum значения по имени
+    // Set enum values by name
     try message.set("UNKNOWN_COLOR", forField: "single_enum")
     XCTAssertEqual(try message.get(forField: "single_enum") as? String, "UNKNOWN_COLOR")
 
@@ -773,28 +773,28 @@ final class DynamicFieldAccessTests: XCTestCase {
   func testEnumUnknownValues() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Тестируем неизвестные номера enum (протобуфы должны их поддерживать)
-    try message.set(Int32(42), forField: "single_enum")  // Неизвестное значение
+    // Test unknown enum numbers (protobufs should support them)
+    try message.set(Int32(42), forField: "single_enum")  // Unknown value
     XCTAssertEqual(try message.get(forField: "single_enum") as? Int32, 42)
 
-    try message.set(Int32(-1), forField: "single_enum")  // Отрицательное значение
+    try message.set(Int32(-1), forField: "single_enum")  // Negative value
     XCTAssertEqual(try message.get(forField: "single_enum") as? Int32, -1)
 
-    try message.set(Int32(1_000_000), forField: "single_enum")  // Очень большое значение
+    try message.set(Int32(1_000_000), forField: "single_enum")  // Very large value
     XCTAssertEqual(try message.get(forField: "single_enum") as? Int32, 1_000_000)
 
-    // Переключение между известным и неизвестным значением
-    try message.set(Int32(1), forField: "single_enum")  // RED (известное)
+    // Switch between known and unknown value
+    try message.set(Int32(1), forField: "single_enum")  // RED (known)
     XCTAssertEqual(try message.get(forField: "single_enum") as? Int32, 1)
 
-    try message.set(Int32(500), forField: "single_enum")  // Неизвестное
+    try message.set(Int32(500), forField: "single_enum")  // Unknown
     XCTAssertEqual(try message.get(forField: "single_enum") as? Int32, 500)
   }
 
   func testEnumInRepeatedField() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Добавляем enum значения в repeated поле по номерам
+    // Add enum values to repeated field by numbers
     try message.addRepeatedValue(Int32(1), forField: "repeated_enums")  // RED
     try message.addRepeatedValue(Int32(2), forField: "repeated_enums")  // GREEN
     try message.addRepeatedValue(Int32(3), forField: "repeated_enums")  // BLUE
@@ -805,7 +805,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(enumArray?[1], 2)
     XCTAssertEqual(enumArray?[2], 3)
 
-    // Добавляем по именам
+    // Add by names
     try message.addRepeatedValue("UNKNOWN_COLOR", forField: "repeated_enums")
     try message.addRepeatedValue("CUSTOM", forField: "repeated_enums")
 
@@ -814,7 +814,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(mixedEnumArray?[3] as? String, "UNKNOWN_COLOR")
     XCTAssertEqual(mixedEnumArray?[4] as? String, "CUSTOM")
 
-    // Добавляем неизвестное значение
+    // Add unknown value
     try message.addRepeatedValue(Int32(777), forField: "repeated_enums")
 
     let finalEnumArray = try message.get(forField: "repeated_enums") as? [Any]
@@ -825,11 +825,11 @@ final class DynamicFieldAccessTests: XCTestCase {
   func testEnumValidation() throws {
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Валидные типы должны работать
+    // Valid types should work
     XCTAssertNoThrow(try message.set(Int32(1), forField: "single_enum"))
     XCTAssertNoThrow(try message.set("RED", forField: "single_enum"))
 
-    // Невалидные типы должны вызывать ошибку
+    // Invalid types should throw error
     XCTAssertThrowsError(try message.set(123.45, forField: "single_enum")) { error in
       XCTAssertTrue(error is DynamicMessageError)
     }
@@ -847,14 +847,14 @@ final class DynamicFieldAccessTests: XCTestCase {
     var message1 = messageFactory.createMessage(from: testMessage)
     var message2 = messageFactory.createMessage(from: testMessage)
 
-    // Устанавливаем одинаковые enum значения разными способами
-    try message1.set(Int32(1), forField: "single_enum")  // По номеру
-    try message2.set("RED", forField: "single_enum")  // По имени
+    // Set same enum values different ways
+    try message1.set(Int32(1), forField: "single_enum")  // By number
+    try message2.set("RED", forField: "single_enum")  // By name
 
-    // Сообщения НЕ должны быть равны, так как хранятся разные типы
+    // Messages should NOT be equal as they store different types
     XCTAssertNotEqual(message1, message2)
 
-    // Устанавливаем одинаковыми способами
+    // Set same ways
     try message1.set(Int32(1), forField: "single_enum")
     try message2.set(Int32(1), forField: "single_enum")
     XCTAssertEqual(message1, message2)
@@ -867,25 +867,25 @@ final class DynamicFieldAccessTests: XCTestCase {
   // MARK: - Integration Tests
 
   func testCombinedFieldTypes() throws {
-    // Тест интеграции всех типов полей вместе
+    // Test integration of all field types together
     var message = messageFactory.createMessage(from: testMessage)
 
-    // Repeated поля
+    // Repeated fields
     try message.set(["a", "b", "c"], forField: "repeated_strings")
     try message.set([Int32(1), Int32(2), Int32(3)], forField: "repeated_int32")
 
-    // Map поля
+    // Map fields
     try message.setMapEntry("map_value", forKey: "map_key", inField: "string_to_string_map")
 
-    // Oneof поля
+    // Oneof fields
     try message.set("oneof_value", forField: "oneof_string")
     try message.set("second_oneof_value", forField: "second_oneof_a")
 
-    // Enum поля
+    // Enum fields
     try message.set(Int32(2), forField: "single_enum")  // GREEN
     try message.set([Int32(1), Int32(3)], forField: "repeated_enums")  // RED, BLUE
 
-    // Проверяем через FieldAccessor
+    // Verify via FieldAccessor
     let accessor = FieldAccessor(message)
 
     XCTAssertEqual(accessor.getStringArray("repeated_strings")?.count, 3)
@@ -895,7 +895,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(accessor.getString("second_oneof_a"), "second_oneof_value")
     XCTAssertEqual(try message.get(forField: "single_enum") as? Int32, 2)
 
-    // Валидация всего сообщения
+    // Validate entire message
     let validationResult = messageFactory.validate(message)
     XCTAssertTrue(validationResult.isValid, "Combined message should be valid: \(validationResult.errors)")
   }

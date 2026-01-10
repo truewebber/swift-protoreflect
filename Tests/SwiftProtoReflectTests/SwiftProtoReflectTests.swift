@@ -8,10 +8,10 @@ final class SwiftProtoReflectTests: XCTestCase {
   }
 
   func testInitialize() {
-    // Проверка, что метод не вызывает исключений
+    // Check that the method does not throw exceptions
     XCTAssertNoThrow(SwiftProtoReflect.initialize(), "Initialize should not throw")
 
-    // Проверка с передачей опций
+    // Check with options passed
     let options: [String: Any] = ["debug": true, "logLevel": "verbose"]
     XCTAssertNoThrow(SwiftProtoReflect.initialize(options: options), "Initialize with options should not throw")
   }

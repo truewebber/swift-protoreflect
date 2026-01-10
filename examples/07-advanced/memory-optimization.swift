@@ -37,7 +37,7 @@ struct MemoryOptimizationExample {
 
     print("  🏊 Implementing object pool pattern...")
 
-    // Простая реализация object pool
+    // Simple object pool implementation
     class MessagePool {
       private var pool: [DynamicMessage] = []
       private let descriptor: MessageDescriptor
@@ -50,7 +50,7 @@ struct MemoryOptimizationExample {
 
       func borrowMessage() -> DynamicMessage {
         if let message = pool.popLast() {
-          // Очистка переиспользуемого сообщения
+          // Cleanup reusable message
           clearMessage(message)
           return message
         }
@@ -60,19 +60,19 @@ struct MemoryOptimizationExample {
       }
 
       func returnMessage(_ message: DynamicMessage) {
-        guard pool.count < 100 else { return }  // Ограничение размера pool
+        guard pool.count < 100 else { return }  // Pool size limit
         pool.append(message)
       }
 
       private func clearMessage(_ message: DynamicMessage) {
-        // В реальной реализации здесь была бы очистка полей
-        // Для демонстрации просто симулируем
+        // In real implementation, field cleanup would happen here
+        // For demonstration, just simulating
       }
 
       var poolSize: Int { pool.count }
     }
 
-    // Создание дескриптора для тестирования
+    // Creating descriptor for testing
     var dataFile = FileDescriptor(name: "pooling.proto", package: "com.pool")
     var dataDescriptor = MessageDescriptor(name: "DataMessage", parent: dataFile)
 
@@ -87,7 +87,7 @@ struct MemoryOptimizationExample {
 
     print("  📊 Testing object pool with \(operationCount) operations...")
 
-    // Тест без pooling
+    // Test without pooling
     let withoutPoolingTime = try ExampleUtils.measureTime {
       let factory = MessageFactory()
       for i in 1...operationCount {
@@ -95,13 +95,13 @@ struct MemoryOptimizationExample {
         try message.set(Int64(i), forField: "id")
         try message.set("Payload \(i)", forField: "payload")
         try message.set(Int64(Date().timeIntervalSince1970), forField: "timestamp")
-        // Сообщение выходит из scope и будет деаллоцировано
+        // Message goes out of scope and will be deallocated
       }
     }
 
     ExampleUtils.printTiming("Without pooling (\(operationCount) messages)", time: withoutPoolingTime.time)
 
-    // Тест с pooling
+    // Test with pooling
     let withPoolingTime = try ExampleUtils.measureTime {
       for i in 1...operationCount {
         var message = pool.borrowMessage()
@@ -144,7 +144,7 @@ struct MemoryOptimizationExample {
 
     print("  ⏳ Implementing lazy loading pattern...")
 
-    // Симуляция lazy loading registry
+    // Lazy loading registry simulation
     class LazyMessageRegistry {
       private var descriptorCache: [String: MessageDescriptor] = [:]
       private var messageCache: [String: DynamicMessage] = [:]
@@ -155,7 +155,7 @@ struct MemoryOptimizationExample {
           return cached
         }
 
-        // Симуляция "загрузки" дескриптора
+        // Simulating descriptor "loading"
         let descriptor = createDescriptor(for: typeName)
         descriptorCache[typeName] = descriptor
         return descriptor
@@ -170,14 +170,14 @@ struct MemoryOptimizationExample {
           return nil
         }
 
-        // Симуляция "загрузки" сообщения
+        // Simulating message "loading"
         let message = factory.createMessage(from: descriptor)
         messageCache[key] = message
         return message
       }
 
       private func createDescriptor(for typeName: String) -> MessageDescriptor {
-        // Симуляция создания дескриптора на лету
+        // Simulating on-the-fly descriptor creation
         var file = FileDescriptor(name: "\(typeName.lowercased()).proto", package: "com.lazy")
         var descriptor = MessageDescriptor(name: typeName, parent: file)
 
@@ -199,9 +199,9 @@ struct MemoryOptimizationExample {
 
     print("  📊 Testing lazy loading with \(accessCount) accesses...")
 
-    // Eager loading simulation (все загружается сразу)
+    // Eager loading simulation (everything loaded at once)
     let eagerTime = ExampleUtils.measureTime {
-      // Симуляция предварительной загрузки всех типов
+      // Simulating preloading all types
       for typeName in typeNames {
         for _ in 1...accessCount / typeNames.count {
           _ = registry.getDescriptor(for: typeName)
@@ -211,7 +211,7 @@ struct MemoryOptimizationExample {
 
     ExampleUtils.printTiming("Eager loading simulation", time: eagerTime.time)
 
-    // Lazy loading (загружается по требованию)
+    // Lazy loading (loaded on demand)
     let lazyTime = ExampleUtils.measureTime {
       for i in 1...accessCount {
         let typeName = typeNames[i % typeNames.count]
@@ -280,21 +280,21 @@ struct MemoryOptimizationExample {
       }
 
       private func flushChunk() throws {
-        // Обработка chunk'а
+        // Processing chunk
         for message in currentChunk {
-          // Симуляция обработки
+          // Simulating processing
           _ = try message.get(forField: "id")
           processedCount += 1
         }
 
-        // Очистка памяти
+        // Memory cleanup
         currentChunk.removeAll(keepingCapacity: true)
       }
 
       var totalProcessed: Int { processedCount }
     }
 
-    // Создание дескриптора для streaming
+    // Creating descriptor for streaming
     var streamFile = FileDescriptor(name: "stream.proto", package: "com.stream")
     var streamDescriptor = MessageDescriptor(name: "StreamRecord", parent: streamFile)
 
@@ -321,9 +321,9 @@ struct MemoryOptimizationExample {
 
         try processor.processMessage(record)
 
-        // Симуляция периодического освобождения памяти
+        // Simulating periodic memory release
         if i % 1000 == 0 {
-          // В реальности здесь могла бы быть сборка мусора
+          // In reality, garbage collection could happen here
         }
       }
 
@@ -362,7 +362,7 @@ struct MemoryOptimizationExample {
 
     print("  🔥 Simulating memory pressure scenarios...")
 
-    // Memory pressure monitor (симуляция)
+    // Memory pressure monitor (simulation)
     class MemoryPressureMonitor {
       private var currentMemoryUsage: Double = 0.0
       private let maxMemoryThreshold: Double = 80.0  // 80% threshold
@@ -391,20 +391,20 @@ struct MemoryOptimizationExample {
       private var processedCount = 0
 
       func processMessage(_ message: DynamicMessage, id: String) throws {
-        // Симуляция использования памяти
-        monitor.addMemoryUsage(0.1)  // 0.1% на сообщение
+        // Simulating memory usage
+        monitor.addMemoryUsage(0.1)  // 0.1% per message
 
         if monitor.isMemoryPressureHigh {
-          // Aggressive memory cleanup при высоком давлении
+          // Aggressive memory cleanup under high pressure
           let cacheCountBefore = cache.count
           cache.removeAll()
           monitor.releaseMemory(Double(cacheCountBefore) * 0.05)
 
-          // Обработка без кеширования
+          // Processing without caching
           _ = try message.get(forField: "id")
         }
         else {
-          // Нормальная обработка с кешированием
+          // Normal processing with caching
           cache[id] = message
           _ = try message.get(forField: "id")
         }
@@ -417,7 +417,7 @@ struct MemoryOptimizationExample {
       }
     }
 
-    // Создание тестовых данных
+    // Creating test data
     var pressureFile = FileDescriptor(name: "pressure.proto", package: "com.pressure")
     var pressureDescriptor = MessageDescriptor(name: "PressureTest", parent: pressureFile)
 
@@ -437,7 +437,7 @@ struct MemoryOptimizationExample {
         var message = factory.createMessage(from: pressureDescriptor)
         try message.set("MSG-\(String(format: "%04d", i))", forField: "id")
 
-        // Симуляция больших данных
+        // Simulating large data
         let largeData = String(repeating: "x", count: 100)
         try message.set(largeData, forField: "large_data")
 
@@ -476,7 +476,7 @@ struct MemoryOptimizationExample {
 
     print("  🔗 Demonstrating weak reference patterns...")
 
-    // Симуляция weak reference pattern
+    // Simulating weak reference pattern
     class MessageNode {
       let id: String
       let message: DynamicMessage
@@ -496,7 +496,7 @@ struct MemoryOptimizationExample {
       var children: [MessageNode] { _children }
 
       deinit {
-        // Симуляция cleanup
+        // Simulating cleanup
       }
     }
 
@@ -530,7 +530,7 @@ struct MemoryOptimizationExample {
       var nodeCount: Int { nodes.count }
     }
 
-    // Создание дескриптора для иерархии
+    // Creating descriptor for hierarchy
     var hierarchyFile = FileDescriptor(name: "hierarchy.proto", package: "com.hierarchy")
     var nodeDescriptor = MessageDescriptor(name: "Node", parent: hierarchyFile)
 
@@ -546,19 +546,19 @@ struct MemoryOptimizationExample {
     print("  📊 Building hierarchy with \(nodeCount) nodes...")
 
     let hierarchyTime = ExampleUtils.measureTime {
-      // Создание корневого узла
+      // Creating root node
       let root = hierarchy.createNode(id: "root")
 
-      // Создание дерева с weak references
+      // Creating tree with weak references
       for i in 1...nodeCount {
         let node = hierarchy.createNode(id: "node_\(i)")
 
-        // Добавление в иерархию (parent ссылка слабая)
+        // Adding to hierarchy (parent reference is weak)
         if i % 10 == 1 {
           root.addChild(node)
         }
         else {
-          // Добавление к случайному родителю
+          // Adding to random parent
           let parentId = "node_\(max(1, i - Int.random(in: 1...5)))"
           if let parent = hierarchy.getNode(id: parentId) {
             parent.addChild(node)
@@ -569,11 +569,11 @@ struct MemoryOptimizationExample {
 
     ExampleUtils.printTiming("Hierarchy building (\(nodeCount) nodes)", time: hierarchyTime.time)
 
-    // Тестирование освобождения памяти
+    // Testing memory release
     print("\n  🗑  Testing memory cleanup...")
 
     let cleanupTime = ExampleUtils.measureTime {
-      // Удаление узлов (weak references не препятствуют deallocation)
+      // Removing nodes (weak references don't prevent deallocation)
       for i in stride(from: nodeCount, to: 0, by: -2) {
         hierarchy.removeNode(id: "node_\(i)")
       }
@@ -644,7 +644,7 @@ struct MemoryOptimizationExample {
 
     var profiler = MemoryProfiler()
 
-    // Создание дескрипторов для профилирования
+    // Creating descriptors for profiling
     var profileFile = FileDescriptor(name: "profile.proto", package: "com.profile")
 
     var smallDescriptor = MessageDescriptor(name: "SmallMessage", parent: profileFile)
@@ -665,7 +665,7 @@ struct MemoryOptimizationExample {
     print("  📊 Profiling different message patterns...")
 
     let profilingTime = try ExampleUtils.measureTime {
-      // Создание и профилирование небольших сообщений
+      // Creating and profiling small messages
       for i in 1...2000 {
         profiler.recordAllocation(type: "SmallMessage")
         var small = factory.createMessage(from: smallDescriptor)
@@ -677,7 +677,7 @@ struct MemoryOptimizationExample {
         }
       }
 
-      // Создание и профилирование больших сообщений
+      // Creating and profiling large messages
       for i in 1...500 {
         profiler.recordAllocation(type: "LargeMessage")
         var large = factory.createMessage(from: largeDescriptor)
@@ -691,13 +691,13 @@ struct MemoryOptimizationExample {
         }
       }
 
-      // Профилирование дескрипторов
+      // Profiling descriptors
       profiler.recordAllocation(type: "Descriptor", count: 2)
     }
 
     ExampleUtils.printTiming("Memory profiling session", time: profilingTime.time)
 
-    // Генерация отчета
+    // Generating report
     print("\n  📊 Memory Profiling Report:")
     let report = profiler.getReport()
 
@@ -711,7 +711,7 @@ struct MemoryOptimizationExample {
 
     ExampleUtils.printDataTable([reportData], title: "Memory Usage Report")
 
-    // Анализ паттернов использования памяти
+    // Analyzing memory usage patterns
     let totalAllocated = report.reduce(0) { $0 + $1.allocated }
     let totalDeallocated = report.reduce(0) { $0 + $1.deallocated }
     let totalCurrent = report.reduce(0) { $0 + $1.current }

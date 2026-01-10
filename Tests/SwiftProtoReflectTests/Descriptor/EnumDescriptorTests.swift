@@ -2,7 +2,7 @@
 // EnumDescriptorTests.swift
 // SwiftProtoReflectTests
 //
-// Создан: 2025-05-22
+// Created: 2025-05-22
 //
 
 import XCTest
@@ -247,12 +247,12 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertEqual(enumDescriptor.value(named: "STARTED"), value2)
   }
 
-  // MARK: - Дополнительные тесты для повышения покрытия
+  // MARK: - Additional tests for coverage improvement
 
   func testEnumValueEqualityWithDifferentOptionTypes() {
-    // Тестирование равенства значений перечисления с разными типами опций
+    // Testing enum value equality with different option types
 
-    // Int опции
+    // Int options
     let value1 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["intOption": 10])
     let value2 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["intOption": 10])
     let value3 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["intOption": 20])
@@ -260,7 +260,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertEqual(value1, value2)
     XCTAssertNotEqual(value1, value3)
 
-    // String опции
+    // String options
     let value4 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["stringOption": "value"])
     let value5 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["stringOption": "value"])
     let value6 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["stringOption": "other"])
@@ -268,7 +268,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertEqual(value4, value5)
     XCTAssertNotEqual(value4, value6)
 
-    // Custom опции
+    // Custom options
     class CustomValue: CustomStringConvertible {
       let value: String
 
@@ -294,7 +294,7 @@ final class EnumDescriptorTests: XCTestCase {
   }
 
   func testEnumValueWithDifferentOptionKeys() {
-    // Проверяем сравнение значений с разными наборами ключей в опциях
+    // Verify comparison of values with different option key sets
     let value1 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["option1": true, "option2": 42])
     let value2 = EnumDescriptor.EnumValue(name: "OPTION1", number: 1, options: ["option1": true, "option3": "value"])
 
@@ -302,7 +302,7 @@ final class EnumDescriptorTests: XCTestCase {
   }
 
   func testEnumDescriptorWithDifferentFileDescriptorPath() {
-    // Проверяем, что дескрипторы с разными путями к файлу не равны
+    // Verify that descriptors with different file paths are not equal
     let enum1 = EnumDescriptor(name: "Status", fullName: "test.Status")
     var enum2 = EnumDescriptor(name: "Status", fullName: "test.Status")
     enum2.fileDescriptorPath = "different_path.proto"
@@ -311,7 +311,7 @@ final class EnumDescriptorTests: XCTestCase {
   }
 
   func testEnumDescriptorWithDifferentParentMessageFullName() {
-    // Проверяем, что дескрипторы с разными родительскими сообщениями не равны
+    // Verify that descriptors with different parent messages are not equal
     let enum1 = EnumDescriptor(name: "Status", fullName: "test.Status")
     var enum2 = EnumDescriptor(name: "Status", fullName: "test.Status")
     enum2.parentMessageFullName = "test.ParentMessage"
@@ -320,9 +320,9 @@ final class EnumDescriptorTests: XCTestCase {
   }
 
   func testEnumDescriptorWithDifferentOptionTypes() {
-    // Тестирование дескрипторов с разными типами опций
+    // Testing descriptors with different option types
 
-    // Int опции
+    // Int options
     let enum1 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["intOption": 10])
     let enum2 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["intOption": 10])
     let enum3 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["intOption": 20])
@@ -330,7 +330,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertEqual(enum1, enum2)
     XCTAssertNotEqual(enum1, enum3)
 
-    // String опции
+    // String options
     let enum4 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["stringOption": "value"])
     let enum5 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["stringOption": "value"])
     let enum6 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["stringOption": "other"])
@@ -338,7 +338,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertEqual(enum4, enum5)
     XCTAssertNotEqual(enum4, enum6)
 
-    // Custom опции
+    // Custom options
     class CustomValue: CustomStringConvertible {
       let value: String
 
@@ -364,7 +364,7 @@ final class EnumDescriptorTests: XCTestCase {
   }
 
   func testEnumDescriptorWithDifferentOptionKeys() {
-    // Проверяем сравнение дескрипторов с разными наборами ключей в опциях
+    // Verify descriptor comparison with different option key sets
     let enum1 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["option1": true, "option2": 42])
     let enum2 = EnumDescriptor(name: "Status", fullName: "test.Status", options: ["option1": true, "option3": "value"])
 
@@ -372,11 +372,11 @@ final class EnumDescriptorTests: XCTestCase {
   }
 
   func testEnumDescriptorWithDifferentEnumValues() {
-    // Проверка сравнения дескрипторов с разными наборами значений
+    // Verify descriptor comparison with different value sets
     var enum1 = EnumDescriptor(name: "Status", parent: fileDescriptor)
     var enum2 = EnumDescriptor(name: "Status", parent: fileDescriptor)
 
-    // Добавляем одинаковые значения, но с разными именами
+    // Add same values but with different names
     enum1.addValue(EnumDescriptor.EnumValue(name: "VALUE1", number: 1))
     enum1.addValue(EnumDescriptor.EnumValue(name: "VALUE2", number: 2))
 

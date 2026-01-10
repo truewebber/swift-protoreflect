@@ -1,12 +1,12 @@
 //
 // JSONSerializationTests.swift
 //
-// Тесты для проверки JSON сериализации и десериализации Protocol Buffers
+// Tests for JSON serialization and deserialization of Protocol Buffers
 //
-// Тестовые случаи из плана:
-// - Test-JSON-001: JSON сериализация всех типов данных с соответствием формату protoc --json_out
-// - Test-JSON-002: Обработка специальных значений (Infinity, NaN, null) в JSON
-// - Test-JSON-003: Корректная JSON десериализация данных, созданных protoc --json_out
+// Test cases from the plan:
+// - Test-JSON-001: JSON serialization of all data types with compliance to protoc --json_out format
+// - Test-JSON-002: Handling special values (Infinity, NaN, null) in JSON
+// - Test-JSON-003: Correct JSON deserialization of data created by protoc --json_out
 
 import XCTest
 
@@ -36,7 +36,7 @@ final class JSONSerializationTests: XCTestCase {
   // MARK: - Scalar Types Tests (Test-JSON-001)
 
   func testSerializeAllScalarTypes() throws {
-    // Создаем сообщение со всеми скалярными типами
+    // Create message with all scalar types
     var scalarMessage = MessageDescriptor(name: "ScalarMessage", parent: fileDescriptor)
 
     scalarMessage.addField(FieldDescriptor(name: "double_field", number: 1, type: .double))
@@ -51,7 +51,7 @@ final class JSONSerializationTests: XCTestCase {
 
     fileDescriptor.addMessage(scalarMessage)
 
-    // Создаем сообщение с данными
+    // Create message with data
     let values: [String: Any] = [
       "double_field": 3.14159,
       "float_field": Float(2.718),
@@ -66,17 +66,17 @@ final class JSONSerializationTests: XCTestCase {
 
     let message = try messageFactory.createMessage(from: scalarMessage, with: values)
 
-    // Сериализуем в JSON
+    // Serialize to JSON
     let jsonData = try serializer.serialize(message)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
-    // Проверяем типы и значения
+    // Verify types and values
     XCTAssertEqual(jsonObject["double_field"] as! Double, 3.14159, accuracy: 0.00001)
     XCTAssertEqual(jsonObject["float_field"] as! Float, Float(2.718), accuracy: 0.001)
     XCTAssertEqual(jsonObject["int32_field"] as! Int, -42)
-    XCTAssertEqual(jsonObject["int64_field"] as! String, "-9223372036854775000")  // int64 как строка
+    XCTAssertEqual(jsonObject["int64_field"] as! String, "-9223372036854775000")  // int64 as string
     XCTAssertEqual(jsonObject["uint32_field"] as! UInt, 4_294_967_295)
-    XCTAssertEqual(jsonObject["uint64_field"] as! String, "18446744073709551615")  // uint64 как строка
+    XCTAssertEqual(jsonObject["uint64_field"] as! String, "18446744073709551615")  // uint64 as string
     XCTAssertEqual(jsonObject["bool_field"] as! Bool, true)
     XCTAssertEqual(jsonObject["string_field"] as! String, "Hello, World! 🌍")
     XCTAssertEqual(jsonObject["bytes_field"] as! String, "AQID/w==")  // base64 encoded
@@ -101,7 +101,7 @@ final class JSONSerializationTests: XCTestCase {
     let jsonData = try serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
-    // Проверяем специальные значения
+    // Verify special values
     XCTAssertEqual(jsonObject["infinity"] as! String, "Infinity")
     XCTAssertEqual(jsonObject["negative_infinity"] as! String, "-Infinity")
     XCTAssertEqual(jsonObject["nan"] as! String, "NaN")
@@ -126,7 +126,7 @@ final class JSONSerializationTests: XCTestCase {
     let jsonData = try serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
-    // Проверяем специальные значения для float
+    // Verify special float values
     XCTAssertEqual(jsonObject["infinity"] as! String, "Infinity")
     XCTAssertEqual(jsonObject["negative_infinity"] as! String, "-Infinity")
     XCTAssertEqual(jsonObject["nan"] as! String, "NaN")
@@ -145,7 +145,7 @@ final class JSONSerializationTests: XCTestCase {
       from: message,
       with: [
         "simple": "Hello",
-        "unicode": "Привет, 世界! 🌟",
+        "unicode": "Hello, 世界! 🌟",
         "empty": "",
       ]
     )
@@ -154,7 +154,7 @@ final class JSONSerializationTests: XCTestCase {
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     XCTAssertEqual(jsonObject["simple"] as! String, "Hello")
-    XCTAssertEqual(jsonObject["unicode"] as! String, "Привет, 世界! 🌟")
+    XCTAssertEqual(jsonObject["unicode"] as! String, "Hello, 世界! 🌟")
     XCTAssertEqual(jsonObject["empty"] as! String, "")
   }
 
@@ -164,7 +164,7 @@ final class JSONSerializationTests: XCTestCase {
     message.addField(FieldDescriptor(name: "empty_data", number: 2, type: .bytes))
     fileDescriptor.addMessage(message)
 
-    let testBytes = Data([0x48, 0x65, 0x6C, 0x6C, 0x6F])  // "Hello" в ASCII
+    let testBytes = Data([0x48, 0x65, 0x6C, 0x6C, 0x6F])  // "Hello" in ASCII
     let emptyBytes = Data()
 
     let dynamicMessage = try messageFactory.createMessage(
@@ -185,13 +185,13 @@ final class JSONSerializationTests: XCTestCase {
   // MARK: - Nested Messages Tests
 
   func testSerializeNestedMessage() throws {
-    // Создаем вложенное сообщение
+    // Create nested message
     var nestedMessage = MessageDescriptor(name: "NestedMessage", parent: fileDescriptor)
     nestedMessage.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
     nestedMessage.addField(FieldDescriptor(name: "name", number: 2, type: .string))
     fileDescriptor.addMessage(nestedMessage)
 
-    // Создаем основное сообщение
+    // Create parent message
     var parentMessage = MessageDescriptor(name: "ParentMessage", parent: fileDescriptor)
     parentMessage.addField(
       FieldDescriptor(
@@ -204,7 +204,7 @@ final class JSONSerializationTests: XCTestCase {
     parentMessage.addField(FieldDescriptor(name: "status", number: 2, type: .string))
     fileDescriptor.addMessage(parentMessage)
 
-    // Создаем вложенное сообщение
+    // Create nested message
     let nested = try messageFactory.createMessage(
       from: nestedMessage,
       with: [
@@ -213,16 +213,16 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    // Создаем родительское сообщение
+    // Create parent message
     var parent = messageFactory.createMessage(from: parentMessage)
     try parent.set(nested, forField: "nested")
     try parent.set("active", forField: "status")
 
-    // Сериализуем
+    // Serialize
     let jsonData = try serializer.serialize(parent)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
-    // Проверяем структуру
+    // Verify structure
     XCTAssertEqual(jsonObject["status"] as! String, "active")
 
     let nestedObject = jsonObject["nested"] as! [String: Any]
@@ -266,20 +266,20 @@ final class JSONSerializationTests: XCTestCase {
     message.addField(FieldDescriptor(name: "values", number: 1, type: .int32, isRepeated: true))
     fileDescriptor.addMessage(message)
 
-    // Создаем сообщение без установки repeated поля
+    // Create message without setting repeated field
     let dynamicMessage = messageFactory.createMessage(from: message)
 
     let jsonData = try serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
-    // Поле без значений не должно появляться в JSON
+    // Field without values should not appear in JSON
     XCTAssertNil(jsonObject["values"])
   }
 
   // MARK: - Map Fields Tests
 
   func testSerializeMapFields() throws {
-    // Создаем map поле: map<string, int32>
+    // Create map field: map<string, int32>
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -320,7 +320,7 @@ final class JSONSerializationTests: XCTestCase {
   }
 
   func testSerializeMapWithIntegerKeys() throws {
-    // Создаем map поле: map<int32, string>
+    // Create map field: map<int32, string>
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .int32)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -354,7 +354,7 @@ final class JSONSerializationTests: XCTestCase {
     let jsonData = try serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
-    // В JSON все ключи должны быть строками
+    // In JSON, all keys must be strings
     let mapObject = jsonObject["int_to_string"] as! [String: String]
     XCTAssertEqual(mapObject["1"], "one")
     XCTAssertEqual(mapObject["2"], "two")
@@ -364,7 +364,7 @@ final class JSONSerializationTests: XCTestCase {
   // MARK: - Enum Tests
 
   func testSerializeEnumField() throws {
-    // Создаем enum
+    // Create enum
     var enumDescriptor = EnumDescriptor(name: "Status", parent: fileDescriptor)
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0))
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "ACTIVE", number: 1))
@@ -392,7 +392,7 @@ final class JSONSerializationTests: XCTestCase {
     let jsonData = try serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
-    // Пока enum возвращается как число, можно расширить для поддержки имен
+    // Currently enum is returned as number, can be extended to support names
     XCTAssertEqual(jsonObject["status"] as! Int, 1)
   }
 
@@ -410,23 +410,23 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    // Тест с camelCase именами (по умолчанию)
+    // Test with camelCase names (default)
     let defaultSerializer = JSONSerializer()
     let defaultJsonData = try defaultSerializer.serialize(dynamicMessage)
     let defaultJsonObject = try JSONSerialization.jsonObject(with: defaultJsonData) as! [String: Any]
     XCTAssertEqual(defaultJsonObject["testField"] as! String, "test_value")
 
-    // Тест с оригинальными именами полей
+    // Test with original field names
     let originalNamesSerializer = JSONSerializer(options: JSONSerializationOptions(useOriginalFieldNames: true))
     let originalJsonData = try originalNamesSerializer.serialize(dynamicMessage)
     let originalJsonObject = try JSONSerialization.jsonObject(with: originalJsonData) as! [String: Any]
     XCTAssertEqual(originalJsonObject["test_field"] as! String, "test_value")
 
-    // Тест с pretty printing
+    // Test with pretty printing
     let prettySerializer = JSONSerializer(options: JSONSerializationOptions(prettyPrinted: true))
     let prettyJsonData = try prettySerializer.serialize(dynamicMessage)
     let prettyJsonString = String(data: prettyJsonData, encoding: .utf8)!
-    XCTAssertTrue(prettyJsonString.contains("\n"))  // Должны быть переносы строк
+    XCTAssertTrue(prettyJsonString.contains("\n"))  // Should have line breaks
   }
 
   // MARK: - Error Handling Tests
@@ -436,12 +436,12 @@ final class JSONSerializationTests: XCTestCase {
     message.addField(FieldDescriptor(name: "group_field", number: 1, type: .group))
     fileDescriptor.addMessage(message)
 
-    // Создаем сообщение с group полем (неподдерживаемый тип)
+    // Create message with group field (unsupported type)
     var dynamicMessage = messageFactory.createMessage(from: message)
     let groupMessage = messageFactory.createMessage(from: message)
     try dynamicMessage.set(groupMessage, forField: "group_field")
 
-    // Group тип не поддерживается
+    // Group type is not supported
     XCTAssertThrowsError(try serializer.serialize(dynamicMessage)) { error in
       if let jsonError = error as? JSONSerializationError {
         if case .unsupportedFieldType(let type) = jsonError {
@@ -494,7 +494,7 @@ final class JSONSerializationTests: XCTestCase {
   // MARK: - Performance Tests
 
   func testJSONSerializationPerformance() throws {
-    // Создаем сложное сообщение для тестирования производительности
+    // Create complex message for performance testing
     var message = MessageDescriptor(name: "PerformanceMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "numbers", number: 1, type: .int32, isRepeated: true))
     message.addField(FieldDescriptor(name: "text", number: 2, type: .string))
@@ -836,7 +836,7 @@ final class JSONSerializationTests: XCTestCase {
   // MARK: - Error Coverage Tests
 
   func testJSONSerializationErrorCoverage() throws {
-    // Тестируем все непокрытые error descriptions
+    // Test all uncovered error descriptions
 
     let error1 = JSONSerializationError.invalidFieldType(fieldName: "test", expectedType: "String", actualType: "Int")
     XCTAssertEqual(error1.description, "Invalid field type for field 'test': expected String, got Int")

@@ -1,20 +1,20 @@
 //
 // SerializationBenchmarks.swift
 //
-// Тесты для измерения производительности сериализации/десериализации Protocol Buffers
+// Tests for measuring Protocol Buffers serialization/deserialization performance
 //
-// Тестовые случаи из плана:
-// - Test-PERF-001: Сравнение времени сериализации с protoc-генерируемым кодом
-// - Test-PERF-002: Сравнение времени десериализации с protoc-генерируемым кодом
-// - Test-PERF-003: Производительность при работе с большими наборами данных
-// - Test-PERF-004: Анализ накладных расходов на рефлексию по сравнению с компилируемым кодом
+// Test cases from the plan:
+// - Test-PERF-001: Comparison of serialization time with protoc-generated code
+// - Test-PERF-002: Comparison of deserialization time with protoc-generated code
+// - Test-PERF-003: Performance when working with large datasets
+// - Test-PERF-004: Analysis of reflection overhead compared to compiled code
 
 import SwiftProtobuf
 import XCTest
 
 @testable import SwiftProtoReflect
 
-/// Комплексные performance benchmarks для сериализации и десериализации.
+/// Comprehensive performance benchmarks for serialization and deserialization.
 final class SerializationBenchmarks: XCTestCase {
 
   // MARK: - Test Setup
@@ -37,12 +37,12 @@ final class SerializationBenchmarks: XCTestCase {
     jsonSerializer = JSONSerializer()
     jsonDeserializer = JSONDeserializer()
 
-    // Создаем тестовые сообщения разного размера
+    // Create test messages of different sizes
     try setupTestMessages()
   }
 
   private func setupTestMessages() throws {
-    // Small message: простое сообщение с несколькими полями
+    // Small message: simple message with a few fields
     let smallDescriptor = try createPersonDescriptor()
     try registry.registerMessage(smallDescriptor)
 
@@ -51,7 +51,7 @@ final class SerializationBenchmarks: XCTestCase {
     try smallMessage.set(Int32(30), forField: "age")
     try smallMessage.set("john@example.com", forField: "email")
 
-    // Medium message: сообщение с вложенными структурами и repeated полями
+    // Medium message: message with nested structures and repeated fields
     let mediumDescriptor = try createCompanyDescriptor()
     try registry.registerMessage(mediumDescriptor)
 
@@ -59,11 +59,11 @@ final class SerializationBenchmarks: XCTestCase {
     try mediumMessage.set("TechCorp Inc", forField: "name")
     try mediumMessage.set(Int32(1000), forField: "employee_count")
 
-    // Добавляем repeated поля
+    // Add repeated fields
     let departments = ["Engineering", "Marketing", "Sales", "HR", "Finance"]
     try mediumMessage.set(departments, forField: "departments")
 
-    // Large message: большое сообщение с множеством полей и данных
+    // Large message: large message with many fields and data
     let largeDescriptor = try createDatabaseDescriptor()
     try registry.registerMessage(largeDescriptor)
 
@@ -71,11 +71,11 @@ final class SerializationBenchmarks: XCTestCase {
     try largeMessage.set("ProductDB", forField: "name")
     try largeMessage.set(Int32(50000), forField: "record_count")
 
-    // Создаем большой массив данных
+    // Create large data array
     let records = (0..<1000).map { "Record_\($0)" }
     try largeMessage.set(records, forField: "records")
 
-    // Добавляем map поле
+    // Add map field
     let metadata: [String: String] = [
       "version": "2.1.0",
       "environment": "production",
@@ -329,7 +329,7 @@ final class SerializationBenchmarks: XCTestCase {
     print("JSON serialization average time: \(avgJSONTime * 1000) ms")
     print("Performance ratio (JSON/Binary): \(avgJSONTime / avgBinaryTime)")
 
-    // JSON обычно медленнее binary, но проверяем, что разница разумная
+    // JSON is usually slower than binary, but we check that the difference is reasonable
     XCTAssertLessThan(avgJSONTime / avgBinaryTime, 20.0, "JSON should not be more than 20x slower than binary")
   }
 
@@ -337,13 +337,13 @@ final class SerializationBenchmarks: XCTestCase {
 
   /// Test-PERF-003: Memory usage during large message processing.
   func testMemoryUsageLargeMessage() throws {
-    // Создаем очень большое сообщение для проверки memory usage
+    // Create very large message to test memory usage
     let veryLargeDescriptor = try createVeryLargeDataDescriptor()
     try registry.registerMessage(veryLargeDescriptor)
 
     var veryLargeMessage = MessageFactory().createMessage(from: veryLargeDescriptor)
 
-    // Заполняем большим количеством данных
+    // Fill with lots of data
     let largeData = (0..<10000).map { "LargeDataEntry_\($0)_With_Long_Content_To_Test_Memory_Usage" }
     try veryLargeMessage.set(largeData, forField: "data_entries")
 

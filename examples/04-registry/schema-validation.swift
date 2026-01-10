@@ -18,11 +18,11 @@ struct SchemaValidationExample {
   static func run() throws {
     ExampleUtils.printHeader("Schema Validation & Quality Assurance")
 
-    try step1_structuralValidation()
-    try step2_semanticValidation()
-    try step3_evolutionCompatibility()
-    try step4_performanceValidation()
-    try step5_customValidationRules()
+    try step1StructuralValidation()
+    try step2SemanticValidation()
+    try step3EvolutionCompatibility()
+    try step4PerformanceValidation()
+    try step5CustomValidationRules()
 
     print("\n🎉 Schema validation fully explored!")
 
@@ -32,7 +32,7 @@ struct SchemaValidationExample {
     print("  • Return to: type-registry.swift, file-loading.swift")
   }
 
-  private static func step1_structuralValidation() throws {
+  private static func step1StructuralValidation() throws {
     ExampleUtils.printStep(1, "Structural validation")
 
     print("  🏗 Validating Protocol Buffers structural rules...")
@@ -76,7 +76,7 @@ struct SchemaValidationExample {
     }
   }
 
-  private static func step2_semanticValidation() throws {
+  private static func step2SemanticValidation() throws {
     ExampleUtils.printStep(2, "Semantic validation")
 
     print("  🧠 Semantic validation and consistency checks...")
@@ -127,10 +127,10 @@ struct SchemaValidationExample {
     print("    Overall integrity: \(integrityResults.overallValid ? "✅ SECURE" : "⚠️ ISSUES")")
   }
 
-  private static func step3_evolutionCompatibility() throws {
+  private static func step3EvolutionCompatibility() throws {
     ExampleUtils.printStep(3, "Schema evolution compatibility")
 
-    print("  🔄 Проверка совместимости эволюции схем...")
+    print("  🔄 Checking schema evolution compatibility...")
 
     // Create schema versions for evolution testing
     let schemaVersions = createSchemaVersions()
@@ -179,10 +179,10 @@ struct SchemaValidationExample {
     }
   }
 
-  private static func step4_performanceValidation() throws {
+  private static func step4PerformanceValidation() throws {
     ExampleUtils.printStep(4, "Performance validation")
 
-    print("  ⚡ Анализ производительности схем...")
+    print("  ⚡ Schema performance analysis...")
 
     let performanceSchemas = createPerformanceTestSchemas()
     let performanceValidator = PerformanceValidator()
@@ -227,10 +227,10 @@ struct SchemaValidationExample {
     ExampleUtils.printTiming("Performance validation (\(performanceSchemas.count) schemas)", time: benchmarkTime)
   }
 
-  private static func step5_customValidationRules() throws {
+  private static func step5CustomValidationRules() throws {
     ExampleUtils.printStep(5, "Custom validation rules")
 
-    print("  🎯 Кастомные правила валидации...")
+    print("  🎯 Custom validation rules...")
 
     // Create custom validator with organization-specific rules
     let customValidator = CustomValidator()
