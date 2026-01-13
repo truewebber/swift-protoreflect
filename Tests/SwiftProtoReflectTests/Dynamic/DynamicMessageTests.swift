@@ -1122,7 +1122,7 @@ final class DynamicMessageTests: XCTestCase {
     let typeMismatchError = DynamicMessageError.typeMismatch(
       fieldName: "test_field",
       expectedType: "String",
-      actualValue: 42
+      actualType: "Int"
     )
     XCTAssertTrue(typeMismatchError.errorDescription?.contains("Type mismatch for field 'test_field'") ?? false)
     XCTAssertTrue(typeMismatchError.errorDescription?.contains("expected String") ?? false)

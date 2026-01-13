@@ -3,12 +3,12 @@
 // SwiftProtoReflect
 //
 // Created: 2025-05-25
+// Updated: 2026-01-13 - Migrated to grpc-swift-2
 //
 
 import Foundation
-import GRPC
+import GRPCCore
 import NIOCore
-import SwiftProtobuf
 
 /// ServiceClient provides a dynamic interface for calling gRPC methods
 /// without pre-generating client code.
@@ -22,33 +22,41 @@ import SwiftProtobuf
 /// ## Usage example:
 ///
 /// ```swift
-/// let client = ServiceClient(channel: channel)
-///
-/// // Unary call
-/// let request = try factory.createMessage(descriptor: requestDescriptor)
-/// try request.set(field: "name", value: "John")
-///
-/// let response = try await client.unaryCall(
-///   service: serviceDescriptor,
-///   method: "GetUser",
-///   request: request
+/// let transport = try HTTP2ClientTransport.Posix(
+///   target: .dns(host: "localhost", port: 50051),
+///   config: .defaults(transportSecurity: .plaintext)
 /// )
+///
+/// try await withGRPCClient(transport: transport) { grpcClient in
+///   let client = ServiceClient(client: grpcClient)
+///
+///   // Unary call
+///   let request = try factory.createMessage(descriptor: requestDescriptor)
+///   try request.set(field: "name", value: "John")
+///
+///   let response = try await client.unaryCall(
+///     service: serviceDescriptor,
+///     method: "GetUser",
+///     request: request
+///   )
+/// }
 /// ```
-public final class ServiceClient {
+@available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
+public final class ServiceClient<Transport: ClientTransport>: Sendable {
 
   // MARK: - Types
 
   /// Options for calling gRPC methods.
   public struct CallOptions {
     /// Timeout for the call.
-    public let timeout: TimeAmount?
+    public let timeout: Duration?
 
     /// Metadata to send with the request.
     public let metadata: [String: String]
 
     /// Creates new call options.
     public init(
-      timeout: TimeAmount? = nil,
+      timeout: Duration? = nil,
       metadata: [String: String] = [:]
     ) {
       self.timeout = timeout
@@ -57,20 +65,20 @@ public final class ServiceClient {
   }
 
   /// Result of a unary call.
-  public struct UnaryCallResult {
+  public struct UnaryCallResult: @unchecked Sendable {
     /// Response message.
     public let response: DynamicMessage
 
-    /// Response metadata (simplified version).
-    public let metadata: [String: String]
+    /// Response metadata.
+    public let metadata: Metadata
 
-    /// Trailing metadata (simplified version).
-    public let trailingMetadata: [String: String]
+    /// Trailing metadata.
+    public let trailingMetadata: Metadata
 
     public init(
       response: DynamicMessage,
-      metadata: [String: String] = [:],
-      trailingMetadata: [String: String] = [:]
+      metadata: Metadata = [:],
+      trailingMetadata: Metadata = [:]
     ) {
       self.response = response
       self.metadata = metadata
@@ -80,8 +88,8 @@ public final class ServiceClient {
 
   // MARK: - Properties
 
-  /// gRPC channel for connecting to the server.
-  private let channel: GRPCChannel
+  /// gRPC client for making calls.
+  private let client: GRPCClient<Transport>
 
   /// Factory for creating messages.
   private let messageFactory: MessageFactory
@@ -94,15 +102,15 @@ public final class ServiceClient {
   /// Creates a new ServiceClient.
   ///
   /// - Parameters:
-  ///   - channel: gRPC channel for connection.
+  ///   - client: gRPC client instance.
   ///   - messageFactory: Factory for creating messages (default: new instance).
   ///   - typeRegistry: Type registry (default: new instance).
   public init(
-    channel: GRPCChannel,
+    client: GRPCClient<Transport>,
     messageFactory: MessageFactory = MessageFactory(),
     typeRegistry: TypeRegistry = TypeRegistry()
   ) {
-    self.channel = channel
+    self.client = client
     self.messageFactory = messageFactory
     self.typeRegistry = typeRegistry
   }
@@ -144,34 +152,45 @@ public final class ServiceClient {
     // Get response type descriptor
     let responseDescriptor = try getResponseDescriptor(outputType: methodDescriptor.outputType)
 
-    // Serialize request
-    let requestData = try serializeRequest(request)
-
-    // Form method path
-    let path = "/\(service.fullName)/\(methodName)"
-
-    // Create gRPC call using low-level API
-    let call: UnaryCall<GRPCPayloadWrapper, GRPCPayloadWrapper> = channel.makeUnaryCall(
-      path: path,
-      request: GRPCPayloadWrapper(data: requestData),
-      callOptions: createGRPCCallOptions(from: options),
-      interceptors: []
+    // Create method descriptor for gRPC
+    let grpcServiceDescriptor = GRPCCore.ServiceDescriptor(
+      fullyQualifiedService: service.fullName
+    )
+    let grpcMethodDescriptor = GRPCCore.MethodDescriptor(
+      service: grpcServiceDescriptor,
+      method: methodName
     )
 
-    // Execute call and handle result
-    let grpcResponse = try await call.response.get()
+    // Create serializer and deserializer
+    let serializer = DynamicMessageSerializer()
+    let deserializer = DynamicMessageDeserializer(descriptor: responseDescriptor)
 
-    // Deserialize response
-    let responseMessage = try deserializeResponse(
-      data: grpcResponse.data,
-      descriptor: responseDescriptor
+    // Create request
+    let clientRequest = ClientRequest<DynamicMessage>(
+      message: request,
+      metadata: createMetadata(from: options)
     )
 
-    return UnaryCallResult(
-      response: responseMessage,
-      metadata: [:],  // Simplified version - empty metadata
-      trailingMetadata: [:]
-    )
+    // Create call options
+    var callOptions = GRPCCore.CallOptions.defaults
+    if let timeout = options.timeout {
+      callOptions.timeout = timeout
+    }
+
+    // Execute call
+    return try await client.unary(
+      request: clientRequest,
+      descriptor: grpcMethodDescriptor,
+      serializer: serializer,
+      deserializer: deserializer,
+      options: callOptions
+    ) { response in
+      UnaryCallResult(
+        response: try response.message,
+        metadata: response.metadata,
+        trailingMetadata: response.trailingMetadata
+      )
+    }
   }
 
   // MARK: - Private Helper Methods
@@ -204,57 +223,50 @@ public final class ServiceClient {
     return descriptor
   }
 
-  /// Serializes request message.
-  private func serializeRequest(_ request: DynamicMessage) throws -> Data {
-    let serializer = BinarySerializer()
-    return try serializer.serialize(request)
-  }
-
-  /// Deserializes response message.
-  private func deserializeResponse(data: Data, descriptor: MessageDescriptor) throws -> DynamicMessage {
-    let deserializer = BinaryDeserializer()
-    return try deserializer.deserialize(data, using: descriptor)
-  }
-
-  /// Creates gRPC call options from our options.
-  private func createGRPCCallOptions(from options: CallOptions) -> GRPC.CallOptions {
-    var grpcOptions = GRPC.CallOptions()
-
-    if let timeout = options.timeout {
-      grpcOptions.timeLimit = .timeout(timeout)
-    }
-
+  /// Creates metadata from call options.
+  private func createMetadata(from options: CallOptions) -> Metadata {
+    var metadata = Metadata()
     for (key, value) in options.metadata {
-      grpcOptions.customMetadata.add(name: key, value: value)
+      metadata.addString(value, forKey: key)
     }
-
-    return grpcOptions
+    return metadata
   }
 }
 
-// MARK: - GRPCPayloadWrapper
+// MARK: - DynamicMessageSerializer
 
-/// Wrapper for Data to conform to GRPCPayload protocol.
-internal struct GRPCPayloadWrapper: GRPCPayload {
-  let data: Data
-
-  init(data: Data) {
-    self.data = data
+/// Serializer for DynamicMessage.
+@available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
+private struct DynamicMessageSerializer: MessageSerializer {
+  func serialize<Bytes: GRPCContiguousBytes>(_ message: DynamicMessage) throws -> Bytes {
+    let serializer = BinarySerializer()
+    let data = try serializer.serialize(message)
+    let bytes = Array(data)
+    return Bytes(bytes)
   }
+}
 
-  func serialize(into buffer: inout ByteBuffer) throws {
-    buffer.writeData(data)
-  }
+// MARK: - DynamicMessageDeserializer
 
-  init(serializedByteBuffer: inout ByteBuffer) throws {
-    self.data = Data(buffer: serializedByteBuffer)
+/// Deserializer for DynamicMessage.
+@available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
+private struct DynamicMessageDeserializer: MessageDeserializer {
+  let descriptor: MessageDescriptor
+
+  func deserialize<Bytes: GRPCContiguousBytes>(_ serializedMessageBytes: Bytes) throws -> DynamicMessage {
+    let deserializer = BinaryDeserializer()
+    var data = Data()
+    serializedMessageBytes.withUnsafeBytes { buffer in
+      data.append(contentsOf: buffer)
+    }
+    return try deserializer.deserialize(data, using: descriptor)
   }
 }
 
 // MARK: - ServiceClientError
 
 /// ServiceClient errors.
-public enum ServiceClientError: Error, CustomStringConvertible {
+public enum ServiceClientError: Error, CustomStringConvertible, Sendable {
   /// Method not found in service.
   case methodNotFound(methodName: String, serviceName: String)
 

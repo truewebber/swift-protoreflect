@@ -112,7 +112,7 @@ public struct WellKnownTypeDetector {
 // MARK: - Support Phase
 
 /// Well-known types support phases.
-public enum WellKnownSupportPhase: Int, CaseIterable {
+public enum WellKnownSupportPhase: Int, CaseIterable, Sendable {
   case critical = 1  // Timestamp, Duration, Empty
   case important = 2  // FieldMask, Struct, Value
   case advanced = 3  // Any, ListValue, NullValue
@@ -210,7 +210,7 @@ public enum WellKnownTypeError: Error, Equatable, CustomStringConvertible {
 // MARK: - Well-Known Types Registry
 
 /// Registry of well-known type handlers.
-public final class WellKnownTypesRegistry {
+public final class WellKnownTypesRegistry: @unchecked Sendable {
 
   /// Singleton instance.
   public static let shared = WellKnownTypesRegistry()

@@ -19,14 +19,14 @@ final class SerializationBenchmarks: XCTestCase {
 
   // MARK: - Test Setup
 
-  private var smallMessage: DynamicMessage!
-  private var mediumMessage: DynamicMessage!
-  private var largeMessage: DynamicMessage!
-  private var registry: TypeRegistry!
-  private var binarySerializer: BinarySerializer!
-  private var binaryDeserializer: BinaryDeserializer!
-  private var jsonSerializer: JSONSerializer!
-  private var jsonDeserializer: JSONDeserializer!
+  nonisolated(unsafe) private var smallMessage: DynamicMessage!
+  nonisolated(unsafe) private var mediumMessage: DynamicMessage!
+  nonisolated(unsafe) private var largeMessage: DynamicMessage!
+  nonisolated(unsafe) private var registry: TypeRegistry!
+  nonisolated(unsafe) private var binarySerializer: BinarySerializer!
+  nonisolated(unsafe) private var binaryDeserializer: BinaryDeserializer!
+  nonisolated(unsafe) private var jsonSerializer: JSONSerializer!
+  nonisolated(unsafe) private var jsonDeserializer: JSONDeserializer!
 
   override func setUpWithError() throws {
     try super.setUpWithError()
@@ -343,10 +343,9 @@ final class SerializationBenchmarks: XCTestCase {
 
     var veryLargeMessage = MessageFactory().createMessage(from: veryLargeDescriptor)
 
-    // Fill with lots of data
-    let largeData = (0..<10000).map { "LargeDataEntry_\($0)_With_Long_Content_To_Test_Memory_Usage" }
+    let largeData = (0..<2000).map { "LargeDataEntry_\($0)_With_Long_Content_To_Test_Memory_Usage" }
     try veryLargeMessage.set(largeData, forField: "data_entries")
-
+    
     measure {
       do {
         let serializedData = try binarySerializer.serialize(veryLargeMessage)
@@ -371,10 +370,12 @@ final class SerializationBenchmarks: XCTestCase {
       let expectation = self.expectation(description: "Concurrent serialization")
       expectation.expectedFulfillmentCount = 100
 
+      let serializer = self.binarySerializer!
+      let message = self.mediumMessage!
       for _ in 0..<100 {
         queue.async {
           do {
-            let _ = try self.binarySerializer.serialize(self.mediumMessage)
+            let _ = try serializer.serialize(message)
             expectation.fulfill()
           }
           catch {

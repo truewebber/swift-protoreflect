@@ -16,7 +16,7 @@ final class SwiftProtoReflectTests: XCTestCase {
     XCTAssertNoThrow(SwiftProtoReflect.initialize(options: options), "Initialize with options should not throw")
   }
 
-  static var allTests = [
+  static let allTests = [
     ("testVersionNotEmpty", testVersionNotEmpty),
     ("testInitialize", testInitialize),
   ]

@@ -118,13 +118,13 @@ Examples are organized by topic:
 
 ## Requirements
 
-- Swift 5.9+
+- Swift 6.0+
 - macOS 12.0+ / iOS 15.0+
 
 ## Dependencies
 
 - [SwiftProtobuf](https://github.com/apple/swift-protobuf) 1.29.0+
-- [GRPC-Swift](https://github.com/grpc/grpc-swift) 1.23.0+ (for gRPC features)
+- [GRPC-Swift v2](https://github.com/grpc/grpc-swift) 2.0.0+ (for gRPC features, requires macOS 15.0+ / iOS 18.0+)
 
 ## Documentation
 

@@ -63,7 +63,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     expectedType: String,
     actualTypeContains: String,
     typeName: String? = nil,
-    file: StaticString = #file,
+    file: StaticString = #filePath,
     line: UInt = #line
   ) {
     XCTAssertThrowsError(
@@ -82,11 +82,10 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
         )
       }
       else if let dynamicMessageError = error as? DynamicMessageError,
-        case .typeMismatch(_, let expected, let actualValue) = dynamicMessageError
+        case .typeMismatch(_, let expected, let actualType) = dynamicMessageError
       {
         // Also accept DynamicMessageError
         XCTAssertEqual(expected, expectedType, file: file, line: line)
-        let actualType = String(describing: type(of: actualValue))
         XCTAssertTrue(
           actualType.contains(actualTypeContains),
           "Expected '\(actualType)' to contain '\(actualTypeContains)'",
@@ -853,10 +852,10 @@ extension BinarySerializer {
     }
     catch let error as DynamicMessageError {
       // Convert DynamicMessageError to SerializationError for uniformity
-      if case .typeMismatch(_, let expectedType, let actualValue) = error {
+      if case .typeMismatch(_, let expectedType, let actualType) = error {
         throw SerializationError.valueTypeMismatch(
           expected: expectedType,
-          actual: String(describing: type(of: actualValue))
+          actual: actualType
         )
       }
       throw error

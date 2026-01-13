@@ -13,7 +13,7 @@ import SwiftProtobuf
 /// Provides functionality for serializing dynamic Protocol Buffers messages
 /// to binary wire format, using integration with Swift Protobuf library
 /// to ensure compatibility with Protocol Buffers standard.
-public struct BinarySerializer {
+public struct BinarySerializer: Sendable {
 
   // MARK: - Properties
 
@@ -424,7 +424,7 @@ private struct BinaryEncoder {
 // MARK: - Serialization Options
 
 /// Options for serialization.
-public struct SerializationOptions {
+public struct SerializationOptions: Sendable {
   /// Whether to use packed encoding for repeated numeric fields.
   public let usePackedRepeated: Bool
 
@@ -437,7 +437,7 @@ public struct SerializationOptions {
 // MARK: - Serialization Errors
 
 /// Serialization errors.
-public enum SerializationError: Error, Equatable {
+public enum SerializationError: Error, Equatable, Sendable {
   case invalidFieldType(fieldName: String, expectedType: String, actualType: String)
   case valueTypeMismatch(expected: String, actual: String)
   case missingMapEntryInfo(fieldName: String)

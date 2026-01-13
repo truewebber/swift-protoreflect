@@ -221,7 +221,7 @@ public struct FieldDescriptor: Equatable {
 }
 
 /// Protocol Buffers field type.
-public enum FieldType: Equatable {
+public enum FieldType: Equatable, Sendable {
   case double
   case float
   case int32

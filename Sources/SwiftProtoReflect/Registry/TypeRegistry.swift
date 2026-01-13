@@ -19,7 +19,7 @@ import SwiftProtobuf
 /// - Automatic type extraction from FileDescriptor.
 /// - Thread-safe operations.
 /// - Dependency resolution between types.
-public class TypeRegistry {
+public class TypeRegistry: @unchecked Sendable {
   // MARK: - Properties
 
   /// Registry of file descriptors by file name.

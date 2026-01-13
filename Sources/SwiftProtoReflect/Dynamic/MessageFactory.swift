@@ -13,7 +13,7 @@ import SwiftProtobuf
 /// Factory for creating and managing dynamic Protocol Buffers messages.
 /// Provides convenient methods for creating empty messages, messages with pre-filled
 /// values, cloning and validation of existing messages.
-public struct MessageFactory {
+public struct MessageFactory: @unchecked Sendable {
   // MARK: - Initialization
 
   /// Creates a new MessageFactory instance.

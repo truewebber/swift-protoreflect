@@ -21,7 +21,7 @@ public struct EmptyHandler: WellKnownTypeHandler {
   /// Specialized representation of Empty.
   ///
   /// Empty messages contain no fields, so this is a simple unit type.
-  public struct EmptyValue: Equatable, CustomStringConvertible {
+  public struct EmptyValue: Equatable, CustomStringConvertible, Sendable {
 
     /// Creates the single instance of EmptyValue.
     public init() {}

@@ -12,11 +12,11 @@ import XCTest
 final class TypeRegistryTests: XCTestCase {
   // MARK: - Properties
 
-  var typeRegistry: TypeRegistry!
-  var fileDescriptor: FileDescriptor!
-  var messageDescriptor: MessageDescriptor!
-  var enumDescriptor: EnumDescriptor!
-  var serviceDescriptor: ServiceDescriptor!
+  nonisolated(unsafe) var typeRegistry: TypeRegistry!
+  nonisolated(unsafe) var fileDescriptor: FileDescriptor!
+  nonisolated(unsafe) var messageDescriptor: MessageDescriptor!
+  nonisolated(unsafe) var enumDescriptor: EnumDescriptor!
+  nonisolated(unsafe) var serviceDescriptor: ServiceDescriptor!
 
   // MARK: - Setup
 
@@ -362,20 +362,21 @@ final class TypeRegistryTests: XCTestCase {
     try typeRegistry.registerFile(fileDescriptor)
 
     let queue = DispatchQueue.global(qos: .default)
+    let registry = self.typeRegistry!
 
     // Parallel read operations
     queue.async {
       for _ in 0..<100 {
-        _ = self.typeRegistry.hasMessage(named: "test.TestMessage")
-        _ = self.typeRegistry.findEnum(named: "test.Status")
+        _ = registry.hasMessage(named: "test.TestMessage")
+        _ = registry.findEnum(named: "test.Status")
       }
       expectation.fulfill()
     }
 
     queue.async {
       for _ in 0..<100 {
-        _ = self.typeRegistry.allMessages()
-        _ = self.typeRegistry.allEnums()
+        _ = registry.allMessages()
+        _ = registry.allEnums()
       }
       expectation.fulfill()
     }
@@ -385,7 +386,7 @@ final class TypeRegistryTests: XCTestCase {
       do {
         for i in 0..<10 {
           let message = MessageDescriptor(name: "Message\(i)", fullName: "test.Message\(i)")
-          try self.typeRegistry.registerMessage(message)
+          try registry.registerMessage(message)
         }
       }
       catch {
@@ -398,7 +399,7 @@ final class TypeRegistryTests: XCTestCase {
     queue.async {
       do {
         for _ in 0..<50 {
-          _ = try self.typeRegistry.resolveDependencies(for: "test.TestMessage")
+          _ = try registry.resolveDependencies(for: "test.TestMessage")
         }
       }
       catch {

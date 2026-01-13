@@ -387,7 +387,7 @@ final class JSONSerializerTypeMismatchTests: XCTestCase {
     _ error: Error,
     expected: String,
     actualContains: String,
-    file: StaticString = #file,
+    file: StaticString = #filePath,
     line: UInt = #line
   ) {
     guard let jsonError = error as? JSONSerializationError,

@@ -18,11 +18,11 @@ final class RegistryBenchmarks: XCTestCase {
 
   // MARK: - Test Setup
 
-  private var typeRegistry: TypeRegistry!
-  private var descriptorPool: DescriptorPool!
-  private var testMessages: [MessageDescriptor] = []
-  private var testEnums: [EnumDescriptor] = []
-  private var testServices: [ServiceDescriptor] = []
+  nonisolated(unsafe) private var typeRegistry: TypeRegistry!
+  nonisolated(unsafe) private var descriptorPool: DescriptorPool!
+  nonisolated(unsafe) private var testMessages: [MessageDescriptor] = []
+  nonisolated(unsafe) private var testEnums: [EnumDescriptor] = []
+  nonisolated(unsafe) private var testServices: [ServiceDescriptor] = []
 
   override func setUpWithError() throws {
     try super.setUpWithError()
@@ -184,17 +184,18 @@ final class RegistryBenchmarks: XCTestCase {
       let expectation = self.expectation(description: "Concurrent access")
       expectation.expectedFulfillmentCount = 200
 
+      let registry = self.typeRegistry!
       // 100 reader threads + 100 search operations
       for i in 0..<100 {
         queue.async {
           let typeName = "performance.test.TestMessage\(i % 100)"
-          let _ = self.typeRegistry.findMessage(named: typeName)
+          let _ = registry.findMessage(named: typeName)
           expectation.fulfill()
         }
 
         queue.async {
           let enumName = "performance.test.TestEnum\(i % 100)"
-          let _ = self.typeRegistry.findEnum(named: enumName)
+          let _ = registry.findEnum(named: enumName)
           expectation.fulfill()
         }
       }
@@ -212,11 +213,12 @@ final class RegistryBenchmarks: XCTestCase {
       let expectation = self.expectation(description: "Concurrent registration")
       expectation.expectedFulfillmentCount = 100
 
+      let messages = self.testMessages
       for i in 0..<100 {
         queue.async {
           do {
-            if i < self.testMessages.count {
-              try registry.registerMessage(self.testMessages[i])
+            if i < messages.count {
+              try registry.registerMessage(messages[i])
             }
           }
           catch {
@@ -348,11 +350,12 @@ final class RegistryBenchmarks: XCTestCase {
       let expectation = self.expectation(description: "High volume operations")
       expectation.expectedFulfillmentCount = 1000
 
+      let registry = self.typeRegistry!
       // 1000 parallel search operations
       for i in 0..<1000 {
         queue.async {
           let typeName = "performance.test.TestMessage\(i % 500)"
-          let _ = self.typeRegistry.findMessage(named: typeName)
+          let _ = registry.findMessage(named: typeName)
           expectation.fulfill()
         }
       }

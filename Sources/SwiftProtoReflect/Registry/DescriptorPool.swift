@@ -22,7 +22,7 @@ import SwiftProtobuf
 /// - Building dependency chains between descriptors.
 /// - Thread-safe operations for safe use in multithreaded environment.
 /// - Integration with MessageFactory for creating dynamic messages.
-public class DescriptorPool {
+public class DescriptorPool: @unchecked Sendable {
   // MARK: - Properties
 
   /// Pool of file descriptors by name.

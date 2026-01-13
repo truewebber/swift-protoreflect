@@ -13,7 +13,7 @@ import SwiftProtobuf
 /// Dynamic representation of a Protocol Buffers message,
 /// which allows creating and manipulating messages
 /// at runtime without prior code generation.
-public struct DynamicMessage: Equatable {
+public struct DynamicMessage: Equatable, @unchecked Sendable {
   // MARK: - Properties
 
   /// Message descriptor defining its structure.
@@ -92,7 +92,7 @@ public struct DynamicMessage: Equatable {
           throw DynamicMessageError.typeMismatch(
             fieldName: field.name,
             expectedType: "Map<Key, Value>",
-            actualValue: value
+            actualType: String(describing: type(of: value))
           )
         }
 
@@ -114,7 +114,7 @@ public struct DynamicMessage: Equatable {
           throw DynamicMessageError.typeMismatch(
             fieldName: field.name,
             expectedType: "Array<\(field.type)>",
-            actualValue: value
+            actualType: String(describing: type(of: value))
           )
         }
 
@@ -141,7 +141,7 @@ public struct DynamicMessage: Equatable {
           throw DynamicMessageError.typeMismatch(
             fieldName: field.name,
             expectedType: "DynamicMessage",
-            actualValue: value
+            actualType: String(describing: type(of: value))
           )
         }
       }
@@ -434,7 +434,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: fieldDesc,
           expectedType: "Double",
-          actualValue: value
+          actualType: String(describing: type(of: value))
         )
       }
     case .float:
@@ -442,7 +442,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: fieldDesc,
           expectedType: "Float",
-          actualValue: value
+          actualType: String(describing: type(of: value))
         )
       }
     case .int32, .sint32, .sfixed32:
@@ -450,7 +450,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: fieldDesc,
           expectedType: "Int32",
-          actualValue: value
+          actualType: String(describing: type(of: value))
         )
       }
     case .int64, .sint64, .sfixed64:
@@ -458,7 +458,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: fieldDesc,
           expectedType: "Int64",
-          actualValue: value
+          actualType: String(describing: type(of: value))
         )
       }
     case .uint32, .fixed32:
@@ -466,7 +466,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: fieldDesc,
           expectedType: "UInt32",
-          actualValue: value
+          actualType: String(describing: type(of: value))
         )
       }
     case .uint64, .fixed64:
@@ -474,7 +474,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: fieldDesc,
           expectedType: "UInt64",
-          actualValue: value
+          actualType: String(describing: type(of: value))
         )
       }
     case .bool:
@@ -482,7 +482,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: fieldDesc,
           expectedType: "Bool",
-          actualValue: value
+          actualType: String(describing: type(of: value))
         )
       }
     case .string:
@@ -490,7 +490,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: fieldDesc,
           expectedType: "String",
-          actualValue: value
+          actualType: String(describing: type(of: value))
         )
       }
     case .bytes:
@@ -498,7 +498,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: fieldDesc,
           expectedType: "Data",
-          actualValue: value
+          actualType: String(describing: type(of: value))
         )
       }
     case .message:
@@ -506,7 +506,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: fieldDesc,
           expectedType: "DynamicMessage",
-          actualValue: value
+          actualType: String(describing: type(of: value))
         )
       }
 
@@ -528,7 +528,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: fieldDesc,
           expectedType: "Enum (Int32 or String)",
-          actualValue: value
+          actualType: String(describing: type(of: value))
         )
       }
 
@@ -539,7 +539,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: fieldDesc,
           expectedType: "DynamicMessage (group)",
-          actualValue: value
+          actualType: String(describing: type(of: value))
         )
       }
     }
@@ -576,7 +576,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: "map key",
           expectedType: "Int32",
-          actualValue: key
+          actualType: String(describing: type(of: key))
         )
       }
     case .int64, .sint64, .sfixed64:
@@ -584,7 +584,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: "map key",
           expectedType: "Int64",
-          actualValue: key
+          actualType: String(describing: type(of: key))
         )
       }
     case .uint32, .fixed32:
@@ -592,7 +592,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: "map key",
           expectedType: "UInt32",
-          actualValue: key
+          actualType: String(describing: type(of: key))
         )
       }
     case .uint64, .fixed64:
@@ -600,7 +600,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: "map key",
           expectedType: "UInt64",
-          actualValue: key
+          actualType: String(describing: type(of: key))
         )
       }
     case .bool:
@@ -608,7 +608,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: "map key",
           expectedType: "Bool",
-          actualValue: key
+          actualType: String(describing: type(of: key))
         )
       }
     case .string:
@@ -616,7 +616,7 @@ public struct DynamicMessage: Equatable {
         throw DynamicMessageError.typeMismatch(
           fieldName: "map key",
           expectedType: "String",
-          actualValue: key
+          actualType: String(describing: type(of: key))
         )
       }
     default:
@@ -861,10 +861,10 @@ public struct DynamicMessage: Equatable {
 }
 
 /// Errors that occur when working with dynamic messages.
-public enum DynamicMessageError: Error, LocalizedError {
+public enum DynamicMessageError: Error, LocalizedError, Sendable {
   case fieldNotFound(fieldName: String)
   case fieldNotFoundByNumber(fieldNumber: Int)
-  case typeMismatch(fieldName: String, expectedType: String, actualValue: Any)
+  case typeMismatch(fieldName: String, expectedType: String, actualType: String)
   case messageMismatch(fieldName: String, expectedType: String, actualType: String)
   case notRepeatedField(fieldName: String)
   case notMapField(fieldName: String)
@@ -876,8 +876,8 @@ public enum DynamicMessageError: Error, LocalizedError {
       return "Field with name '\(fieldName)' not found"
     case .fieldNotFoundByNumber(let fieldNumber):
       return "Field with number \(fieldNumber) not found"
-    case .typeMismatch(let fieldName, let expectedType, let actualValue):
-      return "Type mismatch for field '\(fieldName)': expected \(expectedType), got \(type(of: actualValue))"
+    case .typeMismatch(let fieldName, let expectedType, let actualType):
+      return "Type mismatch for field '\(fieldName)': expected \(expectedType), got \(actualType)"
     case .messageMismatch(let fieldName, let expectedType, let actualType):
       return "Message type mismatch for field '\(fieldName)': expected \(expectedType), got \(actualType)"
     case .notRepeatedField(let fieldName):

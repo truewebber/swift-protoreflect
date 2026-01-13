@@ -185,6 +185,7 @@ final class WellKnownTypesTests: XCTestCase {
     XCTAssertTrue(registeredTypes.contains("google.protobuf.Timestamp"))
   }
 
+  @MainActor
   func testRegistryThreadSafety() {
     let registry = WellKnownTypesRegistry.shared
     let expectation = self.expectation(description: "Thread safety test")

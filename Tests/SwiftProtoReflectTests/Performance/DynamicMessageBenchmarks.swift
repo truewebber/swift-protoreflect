@@ -18,11 +18,11 @@ final class DynamicMessageBenchmarks: XCTestCase {
 
   // MARK: - Test Setup
 
-  private var simpleMessage: DynamicMessage!
-  private var complexMessage: DynamicMessage!
-  private var largeMessage: DynamicMessage!
-  private var messageFactory: MessageFactory!
-  private var registry: TypeRegistry!
+  nonisolated(unsafe) private var simpleMessage: DynamicMessage!
+  nonisolated(unsafe) private var complexMessage: DynamicMessage!
+  nonisolated(unsafe) private var largeMessage: DynamicMessage!
+  nonisolated(unsafe) private var messageFactory: MessageFactory!
+  nonisolated(unsafe) private var registry: TypeRegistry!
 
   override func setUpWithError() throws {
     try super.setUpWithError()
@@ -304,13 +304,14 @@ final class DynamicMessageBenchmarks: XCTestCase {
       expectation.expectedFulfillmentCount = 100
 
       // Concurrent read operations
+      let message = self.complexMessage!
       for _ in 0..<100 {
         queue.async {
           // Concurrent read operations
           for _ in 0..<10 {
-            let _ = try? self.complexMessage.get(forField: "name")
-            let _ = try? self.complexMessage.get(forField: "repeated_strings")
-            let _ = try? self.complexMessage.get(forField: "nested_message")
+            let _ = try? message.get(forField: "name")
+            let _ = try? message.get(forField: "repeated_strings")
+            let _ = try? message.get(forField: "nested_message")
           }
           expectation.fulfill()
         }
@@ -328,10 +329,12 @@ final class DynamicMessageBenchmarks: XCTestCase {
       let expectation = self.expectation(description: "Concurrent message creation")
       expectation.expectedFulfillmentCount = 100
 
+      let factory = self.messageFactory!
+      let descriptor = self.simpleMessage.descriptor
       for i in 0..<100 {
         queue.async {
           do {
-            var message = self.messageFactory.createMessage(from: self.simpleMessage.descriptor)
+            var message = factory.createMessage(from: descriptor)
             try message.set("Concurrent Test \(i)", forField: "text_field")
             try message.set(Int32(i), forField: "int_field")
             try message.set(i % 2 == 0, forField: "bool_field")

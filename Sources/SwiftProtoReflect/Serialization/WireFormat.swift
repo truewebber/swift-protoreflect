@@ -8,7 +8,7 @@
 import Foundation
 
 /// Wire type for Protocol Buffers encoding.
-public enum WireType: UInt32, Equatable {
+public enum WireType: UInt32, Equatable, Sendable {
   case varint = 0
   case fixed64 = 1
   case lengthDelimited = 2

@@ -12,11 +12,11 @@ import XCTest
 final class DescriptorPoolTests: XCTestCase {
   // MARK: - Properties
 
-  var descriptorPool: DescriptorPool!
-  var fileDescriptor: FileDescriptor!
-  var messageDescriptor: MessageDescriptor!
-  var enumDescriptor: EnumDescriptor!
-  var serviceDescriptor: ServiceDescriptor!
+  nonisolated(unsafe) var descriptorPool: DescriptorPool!
+  nonisolated(unsafe) var fileDescriptor: FileDescriptor!
+  nonisolated(unsafe) var messageDescriptor: MessageDescriptor!
+  nonisolated(unsafe) var enumDescriptor: EnumDescriptor!
+  nonisolated(unsafe) var serviceDescriptor: ServiceDescriptor!
 
   // MARK: - Setup
 
@@ -555,9 +555,10 @@ final class DescriptorPoolTests: XCTestCase {
     expectation.expectedFulfillmentCount = 10
 
     // Act - multiple concurrent read operations
+    let pool = self.descriptorPool!
     for i in 0..<10 {
       DispatchQueue.global().async {
-        let found = self.descriptorPool.findMessageDescriptor(named: "test.TestMessage")
+        let found = pool.findMessageDescriptor(named: "test.TestMessage")
         XCTAssertNotNil(found, "Iteration \(i) failed")
         expectation.fulfill()
       }
