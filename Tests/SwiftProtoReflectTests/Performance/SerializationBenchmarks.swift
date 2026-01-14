@@ -345,7 +345,7 @@ final class SerializationBenchmarks: XCTestCase {
 
     let largeData = (0..<2000).map { "LargeDataEntry_\($0)_With_Long_Content_To_Test_Memory_Usage" }
     try veryLargeMessage.set(largeData, forField: "data_entries")
-    
+
     measure {
       do {
         let serializedData = try binarySerializer.serialize(veryLargeMessage)

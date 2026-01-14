@@ -40,14 +40,14 @@ final class ServiceClientTests: XCTestCase {
   func testServiceClientInitialization() async throws {
     // Given
     let mockTransport = MockClientTransport()
-    
+
     try await withGRPCClient(transport: mockTransport) { grpcClient in
       // When
       let client = ServiceClient<MockClientTransport>(client: grpcClient)
-      
+
       // Then
       XCTAssertNotNil(client)
-      
+
       // Minimal yield to prevent grpc-swift-2 from considering this an empty body
       try await Task.sleep(for: .nanoseconds(1))
     }
@@ -61,7 +61,7 @@ final class ServiceClientTests: XCTestCase {
       // Create custom components inside the closure
       let customRegistry = TypeRegistry()
       let customFactory = MessageFactory()
-      
+
       // When
       let client = ServiceClient<MockClientTransport>(
         client: grpcClient,
@@ -71,7 +71,7 @@ final class ServiceClientTests: XCTestCase {
 
       // Then
       XCTAssertNotNil(client)
-      
+
       // Minimal yield to prevent grpc-swift-2 from considering this an empty body
       try await Task.sleep(for: .nanoseconds(1))
     }
@@ -134,7 +134,7 @@ final class ServiceClientTests: XCTestCase {
     let message = messageFactory.createMessage(from: messageDescriptor)
     var metadata = Metadata()
     metadata.addString("abc123", forKey: "response-id")
-    
+
     var trailingMetadata = Metadata()
     trailingMetadata.addString("ok", forKey: "status")
 
@@ -188,7 +188,7 @@ final class ServiceClientTests: XCTestCase {
           XCTFail("Expected methodNotFound error, got \(error)")
         }
       }
-      
+
       // Minimal yield to prevent grpc-swift-2 from considering this an empty body
       try await Task.sleep(for: .nanoseconds(1))
     }
@@ -241,7 +241,7 @@ final class ServiceClientTests: XCTestCase {
           XCTFail("Expected invalidMethodType error, got \(error)")
         }
       }
-      
+
       // Minimal yield to prevent grpc-swift-2 from considering this an empty body
       try await Task.sleep(for: .nanoseconds(1))
     }
@@ -292,7 +292,7 @@ final class ServiceClientTests: XCTestCase {
           XCTFail("Expected typeMismatch error, got \(error)")
         }
       }
-      
+
       // Minimal yield to prevent grpc-swift-2 from considering this an empty body
       try await Task.sleep(for: .nanoseconds(1))
     }
@@ -341,7 +341,7 @@ final class ServiceClientTests: XCTestCase {
           XCTFail("Expected typeNotFound error, got \(error)")
         }
       }
-      
+
       // Minimal yield to prevent grpc-swift-2 from considering this an empty body
       try await Task.sleep(for: .nanoseconds(1))
     }
@@ -480,7 +480,7 @@ final class ServiceClientTests: XCTestCase {
           XCTFail("Expected methodNotFound error, got \(error)")
         }
       }
-      
+
       // Minimal yield to prevent grpc-swift-2 from considering this an empty body
       try await Task.sleep(for: .nanoseconds(1))
     }
@@ -516,26 +516,26 @@ final class ServiceClientTests: XCTestCase {
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
 final class MockClientTransport: ClientTransport, @unchecked Sendable {
   typealias Bytes = [UInt8]
-  
+
   private let shutdownActor = ShutdownActor()
-  
+
   var retryThrottle: GRPCCore.RetryThrottle? {
     nil
   }
-  
+
   func connect() async throws {
     // Mock implementation - just wait until shutdown is called
     while !(await shutdownActor.isShutdown) {
       try await Task.sleep(for: .milliseconds(10))
     }
   }
-  
+
   func beginGracefulShutdown() {
     Task {
       await shutdownActor.shutdown()
     }
   }
-  
+
   func withStream<T: Sendable>(
     descriptor: MethodDescriptor,
     options: CallOptions,
@@ -544,7 +544,7 @@ final class MockClientTransport: ClientTransport, @unchecked Sendable {
     // Mock implementation - throw error to prevent actual RPC execution
     throw RPCError(code: .unimplemented, message: "Mock transport does not execute RPCs")
   }
-  
+
   func config(forMethod descriptor: MethodDescriptor) -> MethodConfig? {
     nil
   }
@@ -555,11 +555,11 @@ final class MockClientTransport: ClientTransport, @unchecked Sendable {
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
 private actor ShutdownActor {
   private var _isShutdown = false
-  
+
   var isShutdown: Bool {
     _isShutdown
   }
-  
+
   func shutdown() {
     _isShutdown = true
   }
