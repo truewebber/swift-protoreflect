@@ -17,9 +17,11 @@ Add to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/truewebber/swift-protoreflect.git", from: "2.0.0")
+    .package(url: "https://github.com/truewebber/swift-protoreflect.git", from: "4.0.0")
 ]
 ```
+
+> **⚠️ Important:** We strongly recommend using version 4.0.0 or higher. Earlier versions included heavy gRPC dependencies that have been removed for a lighter, more focused library.
 
 ## Basic Usage
 
@@ -63,33 +65,18 @@ let anyMessage = try message.packIntoAny()
 let unpackedMessage = try anyMessage.unpackFromAny(to: personSchema)
 ```
 
-### Dynamic gRPC Calls
-
-```swift
-let client = ServiceClient(channel: grpcChannel)
-let request = try MessageFactory().createMessage(from: requestSchema)
-try request.set("query", value: "search term")
-
-let response = try await client.unaryCall(
-    service: "search.SearchService",
-    method: "Search", 
-    request: request
-)
-```
-
 ## Features
 
 - **Dynamic Message Creation**: Create and manipulate protobuf messages at runtime
 - **Schema Definition**: Build message descriptors programmatically
 - **Serialization**: Binary and JSON serialization/deserialization
 - **Well-Known Types**: Support for Google's standard protobuf types
-- **gRPC Integration**: Make dynamic gRPC calls without stub generation
 - **Swift Protobuf Compatibility**: Convert between static and dynamic messages
 - **Type Registry**: Centralized type management and lookup
 
 ## Examples
 
-The library includes 43 working examples demonstrating various use cases:
+The library includes 38 working examples demonstrating various use cases:
 
 ```bash
 git clone https://github.com/truewebber/swift-protoreflect.git
@@ -101,9 +88,9 @@ swift run FieldTypes
 swift run TimestampDemo
 
 # Advanced examples
-swift run DynamicGRPC
 swift run ApiGateway
 swift run MessageTransform
+swift run ValidationFramework
 ```
 
 Examples are organized by topic:
@@ -112,19 +99,18 @@ Examples are organized by topic:
 - **Serialization** (5 examples): Binary and JSON formats
 - **Registry** (4 examples): Type management
 - **Well-Known Types** (8 examples): Google standard types
-- **gRPC** (5 examples): Service integration
 - **Advanced** (6 examples): Complex patterns
 - **Real-World** (5 examples): Production scenarios
 
 ## Requirements
 
-- Swift 6.0+
+- Swift 5.9+
 - macOS 12.0+ / iOS 15.0+
+- **Recommended:** SwiftProtoReflect 4.0.0+
 
 ## Dependencies
 
 - [SwiftProtobuf](https://github.com/apple/swift-protobuf) 1.29.0+
-- [GRPC-Swift v2](https://github.com/grpc/grpc-swift) 2.0.0+ (for gRPC features, requires macOS 15.0+ / iOS 18.0+)
 
 ## Documentation
 
@@ -154,7 +140,7 @@ let staticMessage: Person = try dynamicMessage.toStaticMessage()
 
 ## Testing
 
-The library has comprehensive test coverage with 866 tests covering all functionality and edge cases.
+The library has comprehensive test coverage covering all functionality and edge cases.
 
 ## License
 

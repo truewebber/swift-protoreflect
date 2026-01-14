@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 5.9
 
 import PackageDescription
 
@@ -381,70 +381,14 @@ let package = Package(
       sources: ["well-known-registry.swift"]
     ),
 
-    // 06-grpc examples
-    .executableTarget(
-      name: "DynamicClient",
-      dependencies: [
-        .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
-        "ExampleUtils",
-      ],
-      path: "06-grpc",
-      exclude: ["service-discovery.swift", "unary-calls.swift", "error-handling.swift", "metadata-options.swift"],
-      sources: ["dynamic-client.swift"]
-    ),
-
-    .executableTarget(
-      name: "ServiceDiscovery",
-      dependencies: [
-        .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
-        "ExampleUtils",
-      ],
-      path: "06-grpc",
-      exclude: ["dynamic-client.swift", "unary-calls.swift", "error-handling.swift", "metadata-options.swift"],
-      sources: ["service-discovery.swift"]
-    ),
-
-    .executableTarget(
-      name: "UnaryCalls",
-      dependencies: [
-        .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
-        "ExampleUtils",
-      ],
-      path: "06-grpc",
-      exclude: ["dynamic-client.swift", "service-discovery.swift", "error-handling.swift", "metadata-options.swift"],
-      sources: ["unary-calls.swift"]
-    ),
-
-    .executableTarget(
-      name: "ErrorHandling",
-      dependencies: [
-        .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
-        "ExampleUtils",
-      ],
-      path: "06-grpc",
-      exclude: ["dynamic-client.swift", "service-discovery.swift", "unary-calls.swift", "metadata-options.swift"],
-      sources: ["error-handling.swift"]
-    ),
-
-    .executableTarget(
-      name: "MetadataOptions",
-      dependencies: [
-        .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
-        "ExampleUtils",
-      ],
-      path: "06-grpc",
-      exclude: ["dynamic-client.swift", "service-discovery.swift", "unary-calls.swift", "error-handling.swift"],
-      sources: ["metadata-options.swift"]
-    ),
-
-    // 07-advanced examples
+    // 06-advanced examples
     .executableTarget(
       name: "DescriptorBridge",
       dependencies: [
         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
         "ExampleUtils",
       ],
-      path: "07-advanced",
+      path: "06-advanced",
       exclude: [
         "static-message-bridge.swift", "batch-operations.swift", "memory-optimization.swift", "thread-safety.swift",
         "custom-extensions.swift",
@@ -458,7 +402,7 @@ let package = Package(
         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
         "ExampleUtils",
       ],
-      path: "07-advanced",
+      path: "06-advanced",
       exclude: [
         "descriptor-bridge.swift", "batch-operations.swift", "memory-optimization.swift", "thread-safety.swift",
         "custom-extensions.swift",
@@ -472,7 +416,7 @@ let package = Package(
         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
         "ExampleUtils",
       ],
-      path: "07-advanced",
+      path: "06-advanced",
       exclude: [
         "descriptor-bridge.swift", "static-message-bridge.swift", "memory-optimization.swift", "thread-safety.swift",
         "custom-extensions.swift",
@@ -486,7 +430,7 @@ let package = Package(
         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
         "ExampleUtils",
       ],
-      path: "07-advanced",
+      path: "06-advanced",
       exclude: [
         "descriptor-bridge.swift", "static-message-bridge.swift", "batch-operations.swift", "thread-safety.swift",
         "custom-extensions.swift",
@@ -500,7 +444,7 @@ let package = Package(
         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
         "ExampleUtils",
       ],
-      path: "07-advanced",
+      path: "06-advanced",
       exclude: [
         "descriptor-bridge.swift", "static-message-bridge.swift", "batch-operations.swift", "memory-optimization.swift",
         "custom-extensions.swift",
@@ -514,7 +458,7 @@ let package = Package(
         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
         "ExampleUtils",
       ],
-      path: "07-advanced",
+      path: "06-advanced",
       exclude: [
         "descriptor-bridge.swift", "static-message-bridge.swift", "batch-operations.swift", "memory-optimization.swift",
         "thread-safety.swift",
@@ -522,14 +466,14 @@ let package = Package(
       sources: ["custom-extensions.swift"]
     ),
 
-    // 08-real-world examples
+    // 07-real-world examples
     .executableTarget(
       name: "ConfigurationSystem",
       dependencies: [
         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
         "ExampleUtils",
       ],
-      path: "08-real-world",
+      path: "07-real-world",
       exclude: ["api-gateway.swift", "message-transform.swift", "validation-framework.swift", "proto-repl.swift"],
       sources: ["configuration-system.swift"]
     ),
@@ -540,7 +484,7 @@ let package = Package(
         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
         "ExampleUtils",
       ],
-      path: "08-real-world",
+      path: "07-real-world",
       exclude: [
         "configuration-system.swift", "message-transform.swift", "validation-framework.swift", "proto-repl.swift",
       ],
@@ -553,7 +497,7 @@ let package = Package(
         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
         "ExampleUtils",
       ],
-      path: "08-real-world",
+      path: "07-real-world",
       exclude: ["configuration-system.swift", "api-gateway.swift", "validation-framework.swift", "proto-repl.swift"],
       sources: ["message-transform.swift"]
     ),
@@ -564,7 +508,7 @@ let package = Package(
         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
         "ExampleUtils",
       ],
-      path: "08-real-world",
+      path: "07-real-world",
       exclude: ["configuration-system.swift", "api-gateway.swift", "message-transform.swift", "proto-repl.swift"],
       sources: ["validation-framework.swift"]
     ),
@@ -575,7 +519,7 @@ let package = Package(
         .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
         "ExampleUtils",
       ],
-      path: "08-real-world",
+      path: "07-real-world",
       exclude: [
         "configuration-system.swift", "api-gateway.swift", "message-transform.swift", "validation-framework.swift",
       ],

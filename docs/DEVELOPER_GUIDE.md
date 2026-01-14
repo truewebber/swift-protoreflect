@@ -4,6 +4,17 @@
 
 **ATTENTION:** After each commit, you lose all memory of previous work. This document will help you quickly restore context and continue development.
 
+## Version Information
+
+**Current Version:** 4.0.0+  
+**Recommended for Production:** 4.0.0 or higher
+
+> **⚠️ Version 4.0.0 Breaking Changes:**  
+> - Removed all gRPC dependencies (grpc-swift, swift-nio, swift-log)
+> - Removed ServiceClient (users can integrate DynamicMessage with any gRPC library)
+> - Library is now focused purely on Protocol Buffers reflection
+> - Only dependency: SwiftProtobuf 1.29.0+
+
 ## Workflow Considering Memory Loss
 
 1. **First thing after returning to the project:**

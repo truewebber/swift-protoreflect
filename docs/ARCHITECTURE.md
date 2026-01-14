@@ -12,8 +12,8 @@ SwiftProtoReflect utilizes a layered architecture with the following components:
 ┌───────────────────────────────────────────────────────────────┐
 │                      Public API Layer                         │
 ├───────────────┬───────────────────────────┬───────────────────┤
-│ Descriptor    │ Message                   │ Service           │
-│ Management    │ Manipulation              │ Reflection        │
+│ Descriptor    │ Message                   │ Integration       │
+│ Management    │ Manipulation              │ Layer             │
 ├───────────────┼───────────────────────────┼───────────────────┤
 │               │    Core Reflection Layer  │                   │
 ├───────────────┼───────────────────────────┼───────────────────┤
@@ -32,7 +32,6 @@ SwiftProtoReflect utilizes a layered architecture with the following components:
 
 - **Swift 5.9+**: Utilizing mature language features for performance and safety
 - **SwiftProtobuf 1.29.0+**: Apple's Swift Protobuf library for wire format compatibility and low-level operations
-- **GRPC-Swift 1.23.0+**: For dynamic gRPC service integration capabilities
 - **Platforms**: macOS 12.0+, iOS 15.0+
 - **No Additional Runtime Dependencies**: Self-contained operation with minimal external requirements
 
@@ -60,11 +59,7 @@ SwiftProtoReflect utilizes a layered architecture with the following components:
 - **TypeRegistry**: Central registry for all known types with concurrent access support
 - **DescriptorPool**: Manages descriptor dependencies and resolution with caching
 
-### 4.5 Service Layer
-- **ServiceClient**: Client for dynamically calling gRPC methods with call options
-- **Method Discovery**: Runtime service method resolution and validation
-
-### 4.6 Integration Layer
+### 4.5 Integration Layer
 - **Bridge System**: Bidirectional conversion between static and dynamic messages
 - **Well-Known Types**: Support for Google's standard Protocol Buffer types
 - **Static Interoperability**: Seamless integration with existing Swift Protobuf code
@@ -87,7 +82,6 @@ SwiftProtoReflect leverages Swift Protobuf's mature implementation while providi
 - **Descriptor Construction**: Building descriptors at runtime from various sources
 - **Reflection API**: Dynamic field access and message manipulation
 - **Message Creation**: Runtime message instantiation from descriptors
-- **Service Discovery**: Dynamic service and method discovery
 
 ### 5.3 Integration Points
 
@@ -202,8 +196,6 @@ Sources/SwiftProtoReflect/
 ├── Bridge/                         # Static/Dynamic interoperability
 │   ├── StaticMessageBridge.swift   # Message conversion
 │   └── DescriptorBridge.swift      # Descriptor conversion
-├── Service/                        # gRPC integration
-│   └── ServiceClient.swift         # Dynamic service calls
 ├── Integration/                    # Well-Known Types support
 │   ├── WellKnownTypesRegistry.swift # Registry for standard types
 │   ├── TimestampHandler.swift      # google.protobuf.Timestamp
@@ -221,9 +213,8 @@ examples/                           # Comprehensive examples
 ├── 03-serialization/               # Encoding/decoding
 ├── 04-registry/                    # Type management
 ├── 05-well-known-types/            # Google standard types
-├── 06-grpc/                        # gRPC integration
-├── 07-advanced/                    # Complex patterns
-├── 08-real-world/                  # Production scenarios
+├── 06-advanced/                    # Complex patterns
+├── 07-real-world/                  # Production scenarios
 └── shared/                         # Common utilities
 
 Tests/SwiftProtoReflectTests/       # Comprehensive test suite
@@ -231,7 +222,6 @@ Tests/SwiftProtoReflectTests/       # Comprehensive test suite
 ├── Serialization/                  # Serialization tests
 ├── Registry/                       # Registry tests
 ├── Bridge/                         # Bridge tests
-├── Service/                        # Service tests
 ├── Integration/                    # Integration tests
 └── Performance/                    # Performance benchmarks
 ```
@@ -242,10 +232,9 @@ Tests/SwiftProtoReflectTests/       # Comprehensive test suite
 2. **Serialization Phase**: Binary and JSON serialization/deserialization integration with Swift Protobuf
 3. **Registry Phase**: Type management and descriptor pool implementation
 4. **Bridge Phase**: Develop static/dynamic message conversion capabilities
-5. **Service Phase**: Dynamic service client implementation
-6. **Integration Phase**: Well-Known Types support and ecosystem integration
-7. **Performance Phase**: Benchmarking and optimization
-8. **Examples Phase**: Comprehensive examples and documentation
+5. **Integration Phase**: Well-Known Types support and ecosystem integration
+6. **Performance Phase**: Benchmarking and optimization
+7. **Examples Phase**: Comprehensive examples and documentation
 
 ## 10. Design Decisions
 
@@ -293,7 +282,6 @@ The library design considers Swift's concurrency model:
 - **Type Errors**: Field type mismatches and conversion errors  
 - **Serialization Errors**: Binary and JSON format errors
 - **Registry Errors**: Type registration and lookup errors
-- **Service Errors**: gRPC and service discovery errors
 - **Well-Known Type Errors**: Standard type conversion and validation errors
 
 ### Error Context
