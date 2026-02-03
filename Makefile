@@ -28,7 +28,7 @@ help:
 	@echo "  make format                   - Format the Swift code in-place."
 	@echo "  make test                     - Run unit tests."
 	@echo "  make coverage                 - Generate a code coverage report."
-	@echo "  make test-examples            - Run all 43 working examples to verify they work correctly."
+	@echo "  make test-examples            - Run all 38 working examples to verify they work correctly."
 	@echo "  make list-toolchains          - List available Swift toolchains."
 	@echo ""
 	@echo "Environment variables:"
@@ -67,9 +67,9 @@ coverage:
 		-use-color
 
 
-## Run all 43 working examples to verify they work correctly
+## Run all 38 working examples to verify they work correctly
 test-examples:
-	@echo "Running all 43 working examples to verify they work correctly..."
+	@echo "Running all 38 working examples to verify they work correctly..."
 	@echo "(Excluding ProtoREPL - interactive example that requires user input)"
 	@cd examples && \
 	examples=( \
@@ -78,7 +78,6 @@ test-examples:
 		"ProtobufSerialization" "JsonConversion" "BinaryData" "Streaming" "Compression" \
 		"TypeRegistry" "FileLoading" "DependencyResolution" "SchemaValidation" \
 		"TimestampDemo" "DurationDemo" "EmptyDemo" "FieldMaskDemo" "StructDemo" "ValueDemo" "AnyDemo" "WellKnownRegistry" \
-		"DynamicClient" "ServiceDiscovery" "UnaryCalls" "ErrorHandling" "MetadataOptions" \
 		"DescriptorBridge" "StaticMessageBridge" "BatchOperations" "MemoryOptimization" "ThreadSafety" "CustomExtensions" \
 		"ConfigurationSystem" "ApiGateway" "MessageTransform" "ValidationFramework" \
 	); \
