@@ -52,7 +52,7 @@ format:
 ## Run tests
 test:
 	@echo "Running swift test..."
-	$(SWIFT_TEST) --enable-code-coverage --parallel --filter SwiftProtoReflectTests
+	$(SWIFT_TEST) --enable-code-coverage --parallel --filter SwiftProtoReflectTests --disable-swift-testing
 	@echo "Tests complete."
 
 ## Generate a code coverage report
