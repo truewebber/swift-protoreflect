@@ -76,13 +76,7 @@ public struct DescriptorBridge {
       parent: parent
     )
 
-    // Convert fields
-    for fieldProto in protobufDescriptor.field {
-      let field = try fromProtobufFieldDescriptor(fieldProto)
-      messageDescriptor.addField(field)
-    }
-
-    // Convert nested messages
+    // First, convert nested messages (needed for map entry detection)
     for nestedProto in protobufDescriptor.nestedType {
       let nestedMessage = try fromProtobufDescriptor(nestedProto, parent: nil)
       messageDescriptor.addNestedMessage(nestedMessage)
@@ -92,6 +86,16 @@ public struct DescriptorBridge {
     for enumProto in protobufDescriptor.enumType {
       let nestedEnum = try fromProtobufEnumDescriptor(enumProto)
       messageDescriptor.addNestedEnum(nestedEnum)
+    }
+
+    // Convert fields (now with nested messages available for map detection)
+    for fieldProto in protobufDescriptor.field {
+      let field = try fromProtobufFieldDescriptor(
+        fieldProto,
+        messageDescriptor: protobufDescriptor,
+        nestedMessages: messageDescriptor.nestedMessages
+      )
+      messageDescriptor.addField(field)
     }
 
     // Convert options
@@ -162,6 +166,26 @@ public struct DescriptorBridge {
   public func fromProtobufFieldDescriptor(
     _ protobufDescriptor: Google_Protobuf_FieldDescriptorProto
   ) throws -> FieldDescriptor {
+    return try fromProtobufFieldDescriptor(
+      protobufDescriptor,
+      messageDescriptor: nil,
+      nestedMessages: [:]
+    )
+  }
+
+  /// Creates FieldDescriptor from Google_Protobuf_FieldDescriptorProto with map detection.
+  ///
+  /// - Parameters:
+  ///   - protobufDescriptor: Field descriptor in Swift Protobuf format.
+  ///   - messageDescriptor: Parent message descriptor for nested type resolution.
+  ///   - nestedMessages: Dictionary of nested messages for map entry detection.
+  /// - Returns: SwiftProtoReflect field descriptor.
+  /// - Throws: Error if conversion is impossible.
+  private func fromProtobufFieldDescriptor(
+    _ protobufDescriptor: Google_Protobuf_FieldDescriptorProto,
+    messageDescriptor: Google_Protobuf_DescriptorProto?,
+    nestedMessages: [String: MessageDescriptor]
+  ) throws -> FieldDescriptor {
     // Convert field type
     let fieldType = try fromProtobufFieldType(protobufDescriptor.type)
 
@@ -169,6 +193,22 @@ public struct DescriptorBridge {
     let isRepeated = protobufDescriptor.label == .repeated
     let isRequired = protobufDescriptor.label == .required
     let isOptional = protobufDescriptor.label == .optional
+
+    // Check if this is a map field
+    var isMap = false
+    var mapEntryInfo: MapEntryInfo? = nil
+
+    if isRepeated && fieldType == .message && protobufDescriptor.hasTypeName {
+      // Try to detect map field
+      if let mapInfo = try detectMapField(
+        fieldDescriptor: protobufDescriptor,
+        messageDescriptor: messageDescriptor,
+        nestedMessages: nestedMessages
+      ) {
+        isMap = true
+        mapEntryInfo = mapInfo
+      }
+    }
 
     // Create field descriptor
     let fieldDescriptor = FieldDescriptor(
@@ -179,7 +219,9 @@ public struct DescriptorBridge {
       jsonName: protobufDescriptor.hasJsonName ? protobufDescriptor.jsonName : protobufDescriptor.name,
       isRepeated: isRepeated,
       isOptional: isOptional,
-      isRequired: isRequired
+      isRequired: isRequired,
+      isMap: isMap,
+      mapEntryInfo: mapEntryInfo
     )
 
     // Convert options
@@ -476,6 +518,146 @@ public struct DescriptorBridge {
     // Stub for options conversion
     // In real implementation there should be full conversion logic
     return [:]
+  }
+
+  // MARK: - Map Field Detection
+
+  /// Detects if a field is a map and extracts map entry information.
+  ///
+  /// According to Protocol Buffers specification, map fields are represented as:
+  /// - Repeated message field with a specific entry message
+  /// - Entry message has `map_entry = true` option
+  /// - Entry message has exactly 2 fields: "key" (tag 1) and "value" (tag 2)
+  ///
+  /// - Parameters:
+  ///   - fieldDescriptor: Field descriptor to check.
+  ///   - messageDescriptor: Parent message descriptor containing nested types.
+  ///   - nestedMessages: Already converted nested messages.
+  /// - Returns: MapEntryInfo if field is a map, nil otherwise.
+  /// - Throws: Error if map entry structure is invalid.
+  private func detectMapField(
+    fieldDescriptor: Google_Protobuf_FieldDescriptorProto,
+    messageDescriptor: Google_Protobuf_DescriptorProto?,
+    nestedMessages: [String: MessageDescriptor]
+  ) throws -> MapEntryInfo? {
+    guard let typeName = fieldDescriptor.hasTypeName ? fieldDescriptor.typeName : nil else {
+      return nil
+    }
+
+    // Extract the simple name from the type name (e.g., ".package.Message.EntryMessage" -> "EntryMessage")
+    let entryMessageName = extractSimpleName(from: typeName)
+
+    // Try to find the entry message in nested messages
+    guard let entryMessage = findMapEntryMessage(
+      named: entryMessageName,
+      in: messageDescriptor,
+      nestedMessages: nestedMessages
+    ) else {
+      return nil
+    }
+
+    // Check if this message has map_entry option
+    guard isMapEntryMessage(entryMessage) else {
+      return nil
+    }
+
+    // Extract key and value fields
+    guard let keyField = entryMessage.field.first(where: { $0.number == 1 }),
+      let valueField = entryMessage.field.first(where: { $0.number == 2 })
+    else {
+      throw DescriptorBridgeError.invalidDescriptorStructure(
+        "Map entry message '\(entryMessageName)' must have exactly 2 fields with numbers 1 (key) and 2 (value)"
+      )
+    }
+
+    // Validate key and value fields
+    guard keyField.name == "key" && valueField.name == "value" else {
+      throw DescriptorBridgeError.invalidDescriptorStructure(
+        "Map entry message '\(entryMessageName)' fields must be named 'key' and 'value'"
+      )
+    }
+
+    // Convert key field type
+    let keyType = try fromProtobufFieldType(keyField.type)
+
+    // Validate key type (only scalar types except float, double, bytes are allowed)
+    let validKeyTypes: [FieldType] = [
+      .int32, .int64, .uint32, .uint64, .sint32, .sint64,
+      .fixed32, .fixed64, .sfixed32, .sfixed64, .bool, .string,
+    ]
+
+    guard validKeyTypes.contains(keyType) else {
+      throw DescriptorBridgeError.invalidDescriptorStructure(
+        "Invalid map key type '\(keyType)'. Only scalar types except float, double, and bytes are allowed"
+      )
+    }
+
+    // Convert value field type
+    let valueType = try fromProtobufFieldType(valueField.type)
+
+    // Create key and value field info
+    let keyFieldInfo = KeyFieldInfo(
+      name: keyField.name,
+      number: Int(keyField.number),
+      type: keyType
+    )
+
+    let valueFieldInfo = ValueFieldInfo(
+      name: valueField.name,
+      number: Int(valueField.number),
+      type: valueType,
+      typeName: valueField.hasTypeName ? valueField.typeName : nil
+    )
+
+    return MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
+  }
+
+  /// Extracts simple name from a fully qualified type name.
+  ///
+  /// Examples:
+  /// - ".package.Message.EntryMessage" -> "EntryMessage"
+  /// - "EntryMessage" -> "EntryMessage"
+  /// - ".Message" -> "Message"
+  ///
+  /// - Parameter typeName: Fully qualified type name.
+  /// - Returns: Simple name without package and parent message prefixes.
+  private func extractSimpleName(from typeName: String) -> String {
+    let components = typeName.split(separator: ".")
+    return String(components.last ?? "")
+  }
+
+  /// Finds a map entry message by name in the parent message's nested types.
+  ///
+  /// - Parameters:
+  ///   - name: Simple name of the entry message.
+  ///   - messageDescriptor: Parent message descriptor.
+  ///   - nestedMessages: Already converted nested messages.
+  /// - Returns: Map entry message descriptor if found, nil otherwise.
+  private func findMapEntryMessage(
+    named name: String,
+    in messageDescriptor: Google_Protobuf_DescriptorProto?,
+    nestedMessages: [String: MessageDescriptor]
+  ) -> Google_Protobuf_DescriptorProto? {
+    guard let messageDescriptor = messageDescriptor else {
+      return nil
+    }
+
+    // Search in nested types
+    return messageDescriptor.nestedType.first { $0.name == name }
+  }
+
+  /// Checks if a message descriptor is a map entry message.
+  ///
+  /// A message is a map entry if it has the `map_entry = true` option set.
+  ///
+  /// - Parameter messageDescriptor: Message descriptor to check.
+  /// - Returns: true if message is a map entry, false otherwise.
+  private func isMapEntryMessage(_ messageDescriptor: Google_Protobuf_DescriptorProto) -> Bool {
+    guard messageDescriptor.hasOptions else {
+      return false
+    }
+
+    return messageDescriptor.options.mapEntry
   }
 }
 
