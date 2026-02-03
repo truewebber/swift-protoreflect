@@ -6,6 +6,7 @@ A Swift library for dynamic Protocol Buffers message manipulation without pre-co
 [![Swift Package Index](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ftruewebber%2Fswift-protoreflect%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/truewebber/swift-protoreflect)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat)](LICENSE)
 [![Coverage](https://img.shields.io/badge/Test%20Coverage-94%25-green.svg?style=flat)](#quality-metrics)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/truewebber/swift-protoreflect)
 
 ## Overview
 
