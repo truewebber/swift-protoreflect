@@ -590,5 +590,100 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertEqual(messageDescriptor.oneofDecls[1].name, "identifier")
   }
 
+  // MARK: - OPE-221 MessageDescriptor oneof API (T-MD-07…17)
+
+  func test_messageDescriptor_whenFieldsAndOneofDeclsAdded_remainIndependent_TMD07() {
+    messageDescriptor.addField(
+      FieldDescriptor(name: "email", number: 1, type: .string, oneofIndex: 0)
+    )
+    messageDescriptor.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
+    XCTAssertEqual(messageDescriptor.fields.count, 1)
+    XCTAssertEqual(messageDescriptor.oneofDecls.count, 1)
+  }
+
+  func test_messageDescriptor_fieldOneofIndexResolvesViaOneofAt_TMD08() {
+    messageDescriptor.addField(
+      FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0)
+    )
+    messageDescriptor.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
+    guard let idx = messageDescriptor.field(named: "email")?.oneofIndex else {
+      XCTFail("expected oneofIndex")
+      return
+    }
+    XCTAssertEqual(messageDescriptor.oneof(at: idx)?.name, "contact")
+  }
+
+  func test_messageDescriptor_allFieldsOneofLookup_returnsGroupName_TMD09() {
+    messageDescriptor.addField(FieldDescriptor(name: "id", number: 1, type: .string))
+    messageDescriptor.addField(
+      FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0)
+    )
+    messageDescriptor.addField(
+      FieldDescriptor(name: "phone", number: 3, type: .string, oneofIndex: 0)
+    )
+    messageDescriptor.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
+
+    for field in messageDescriptor.allFields() {
+      if let idx = field.oneofIndex {
+        XCTAssertEqual(messageDescriptor.oneof(at: idx)?.name, "contact")
+      }
+    }
+  }
+
+  func test_messageDescriptor_nestedMessage_hasIndependentOneofDecls_TMD10() {
+    var parent = MessageDescriptor(name: "Parent", fullName: "Parent")
+    var child = MessageDescriptor(name: "Child", fullName: "Parent.Child")
+    child.addOneofDecl(OneofDescriptor(name: "childGroup", index: 0))
+    parent.addNestedMessage(child)
+    XCTAssertTrue(parent.oneofDecls.isEmpty)
+    XCTAssertEqual(parent.nestedMessage(named: "Child")?.oneofDecls.count, 1)
+  }
+
+  func test_messageDescriptor_whenOneofDeclsEmpty_oneofAtReturnsNil_TMD12() {
+    XCTAssertTrue(messageDescriptor.oneofDecls.isEmpty)
+    XCTAssertNil(messageDescriptor.oneof(at: 0))
+  }
+
+  func test_messageDescriptor_whenFieldHasNoOneofIndex_oneofLookupNotUsed_TMD13() {
+    messageDescriptor.addField(FieldDescriptor(name: "plain", number: 1, type: .string))
+    messageDescriptor.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
+    XCTAssertNil(messageDescriptor.field(named: "plain")?.oneofIndex)
+  }
+
+  func test_messageDescriptor_whenDuplicateOneofIndex_oneofAtReturnsFirst_TMD14() {
+    messageDescriptor.addOneofDecl(OneofDescriptor(name: "first", index: 0))
+    messageDescriptor.addOneofDecl(OneofDescriptor(name: "second", index: 0))
+    XCTAssertEqual(messageDescriptor.oneofDecls.count, 2)
+    XCTAssertEqual(messageDescriptor.oneof(at: 0)?.name, "first")
+  }
+
+  func test_messageDescriptor_whenDuplicateNameDifferentIndex_bothStored_TMD15() {
+    messageDescriptor.addOneofDecl(OneofDescriptor(name: "x", index: 0))
+    messageDescriptor.addOneofDecl(OneofDescriptor(name: "x", index: 1))
+    XCTAssertEqual(messageDescriptor.oneof(at: 0)?.name, "x")
+    XCTAssertEqual(messageDescriptor.oneof(at: 1)?.name, "x")
+  }
+
+  func test_messageDescriptor_whenFieldOneofIndexHasNoMatchingDecl_oneofAtReturnsNil_TMD16() {
+    messageDescriptor.addField(
+      FieldDescriptor(name: "orphan", number: 1, type: .string, oneofIndex: 2)
+    )
+    messageDescriptor.addOneofDecl(OneofDescriptor(name: "only", index: 0))
+    XCTAssertNil(messageDescriptor.oneof(at: 2))
+  }
+
+  func test_messageDescriptor_whenOneofDeclAddedAfterFields_lookupStillWorks_TMD17() {
+    messageDescriptor.addField(
+      FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0)
+    )
+    messageDescriptor.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
+    XCTAssertEqual(messageDescriptor.oneof(at: 0)?.name, "contact")
+
+    var other = MessageDescriptor(name: "M2", fullName: "M2")
+    other.addOneofDecl(OneofDescriptor(name: "g", index: 0))
+    other.addField(FieldDescriptor(name: "f", number: 1, type: .string, oneofIndex: 0))
+    XCTAssertEqual(other.oneof(at: 0)?.name, "g")
+  }
+
   // MARK: - Helpers
 }

@@ -1019,4 +1019,430 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(roundTrippedMsg.field(named: "phone")?.oneofIndex, 0)
     XCTAssertNil(roundTrippedMsg.field(named: "id")?.oneofIndex)
   }
+
+  // MARK: - OPE-221: FieldDescriptor bridge edge cases (T-FD-05, T-FD-09, T-FD-11)
+
+  func test_toProtobufFieldDescriptor_whenFieldHasOneofIndexZero_setsProtoOneofIndex_TFD05() throws {
+    let field = FieldDescriptor(
+      name: "email",
+      number: 2,
+      type: .string,
+      oneofIndex: 0
+    )
+    let proto = try bridge.toProtobufFieldDescriptor(from: field)
+    XCTAssertTrue(proto.hasOneofIndex)
+    XCTAssertEqual(proto.oneofIndex, 0)
+  }
+
+  func test_toProtobufFieldDescriptor_whenFieldHasNoOneof_clearsProtoOneofIndex_TFD09() throws {
+    let field = FieldDescriptor(name: "name", number: 1, type: .string)
+    let proto = try bridge.toProtobufFieldDescriptor(from: field)
+    XCTAssertFalse(proto.hasOneofIndex)
+  }
+
+  func test_fromProtobufDescriptor_whenMapField_detectedMapHasNilOneofIndex_TFD11() throws {
+    var messageProto = Google_Protobuf_DescriptorProto()
+    messageProto.name = "WithMap"
+
+    var mapField = Google_Protobuf_FieldDescriptorProto()
+    mapField.name = "labels"
+    mapField.number = 5
+    mapField.type = .message
+    mapField.label = .repeated
+    mapField.typeName = ".test.WithMap.LabelsEntry"
+
+    let entryMessage = Self.makeMapEntryProto(
+      name: "LabelsEntry",
+      keyType: .string,
+      valueType: .string
+    )
+    messageProto.nestedType = [entryMessage]
+    messageProto.field = [mapField]
+
+    let msg = try bridge.fromProtobufDescriptor(messageProto)
+    let labels = try XCTUnwrap(msg.field(named: "labels"))
+    XCTAssertTrue(labels.isMap)
+    XCTAssertNil(labels.oneofIndex)
+  }
+
+  // MARK: - OPE-221: fromProtobuf oneof (T-BR-FROM-05…13)
+
+  func test_fromProtobufDescriptor_mixedScalarAndOneofFields_TBRFROM05() throws {
+    var proto = Google_Protobuf_DescriptorProto()
+    proto.name = "User"
+
+    var idField = Google_Protobuf_FieldDescriptorProto()
+    idField.name = "id"
+    idField.number = 1
+    idField.type = .string
+    idField.label = .optional
+
+    var emailField = Google_Protobuf_FieldDescriptorProto()
+    emailField.name = "email"
+    emailField.number = 2
+    emailField.type = .string
+    emailField.label = .optional
+    emailField.oneofIndex = 0
+
+    var oneof = Google_Protobuf_OneofDescriptorProto()
+    oneof.name = "contact"
+
+    proto.field = [idField, emailField]
+    proto.oneofDecl = [oneof]
+
+    let msg = try bridge.fromProtobufDescriptor(proto)
+    XCTAssertNil(msg.field(named: "id")?.oneofIndex)
+    XCTAssertEqual(msg.field(named: "email")?.oneofIndex, 0)
+  }
+
+  func test_fromProtobufFileDescriptor_preservesOneofDecls_TBRFROM06() throws {
+    var fileDesc = FileDescriptor(name: "m.proto", package: "example")
+    var msg = MessageDescriptor(name: "User", parent: fileDesc)
+    msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
+    msg.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
+    fileDesc.addMessage(msg)
+
+    let fileProto = try bridge.toProtobufFileDescriptor(from: fileDesc)
+    let roundFile = try bridge.fromProtobufFileDescriptor(fileProto)
+    let roundMsg = try XCTUnwrap(roundFile.messages["User"])
+    XCTAssertEqual(roundMsg.oneofDecls.count, 1)
+    XCTAssertEqual(roundMsg.oneof(at: 0)?.name, "contact")
+  }
+
+  func test_fromProtobufDescriptor_nestedMessageOneofIndependent_TBRFROM07() throws {
+    var inner = Google_Protobuf_DescriptorProto()
+    inner.name = "Inner"
+    var innerOneof = Google_Protobuf_OneofDescriptorProto()
+    innerOneof.name = "format"
+    var innerField = Google_Protobuf_FieldDescriptorProto()
+    innerField.name = "x"
+    innerField.number = 1
+    innerField.type = .string
+    innerField.label = .optional
+    innerField.oneofIndex = 0
+    inner.field = [innerField]
+    inner.oneofDecl = [innerOneof]
+
+    var outer = Google_Protobuf_DescriptorProto()
+    outer.name = "Outer"
+    var outerOneof = Google_Protobuf_OneofDescriptorProto()
+    outerOneof.name = "kind"
+    var outerField = Google_Protobuf_FieldDescriptorProto()
+    outerField.name = "a"
+    outerField.number = 1
+    outerField.type = .string
+    outerField.label = .optional
+    outerField.oneofIndex = 0
+    outer.field = [outerField]
+    outer.oneofDecl = [outerOneof]
+    outer.nestedType = [inner]
+
+    let msg = try bridge.fromProtobufDescriptor(outer)
+    XCTAssertEqual(msg.oneofDecls.count, 1)
+    XCTAssertEqual(msg.oneof(at: 0)?.name, "kind")
+    let innerMsg = try XCTUnwrap(msg.nestedMessage(named: "Inner"))
+    XCTAssertEqual(innerMsg.oneofDecls.count, 1)
+    XCTAssertEqual(innerMsg.oneof(at: 0)?.name, "format")
+  }
+
+  func test_fromProtobufDescriptor_onlyOneofFields_TBRFROM09() throws {
+    var proto = Google_Protobuf_DescriptorProto()
+    proto.name = "OnlyOneof"
+
+    var a = Google_Protobuf_FieldDescriptorProto()
+    a.name = "a"
+    a.number = 1
+    a.type = .string
+    a.label = .optional
+    a.oneofIndex = 0
+
+    var b = Google_Protobuf_FieldDescriptorProto()
+    b.name = "b"
+    b.number = 2
+    b.type = .string
+    b.label = .optional
+    b.oneofIndex = 0
+
+    var oneof = Google_Protobuf_OneofDescriptorProto()
+    oneof.name = "choice"
+
+    proto.field = [a, b]
+    proto.oneofDecl = [oneof]
+
+    let msg = try bridge.fromProtobufDescriptor(proto)
+    XCTAssertEqual(msg.fields.count, 2)
+    XCTAssertEqual(msg.oneofDecls.count, 1)
+    XCTAssertEqual(msg.field(named: "a")?.oneofIndex, 0)
+  }
+
+  func test_fromProtobufDescriptor_proto3SyntheticOptionalOneof_TBRFROM10() throws {
+    var proto = Google_Protobuf_DescriptorProto()
+    proto.name = "WithOptional"
+
+    var syntheticOneof = Google_Protobuf_OneofDescriptorProto()
+    syntheticOneof.name = "_nickname"
+
+    var nickField = Google_Protobuf_FieldDescriptorProto()
+    nickField.name = "nickname"
+    nickField.number = 1
+    nickField.type = .string
+    nickField.label = .optional
+    nickField.oneofIndex = 0
+    nickField.proto3Optional = true
+
+    proto.field = [nickField]
+    proto.oneofDecl = [syntheticOneof]
+
+    let msg = try bridge.fromProtobufDescriptor(proto)
+    XCTAssertEqual(msg.oneofDecls.count, 1)
+    XCTAssertEqual(msg.oneofDecls[0].name, "_nickname")
+    XCTAssertEqual(msg.field(named: "nickname")?.oneofIndex, 0)
+  }
+
+  func test_fromProtobufDescriptor_emptyOneofName_TBRFROM11() throws {
+    var proto = Google_Protobuf_DescriptorProto()
+    proto.name = "M"
+    var oneof = Google_Protobuf_OneofDescriptorProto()
+    oneof.name = ""
+    var f = Google_Protobuf_FieldDescriptorProto()
+    f.name = "x"
+    f.number = 1
+    f.type = .string
+    f.label = .optional
+    f.oneofIndex = 0
+    proto.field = [f]
+    proto.oneofDecl = [oneof]
+
+    let msg = try bridge.fromProtobufDescriptor(proto)
+    XCTAssertEqual(msg.oneofDecls[0].name, "")
+    XCTAssertEqual(msg.oneofDecls[0].index, 0)
+  }
+
+  func test_fromProtobufDescriptor_oneofDeclOrderDefinesIndex_TBRFROM12() throws {
+    var proto = Google_Protobuf_DescriptorProto()
+    proto.name = "Ordered"
+
+    var oneofPayment = Google_Protobuf_OneofDescriptorProto()
+    oneofPayment.name = "payment"
+    var oneofContact = Google_Protobuf_OneofDescriptorProto()
+    oneofContact.name = "contact"
+
+    var payField = Google_Protobuf_FieldDescriptorProto()
+    payField.name = "card"
+    payField.number = 2
+    payField.type = .string
+    payField.label = .optional
+    payField.oneofIndex = 0
+
+    var mailField = Google_Protobuf_FieldDescriptorProto()
+    mailField.name = "email"
+    mailField.number = 3
+    mailField.type = .string
+    mailField.label = .optional
+    mailField.oneofIndex = 1
+
+    proto.oneofDecl = [oneofPayment, oneofContact]
+    proto.field = [payField, mailField]
+
+    let msg = try bridge.fromProtobufDescriptor(proto)
+    XCTAssertEqual(msg.oneof(at: 0)?.name, "payment")
+    XCTAssertEqual(msg.oneof(at: 1)?.name, "contact")
+    XCTAssertEqual(msg.field(named: "card")?.oneofIndex, 0)
+    XCTAssertEqual(msg.field(named: "email")?.oneofIndex, 1)
+  }
+
+  func test_fromProtobufDescriptor_mapAndOneofCoexist_TBRFROM13() throws {
+    var messageProto = Google_Protobuf_DescriptorProto()
+    messageProto.name = "Hybrid"
+
+    var mapField = Google_Protobuf_FieldDescriptorProto()
+    mapField.name = "labels"
+    mapField.number = 1
+    mapField.type = .message
+    mapField.label = .repeated
+    mapField.typeName = ".test.Hybrid.LabelsEntry"
+
+    var emailField = Google_Protobuf_FieldDescriptorProto()
+    emailField.name = "email"
+    emailField.number = 2
+    emailField.type = .string
+    emailField.label = .optional
+    emailField.oneofIndex = 0
+
+    var oneof = Google_Protobuf_OneofDescriptorProto()
+    oneof.name = "contact"
+
+    let entry = Self.makeMapEntryProto(name: "LabelsEntry", keyType: .string, valueType: .string)
+    messageProto.nestedType = [entry]
+    messageProto.field = [mapField, emailField]
+    messageProto.oneofDecl = [oneof]
+
+    let msg = try bridge.fromProtobufDescriptor(messageProto)
+    XCTAssertTrue(try XCTUnwrap(msg.field(named: "labels")).isMap)
+    XCTAssertNil(msg.field(named: "labels")?.oneofIndex)
+    XCTAssertEqual(msg.field(named: "email")?.oneofIndex, 0)
+  }
+
+  // MARK: - OPE-221: toProtobuf oneof (T-BR-TO-02…12)
+
+  func test_toProtobufDescriptor_fieldWithOneofIndexWritesProtoOneofIndex_TBRTO03() throws {
+    var msg = MessageDescriptor(name: "User", fullName: "User")
+    msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
+    msg.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
+
+    let proto = try bridge.toProtobufDescriptor(from: msg)
+    let emailProto = try XCTUnwrap(proto.field.first { $0.name == "email" })
+    XCTAssertTrue(emailProto.hasOneofIndex)
+    XCTAssertEqual(emailProto.oneofIndex, 0)
+  }
+
+  func test_toProtobufDescriptor_oneofDeclsSortedByIndex_TBRTO02() throws {
+    var msg = MessageDescriptor(name: "User", fullName: "User")
+    msg.addOneofDecl(OneofDescriptor(name: "payment", index: 1))
+    msg.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
+
+    let proto = try bridge.toProtobufDescriptor(from: msg)
+    XCTAssertEqual(proto.oneofDecl.count, 2)
+    XCTAssertEqual(proto.oneofDecl[0].name, "contact")
+    XCTAssertEqual(proto.oneofDecl[1].name, "payment")
+  }
+
+  func test_toProtobufDescriptor_regularFieldOmitsOneofIndex_TBRTO04() throws {
+    var msg = MessageDescriptor(name: "User", fullName: "User")
+    msg.addField(FieldDescriptor(name: "id", number: 1, type: .string))
+    msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
+    msg.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
+
+    let proto = try bridge.toProtobufDescriptor(from: msg)
+    let idProto = try XCTUnwrap(proto.field.first { $0.name == "id" })
+    XCTAssertFalse(idProto.hasOneofIndex)
+  }
+
+  func test_toProtobufDescriptor_fullMessageRoundTripPreservesOneofs_TBRTO05() throws {
+    var msg = MessageDescriptor(name: "User", fullName: "User")
+    msg.addField(FieldDescriptor(name: "id", number: 1, type: .string))
+    msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
+    msg.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
+
+    let proto = try bridge.toProtobufDescriptor(from: msg)
+    let round = try bridge.fromProtobufDescriptor(proto)
+
+    XCTAssertEqual(round.oneofDecls.count, 1)
+    XCTAssertEqual(round.oneof(at: 0)?.name, "contact")
+    XCTAssertNil(round.field(named: "id")?.oneofIndex)
+    XCTAssertEqual(round.field(named: "email")?.oneofIndex, 0)
+  }
+
+  func test_toProtobufDescriptor_nestedOneofRoundTripIndependent_TBRTO07() throws {
+    var inner = MessageDescriptor(name: "Inner", fullName: "Outer.Inner")
+    inner.addField(FieldDescriptor(name: "x", number: 1, type: .string, oneofIndex: 0))
+    inner.addOneofDecl(OneofDescriptor(name: "format", index: 0))
+
+    var outer = MessageDescriptor(name: "Outer", fullName: "Outer")
+    outer.addField(FieldDescriptor(name: "a", number: 1, type: .string, oneofIndex: 0))
+    outer.addOneofDecl(OneofDescriptor(name: "kind", index: 0))
+    outer.addNestedMessage(inner)
+
+    let proto = try bridge.toProtobufDescriptor(from: outer)
+    let round = try bridge.fromProtobufDescriptor(proto)
+
+    XCTAssertEqual(round.oneof(at: 0)?.name, "kind")
+    let innerRound = try XCTUnwrap(round.nestedMessage(named: "Inner"))
+    XCTAssertEqual(innerRound.oneof(at: 0)?.name, "format")
+  }
+
+  func test_toProtobufDescriptor_withoutOneofDecls_emitsEmptyOneofDecl_TBRTO08() throws {
+    var msg = MessageDescriptor(name: "Plain", fullName: "Plain")
+    msg.addField(FieldDescriptor(name: "v", number: 1, type: .string))
+
+    let proto = try bridge.toProtobufDescriptor(from: msg)
+    XCTAssertTrue(proto.oneofDecl.isEmpty)
+  }
+
+  func test_toProtobufDescriptor_oneofDeclsWithoutFieldOneofIndices_TBRTO09() throws {
+    var msg = MessageDescriptor(name: "M", fullName: "M")
+    msg.addField(FieldDescriptor(name: "id", number: 1, type: .string))
+    msg.addOneofDecl(OneofDescriptor(name: "unused", index: 0))
+
+    let proto = try bridge.toProtobufDescriptor(from: msg)
+    XCTAssertEqual(proto.oneofDecl.count, 1)
+    XCTAssertFalse(try XCTUnwrap(proto.field.first { $0.name == "id" }).hasOneofIndex)
+  }
+
+  func test_toProtobufDescriptor_duplicateOneofIndices_notDeduplicated_TBRTO10() throws {
+    var msg = MessageDescriptor(name: "M", fullName: "M")
+    msg.addOneofDecl(OneofDescriptor(name: "a", index: 0))
+    msg.addOneofDecl(OneofDescriptor(name: "b", index: 0))
+
+    let proto = try bridge.toProtobufDescriptor(from: msg)
+    XCTAssertEqual(proto.oneofDecl.count, 2)
+  }
+
+  func test_toProtobufDescriptor_manyOneofGroups_sortedByIndex_TBRTO11() throws {
+    var msg = MessageDescriptor(name: "Big", fullName: "Big")
+    for i in 0..<11 {
+      msg.addOneofDecl(OneofDescriptor(name: "g\(i)", index: i))
+    }
+    let proto = try bridge.toProtobufDescriptor(from: msg)
+    XCTAssertEqual(proto.oneofDecl.count, 11)
+    for i in 0..<11 {
+      XCTAssertEqual(proto.oneofDecl[i].name, "g\(i)")
+    }
+  }
+
+  func test_toProtobufDescriptor_mapAndOneofFieldsIndependent_TBRTO12() throws {
+    var msg = MessageDescriptor(name: "Hybrid", fullName: "test.Hybrid")
+    let keyInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
+    let valInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
+    let mapInfo = MapEntryInfo(keyFieldInfo: keyInfo, valueFieldInfo: valInfo)
+    msg.addField(
+      FieldDescriptor(
+        name: "labels",
+        number: 1,
+        type: .message,
+        typeName: "test.Hybrid.LabelsEntry",
+        isRepeated: true,
+        isMap: true,
+        mapEntryInfo: mapInfo
+      )
+    )
+    msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
+    msg.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
+
+    let proto = try bridge.toProtobufDescriptor(from: msg)
+    XCTAssertEqual(proto.oneofDecl.count, 1)
+    XCTAssertFalse(try XCTUnwrap(proto.field.first { $0.name == "labels" }).hasOneofIndex)
+    XCTAssertTrue(try XCTUnwrap(proto.field.first { $0.name == "email" }).hasOneofIndex)
+  }
+
+  private static func makeMapEntryProto(
+    name: String,
+    keyType: Google_Protobuf_FieldDescriptorProto.TypeEnum,
+    valueType: Google_Protobuf_FieldDescriptorProto.TypeEnum,
+    valueTypeName: String? = nil
+  ) -> Google_Protobuf_DescriptorProto {
+    var entryMessage = Google_Protobuf_DescriptorProto()
+    entryMessage.name = name
+    var options = Google_Protobuf_MessageOptions()
+    options.mapEntry = true
+    entryMessage.options = options
+
+    var keyField = Google_Protobuf_FieldDescriptorProto()
+    keyField.name = "key"
+    keyField.number = 1
+    keyField.type = keyType
+    keyField.label = .optional
+
+    var valueField = Google_Protobuf_FieldDescriptorProto()
+    valueField.name = "value"
+    valueField.number = 2
+    valueField.type = valueType
+    valueField.label = .optional
+    if let valueTypeName {
+      valueField.typeName = valueTypeName
+    }
+
+    entryMessage.field = [keyField, valueField]
+    return entryMessage
+  }
 }

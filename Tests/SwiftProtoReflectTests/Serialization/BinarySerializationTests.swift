@@ -596,6 +596,311 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertGreaterThanOrEqual(data.count, 11)
   }
 
+  // MARK: - Enum Field with String Value
+
+  func testSerialize_enumField_withStringValue_throwsValueTypeMismatch() throws {
+    // DynamicMessage accepts both Int32 and String for enum fields,
+    // but BinarySerializer only accepts Int32.
+    // This test covers the guard let enumValue = value as? Int32 path in encodeValue.
+    var message = MessageDescriptor(name: "EnumMessage", parent: fileDescriptor)
+    message.addField(
+      FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "test.Status")
+    )
+    fileDescriptor.addMessage(message)
+
+    var msg = messageFactory.createMessage(from: message)
+    try msg.set("ACTIVE", forField: "status")  // DynamicMessage accepts String for enum
+
+    XCTAssertThrowsError(try serializer.serialize(msg)) { error in
+      if let serializationError = error as? SerializationError,
+        case .valueTypeMismatch(let expected, let actual) = serializationError
+      {
+        XCTAssertEqual(expected, "Int32")
+        XCTAssertTrue(actual.contains("String"))
+      }
+      else {
+        XCTFail("Expected SerializationError.valueTypeMismatch, got: \(error)")
+      }
+    }
+  }
+
+  // MARK: - Repeated Fields: Packed Encoding for More Types
+
+  func testSerializePackedRepeatedBoolField() throws {
+    var message = MessageDescriptor(name: "PackedBoolMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "flags", number: 1, type: .bool, isRepeated: true))
+    fileDescriptor.addMessage(message)
+
+    let dynamicMessage = try messageFactory.createMessage(
+      from: message,
+      with: ["flags": [true, false, true]]
+    )
+    let data = try serializer.serialize(dynamicMessage)
+
+    // Packed encoding: only one tag
+    let dataArray = Array(data)
+    let tagCount = dataArray.filter { $0 == 10 }.count  // Tag: (1 << 3) | 2 = 10
+    XCTAssertEqual(tagCount, 1)
+
+    // Round-trip
+    let deserialized = try BinaryDeserializer().deserialize(data, using: message)
+    let flags = try deserialized.get(forField: "flags") as? [Bool]
+    XCTAssertEqual(flags, [true, false, true])
+  }
+
+  func testSerializePackedRepeatedUInt32Field() throws {
+    var message = MessageDescriptor(name: "PackedUInt32Message", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "values", number: 1, type: .uint32, isRepeated: true))
+    fileDescriptor.addMessage(message)
+
+    let dynamicMessage = try messageFactory.createMessage(
+      from: message,
+      with: ["values": [UInt32(100), UInt32(200), UInt32(300)]]
+    )
+    let data = try serializer.serialize(dynamicMessage)
+    XCTAssertGreaterThan(data.count, 0)
+
+    let deserialized = try BinaryDeserializer().deserialize(data, using: message)
+    let values = try deserialized.get(forField: "values") as? [UInt32]
+    XCTAssertEqual(values, [UInt32(100), UInt32(200), UInt32(300)])
+  }
+
+  func testSerializePackedRepeatedSint32Field() throws {
+    var message = MessageDescriptor(name: "PackedSint32Message", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "values", number: 1, type: .sint32, isRepeated: true))
+    fileDescriptor.addMessage(message)
+
+    let dynamicMessage = try messageFactory.createMessage(
+      from: message,
+      with: ["values": [Int32(-1), Int32(-2), Int32(3)]]
+    )
+    let data = try serializer.serialize(dynamicMessage)
+    XCTAssertGreaterThan(data.count, 0)
+
+    let deserialized = try BinaryDeserializer().deserialize(data, using: message)
+    let values = try deserialized.get(forField: "values") as? [Int32]
+    XCTAssertEqual(values, [Int32(-1), Int32(-2), Int32(3)])
+  }
+
+  func testSerializePackedRepeatedFixed32Field() throws {
+    var message = MessageDescriptor(name: "PackedFixed32Message", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "values", number: 1, type: .fixed32, isRepeated: true))
+    fileDescriptor.addMessage(message)
+
+    let dynamicMessage = try messageFactory.createMessage(
+      from: message,
+      with: ["values": [UInt32(10), UInt32(20), UInt32(30)]]
+    )
+    let data = try serializer.serialize(dynamicMessage)
+    XCTAssertGreaterThan(data.count, 0)
+
+    let deserialized = try BinaryDeserializer().deserialize(data, using: message)
+    let values = try deserialized.get(forField: "values") as? [UInt32]
+    XCTAssertEqual(values, [UInt32(10), UInt32(20), UInt32(30)])
+  }
+
+  func testSerializePackedRepeatedFixed64Field() throws {
+    var message = MessageDescriptor(name: "PackedFixed64Message", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "values", number: 1, type: .fixed64, isRepeated: true))
+    fileDescriptor.addMessage(message)
+
+    let dynamicMessage = try messageFactory.createMessage(
+      from: message,
+      with: ["values": [UInt64(1_000_000), UInt64(2_000_000)]]
+    )
+    let data = try serializer.serialize(dynamicMessage)
+    XCTAssertGreaterThan(data.count, 0)
+
+    let deserialized = try BinaryDeserializer().deserialize(data, using: message)
+    let values = try deserialized.get(forField: "values") as? [UInt64]
+    XCTAssertEqual(values, [UInt64(1_000_000), UInt64(2_000_000)])
+  }
+
+  func testSerializePackedRepeatedSfixed32Field() throws {
+    var message = MessageDescriptor(name: "PackedSfixed32Message", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "values", number: 1, type: .sfixed32, isRepeated: true))
+    fileDescriptor.addMessage(message)
+
+    let dynamicMessage = try messageFactory.createMessage(
+      from: message,
+      with: ["values": [Int32(-100), Int32(0), Int32(100)]]
+    )
+    let data = try serializer.serialize(dynamicMessage)
+    XCTAssertGreaterThan(data.count, 0)
+
+    let deserialized = try BinaryDeserializer().deserialize(data, using: message)
+    let values = try deserialized.get(forField: "values") as? [Int32]
+    XCTAssertEqual(values, [Int32(-100), Int32(0), Int32(100)])
+  }
+
+  func testSerializePackedRepeatedSfixed64Field() throws {
+    var message = MessageDescriptor(name: "PackedSfixed64Message", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "values", number: 1, type: .sfixed64, isRepeated: true))
+    fileDescriptor.addMessage(message)
+
+    let dynamicMessage = try messageFactory.createMessage(
+      from: message,
+      with: ["values": [Int64(-1_000_000), Int64(1_000_000)]]
+    )
+    let data = try serializer.serialize(dynamicMessage)
+    XCTAssertGreaterThan(data.count, 0)
+
+    let deserialized = try BinaryDeserializer().deserialize(data, using: message)
+    let values = try deserialized.get(forField: "values") as? [Int64]
+    XCTAssertEqual(values, [Int64(-1_000_000), Int64(1_000_000)])
+  }
+
+  func testSerializePackedRepeatedUInt64Field() throws {
+    var message = MessageDescriptor(name: "PackedUInt64Message", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "values", number: 1, type: .uint64, isRepeated: true))
+    fileDescriptor.addMessage(message)
+
+    let dynamicMessage = try messageFactory.createMessage(
+      from: message,
+      with: ["values": [UInt64(1), UInt64(2), UInt64(3)]]
+    )
+    let data = try serializer.serialize(dynamicMessage)
+    XCTAssertGreaterThan(data.count, 0)
+  }
+
+  func testSerializePackedRepeatedSint64Field() throws {
+    var message = MessageDescriptor(name: "PackedSint64Message", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "values", number: 1, type: .sint64, isRepeated: true))
+    fileDescriptor.addMessage(message)
+
+    let dynamicMessage = try messageFactory.createMessage(
+      from: message,
+      with: ["values": [Int64(-100), Int64(100)]]
+    )
+    let data = try serializer.serialize(dynamicMessage)
+    XCTAssertGreaterThan(data.count, 0)
+  }
+
+  func testSerializePackedRepeatedDoubleField() throws {
+    var message = MessageDescriptor(name: "PackedDoubleMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "values", number: 1, type: .double, isRepeated: true))
+    fileDescriptor.addMessage(message)
+
+    let dynamicMessage = try messageFactory.createMessage(
+      from: message,
+      with: ["values": [1.1, 2.2, 3.3]]
+    )
+    let data = try serializer.serialize(dynamicMessage)
+    XCTAssertGreaterThan(data.count, 0)
+  }
+
+  func testSerializePackedRepeatedFloatField() throws {
+    var message = MessageDescriptor(name: "PackedFloatMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "values", number: 1, type: .float, isRepeated: true))
+    fileDescriptor.addMessage(message)
+
+    let dynamicMessage = try messageFactory.createMessage(
+      from: message,
+      with: ["values": [Float(1.1), Float(2.2)]]
+    )
+    let data = try serializer.serialize(dynamicMessage)
+    XCTAssertGreaterThan(data.count, 0)
+  }
+
+  func testSerializePackedRepeatedEnumField() throws {
+    var message = MessageDescriptor(name: "PackedEnumMessage", parent: fileDescriptor)
+    message.addField(
+      FieldDescriptor(name: "statuses", number: 1, type: .enum, typeName: "test.Status", isRepeated: true)
+    )
+    fileDescriptor.addMessage(message)
+
+    let dynamicMessage = try messageFactory.createMessage(
+      from: message,
+      with: ["statuses": [Int32(0), Int32(1), Int32(2)]]
+    )
+    let data = try serializer.serialize(dynamicMessage)
+    XCTAssertGreaterThan(data.count, 0)
+  }
+
+  // MARK: - Repeated Bytes Field (Non-Packable)
+
+  func testSerializeRepeatedBytesField() throws {
+    var message = MessageDescriptor(name: "RepeatedBytesMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "blobs", number: 1, type: .bytes, isRepeated: true))
+    fileDescriptor.addMessage(message)
+
+    let dynamicMessage = try messageFactory.createMessage(
+      from: message,
+      with: [
+        "blobs": [Data([0x01, 0x02]), Data([0x03, 0x04, 0x05])]
+      ]
+    )
+
+    // bytes is non-packable, so each element gets its own tag
+    let data = try serializer.serialize(dynamicMessage)
+    XCTAssertGreaterThan(data.count, 0)
+
+    // Deserialize and verify
+    let deserialized = try BinaryDeserializer().deserialize(data, using: message)
+    let blobs = try deserialized.get(forField: "blobs") as? [Data]
+    XCTAssertEqual(blobs?.count, 2)
+    XCTAssertEqual(blobs?[0], Data([0x01, 0x02]))
+    XCTAssertEqual(blobs?[1], Data([0x03, 0x04, 0x05]))
+  }
+
+  // MARK: - Map Fields with Various Key Types
+
+  func testSerializeMapFieldWithIntKey() throws {
+    let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .int32)
+    let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
+    let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
+
+    var message = MessageDescriptor(name: "IntKeyMapMessage", parent: fileDescriptor)
+    message.addField(
+      FieldDescriptor(
+        name: "int_to_str",
+        number: 1,
+        type: .message,
+        typeName: "int_to_str_entry",
+        isMap: true,
+        mapEntryInfo: mapEntryInfo
+      )
+    )
+    fileDescriptor.addMessage(message)
+
+    let mapData: [Int32: String] = [Int32(1): "one", Int32(2): "two"]
+    let dynamicMessage = try messageFactory.createMessage(
+      from: message,
+      with: ["int_to_str": mapData]
+    )
+
+    let data = try serializer.serialize(dynamicMessage)
+    XCTAssertGreaterThan(data.count, 0)
+  }
+
+  func testSerializeMapFieldWithBoolKey() throws {
+    let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .bool)
+    let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
+    let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
+
+    var message = MessageDescriptor(name: "BoolKeyMapMessage", parent: fileDescriptor)
+    message.addField(
+      FieldDescriptor(
+        name: "bool_to_str",
+        number: 1,
+        type: .message,
+        typeName: "bool_to_str_entry",
+        isMap: true,
+        mapEntryInfo: mapEntryInfo
+      )
+    )
+    fileDescriptor.addMessage(message)
+
+    let mapData: [Bool: String] = [true: "yes", false: "no"]
+    let dynamicMessage = try messageFactory.createMessage(
+      from: message,
+      with: ["bool_to_str": mapData]
+    )
+
+    let data = try serializer.serialize(dynamicMessage)
+    XCTAssertGreaterThan(data.count, 0)
+  }
+
   // MARK: - Performance Tests
 
   func testSerializationPerformance() throws {

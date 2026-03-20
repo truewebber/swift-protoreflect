@@ -490,6 +490,250 @@ final class BinaryDeserializationTests: XCTestCase {
     }
   }
 
+  // MARK: - Error Path Coverage Tests
+
+  func testDeserialize_invalidWireType_throwsError() {
+    var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "field", number: 1, type: .int32))
+
+    // Wire type 6 is not a valid protobuf wire type (valid: 0-5)
+    // Tag = (fieldNumber=1 << 3) | wireType=6 = 8 | 6 = 14 = 0x0E
+    let invalidData = Data([0x0E])
+    XCTAssertThrowsError(try deserializer.deserialize(invalidData, using: message)) { error in
+      if case .invalidWireType = error as? DeserializationError {
+        // Expected
+      }
+      else {
+        XCTFail("Expected invalidWireType error, got: \(error)")
+      }
+    }
+  }
+
+  func testDeserialize_wireTypeMismatch_throwsError() {
+    var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "value", number: 1, type: .int32))
+
+    // int32 field expects varint wire type (0), but we send fixed32 wire type (5)
+    // Tag = (1 << 3) | 5 = 13 = 0x0D, then 4 bytes of fixed32 data
+    let mismatchData = Data([0x0D, 0x01, 0x00, 0x00, 0x00])
+    XCTAssertThrowsError(try deserializer.deserialize(mismatchData, using: message)) { error in
+      if case .wireTypeMismatch(let fieldName, _, _) = error as? DeserializationError {
+        XCTAssertEqual(fieldName, "value")
+      }
+      else {
+        XCTFail("Expected wireTypeMismatch error, got: \(error)")
+      }
+    }
+  }
+
+  func testDeserialize_messageTypeField_throwsUnsupportedNestedMessage() {
+    var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "nested", number: 1, type: .message, typeName: "test.Nested"))
+
+    // Tag for field 1 (length-delimited) = (1 << 3) | 2 = 10 = 0x0A
+    // Length = 2, content = 2 bytes of data
+    let data = Data([0x0A, 0x02, 0x08, 0x01])
+    XCTAssertThrowsError(try deserializer.deserialize(data, using: message)) { error in
+      if case .unsupportedNestedMessage(let typeName) = error as? DeserializationError {
+        XCTAssertEqual(typeName, "test.Nested")
+      }
+      else {
+        XCTFail("Expected unsupportedNestedMessage error, got: \(error)")
+      }
+    }
+  }
+
+  func testDeserialize_groupWireTypeInUnknownField_throwsError() {
+    var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "known", number: 1, type: .int32))
+
+    // Field 2 is NOT in the descriptor (unknown field)
+    // Tag = (2 << 3) | 3 = 19 = 0x13 (field 2, startGroup wire type)
+    let groupData = Data([0x13])
+    XCTAssertThrowsError(try deserializer.deserialize(groupData, using: message)) { error in
+      if case .unsupportedFieldType(let type) = error as? DeserializationError {
+        XCTAssertEqual(type, "group")
+      }
+      else {
+        XCTFail("Expected unsupportedFieldType error, got: \(error)")
+      }
+    }
+  }
+
+  func testDeserialize_preserveUnknownFieldsFalse_discardsUnknownData() throws {
+    var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "known", number: 1, type: .int32))
+
+    // Field 1 (known): tag=0x08, value=42=0x2A
+    // Field 2 (unknown varint): tag=0x10, value=99=0x63
+    let data = Data([0x08, 0x2A, 0x10, 0x63])
+    let discardDeserializer = BinaryDeserializer(options: DeserializationOptions(preserveUnknownFields: false))
+    let result = try discardDeserializer.deserialize(data, using: message)
+
+    // Known field should be deserialized
+    XCTAssertEqual(try result.get(forField: "known") as? Int32, Int32(42))
+  }
+
+  func testDeserialize_preserveUnknownFieldsTrue_skipsUnknownData() throws {
+    var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "known", number: 1, type: .int32))
+
+    // Field 1 (known): tag=0x08, value=5=0x05
+    // Field 3 (unknown fixed32): tag=(3<<3)|5=29=0x1D, then 4 bytes
+    let data = Data([0x08, 0x05, 0x1D, 0xAA, 0xBB, 0xCC, 0xDD])
+    let preserveDeserializer = BinaryDeserializer(options: DeserializationOptions(preserveUnknownFields: true))
+    let result = try preserveDeserializer.deserialize(data, using: message)
+
+    XCTAssertEqual(try result.get(forField: "known") as? Int32, Int32(5))
+  }
+
+  func testDeserialize_unknownLengthDelimitedField_preserved() throws {
+    var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "known", number: 1, type: .string))
+
+    // Field 1 (known string): tag=0x0A, length=5, "hello"
+    // Field 5 (unknown length-delimited): tag=(5<<3)|2=42=0x2A, length=3, "abc"
+    let helloBytes: [UInt8] = [0x68, 0x65, 0x6C, 0x6C, 0x6F]
+    let abcBytes: [UInt8] = [0x61, 0x62, 0x63]
+    let data = Data([0x0A, 0x05] + helloBytes + [0x2A, 0x03] + abcBytes)
+
+    let result = try deserializer.deserialize(data, using: message)
+    XCTAssertEqual(try result.get(forField: "known") as? String, "hello")
+  }
+
+  func testDeserialize_malformedMapEntry_throwsError() throws {
+    let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
+    let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
+    let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
+
+    var message = MessageDescriptor(name: "MapMessage", parent: fileDescriptor)
+    message.addField(
+      FieldDescriptor(
+        name: "my_map",
+        number: 1,
+        type: .message,
+        typeName: "map_entry",
+        isMap: true,
+        mapEntryInfo: mapEntryInfo
+      )
+    )
+
+    // Map entry tag: (1 << 3) | 2 = 10 = 0x0A
+    // Declared entry length = 3 bytes
+    // But key field = tag(string,field1)=0x0A, length=0x04, "test" (4 bytes) = 6 bytes total
+    // Reading 4 bytes for string exceeds declared 3-byte entry, causing malformed entry
+    let mapTag: UInt8 = 0x0A
+    let entryLength: UInt8 = 0x03
+    let keyTag: UInt8 = 0x0A  // field 1, length-delimited
+    let keyLen: UInt8 = 0x04  // 4 bytes for key string
+    let keyData: [UInt8] = [0x74, 0x65, 0x73, 0x74]  // "test"
+    let data = Data([mapTag, entryLength, keyTag, keyLen] + keyData)
+
+    XCTAssertThrowsError(try deserializer.deserialize(data, using: message)) { error in
+      // Either malformedMapEntry or truncatedMessage depending on how overread is detected
+      XCTAssertTrue(error is DeserializationError, "Expected a DeserializationError, got: \(error)")
+    }
+  }
+
+  func testDeserializationError_wireTypeMismatch_description() {
+    let error = DeserializationError.wireTypeMismatch(fieldName: "field1", expected: .varint, actual: .fixed64)
+    XCTAssertTrue(error.description.contains("field1"))
+    XCTAssertTrue(error.description.contains("varint"))
+    XCTAssertTrue(error.description.contains("fixed64"))
+  }
+
+  func testDeserializationError_malformedMapEntry_description() {
+    let error = DeserializationError.malformedMapEntry(fieldName: "myMap")
+    XCTAssertEqual(error.description, "Malformed map entry: myMap")
+  }
+
+  func testDeserializationError_missingMapEntryInfo_description() {
+    let error = DeserializationError.missingMapEntryInfo(fieldName: "someMap")
+    XCTAssertEqual(error.description, "Missing map entry info for field 'someMap'")
+  }
+
+  func testDeserializationError_missingTypeName_description() {
+    let error = DeserializationError.missingTypeName(fieldType: "message")
+    XCTAssertEqual(error.description, "Missing type name for field type: message")
+  }
+
+  func testDeserializationError_unsupportedFieldType_description() {
+    let error = DeserializationError.unsupportedFieldType(type: "group")
+    XCTAssertEqual(error.description, "Unsupported field type: group")
+  }
+
+  func testDeserializationError_equality_allCases() {
+    XCTAssertEqual(DeserializationError.truncatedVarint, DeserializationError.truncatedVarint)
+    XCTAssertEqual(DeserializationError.truncatedMessage, DeserializationError.truncatedMessage)
+    XCTAssertEqual(DeserializationError.invalidUTF8String, DeserializationError.invalidUTF8String)
+    XCTAssertEqual(
+      DeserializationError.malformedMapEntry(fieldName: "x"),
+      DeserializationError.malformedMapEntry(fieldName: "x")
+    )
+    XCTAssertNotEqual(
+      DeserializationError.malformedMapEntry(fieldName: "x"),
+      DeserializationError.malformedMapEntry(fieldName: "y")
+    )
+    XCTAssertEqual(
+      DeserializationError.missingMapEntryInfo(fieldName: "x"),
+      DeserializationError.missingMapEntryInfo(fieldName: "x")
+    )
+    XCTAssertEqual(
+      DeserializationError.missingTypeName(fieldType: "message"),
+      DeserializationError.missingTypeName(fieldType: "message")
+    )
+    XCTAssertEqual(
+      DeserializationError.unsupportedNestedMessage(typeName: "Foo"),
+      DeserializationError.unsupportedNestedMessage(typeName: "Foo")
+    )
+    XCTAssertEqual(
+      DeserializationError.unsupportedFieldType(type: "group"),
+      DeserializationError.unsupportedFieldType(type: "group")
+    )
+    XCTAssertEqual(
+      DeserializationError.wireTypeMismatch(fieldName: "f", expected: .varint, actual: .fixed32),
+      DeserializationError.wireTypeMismatch(fieldName: "f", expected: .varint, actual: .fixed32)
+    )
+    XCTAssertNotEqual(
+      DeserializationError.wireTypeMismatch(fieldName: "f", expected: .varint, actual: .fixed32),
+      DeserializationError.wireTypeMismatch(fieldName: "f", expected: .varint, actual: .fixed64)
+    )
+  }
+
+  func testDeserialize_truncatedFixed32_throwsError() {
+    var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "value", number: 1, type: .fixed32))
+
+    // Tag for field 1 (fixed32 wire type): (1 << 3) | 5 = 13 = 0x0D
+    // But only provide 2 bytes instead of 4
+    let truncatedData = Data([0x0D, 0x01, 0x02])
+    XCTAssertThrowsError(try deserializer.deserialize(truncatedData, using: message)) { error in
+      if case .truncatedMessage = error as? DeserializationError {
+        // Expected
+      }
+      else {
+        XCTFail("Expected truncatedMessage error, got: \(error)")
+      }
+    }
+  }
+
+  func testDeserialize_truncatedFixed64_throwsError() {
+    var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "value", number: 1, type: .fixed64))
+
+    // Tag for field 1 (fixed64 wire type): (1 << 3) | 1 = 9 = 0x09
+    // But only provide 4 bytes instead of 8
+    let truncatedData = Data([0x09, 0x01, 0x02, 0x03, 0x04])
+    XCTAssertThrowsError(try deserializer.deserialize(truncatedData, using: message)) { error in
+      if case .truncatedMessage = error as? DeserializationError {
+        // Expected
+      }
+      else {
+        XCTFail("Expected truncatedMessage error, got: \(error)")
+      }
+    }
+  }
+
   // MARK: - Edge Cases Tests
 
   func testDeserializeEmptyMessage() throws {

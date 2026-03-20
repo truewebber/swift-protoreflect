@@ -48,6 +48,61 @@ final class FieldDescriptorTests: XCTestCase {
     XCTAssertTrue(field.options.isEmpty)
   }
 
+  // MARK: - OPE-221: oneofIndex on manual FieldDescriptor (T-FD-01…03, T-FD-07)
+
+  func test_fieldDescriptor_whenCreatedWithOneofIndex_preservesIndex_TFD01() {
+    let field = FieldDescriptor(
+      name: "email",
+      number: 1,
+      type: .string,
+      oneofIndex: 0
+    )
+    XCTAssertEqual(field.oneofIndex, 0)
+  }
+
+  func test_fieldDescriptor_whenOneofIndexIsZero_preservesZero_TFD02() {
+    let field = FieldDescriptor(
+      name: "f",
+      number: 1,
+      type: .string,
+      oneofIndex: 0
+    )
+    XCTAssertEqual(field.oneofIndex, 0)
+  }
+
+  func test_fieldDescriptor_whenOneofIndexIsLarge_preservesValue_TFD03() {
+    let field = FieldDescriptor(
+      name: "f",
+      number: 1,
+      type: .string,
+      oneofIndex: 9
+    )
+    XCTAssertEqual(field.oneofIndex, 9)
+  }
+
+  func test_fieldDescriptor_whenCreatedWithoutOneof_hasNilOneofIndex_TFD07() {
+    let field = FieldDescriptor(name: "id", number: 1, type: .string)
+    XCTAssertNil(field.oneofIndex)
+  }
+
+  func test_fieldDescriptor_whenRepeatedWithOneofIndex_storesValue_TFD10() {
+    let field = FieldDescriptor(
+      name: "items",
+      number: 1,
+      type: .string,
+      isRepeated: true,
+      oneofIndex: 0
+    )
+    XCTAssertTrue(field.isRepeated)
+    XCTAssertEqual(field.oneofIndex, 0)
+  }
+
+  func test_fieldDescriptor_whenSameOneofIndexOnTwoFields_bothRetainIndex_TFD12() {
+    let a = FieldDescriptor(name: "a", number: 1, type: .string, oneofIndex: 0)
+    let b = FieldDescriptor(name: "b", number: 2, type: .string, oneofIndex: 0)
+    XCTAssertEqual(a.oneofIndex, b.oneofIndex)
+  }
+
   func testFieldDescriptorWithAllProperties() {
     // Create detailed field descriptor
     let field = FieldDescriptor(
@@ -1080,5 +1135,69 @@ final class FieldDescriptorTests: XCTestCase {
 
     XCTAssertEqual(enumValueInfo.type, .enum)
     XCTAssertEqual(enumValueInfo.typeName, "example.EnumType")
+  }
+
+  // MARK: - DescriptorOption.asAny Tests
+
+  func test_descriptorOption_asAny_bool() {
+    XCTAssertTrue(DescriptorOption.bool(true).asAny as! Bool == true)
+    XCTAssertTrue(DescriptorOption.bool(false).asAny as! Bool == false)
+  }
+
+  func test_descriptorOption_asAny_int() {
+    XCTAssertTrue(DescriptorOption.int(42).asAny as! Int == 42)
+    XCTAssertTrue(DescriptorOption.int(-100).asAny as! Int == -100)
+  }
+
+  func test_descriptorOption_asAny_string() {
+    XCTAssertTrue(DescriptorOption.string("hello").asAny as! String == "hello")
+    XCTAssertTrue(DescriptorOption.string("").asAny as! String == "")
+  }
+
+  func test_descriptorOption_asAny_float() {
+    XCTAssertEqual(DescriptorOption.float(3.14).asAny as! Float, Float(3.14))
+    XCTAssertEqual(DescriptorOption.float(0.0).asAny as! Float, Float(0.0))
+  }
+
+  func test_descriptorOption_asAny_bytes() {
+    let data = Data([1, 2, 3, 0xFF])
+    XCTAssertEqual(DescriptorOption.bytes(data).asAny as! Data, data)
+    XCTAssertEqual(DescriptorOption.bytes(Data()).asAny as! Data, Data())
+  }
+
+  func test_descriptorOption_asAny_returnsCorrectTypes() {
+    let boolOpt = DescriptorOption.bool(true)
+    let intOpt = DescriptorOption.int(99)
+    let stringOpt = DescriptorOption.string("value")
+    let floatOpt = DescriptorOption.float(1.5)
+    let bytesOpt = DescriptorOption.bytes(Data([0x01]))
+
+    XCTAssertTrue(boolOpt.asAny is Bool)
+    XCTAssertTrue(intOpt.asAny is Int)
+    XCTAssertTrue(stringOpt.asAny is String)
+    XCTAssertTrue(floatOpt.asAny is Float)
+    XCTAssertTrue(bytesOpt.asAny is Data)
+  }
+
+  // MARK: - isRepeated Auto-Set for Map Fields
+
+  func test_fieldDescriptor_mapField_autoSetsIsRepeated() {
+    let keyInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
+    let valueInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
+    let mapInfo = MapEntryInfo(keyFieldInfo: keyInfo, valueFieldInfo: valueInfo)
+
+    // isRepeated: false but isMap: true → should auto-set isRepeated to true
+    let mapField = FieldDescriptor(
+      name: "my_map",
+      number: 1,
+      type: .message,
+      typeName: "example.MapEntry",
+      isRepeated: false,
+      isMap: true,
+      mapEntryInfo: mapInfo
+    )
+
+    XCTAssertTrue(mapField.isMap)
+    XCTAssertTrue(mapField.isRepeated, "Map fields must be automatically marked as repeated")
   }
 }
