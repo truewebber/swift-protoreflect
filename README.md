@@ -18,11 +18,11 @@ Add to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/truewebber/swift-protoreflect.git", from: "4.0.0")
+    .package(url: "https://github.com/truewebber/swift-protoreflect.git", from: "5.0.0")
 ]
 ```
 
-> **⚠️ Important:** We strongly recommend using version 4.0.0 or higher. Earlier versions included heavy gRPC dependencies that have been removed for a lighter, more focused library.
+> **Note:** If you are upgrading from 4.x, see the [Migration Guide](MIGRATION_GUIDE.md) for details on breaking changes.
 
 ## Basic Usage
 
@@ -53,13 +53,12 @@ let jsonString = try JSONSerializer().serialize(message: message)
 
 ```swift
 // Timestamps
-let now = Date()
-let timestampMessage = try now.toTimestampMessage()
+let timestampMessage = try DynamicMessage.timestampMessage(from: Date())
 let backToDate = try timestampMessage.toDate()
 
 // JSON-like structures
 let data: [String: Any] = ["user": "john", "active": true]
-let structMessage = try data.toStructMessage()
+let structMessage = try DynamicMessage.structMessage(from: data)
 
 // Type erasure
 let anyMessage = try message.packIntoAny()
@@ -70,10 +69,13 @@ let unpackedMessage = try anyMessage.unpackFromAny(to: personSchema)
 
 - **Dynamic Message Creation**: Create and manipulate protobuf messages at runtime
 - **Schema Definition**: Build message descriptors programmatically
+- **Typed Options**: `DescriptorOption` enum for type-safe, `Sendable` descriptor options
+- **Oneof Support**: First-class `OneofDescriptor` with full bridge round-trip
 - **Serialization**: Binary and JSON serialization/deserialization
 - **Well-Known Types**: Support for Google's standard protobuf types
 - **Swift Protobuf Compatibility**: Convert between static and dynamic messages
 - **Type Registry**: Centralized type management and lookup
+- **Swift 6 Ready**: All public types conform to `Sendable`
 
 ## Examples
 
@@ -107,7 +109,7 @@ Examples are organized by topic:
 
 - Swift 5.9+
 - macOS 12.0+ / iOS 15.0+
-- **Recommended:** SwiftProtoReflect 4.0.0+
+- **Recommended:** SwiftProtoReflect 5.0.0+
 
 ## Dependencies
 

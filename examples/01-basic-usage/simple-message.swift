@@ -336,7 +336,7 @@ struct SimpleMessageExample {
         name: "status",
         number: 1,
         type: .string,
-        defaultValue: "new"
+        defaultValue: .string("new")
       )
     )
     messageDescriptor.addField(
@@ -344,7 +344,7 @@ struct SimpleMessageExample {
         name: "priority",
         number: 2,
         type: .int32,
-        defaultValue: Int32(1)
+        defaultValue: .int(1)
       )
     )
     messageDescriptor.addField(
@@ -352,7 +352,7 @@ struct SimpleMessageExample {
         name: "is_active",
         number: 3,
         type: .bool,
-        defaultValue: true
+        defaultValue: .bool(true)
       )
     )
 

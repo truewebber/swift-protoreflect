@@ -312,7 +312,9 @@ struct BasicDescriptorsExample {
     addressDescriptor.addField(FieldDescriptor(name: "street", number: 1, type: .string))
     addressDescriptor.addField(FieldDescriptor(name: "city", number: 2, type: .string))
     addressDescriptor.addField(FieldDescriptor(name: "postal_code", number: 3, type: .string))
-    addressDescriptor.addField(FieldDescriptor(name: "country", number: 4, type: .string, defaultValue: "Unknown"))
+    addressDescriptor.addField(
+      FieldDescriptor(name: "country", number: 4, type: .string, defaultValue: .string("Unknown"))
+    )
 
     // Create Contact message with OneOf fields
     var contactDescriptor = MessageDescriptor(name: "Contact", parent: fileDescriptor)
@@ -325,14 +327,14 @@ struct BasicDescriptorsExample {
     userDescriptor.addField(FieldDescriptor(name: "id", number: 1, type: .int64))
     userDescriptor.addField(FieldDescriptor(name: "name", number: 2, type: .string))
     userDescriptor.addField(FieldDescriptor(name: "email", number: 3, type: .string))
-    userDescriptor.addField(FieldDescriptor(name: "age", number: 4, type: .int32, defaultValue: Int32(0)))
+    userDescriptor.addField(FieldDescriptor(name: "age", number: 4, type: .int32, defaultValue: .int(0)))
     userDescriptor.addField(
       FieldDescriptor(
         name: "status",
         number: 5,
         type: .enum,
         typeName: "example.UserStatus",
-        defaultValue: Int32(0)
+        defaultValue: .int(0)
       )
     )
     userDescriptor.addField(
@@ -359,10 +361,10 @@ struct BasicDescriptorsExample {
         number: 9,
         type: .enum,
         typeName: "example.Priority",
-        defaultValue: Int32(1)
+        defaultValue: .int(1)
       )
     )
-    userDescriptor.addField(FieldDescriptor(name: "is_verified", number: 10, type: .bool, defaultValue: false))
+    userDescriptor.addField(FieldDescriptor(name: "is_verified", number: 10, type: .bool, defaultValue: .bool(false)))
 
     // Add all types to file
     fileDescriptor.addEnum(userStatusEnum)

@@ -103,7 +103,8 @@ let finalPerson: Person = try processedMessage.toStaticMessage()
 ```swift
 // Migrate multiple messages efficiently
 let staticMessages: [Person] = loadExistingPersons()
-let dynamicMessages = try StaticMessageBridge.convertToDynamic(staticMessages)
+let bridge = StaticMessageBridge()
+let dynamicMessages = try bridge.toDynamicMessages(from: staticMessages, using: personSchema)
 
 // Process dynamically
 let processedMessages = try dynamicMessages.map { message in
@@ -111,7 +112,7 @@ let processedMessages = try dynamicMessages.map { message in
 }
 
 // Convert back if needed
-let finalStaticMessages: [Person] = try StaticMessageBridge.convertToStatic(processedMessages)
+let finalStaticMessages: [Person] = try bridge.toStaticMessages(from: processedMessages, as: Person.self)
 ```
 
 ## Migration Strategies
@@ -204,7 +205,7 @@ func addMetadata(to message: DynamicMessage) throws -> DynamicMessage {
     
     let enhanced = try MessageFactory().createMessage(from: enhancedSchema)
     try enhanced.set("person", value: message)
-    try enhanced.set("created_at", value: Date().toTimestampMessage())
+    try enhanced.set("created_at", value: DynamicMessage.timestampMessage(from: Date()))
     try enhanced.set("version", value: Int32(1))
     
     return enhanced
@@ -229,7 +230,7 @@ func processUnknownMessage(data: Data, schema: MessageDescriptor) throws -> Data
     
     // Add common fields to any message
     if !message.hasField("processed_at") {
-        try message.set("processed_at", value: Date().toTimestampMessage())
+        try message.set("processed_at", value: DynamicMessage.timestampMessage(from: Date()))
     }
     
     return try BinarySerializer().serialize(message: message)
@@ -257,13 +258,9 @@ let event = Event.with {
 ```swift
 import SwiftProtoReflect
 
-// Much simpler!
 let event = try MessageFactory().createMessage(from: eventSchema)
 try event.set("name", value: "UserLogin")
-try event.set("timestamp", value: Date().toTimestampMessage())
-
-// Or even simpler with extensions
-try event.set("timestamp", value: Date())  // Automatic conversion
+try event.set("timestamp", value: DynamicMessage.timestampMessage(from: Date()))
 ```
 
 ### Struct (JSON-like data)
@@ -285,10 +282,7 @@ let data: [String: Any] = [
     "active": true,
     "score": 95.5
 ]
-let structMessage = try data.toStructMessage()
-
-// Or set directly in message
-try message.set("metadata", value: data)  // Automatic Struct conversion
+let structMessage = try DynamicMessage.structMessage(from: data)
 ```
 
 ## Migration Gotchas & Solutions
@@ -346,9 +340,6 @@ class SchemaRepository {
 ```swift
 // ✅ Cache schemas and reuse
 let schema = SchemaRepository.personSchema  // Cache this
-
-// ✅ Batch operations when possible
-let messages = try MessageFactory().createMessages(from: schema, count: 100)
 
 // ✅ Use typed accessors for hot paths
 extension DynamicMessage {
@@ -491,7 +482,7 @@ class MessageFactory {
 ## 🤝 Need Help?
 
 **Migration Questions?**
-- Check our [43 comprehensive examples](examples/)
+- Check our [38 comprehensive examples](examples/)
 - Read the [Architecture Guide](docs/ARCHITECTURE.md)
 - Open a GitHub Issue for specific migration challenges
 
