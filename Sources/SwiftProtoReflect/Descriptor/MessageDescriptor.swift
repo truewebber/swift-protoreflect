@@ -39,6 +39,9 @@ public struct MessageDescriptor: Sendable {
   /// List of nested enums.
   public private(set) var nestedEnums: [String: EnumDescriptor] = [:]
 
+  /// Oneof group declarations for this message, ordered by insertion.
+  public private(set) var oneofDecls: [OneofDescriptor] = []
+
   /// Message options.
   public let options: [String: DescriptorOption]
 
@@ -140,6 +143,26 @@ public struct MessageDescriptor: Sendable {
   /// - Returns: Ordered list of fields.
   public func allFields() -> [FieldDescriptor] {
     return fields.sorted { $0.key < $1.key }.map { $0.value }
+  }
+
+  // MARK: - Oneof Decl Methods
+
+  /// Adds a oneof group declaration to the message.
+  ///
+  /// - Parameter oneof: Oneof descriptor to add.
+  /// - Returns: Updated MessageDescriptor.
+  @discardableResult
+  public mutating func addOneofDecl(_ oneof: OneofDescriptor) -> Self {
+    oneofDecls.append(oneof)
+    return self
+  }
+
+  /// Returns the oneof group descriptor at the given index.
+  ///
+  /// - Parameter index: Zero-based oneof index (matches `FieldDescriptor.oneofIndex`).
+  /// - Returns: `OneofDescriptor` if a group with this index exists, otherwise `nil`.
+  public func oneof(at index: Int) -> OneofDescriptor? {
+    oneofDecls.first { $0.index == index }
   }
 
   // MARK: - Nested Type Methods

@@ -53,6 +53,7 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertTrue(messageDescriptor.fields.isEmpty)
     XCTAssertTrue(messageDescriptor.nestedMessages.isEmpty)
     XCTAssertTrue(messageDescriptor.nestedEnums.isEmpty)
+    XCTAssertTrue(messageDescriptor.oneofDecls.isEmpty)
     XCTAssertEqual(messageDescriptor.fileDescriptorPath, "person.proto")
     XCTAssertNil(messageDescriptor.parentMessageFullName)
   }
@@ -521,6 +522,72 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertNotNil(nestedProfile)
     XCTAssertEqual(nestedProfile?.fullName, "example.user.User.Profile")
     XCTAssertEqual(nestedProfile?.field(number: 1)?.typeName, "example.common.Image")
+  }
+
+  // MARK: - Oneof Decls Tests
+
+  func testAddOneofDecl() {
+    let oneof = OneofDescriptor(name: "contact", index: 0)
+    messageDescriptor.addOneofDecl(oneof)
+
+    XCTAssertEqual(messageDescriptor.oneofDecls.count, 1)
+    XCTAssertEqual(messageDescriptor.oneofDecls[0].name, "contact")
+    XCTAssertEqual(messageDescriptor.oneofDecls[0].index, 0)
+
+    let found = messageDescriptor.oneof(at: 0)
+    XCTAssertNotNil(found)
+    XCTAssertEqual(found?.name, "contact")
+    XCTAssertEqual(found?.index, 0)
+  }
+
+  func testAddMultipleOneofDecls() {
+    let oneof0 = OneofDescriptor(name: "contact", index: 0)
+    let oneof1 = OneofDescriptor(name: "identifier", index: 1)
+    messageDescriptor.addOneofDecl(oneof0)
+    messageDescriptor.addOneofDecl(oneof1)
+
+    XCTAssertEqual(messageDescriptor.oneofDecls.count, 2)
+
+    let found0 = messageDescriptor.oneof(at: 0)
+    XCTAssertNotNil(found0)
+    XCTAssertEqual(found0?.name, "contact")
+
+    let found1 = messageDescriptor.oneof(at: 1)
+    XCTAssertNotNil(found1)
+    XCTAssertEqual(found1?.name, "identifier")
+  }
+
+  func testOneofAtIndexNotFound() {
+    let oneof = OneofDescriptor(name: "contact", index: 0)
+    messageDescriptor.addOneofDecl(oneof)
+
+    XCTAssertNil(messageDescriptor.oneof(at: 99))
+  }
+
+  func testOneofDeclsOrderedByInsertion() {
+    let oneofC = OneofDescriptor(name: "c_group", index: 2)
+    let oneofA = OneofDescriptor(name: "a_group", index: 0)
+    let oneofB = OneofDescriptor(name: "b_group", index: 1)
+    messageDescriptor.addOneofDecl(oneofC)
+    messageDescriptor.addOneofDecl(oneofA)
+    messageDescriptor.addOneofDecl(oneofB)
+
+    XCTAssertEqual(messageDescriptor.oneofDecls[0].name, "c_group")
+    XCTAssertEqual(messageDescriptor.oneofDecls[1].name, "a_group")
+    XCTAssertEqual(messageDescriptor.oneofDecls[2].name, "b_group")
+  }
+
+  func testAddOneofDeclReturnsSelf() {
+    let oneof0 = OneofDescriptor(name: "contact", index: 0)
+    let oneof1 = OneofDescriptor(name: "identifier", index: 1)
+
+    let returned = messageDescriptor.addOneofDecl(oneof0)
+    XCTAssertEqual(returned.oneofDecls.count, 1)
+    XCTAssertEqual(returned.oneofDecls[0].name, "contact")
+
+    messageDescriptor.addOneofDecl(oneof1)
+    XCTAssertEqual(messageDescriptor.oneofDecls.count, 2)
+    XCTAssertEqual(messageDescriptor.oneofDecls[1].name, "identifier")
   }
 
   // MARK: - Helpers
