@@ -949,4 +949,74 @@ final class DescriptorBridgeTests: XCTestCase {
     let protobufField = try bridge.toProtobufFieldDescriptor(from: fieldWithOptions)
     XCTAssertEqual(protobufField.name, "test_field")
   }
+
+  // MARK: - Oneof Decls Serialization Tests
+
+  func testOneofDeclsSerializedToProtobuf() throws {
+    var msg = MessageDescriptor(name: "User", fullName: "User")
+    msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
+    msg.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
+
+    let proto = try bridge.toProtobufDescriptor(from: msg)
+
+    XCTAssertEqual(proto.oneofDecl.count, 1)
+    XCTAssertEqual(proto.oneofDecl[0].name, "contact")
+  }
+
+  func testMultipleOneofDeclsSerializedToProtobuf() throws {
+    var msg = MessageDescriptor(name: "User", fullName: "User")
+    msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
+    msg.addField(FieldDescriptor(name: "passport", number: 4, type: .string, oneofIndex: 1))
+    msg.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
+    msg.addOneofDecl(OneofDescriptor(name: "identifier", index: 1))
+
+    let proto = try bridge.toProtobufDescriptor(from: msg)
+
+    XCTAssertEqual(proto.oneofDecl.count, 2)
+    XCTAssertEqual(proto.oneofDecl[0].name, "contact")
+    XCTAssertEqual(proto.oneofDecl[1].name, "identifier")
+  }
+
+  func testOneofRoundTrip() throws {
+    var msg = MessageDescriptor(name: "User", fullName: "User")
+    msg.addField(FieldDescriptor(name: "id", number: 1, type: .string))
+    msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
+    msg.addField(FieldDescriptor(name: "phone", number: 3, type: .string, oneofIndex: 0))
+    msg.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
+
+    let proto = try bridge.toProtobufDescriptor(from: msg)
+    XCTAssertEqual(proto.oneofDecl.count, 1)
+    XCTAssertEqual(proto.oneofDecl[0].name, "contact")
+    XCTAssertEqual(proto.field.first { $0.name == "email" }?.oneofIndex, 0)
+
+    let roundTripped = try bridge.fromProtobufDescriptor(proto)
+    XCTAssertEqual(roundTripped.oneofDecls.count, 1)
+    XCTAssertEqual(roundTripped.oneof(at: 0)?.name, "contact")
+    XCTAssertEqual(roundTripped.field(named: "email")?.oneofIndex, 0)
+    XCTAssertEqual(roundTripped.field(named: "phone")?.oneofIndex, 0)
+    XCTAssertNil(roundTripped.field(named: "id")?.oneofIndex)
+  }
+
+  func testOneofRoundTripViaFileDescriptor() throws {
+    var fileDesc = FileDescriptor(name: "user.proto", package: "example")
+    var msg = MessageDescriptor(name: "User", parent: fileDesc)
+    msg.addField(FieldDescriptor(name: "id", number: 1, type: .string))
+    msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
+    msg.addField(FieldDescriptor(name: "phone", number: 3, type: .string, oneofIndex: 0))
+    msg.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
+    fileDesc.addMessage(msg)
+
+    let fileProto = try bridge.toProtobufFileDescriptor(from: fileDesc)
+    let msgProto = try XCTUnwrap(fileProto.messageType.first { $0.name == "User" })
+    XCTAssertEqual(msgProto.oneofDecl.count, 1)
+    XCTAssertEqual(msgProto.oneofDecl[0].name, "contact")
+
+    let roundTrippedFile = try bridge.fromProtobufFileDescriptor(fileProto)
+    let roundTrippedMsg = try XCTUnwrap(roundTrippedFile.messages["User"])
+    XCTAssertEqual(roundTrippedMsg.oneofDecls.count, 1)
+    XCTAssertEqual(roundTrippedMsg.oneof(at: 0)?.name, "contact")
+    XCTAssertEqual(roundTrippedMsg.field(named: "email")?.oneofIndex, 0)
+    XCTAssertEqual(roundTrippedMsg.field(named: "phone")?.oneofIndex, 0)
+    XCTAssertNil(roundTrippedMsg.field(named: "id")?.oneofIndex)
+  }
 }

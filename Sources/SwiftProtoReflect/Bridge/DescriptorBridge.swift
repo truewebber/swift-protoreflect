@@ -52,6 +52,13 @@ public struct DescriptorBridge {
       try toProtobufEnumDescriptor(from: nestedEnum)
     }
 
+    // Serialize oneof declarations ordered by index
+    proto.oneofDecl = messageDescriptor.oneofDecls.sorted { $0.index < $1.index }.map { oneof in
+      var oneofProto = Google_Protobuf_OneofDescriptorProto()
+      oneofProto.name = oneof.name
+      return oneofProto
+    }
+
     // Set options if present
     if !messageDescriptor.options.isEmpty {
       proto.options = try toProtobufMessageOptions(from: messageDescriptor.options)
