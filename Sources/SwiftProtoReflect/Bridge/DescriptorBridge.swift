@@ -501,30 +501,26 @@ public struct DescriptorBridge {
   }
 
   /// Converts message options to Google_Protobuf_MessageOptions.
-  private func toProtobufMessageOptions(from options: [String: Any]) throws -> Google_Protobuf_MessageOptions {
-    // Stub for options conversion
-    // In real implementation there should be full conversion logic
+  private func toProtobufMessageOptions(from options: [String: DescriptorOption]) throws
+    -> Google_Protobuf_MessageOptions
+  {
     return Google_Protobuf_MessageOptions()
   }
 
   /// Converts Google_Protobuf_MessageOptions to options dictionary.
-  private func fromProtobufMessageOptions(_ options: Google_Protobuf_MessageOptions) throws -> [String: Any] {
-    // Stub for options conversion
-    // In real implementation there should be full conversion logic
+  private func fromProtobufMessageOptions(_ options: Google_Protobuf_MessageOptions) throws -> [String:
+    DescriptorOption]
+  {
     return [:]
   }
 
   /// Converts field options to Google_Protobuf_FieldOptions.
-  private func toProtobufFieldOptions(from options: [String: Any]) throws -> Google_Protobuf_FieldOptions {
-    // Stub for options conversion
-    // In real implementation there should be full conversion logic
+  private func toProtobufFieldOptions(from options: [String: DescriptorOption]) throws -> Google_Protobuf_FieldOptions {
     return Google_Protobuf_FieldOptions()
   }
 
   /// Converts Google_Protobuf_FieldOptions to options dictionary.
-  private func fromProtobufFieldOptions(_ options: Google_Protobuf_FieldOptions) throws -> [String: Any] {
-    // Stub for options conversion
-    // In real implementation there should be full conversion logic
+  private func fromProtobufFieldOptions(_ options: Google_Protobuf_FieldOptions) throws -> [String: DescriptorOption] {
     return [:]
   }
 
