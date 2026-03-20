@@ -117,13 +117,13 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
     var dynamicMsg = DynamicMessage(descriptor: messageDescriptor)
 
     // Set map entries with Int64
-    try dynamicMsg.setMapEntry(Int64(1000000000), forKey: Int64(1), inField: "big_counters")
-    try dynamicMsg.setMapEntry(Int64(2000000000), forKey: Int64(2), inField: "big_counters")
+    try dynamicMsg.setMapEntry(Int64(1_000_000_000), forKey: Int64(1), inField: "big_counters")
+    try dynamicMsg.setMapEntry(Int64(2_000_000_000), forKey: Int64(2), inField: "big_counters")
 
     // Get map
     let counters = try dynamicMsg.get(forField: "big_counters") as? [Int64: Int64]
-    XCTAssertEqual(counters?[Int64(1)], 1000000000)
-    XCTAssertEqual(counters?[Int64(2)], 2000000000)
+    XCTAssertEqual(counters?[Int64(1)], 1_000_000_000)
+    XCTAssertEqual(counters?[Int64(2)], 2_000_000_000)
   }
 
   func testDynamicMessageWithDetectedBoolToStringMap() throws {

@@ -150,6 +150,11 @@ public struct DescriptorBridge {
       proto.jsonName = fieldDescriptor.jsonName
     }
 
+    // Set oneofIndex if the field belongs to a oneof group
+    if let idx = fieldDescriptor.oneofIndex {
+      proto.oneofIndex = Int32(idx)
+    }
+
     // Set options if present
     if !fieldDescriptor.options.isEmpty {
       proto.options = try toProtobufFieldOptions(from: fieldDescriptor.options)
@@ -210,6 +215,8 @@ public struct DescriptorBridge {
       }
     }
 
+    let oneofIndex: Int? = protobufDescriptor.hasOneofIndex ? Int(protobufDescriptor.oneofIndex) : nil
+
     // Create field descriptor
     let fieldDescriptor = FieldDescriptor(
       name: protobufDescriptor.name,
@@ -221,6 +228,7 @@ public struct DescriptorBridge {
       isOptional: isOptional,
       isRequired: isRequired,
       isMap: isMap,
+      oneofIndex: oneofIndex,
       mapEntryInfo: mapEntryInfo
     )
 
@@ -548,11 +556,13 @@ public struct DescriptorBridge {
     let entryMessageName = extractSimpleName(from: typeName)
 
     // Try to find the entry message in nested messages
-    guard let entryMessage = findMapEntryMessage(
-      named: entryMessageName,
-      in: messageDescriptor,
-      nestedMessages: nestedMessages
-    ) else {
+    guard
+      let entryMessage = findMapEntryMessage(
+        named: entryMessageName,
+        in: messageDescriptor,
+        nestedMessages: nestedMessages
+      )
+    else {
       return nil
     }
 

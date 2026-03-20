@@ -772,6 +772,49 @@ final class DescriptorBridgeTests: XCTestCase {
     }
   }
 
+  // MARK: - OneofIndex Tests
+
+  func testFieldWithOneofIndexPreservedFromProtobuf() throws {
+    var protobufField = Google_Protobuf_FieldDescriptorProto()
+    protobufField.name = "oneof_field"
+    protobufField.number = 1
+    protobufField.type = .string
+    protobufField.label = .optional
+    protobufField.oneofIndex = 0
+
+    let fieldDescriptor = try bridge.fromProtobufFieldDescriptor(protobufField)
+
+    XCTAssertEqual(fieldDescriptor.oneofIndex, 0)
+  }
+
+  func testFieldWithoutOneofIndexRemainsNil() throws {
+    var protobufField = Google_Protobuf_FieldDescriptorProto()
+    protobufField.name = "regular_field"
+    protobufField.number = 1
+    protobufField.type = .string
+    protobufField.label = .optional
+
+    let fieldDescriptor = try bridge.fromProtobufFieldDescriptor(protobufField)
+
+    XCTAssertNil(fieldDescriptor.oneofIndex)
+  }
+
+  func testFieldOneofIndexRoundTrip() throws {
+    let original = FieldDescriptor(
+      name: "oneof_field",
+      number: 1,
+      type: .string,
+      oneofIndex: 1
+    )
+
+    let proto = try bridge.toProtobufFieldDescriptor(from: original)
+    XCTAssertTrue(proto.hasOneofIndex)
+    XCTAssertEqual(proto.oneofIndex, 1)
+
+    let converted = try bridge.fromProtobufFieldDescriptor(proto)
+    XCTAssertEqual(converted.oneofIndex, 1)
+  }
+
   func testPrivateOptionsMethods() throws {
     // Test private methods for working with options via public methods
 
