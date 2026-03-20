@@ -98,6 +98,12 @@ public struct DescriptorBridge {
       messageDescriptor.addField(field)
     }
 
+    // Convert oneof declarations
+    for (index, oneofProto) in protobufDescriptor.oneofDecl.enumerated() {
+      let oneof = OneofDescriptor(name: oneofProto.name, index: index)
+      messageDescriptor.addOneofDecl(oneof)
+    }
+
     // Convert options
     if protobufDescriptor.hasOptions {
       _ = try fromProtobufMessageOptions(protobufDescriptor.options)

@@ -15,6 +15,7 @@ import struct SwiftProtobuf.Google_Protobuf_FieldOptions
 import struct SwiftProtobuf.Google_Protobuf_FileDescriptorProto
 import struct SwiftProtobuf.Google_Protobuf_MessageOptions
 import struct SwiftProtobuf.Google_Protobuf_MethodDescriptorProto
+import struct SwiftProtobuf.Google_Protobuf_OneofDescriptorProto
 import struct SwiftProtobuf.Google_Protobuf_ServiceDescriptorProto
 
 @testable import SwiftProtoReflect
@@ -813,6 +814,113 @@ final class DescriptorBridgeTests: XCTestCase {
 
     let converted = try bridge.fromProtobufFieldDescriptor(proto)
     XCTAssertEqual(converted.oneofIndex, 1)
+  }
+
+  // MARK: - Oneof Decls from Protobuf Tests
+
+  func testOneofDeclsPopulatedFromProtobuf() throws {
+    var proto = Google_Protobuf_DescriptorProto()
+    proto.name = "User"
+
+    var emailField = Google_Protobuf_FieldDescriptorProto()
+    emailField.name = "email"
+    emailField.number = 2
+    emailField.type = .string
+    emailField.label = .optional
+    emailField.oneofIndex = 0
+
+    var oneof = Google_Protobuf_OneofDescriptorProto()
+    oneof.name = "contact"
+
+    proto.field = [emailField]
+    proto.oneofDecl = [oneof]
+
+    let msg = try bridge.fromProtobufDescriptor(proto)
+
+    XCTAssertEqual(msg.oneofDecls.count, 1)
+    XCTAssertEqual(msg.oneofDecls[0].name, "contact")
+    XCTAssertEqual(msg.oneofDecls[0].index, 0)
+    XCTAssertNotNil(msg.oneof(at: 0))
+    XCTAssertEqual(msg.oneof(at: 0)?.name, "contact")
+  }
+
+  func testMultipleOneofDeclsFromProtobuf() throws {
+    var proto = Google_Protobuf_DescriptorProto()
+    proto.name = "User"
+
+    var oneof0 = Google_Protobuf_OneofDescriptorProto()
+    oneof0.name = "contact"
+
+    var oneof1 = Google_Protobuf_OneofDescriptorProto()
+    oneof1.name = "identifier"
+
+    proto.oneofDecl = [oneof0, oneof1]
+
+    let msg = try bridge.fromProtobufDescriptor(proto)
+
+    XCTAssertEqual(msg.oneofDecls.count, 2)
+    XCTAssertEqual(msg.oneofDecls[0].name, "contact")
+    XCTAssertEqual(msg.oneofDecls[0].index, 0)
+    XCTAssertEqual(msg.oneofDecls[1].name, "identifier")
+    XCTAssertEqual(msg.oneofDecls[1].index, 1)
+    XCTAssertEqual(msg.oneof(at: 0)?.name, "contact")
+    XCTAssertEqual(msg.oneof(at: 1)?.name, "identifier")
+  }
+
+  func testFieldOneofIndexMatchesOneofDecl() throws {
+    var proto = Google_Protobuf_DescriptorProto()
+    proto.name = "User"
+
+    var emailField = Google_Protobuf_FieldDescriptorProto()
+    emailField.name = "email"
+    emailField.number = 2
+    emailField.type = .string
+    emailField.label = .optional
+    emailField.oneofIndex = 0
+
+    var phoneField = Google_Protobuf_FieldDescriptorProto()
+    phoneField.name = "phone"
+    phoneField.number = 3
+    phoneField.type = .string
+    phoneField.label = .optional
+    phoneField.oneofIndex = 0
+
+    var oneof = Google_Protobuf_OneofDescriptorProto()
+    oneof.name = "contact"
+
+    proto.field = [emailField, phoneField]
+    proto.oneofDecl = [oneof]
+
+    let msg = try bridge.fromProtobufDescriptor(proto)
+
+    let emailDescriptor = msg.field(named: "email")
+    let phoneDescriptor = msg.field(named: "phone")
+
+    XCTAssertEqual(emailDescriptor?.oneofIndex, 0)
+    XCTAssertEqual(phoneDescriptor?.oneofIndex, 0)
+
+    let resolved = msg.oneof(at: 0)
+    XCTAssertNotNil(resolved)
+    XCTAssertEqual(resolved?.name, "contact")
+    XCTAssertEqual(emailDescriptor?.oneofIndex, resolved?.index)
+    XCTAssertEqual(phoneDescriptor?.oneofIndex, resolved?.index)
+  }
+
+  func testMessageWithoutOneofsHasEmptyOneofDecls() throws {
+    var proto = Google_Protobuf_DescriptorProto()
+    proto.name = "Simple"
+
+    var field = Google_Protobuf_FieldDescriptorProto()
+    field.name = "value"
+    field.number = 1
+    field.type = .string
+    field.label = .optional
+
+    proto.field = [field]
+
+    let msg = try bridge.fromProtobufDescriptor(proto)
+
+    XCTAssertTrue(msg.oneofDecls.isEmpty)
   }
 
   func testPrivateOptionsMethods() throws {
