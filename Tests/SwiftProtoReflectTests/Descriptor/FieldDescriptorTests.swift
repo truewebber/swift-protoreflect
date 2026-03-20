@@ -57,7 +57,7 @@ final class FieldDescriptorTests: XCTestCase {
       jsonName: "email_addresses",
       isRepeated: true,
       isOptional: false,
-      defaultValue: [],
+      defaultValue: .string(""),
       options: ["packed": .bool(true)]
     )
 
@@ -641,11 +641,11 @@ final class FieldDescriptorTests: XCTestCase {
       name: "field",
       number: 1,
       type: .string,
-      defaultValue: defaultVal
+      defaultValue: .string(defaultVal)
     )
 
     // Verify properties
-    XCTAssertEqual(field.defaultValue as? String, defaultVal)
+    XCTAssertEqual(field.defaultValue, .string(defaultVal))
 
     // Verify that fields with different defaultValue are considered equal,
     // since defaultValue is not compared in == method
@@ -653,7 +653,7 @@ final class FieldDescriptorTests: XCTestCase {
       name: "field",
       number: 1,
       type: .string,
-      defaultValue: "different_default"
+      defaultValue: .string("different_default")
     )
 
     // Note that although defaultValue differs, FieldDescriptor.== doesn't consider this
@@ -973,25 +973,25 @@ final class FieldDescriptorTests: XCTestCase {
       name: "string_field_with_default",
       number: 4,
       type: .string,
-      defaultValue: "default_value"
+      defaultValue: .string("default_value")
     )
     let boolFieldWithDefault = FieldDescriptor(
       name: "bool_field_with_default",
       number: 5,
       type: .bool,
-      defaultValue: true
+      defaultValue: .bool(true)
     )
     let bytesFieldWithDefault = FieldDescriptor(
       name: "bytes_field_with_default",
       number: 6,
       type: .bytes,
-      defaultValue: Data([1, 2, 3])
+      defaultValue: .bytes(Data([1, 2, 3]))
     )
 
     // Verify that explicitly set default values are returned correctly
-    XCTAssertEqual(stringFieldWithDefault.defaultValue as? String, "default_value")
-    XCTAssertEqual(boolFieldWithDefault.defaultValue as? Bool, true)
-    XCTAssertEqual(bytesFieldWithDefault.defaultValue as? Data, Data([1, 2, 3]))
+    XCTAssertEqual(stringFieldWithDefault.defaultValue, .string("default_value"))
+    XCTAssertEqual(boolFieldWithDefault.defaultValue, .bool(true))
+    XCTAssertEqual(bytesFieldWithDefault.defaultValue, .bytes(Data([1, 2, 3])))
   }
 
   func testOptionsComparisonEdgeCases() {

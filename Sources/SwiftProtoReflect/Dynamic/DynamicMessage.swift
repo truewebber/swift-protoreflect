@@ -191,7 +191,7 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
       return nestedMessages[fieldNumber]
     }
     else {
-      return values[fieldNumber] ?? field.defaultValue
+      return values[fieldNumber] ?? field.defaultValue?.asAny
     }
   }
 

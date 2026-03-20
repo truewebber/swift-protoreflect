@@ -12,7 +12,7 @@ import SwiftProtobuf
 ///
 /// Protocol Buffers field descriptor describing properties of a message field,
 /// including its type, name, number, options and other metadata.
-public struct FieldDescriptor: Equatable {
+public struct FieldDescriptor: Equatable, Sendable {
   // MARK: - Properties
 
   /// Field name (e.g., "first_name").
@@ -49,7 +49,7 @@ public struct FieldDescriptor: Equatable {
   public let mapEntryInfo: MapEntryInfo?
 
   /// Default value for the field (if defined).
-  public let defaultValue: Any?
+  public let defaultValue: DescriptorOption?
 
   /// Field options.
   public let options: [String: DescriptorOption]
@@ -70,7 +70,7 @@ public struct FieldDescriptor: Equatable {
   ///   - isMap: Whether the field is a map.
   ///   - oneofIndex: Oneof group index if the field is part of a oneof.
   ///   - mapEntryInfo: Metadata for map fields.
-  ///   - defaultValue: Default value.
+  ///   - defaultValue: Default value expressed as a `DescriptorOption`.
   ///   - options: Field options.
   public init(
     name: String,
@@ -84,7 +84,7 @@ public struct FieldDescriptor: Equatable {
     isMap: Bool = false,
     oneofIndex: Int? = nil,
     mapEntryInfo: MapEntryInfo? = nil,
-    defaultValue: Any? = nil,
+    defaultValue: DescriptorOption? = nil,
     options: [String: DescriptorOption] = [:]
   ) {
     self.name = name
@@ -198,7 +198,7 @@ public enum FieldType: Equatable, Sendable {
 /// Class describing metadata for map<key, value> type fields.
 ///
 /// Uses reference-type to avoid circular references.
-public final class MapEntryInfo: Equatable {
+public final class MapEntryInfo: Equatable, Sendable {
   /// Key field information.
   public let keyFieldInfo: KeyFieldInfo
 
@@ -231,7 +231,7 @@ public final class MapEntryInfo: Equatable {
 }
 
 /// Key field information in a map.
-public struct KeyFieldInfo: Equatable {
+public struct KeyFieldInfo: Equatable, Sendable {
   public let name: String
   public let number: Int
   public let type: FieldType
@@ -244,7 +244,7 @@ public struct KeyFieldInfo: Equatable {
 }
 
 /// Value field information in a map.
-public struct ValueFieldInfo: Equatable {
+public struct ValueFieldInfo: Equatable, Sendable {
   public let name: String
   public let number: Int
   public let type: FieldType

@@ -12,11 +12,11 @@ import SwiftProtobuf
 ///
 /// Protocol Buffers enum descriptor that describes
 /// enum values, their names, numeric values and options.
-public struct EnumDescriptor: Equatable {
+public struct EnumDescriptor: Equatable, Sendable {
   // MARK: - Types
 
   /// Enum value with its name and options.
-  public struct EnumValue: Equatable {
+  public struct EnumValue: Equatable, Sendable {
     /// Enum value name (e.g., "UNKNOWN").
     public let name: String
 

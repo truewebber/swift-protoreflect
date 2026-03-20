@@ -898,7 +898,7 @@ final class DynamicMessageTests: XCTestCase {
         name: "string_with_default",
         number: 1,
         type: .string,
-        defaultValue: "default"
+        defaultValue: .string("default")
       )
     )
     messageDesc.addField(
@@ -906,7 +906,7 @@ final class DynamicMessageTests: XCTestCase {
         name: "int32_with_default",
         number: 2,
         type: .int32,
-        defaultValue: Int32(42)
+        defaultValue: .int(42)
       )
     )
     messageDesc.addField(
@@ -914,7 +914,7 @@ final class DynamicMessageTests: XCTestCase {
         name: "bool_with_default",
         number: 3,
         type: .bool,
-        defaultValue: true
+        defaultValue: .bool(true)
       )
     )
     messageDesc.addField(
@@ -935,7 +935,7 @@ final class DynamicMessageTests: XCTestCase {
         XCTAssertEqual(defaultStr, "default")
       }
 
-      if let defaultInt = try message.get(forField: "int32_with_default") as? Int32 {
+      if let defaultInt = try message.get(forField: "int32_with_default") as? Int {
         XCTAssertEqual(defaultInt, 42)
       }
 

@@ -12,7 +12,7 @@ import SwiftProtobuf
 ///
 /// Protocol Buffers message descriptor that describes
 /// the structure of a message, its fields, nested types and options.
-public struct MessageDescriptor: @unchecked Sendable {
+public struct MessageDescriptor: Sendable {
   // MARK: - Properties
 
   /// Message name (e.g., "Person").

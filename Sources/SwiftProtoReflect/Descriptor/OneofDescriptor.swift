@@ -10,7 +10,7 @@
 /// A oneof group means that at most one field within the group can be set at a time.
 /// `OneofDescriptor` gives consumers the name and position of the group
 /// within the parent message, matching `FieldDescriptor.oneofIndex`.
-public struct OneofDescriptor: Equatable {
+public struct OneofDescriptor: Equatable, Sendable {
 
   /// Group name as defined in the .proto file (e.g. "contact").
   public let name: String

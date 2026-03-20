@@ -91,7 +91,7 @@ final class FileDescriptorTests: XCTestCase {
       name: "age",
       number: 2,
       type: .int32,
-      defaultValue: 0,
+      defaultValue: .int(0),
       options: ["packed": .bool(true)]
     )
 

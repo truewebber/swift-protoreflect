@@ -12,7 +12,7 @@ import SwiftProtobuf
 ///
 /// Representation of a .proto file containing metadata about messages, enums,
 /// services and other elements defined in the Protocol Buffers file.
-public struct FileDescriptor {
+public struct FileDescriptor: Sendable {
   // MARK: - Properties
 
   /// File name (e.g., "person.proto").

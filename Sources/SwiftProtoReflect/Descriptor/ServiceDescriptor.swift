@@ -12,11 +12,11 @@ import SwiftProtobuf
 ///
 /// Protocol Buffers service descriptor that describes a gRPC service,
 /// its methods, input and output message types, and options.
-public struct ServiceDescriptor: Equatable {
+public struct ServiceDescriptor: Equatable, Sendable {
   // MARK: - Types
 
   /// Service method descriptor with name, input and output types.
-  public struct MethodDescriptor: Equatable {
+  public struct MethodDescriptor: Equatable, Sendable {
     /// Method name (e.g., "GetUser").
     public let name: String
 
