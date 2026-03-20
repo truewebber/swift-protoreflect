@@ -58,7 +58,7 @@ final class FieldDescriptorTests: XCTestCase {
       isRepeated: true,
       isOptional: false,
       defaultValue: [],
-      options: ["packed": true]
+      options: ["packed": .bool(true)]
     )
 
     // Verify all properties
@@ -72,7 +72,7 @@ final class FieldDescriptorTests: XCTestCase {
     XCTAssertFalse(field.isMap)
     XCTAssertNotNil(field.defaultValue)
     XCTAssertEqual(field.options.count, 1)
-    XCTAssertEqual(field.options["packed"] as? Bool, true)
+    XCTAssertEqual(field.options["packed"], .bool(true))
   }
 
   func testMessageTypeWithTypeName() {
@@ -377,7 +377,7 @@ final class FieldDescriptorTests: XCTestCase {
       name: "name",
       number: 1,
       type: .string,
-      options: ["deprecated": true]
+      options: ["deprecated": .bool(true)]
     )
 
     XCTAssertNotEqual(field1, field4)
@@ -434,9 +434,9 @@ final class FieldDescriptorTests: XCTestCase {
       number: 1,
       type: .string,
       options: [
-        "boolOption": true,
-        "intOption": 42,
-        "stringOption": "value",
+        "boolOption": .bool(true),
+        "intOption": .int(42),
+        "stringOption": .string("value"),
       ]
     )
 
@@ -445,9 +445,9 @@ final class FieldDescriptorTests: XCTestCase {
       number: 1,
       type: .string,
       options: [
-        "boolOption": true,
-        "intOption": 42,
-        "stringOption": "value",
+        "boolOption": .bool(true),
+        "intOption": .int(42),
+        "stringOption": .string("value"),
       ]
     )
 
@@ -456,9 +456,9 @@ final class FieldDescriptorTests: XCTestCase {
       number: 1,
       type: .string,
       options: [
-        "boolOption": false,  // Different value
-        "intOption": 42,
-        "stringOption": "value",
+        "boolOption": .bool(false),
+        "intOption": .int(42),
+        "stringOption": .string("value"),
       ]
     )
 
@@ -467,9 +467,9 @@ final class FieldDescriptorTests: XCTestCase {
       number: 1,
       type: .string,
       options: [
-        "boolOption": true,
-        "intOption": 43,  // Different value
-        "stringOption": "value",
+        "boolOption": .bool(true),
+        "intOption": .int(43),
+        "stringOption": .string("value"),
       ]
     )
 
@@ -478,9 +478,9 @@ final class FieldDescriptorTests: XCTestCase {
       number: 1,
       type: .string,
       options: [
-        "boolOption": true,
-        "intOption": 42,
-        "stringOption": "different",  // Different value
+        "boolOption": .bool(true),
+        "intOption": .int(42),
+        "stringOption": .string("different"),
       ]
     )
 
@@ -499,50 +499,43 @@ final class FieldDescriptorTests: XCTestCase {
       name: "test",
       number: 1,
       type: .string,
-      options: ["option1": true, "option2": "value"]
+      options: ["option1": .bool(true), "option2": .string("value")]
     )
 
     let field2 = FieldDescriptor(
       name: "test",
       number: 1,
       type: .string,
-      options: ["option1": true, "option3": 42]  // Different key set
+      options: ["option1": .bool(true), "option3": .int(42)]
     )
 
     XCTAssertNotEqual(field1, field2)
   }
 
   func testComplexOptionsEquality() {
-    // Verify comparison with more complex option types using string representation
-    let customValue1 = CustomStringType(value: "test")
-    let customValue2 = CustomStringType(value: "test")
-    let customValue3 = CustomStringType(value: "different")
-
+    // Verify comparison using float options
     let field1 = FieldDescriptor(
       name: "test",
       number: 1,
       type: .string,
-      options: ["custom": customValue1]
+      options: ["weight": .float(1.5)]
     )
 
     let field2 = FieldDescriptor(
       name: "test",
       number: 1,
       type: .string,
-      options: ["custom": customValue2]
+      options: ["weight": .float(1.5)]
     )
 
     let field3 = FieldDescriptor(
       name: "test",
       number: 1,
       type: .string,
-      options: ["custom": customValue3]
+      options: ["weight": .float(2.5)]
     )
 
-    // Same custom values should give equality
     XCTAssertEqual(field1, field2)
-
-    // Different custom values should give inequality
     XCTAssertNotEqual(field1, field3)
   }
 
@@ -933,21 +926,6 @@ final class FieldDescriptorTests: XCTestCase {
     XCTAssertNotEqual(field1, field2)
   }
 
-  // MARK: - Helpers
-
-  // Custom type for testing complex options
-  class CustomStringType: CustomStringConvertible {
-    let value: String
-
-    init(value: String) {
-      self.value = value
-    }
-
-    var description: String {
-      return "CustomStringType(\(value))"
-    }
-  }
-
   // MARK: - Additional Coverage Tests
 
   func testDefaultValueForComplexTypes() {
@@ -1017,22 +995,16 @@ final class FieldDescriptorTests: XCTestCase {
   }
 
   func testOptionsComparisonEdgeCases() {
-    // Test special cases of option comparison to cover all branches in compareOptions
-
-    // Create fields with options of different types to verify string comparison
-    struct CustomType: CustomStringConvertible {
-      let id: Int
-      var description: String { return "CustomType(\(id))" }
-    }
-
+    // Verify all four DescriptorOption cases work correctly in options
     let field1 = FieldDescriptor(
       name: "test",
       number: 1,
       type: .string,
       options: [
-        "customType": CustomType(id: 1),
-        "array": [1, 2, 3] as [Int],
-        "dict": ["key": "value"] as [String: String],
+        "boolOpt": .bool(true),
+        "intOpt": .int(99),
+        "stringOpt": .string("hello"),
+        "floatOpt": .float(3.14),
       ]
     )
 
@@ -1041,9 +1013,10 @@ final class FieldDescriptorTests: XCTestCase {
       number: 1,
       type: .string,
       options: [
-        "customType": CustomType(id: 1),
-        "array": [1, 2, 3] as [Int],
-        "dict": ["key": "value"] as [String: String],
+        "boolOpt": .bool(true),
+        "intOpt": .int(99),
+        "stringOpt": .string("hello"),
+        "floatOpt": .float(3.14),
       ]
     )
 
@@ -1052,16 +1025,14 @@ final class FieldDescriptorTests: XCTestCase {
       number: 1,
       type: .string,
       options: [
-        "customType": CustomType(id: 2),  // Different value
-        "array": [1, 2, 3] as [Int],
-        "dict": ["key": "value"] as [String: String],
+        "boolOpt": .bool(true),
+        "intOpt": .int(99),
+        "stringOpt": .string("hello"),
+        "floatOpt": .float(9.99),
       ]
     )
 
-    // Fields with same string representations of options should be equal
     XCTAssertEqual(field1, field2)
-
-    // Fields with different string representations of options should not be equal
     XCTAssertNotEqual(field1, field3)
   }
 

@@ -24,7 +24,7 @@ public struct EnumDescriptor: Equatable {
     public let number: Int
 
     /// Enum value options.
-    public let options: [String: Any]
+    public let options: [String: DescriptorOption]
 
     /// Creates a new enum value.
     ///
@@ -32,7 +32,7 @@ public struct EnumDescriptor: Equatable {
     ///   - name: Enum value name.
     ///   - number: Numeric value.
     ///   - options: Enum value options.
-    public init(name: String, number: Int, options: [String: Any] = [:]) {
+    public init(name: String, number: Int, options: [String: DescriptorOption] = [:]) {
       self.name = name
       self.number = number
       self.options = options
@@ -41,48 +41,7 @@ public struct EnumDescriptor: Equatable {
     // MARK: - Equatable
 
     public static func == (lhs: EnumValue, rhs: EnumValue) -> Bool {
-      guard lhs.name == rhs.name && lhs.number == rhs.number else {
-        return false
-      }
-
-      // Compare options: check keys and values
-      let lhsKeys = Set(lhs.options.keys)
-      let rhsKeys = Set(rhs.options.keys)
-
-      guard lhsKeys == rhsKeys else {
-        return false
-      }
-
-      // Check value matching for all keys
-      for key in lhsKeys {
-        let lhsValue = lhs.options[key]
-        let rhsValue = rhs.options[key]
-
-        // Check known value types
-        if let lhsBool = lhsValue as? Bool, let rhsBool = rhsValue as? Bool {
-          if lhsBool != rhsBool {
-            return false
-          }
-        }
-        else if let lhsInt = lhsValue as? Int, let rhsInt = rhsValue as? Int {
-          if lhsInt != rhsInt {
-            return false
-          }
-        }
-        else if let lhsString = lhsValue as? String, let rhsString = rhsValue as? String {
-          if lhsString != rhsString {
-            return false
-          }
-        }
-        else {
-          // For other types, compare string representations
-          if String(describing: lhsValue) != String(describing: rhsValue) {
-            return false
-          }
-        }
-      }
-
-      return true
+      return lhs.name == rhs.name && lhs.number == rhs.number && lhs.options == rhs.options
     }
   }
 
@@ -107,7 +66,7 @@ public struct EnumDescriptor: Equatable {
   public private(set) var valuesByNumber: [Int: EnumValue] = [:]
 
   /// Enum options.
-  public let options: [String: Any]
+  public let options: [String: DescriptorOption]
 
   // MARK: - Initialization
 
@@ -120,7 +79,7 @@ public struct EnumDescriptor: Equatable {
   public init(
     name: String,
     fullName: String,
-    options: [String: Any] = [:]
+    options: [String: DescriptorOption] = [:]
   ) {
     self.name = name
     self.fullName = fullName
@@ -138,7 +97,7 @@ public struct EnumDescriptor: Equatable {
   public init(
     name: String,
     parent: Any? = nil,
-    options: [String: Any] = [:]
+    options: [String: DescriptorOption] = [:]
   ) {
     self.name = name
     self.options = options
@@ -212,15 +171,13 @@ public struct EnumDescriptor: Equatable {
   // MARK: - Equatable
 
   public static func == (lhs: EnumDescriptor, rhs: EnumDescriptor) -> Bool {
-    // Compare main properties
     guard
       lhs.name == rhs.name && lhs.fullName == rhs.fullName && lhs.fileDescriptorPath == rhs.fileDescriptorPath
-        && lhs.parentMessageFullName == rhs.parentMessageFullName
+        && lhs.parentMessageFullName == rhs.parentMessageFullName && lhs.options == rhs.options
     else {
       return false
     }
 
-    // Compare enum values
     let lhsValuesByName = lhs.valuesByName
     let rhsValuesByName = rhs.valuesByName
 
@@ -231,43 +188,6 @@ public struct EnumDescriptor: Equatable {
     for (name, lhsValue) in lhsValuesByName {
       guard let rhsValue = rhsValuesByName[name], lhsValue == rhsValue else {
         return false
-      }
-    }
-
-    // Compare options
-    let lhsKeys = Set(lhs.options.keys)
-    let rhsKeys = Set(rhs.options.keys)
-
-    guard lhsKeys == rhsKeys else {
-      return false
-    }
-
-    // Check value matching for all keys
-    for key in lhsKeys {
-      let lhsValue = lhs.options[key]
-      let rhsValue = rhs.options[key]
-
-      // Check known value types
-      if let lhsBool = lhsValue as? Bool, let rhsBool = rhsValue as? Bool {
-        if lhsBool != rhsBool {
-          return false
-        }
-      }
-      else if let lhsInt = lhsValue as? Int, let rhsInt = rhsValue as? Int {
-        if lhsInt != rhsInt {
-          return false
-        }
-      }
-      else if let lhsString = lhsValue as? String, let rhsString = rhsValue as? String {
-        if lhsString != rhsString {
-          return false
-        }
-      }
-      else {
-        // For other types, compare string representations
-        if String(describing: lhsValue) != String(describing: rhsValue) {
-          return false
-        }
       }
     }
 

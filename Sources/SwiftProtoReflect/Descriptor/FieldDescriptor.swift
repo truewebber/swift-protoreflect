@@ -52,7 +52,7 @@ public struct FieldDescriptor: Equatable {
   public let defaultValue: Any?
 
   /// Field options.
-  public let options: [String: Any]
+  public let options: [String: DescriptorOption]
 
   // MARK: - Initialization
 
@@ -85,7 +85,7 @@ public struct FieldDescriptor: Equatable {
     oneofIndex: Int? = nil,
     mapEntryInfo: MapEntryInfo? = nil,
     defaultValue: Any? = nil,
-    options: [String: Any] = [:]
+    options: [String: DescriptorOption] = [:]
   ) {
     self.name = name
     self.number = number
@@ -166,57 +166,10 @@ public struct FieldDescriptor: Equatable {
   // MARK: - Equatable
 
   public static func == (lhs: FieldDescriptor, rhs: FieldDescriptor) -> Bool {
-    // Compare main properties
-    guard
-      lhs.name == rhs.name && lhs.jsonName == rhs.jsonName && lhs.number == rhs.number && lhs.type == rhs.type
-        && lhs.typeName == rhs.typeName && lhs.isRepeated == rhs.isRepeated && lhs.isOptional == rhs.isOptional
-        && lhs.isRequired == rhs.isRequired && lhs.isMap == rhs.isMap && lhs.oneofIndex == rhs.oneofIndex
-        && lhs.mapEntryInfo == rhs.mapEntryInfo
-    else {
-      return false
-    }
-
-    // Compare options: check keys and values
-    // May require individual comparison for each possible value type
-    let lhsKeys = Set(lhs.options.keys)
-    let rhsKeys = Set(rhs.options.keys)
-
-    guard lhsKeys == rhsKeys else {
-      return false
-    }
-
-    // Check value matching for all keys
-    for key in lhsKeys {
-      // Since options is of type [String: Any], we can only check string representation
-      // or convert to known types where possible
-      let lhsValue = lhs.options[key]
-      let rhsValue = rhs.options[key]
-
-      // Check known value types
-      if let lhsBool = lhsValue as? Bool, let rhsBool = rhsValue as? Bool {
-        if lhsBool != rhsBool {
-          return false
-        }
-      }
-      else if let lhsInt = lhsValue as? Int, let rhsInt = rhsValue as? Int {
-        if lhsInt != rhsInt {
-          return false
-        }
-      }
-      else if let lhsString = lhsValue as? String, let rhsString = rhsValue as? String {
-        if lhsString != rhsString {
-          return false
-        }
-      }
-      else {
-        // For other types, compare string representations
-        if String(describing: lhsValue) != String(describing: rhsValue) {
-          return false
-        }
-      }
-    }
-
-    return true
+    return lhs.name == rhs.name && lhs.jsonName == rhs.jsonName && lhs.number == rhs.number && lhs.type == rhs.type
+      && lhs.typeName == rhs.typeName && lhs.isRepeated == rhs.isRepeated && lhs.isOptional == rhs.isOptional
+      && lhs.isRequired == rhs.isRequired && lhs.isMap == rhs.isMap && lhs.oneofIndex == rhs.oneofIndex
+      && lhs.mapEntryInfo == rhs.mapEntryInfo && lhs.options == rhs.options
   }
 }
 

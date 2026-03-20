@@ -587,7 +587,7 @@ final class DescriptorBridgeTests: XCTestCase {
       name: "field_with_options",
       number: 1,
       type: .string,
-      options: ["packed": true, "deprecated": false]
+      options: ["packed": .bool(true), "deprecated": .bool(false)]
     )
 
     // Convert to protobuf format (should cover line 149)
@@ -622,7 +622,7 @@ final class DescriptorBridgeTests: XCTestCase {
     let enumValue = EnumDescriptor.EnumValue(
       name: "VALUE_WITH_OPTIONS",
       number: 0,
-      options: ["deprecated": true]
+      options: ["deprecated": .bool(true)]
     )
     enumDescriptor.addValue(enumValue)
 
@@ -639,7 +639,7 @@ final class DescriptorBridgeTests: XCTestCase {
     // Create EnumDescriptor with enum options via constructor
     var enumDescriptor = EnumDescriptor(
       name: "EnumWithOptions",
-      options: ["allow_alias": true]
+      options: ["allow_alias": .bool(true)]
     )
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "VALUE1", number: 0))
 
@@ -834,7 +834,7 @@ final class DescriptorBridgeTests: XCTestCase {
       name: "test_field",
       number: 1,
       type: .string,
-      options: ["field_option": "field_value"]
+      options: ["field_option": .string("field_value")]
     )
 
     // Convert - this should call toProtobufFieldOptions

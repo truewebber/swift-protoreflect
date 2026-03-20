@@ -84,7 +84,7 @@ final class FileDescriptorTests: XCTestCase {
       number: 1,
       type: .string,
       isOptional: true,
-      options: ["deprecated": false]
+      options: ["deprecated": .bool(false)]
     )
 
     let ageField = FieldDescriptor(
@@ -92,7 +92,7 @@ final class FileDescriptorTests: XCTestCase {
       number: 2,
       type: .int32,
       defaultValue: 0,
-      options: ["packed": true]
+      options: ["packed": .bool(true)]
     )
 
     retrievedMessage.addField(nameField)
@@ -112,8 +112,8 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(finalMessage.field(number: 2)?.type, .int32)
 
     // Verify field options
-    XCTAssertEqual(finalMessage.field(number: 1)?.options["deprecated"] as? Bool, false)
-    XCTAssertEqual(finalMessage.field(number: 2)?.options["packed"] as? Bool, true)
+    XCTAssertEqual(finalMessage.field(number: 1)?.options["deprecated"], .bool(false))
+    XCTAssertEqual(finalMessage.field(number: 2)?.options["packed"], .bool(true))
 
     // Verify field flags
     XCTAssertTrue(finalMessage.field(number: 1)?.isOptional ?? false)
@@ -137,14 +137,14 @@ final class FileDescriptorTests: XCTestCase {
   ///
   /// Verifies enum values, enum options and options for individual values.
   func testAddEnum() {
-    var genderEnum = EnumDescriptor(name: "Gender", options: ["deprecated": false])
+    var genderEnum = EnumDescriptor(name: "Gender", options: ["deprecated": .bool(false)])
 
     // Add enum values with options
     genderEnum.addValue(
       EnumDescriptor.EnumValue(
         name: "UNKNOWN",
         number: 0,
-        options: ["deprecated": true]
+        options: ["deprecated": .bool(true)]
       )
     )
 
@@ -152,7 +152,7 @@ final class FileDescriptorTests: XCTestCase {
       EnumDescriptor.EnumValue(
         name: "MALE",
         number: 1,
-        options: ["custom_option": "male_value"]
+        options: ["custom_option": .string("male_value")]
       )
     )
 
@@ -160,7 +160,7 @@ final class FileDescriptorTests: XCTestCase {
       EnumDescriptor.EnumValue(
         name: "FEMALE",
         number: 2,
-        options: ["custom_option": "female_value"]
+        options: ["custom_option": .string("female_value")]
       )
     )
 
@@ -183,17 +183,17 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertTrue(retrievedEnum.hasValue(number: 2))
 
     // Verify enum options
-    XCTAssertEqual(retrievedEnum.options["deprecated"] as? Bool, false)
+    XCTAssertEqual(retrievedEnum.options["deprecated"], .bool(false))
 
     // Verify options for individual values
     let unknownValue = retrievedEnum.value(named: "UNKNOWN")
-    XCTAssertEqual(unknownValue?.options["deprecated"] as? Bool, true)
+    XCTAssertEqual(unknownValue?.options["deprecated"], .bool(true))
 
     let maleValue = retrievedEnum.value(named: "MALE")
-    XCTAssertEqual(maleValue?.options["custom_option"] as? String, "male_value")
+    XCTAssertEqual(maleValue?.options["custom_option"], .string("male_value"))
 
     let femaleValue = retrievedEnum.value(named: "FEMALE")
-    XCTAssertEqual(femaleValue?.options["custom_option"] as? String, "female_value")
+    XCTAssertEqual(femaleValue?.options["custom_option"], .string("female_value"))
 
     // Verify value numbers
     XCTAssertEqual(unknownValue?.number, 0)
@@ -451,7 +451,7 @@ final class FileDescriptorTests: XCTestCase {
       number: 1,
       type: .string,
       isOptional: true,
-      options: ["max_length": 100]
+      options: ["max_length": .int(100)]
     )
 
     let zipCodeField = FieldDescriptor(
@@ -459,7 +459,7 @@ final class FileDescriptorTests: XCTestCase {
       number: 2,
       type: .string,
       isRequired: false,
-      options: ["pattern": "\\d{5}"]
+      options: ["pattern": .string("\\d{5}")]
     )
 
     addressMessage.addField(streetField)
@@ -468,14 +468,14 @@ final class FileDescriptorTests: XCTestCase {
     // Create nested enum
     var countryEnum = EnumDescriptor(
       name: "Country",
-      options: ["allow_alias": true]
+      options: ["allow_alias": .bool(true)]
     )
 
     countryEnum.addValue(
       EnumDescriptor.EnumValue(
         name: "UNKNOWN",
         number: 0,
-        options: ["deprecated": true]
+        options: ["deprecated": .bool(true)]
       )
     )
 
@@ -483,7 +483,7 @@ final class FileDescriptorTests: XCTestCase {
       EnumDescriptor.EnumValue(
         name: "USA",
         number: 1,
-        options: ["country_code": "US"]
+        options: ["country_code": .string("US")]
       )
     )
 
@@ -518,29 +518,29 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(retrievedStreetField.name, "street")
     XCTAssertEqual(retrievedStreetField.type, .string)
     XCTAssertTrue(retrievedStreetField.isOptional)
-    XCTAssertEqual(retrievedStreetField.options["max_length"] as? Int, 100)
+    XCTAssertEqual(retrievedStreetField.options["max_length"], .int(100))
 
     let retrievedZipField = retrievedAddress.field(number: 2)!
     XCTAssertEqual(retrievedZipField.name, "zip_code")
     XCTAssertEqual(retrievedZipField.type, .string)
     XCTAssertFalse(retrievedZipField.isRequired)
-    XCTAssertEqual(retrievedZipField.options["pattern"] as? String, "\\d{5}")
+    XCTAssertEqual(retrievedZipField.options["pattern"], .string("\\d{5}"))
 
     // Verify all attributes of nested enum
     let retrievedCountry = retrievedPerson.nestedEnum(named: "Country")!
     XCTAssertEqual(retrievedCountry.name, "Country")
-    XCTAssertEqual(retrievedCountry.options["allow_alias"] as? Bool, true)
+    XCTAssertEqual(retrievedCountry.options["allow_alias"], .bool(true))
 
     // Verify enum values
     XCTAssertEqual(retrievedCountry.allValues().count, 2)
 
     let unknownValue = retrievedCountry.value(named: "UNKNOWN")!
     XCTAssertEqual(unknownValue.number, 0)
-    XCTAssertEqual(unknownValue.options["deprecated"] as? Bool, true)
+    XCTAssertEqual(unknownValue.options["deprecated"], .bool(true))
 
     let usaValue = retrievedCountry.value(named: "USA")!
     XCTAssertEqual(usaValue.number, 1)
-    XCTAssertEqual(usaValue.options["country_code"] as? String, "US")
+    XCTAssertEqual(usaValue.options["country_code"], .string("US"))
   }
 
   /// Verifies correctness of full paths for nested types.
