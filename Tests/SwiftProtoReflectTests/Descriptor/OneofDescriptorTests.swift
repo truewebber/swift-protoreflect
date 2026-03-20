@@ -15,13 +15,13 @@ final class OneofDescriptorTests: XCTestCase {
     let descriptor = OneofDescriptor(
       name: "contact",
       index: 0,
-      options: ["deprecated": true]
+      options: ["deprecated": .bool(true)]
     )
 
     XCTAssertEqual(descriptor.name, "contact")
     XCTAssertEqual(descriptor.index, 0)
     XCTAssertEqual(descriptor.options.count, 1)
-    XCTAssertEqual(descriptor.options["deprecated"] as? Bool, true)
+    XCTAssertEqual(descriptor.options["deprecated"], .bool(true))
   }
 
   func testDefaultOptions() {
@@ -34,7 +34,7 @@ final class OneofDescriptorTests: XCTestCase {
 
   func testEquality() {
     let lhs = OneofDescriptor(name: "contact", index: 0)
-    let rhs = OneofDescriptor(name: "contact", index: 0, options: ["deprecated": true])
+    let rhs = OneofDescriptor(name: "contact", index: 0, options: ["deprecated": .bool(true)])
 
     XCTAssertEqual(lhs, rhs)
   }

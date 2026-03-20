@@ -539,7 +539,7 @@ final class DescriptorBridgeTests: XCTestCase {
     var messageDescriptor = MessageDescriptor(
       name: "MessageWithOptions",
       parent: fileDescriptor,
-      options: ["deprecated": true, "custom_option": "test_value"]
+      options: ["deprecated": .bool(true), "custom_option": .string("test_value")]
     )
     messageDescriptor.addField(FieldDescriptor(name: "name", number: 1, type: .string))
 
@@ -822,7 +822,7 @@ final class DescriptorBridgeTests: XCTestCase {
     let messageWithOptions = MessageDescriptor(
       name: "TestMessage",
       parent: fileDescriptor,
-      options: ["test_option": "test_value"]
+      options: ["test_option": .string("test_value")]
     )
 
     // Convert - this should call toProtobufMessageOptions

@@ -30,7 +30,7 @@ final class FileDescriptorTests: XCTestCase {
       name: "person.proto",
       package: "example.person",
       dependencies: ["google/protobuf/timestamp.proto"],
-      options: ["java_package": "com.example.person"]
+      options: ["java_package": .string("com.example.person")]
     )
   }
 
@@ -45,7 +45,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(fileDescriptor.name, "person.proto")
     XCTAssertEqual(fileDescriptor.package, "example.person")
     XCTAssertEqual(fileDescriptor.dependencies, ["google/protobuf/timestamp.proto"])
-    XCTAssertEqual(fileDescriptor.options["java_package"] as? String, "com.example.person")
+    XCTAssertEqual(fileDescriptor.options["java_package"], .string("com.example.person"))
     XCTAssertTrue(fileDescriptor.messages.isEmpty)
     XCTAssertTrue(fileDescriptor.enums.isEmpty)
     XCTAssertTrue(fileDescriptor.services.isEmpty)
@@ -221,7 +221,7 @@ final class FileDescriptorTests: XCTestCase {
     var personService = ServiceDescriptor(
       name: "PersonService",
       parent: fileDescriptor,
-      options: ["deprecated": false]
+      options: ["deprecated": .bool(false)]
     )
 
     // Add service methods with options
@@ -230,7 +230,7 @@ final class FileDescriptorTests: XCTestCase {
         name: "GetPerson",
         inputType: "example.person.GetPersonRequest",
         outputType: "example.person.GetPersonResponse",
-        options: ["idempotency_level": "IDEMPOTENT"]
+        options: ["idempotency_level": .string("IDEMPOTENT")]
       )
     )
 
@@ -241,7 +241,7 @@ final class FileDescriptorTests: XCTestCase {
         outputType: "example.person.CreatePersonResponse",
         clientStreaming: false,
         serverStreaming: false,
-        options: ["method_signature": "person"]
+        options: ["method_signature": .string("person")]
       )
     )
 
@@ -252,7 +252,7 @@ final class FileDescriptorTests: XCTestCase {
         outputType: "example.person.StreamPersonsResponse",
         clientStreaming: false,
         serverStreaming: true,
-        options: ["deprecated": true]
+        options: ["deprecated": .bool(true)]
       )
     )
 
@@ -288,12 +288,12 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertTrue(streamPersonsMethod?.serverStreaming ?? false)
 
     // Verify service options
-    XCTAssertEqual(retrievedService.options["deprecated"] as? Bool, false)
+    XCTAssertEqual(retrievedService.options["deprecated"], .bool(false))
 
     // Verify method options
-    XCTAssertEqual(getPersonMethod?.options["idempotency_level"] as? String, "IDEMPOTENT")
-    XCTAssertEqual(createPersonMethod?.options["method_signature"] as? String, "person")
-    XCTAssertEqual(streamPersonsMethod?.options["deprecated"] as? Bool, true)
+    XCTAssertEqual(getPersonMethod?.options["idempotency_level"], .string("IDEMPOTENT"))
+    XCTAssertEqual(createPersonMethod?.options["method_signature"], .string("person"))
+    XCTAssertEqual(streamPersonsMethod?.options["deprecated"], .bool(true))
   }
 
   func testAddServiceReplacement() {
@@ -442,7 +442,7 @@ final class FileDescriptorTests: XCTestCase {
     var addressMessage = MessageDescriptor(
       name: "Address",
       parent: personMessage,
-      options: ["deprecated": false, "custom_option": "address_value"]
+      options: ["deprecated": .bool(false), "custom_option": .string("address_value")]
     )
 
     // Add fields to nested message
@@ -508,8 +508,8 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(retrievedAddress.parentMessageFullName, "example.person.Person")
 
     // Verify nested message options
-    XCTAssertEqual(retrievedAddress.options["deprecated"] as? Bool, false)
-    XCTAssertEqual(retrievedAddress.options["custom_option"] as? String, "address_value")
+    XCTAssertEqual(retrievedAddress.options["deprecated"], .bool(false))
+    XCTAssertEqual(retrievedAddress.options["custom_option"], .string("address_value"))
 
     // Verify nested message fields
     XCTAssertEqual(retrievedAddress.fields.count, 2)

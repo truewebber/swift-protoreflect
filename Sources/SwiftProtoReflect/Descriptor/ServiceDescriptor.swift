@@ -33,7 +33,7 @@ public struct ServiceDescriptor: Equatable {
     public let serverStreaming: Bool
 
     /// Method options.
-    public let options: [String: Any]
+    public let options: [String: DescriptorOption]
 
     /// Creates a new method descriptor.
     ///
@@ -50,7 +50,7 @@ public struct ServiceDescriptor: Equatable {
       outputType: String,
       clientStreaming: Bool = false,
       serverStreaming: Bool = false,
-      options: [String: Any] = [:]
+      options: [String: DescriptorOption] = [:]
     ) {
       self.name = name
       self.inputType = inputType
@@ -63,51 +63,9 @@ public struct ServiceDescriptor: Equatable {
     // MARK: - Equatable
 
     public static func == (lhs: MethodDescriptor, rhs: MethodDescriptor) -> Bool {
-      guard
-        lhs.name == rhs.name && lhs.inputType == rhs.inputType && lhs.outputType == rhs.outputType
-          && lhs.clientStreaming == rhs.clientStreaming && lhs.serverStreaming == rhs.serverStreaming
-      else {
-        return false
-      }
-
-      // Compare options: check keys and values
-      let lhsKeys = Set(lhs.options.keys)
-      let rhsKeys = Set(rhs.options.keys)
-
-      guard lhsKeys == rhsKeys else {
-        return false
-      }
-
-      // Check value matching for all keys
-      for key in lhsKeys {
-        let lhsValue = lhs.options[key]
-        let rhsValue = rhs.options[key]
-
-        // Check known value types
-        if let lhsBool = lhsValue as? Bool, let rhsBool = rhsValue as? Bool {
-          if lhsBool != rhsBool {
-            return false
-          }
-        }
-        else if let lhsInt = lhsValue as? Int, let rhsInt = rhsValue as? Int {
-          if lhsInt != rhsInt {
-            return false
-          }
-        }
-        else if let lhsString = lhsValue as? String, let rhsString = rhsValue as? String {
-          if lhsString != rhsString {
-            return false
-          }
-        }
-        else {
-          // For other types, compare string representations
-          if String(describing: lhsValue) != String(describing: rhsValue) {
-            return false
-          }
-        }
-      }
-
-      return true
+      return lhs.name == rhs.name && lhs.inputType == rhs.inputType && lhs.outputType == rhs.outputType
+        && lhs.clientStreaming == rhs.clientStreaming && lhs.serverStreaming == rhs.serverStreaming
+        && lhs.options == rhs.options
     }
   }
 
@@ -126,7 +84,7 @@ public struct ServiceDescriptor: Equatable {
   public private(set) var methodsByName: [String: MethodDescriptor] = [:]
 
   /// Service options.
-  public let options: [String: Any]
+  public let options: [String: DescriptorOption]
 
   // MARK: - Initialization
 
@@ -139,7 +97,7 @@ public struct ServiceDescriptor: Equatable {
   public init(
     name: String,
     fullName: String,
-    options: [String: Any] = [:]
+    options: [String: DescriptorOption] = [:]
   ) {
     self.name = name
     self.fullName = fullName
@@ -157,7 +115,7 @@ public struct ServiceDescriptor: Equatable {
   public init(
     name: String,
     parent: FileDescriptor,
-    options: [String: Any] = [:]
+    options: [String: DescriptorOption] = [:]
   ) {
     self.name = name
     self.options = options
@@ -203,13 +161,13 @@ public struct ServiceDescriptor: Equatable {
   // MARK: - Equatable
 
   public static func == (lhs: ServiceDescriptor, rhs: ServiceDescriptor) -> Bool {
-    // Compare main properties
-    guard lhs.name == rhs.name && lhs.fullName == rhs.fullName && lhs.fileDescriptorPath == rhs.fileDescriptorPath
+    guard
+      lhs.name == rhs.name && lhs.fullName == rhs.fullName && lhs.fileDescriptorPath == rhs.fileDescriptorPath
+        && lhs.options == rhs.options
     else {
       return false
     }
 
-    // Compare methods
     let lhsMethodsByName = lhs.methodsByName
     let rhsMethodsByName = rhs.methodsByName
 
@@ -220,43 +178,6 @@ public struct ServiceDescriptor: Equatable {
     for (name, lhsMethod) in lhsMethodsByName {
       guard let rhsMethod = rhsMethodsByName[name], lhsMethod == rhsMethod else {
         return false
-      }
-    }
-
-    // Compare options
-    let lhsKeys = Set(lhs.options.keys)
-    let rhsKeys = Set(rhs.options.keys)
-
-    guard lhsKeys == rhsKeys else {
-      return false
-    }
-
-    // Check value matching for all keys
-    for key in lhsKeys {
-      let lhsValue = lhs.options[key]
-      let rhsValue = rhs.options[key]
-
-      // Check known value types
-      if let lhsBool = lhsValue as? Bool, let rhsBool = rhsValue as? Bool {
-        if lhsBool != rhsBool {
-          return false
-        }
-      }
-      else if let lhsInt = lhsValue as? Int, let rhsInt = rhsValue as? Int {
-        if lhsInt != rhsInt {
-          return false
-        }
-      }
-      else if let lhsString = lhsValue as? String, let rhsString = rhsValue as? String {
-        if lhsString != rhsString {
-          return false
-        }
-      }
-      else {
-        // For other types, compare string representations
-        if String(describing: lhsValue) != String(describing: rhsValue) {
-          return false
-        }
       }
     }
 

@@ -64,7 +64,7 @@ final class ServiceDescriptorTests: XCTestCase {
 
   func testInitWithOptions() {
     // Arrange
-    let options: [String: Any] = ["deprecated": true, "customOption": "value"]
+    let options: [String: DescriptorOption] = ["deprecated": .bool(true), "customOption": .string("value")]
 
     // Act
     let service = ServiceDescriptor(name: serviceName, fullName: serviceFullName, options: options)
@@ -73,8 +73,8 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertEqual(service.name, serviceName)
     XCTAssertEqual(service.fullName, serviceFullName)
     XCTAssertEqual(service.options.count, 2)
-    XCTAssertEqual(service.options["deprecated"] as? Bool, true)
-    XCTAssertEqual(service.options["customOption"] as? String, "value")
+    XCTAssertEqual(service.options["deprecated"], .bool(true))
+    XCTAssertEqual(service.options["customOption"], .string("value"))
   }
 
   // MARK: Method Management Tests
@@ -206,7 +206,7 @@ final class ServiceDescriptorTests: XCTestCase {
       outputType: outputType,
       clientStreaming: true,
       serverStreaming: true,
-      options: ["deprecated": true]
+      options: ["deprecated": .bool(true)]
     )
 
     // Assert
@@ -216,7 +216,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertTrue(method.clientStreaming)
     XCTAssertTrue(method.serverStreaming)
     XCTAssertEqual(method.options.count, 1)
-    XCTAssertEqual(method.options["deprecated"] as? Bool, true)
+    XCTAssertEqual(method.options["deprecated"], .bool(true))
   }
 
   func testMethodDescriptorDefaultValues() {
@@ -301,7 +301,7 @@ final class ServiceDescriptorTests: XCTestCase {
       outputType: outputType,
       clientStreaming: true,
       serverStreaming: false,
-      options: ["deprecated": true]
+      options: ["deprecated": .bool(true)]
     )
 
     let method2 = ServiceDescriptor.MethodDescriptor(
@@ -310,7 +310,7 @@ final class ServiceDescriptorTests: XCTestCase {
       outputType: outputType,
       clientStreaming: true,
       serverStreaming: false,
-      options: ["deprecated": true]
+      options: ["deprecated": .bool(true)]
     )
 
     // Act & Assert
@@ -349,14 +349,14 @@ final class ServiceDescriptorTests: XCTestCase {
       name: methodName,
       inputType: inputType,
       outputType: outputType,
-      options: ["option1": true, "option2": "value"]
+      options: ["option1": .bool(true), "option2": .string("value")]
     )
 
     let method2 = ServiceDescriptor.MethodDescriptor(
       name: methodName,
       inputType: inputType,
       outputType: outputType,
-      options: ["option1": true, "option3": "different"]
+      options: ["option1": .bool(true), "option3": .string("different")]
     )
 
     // Act & Assert
@@ -364,21 +364,19 @@ final class ServiceDescriptorTests: XCTestCase {
   }
 
   func testMethodDescriptorOptionsWithDifferentTypes() {
-    // Check different types of options
-
     // Boolean options
     let method1 = ServiceDescriptor.MethodDescriptor(
       name: methodName,
       inputType: inputType,
       outputType: outputType,
-      options: ["boolOption": true]
+      options: ["boolOption": .bool(true)]
     )
 
     let method2 = ServiceDescriptor.MethodDescriptor(
       name: methodName,
       inputType: inputType,
       outputType: outputType,
-      options: ["boolOption": false]
+      options: ["boolOption": .bool(false)]
     )
 
     XCTAssertNotEqual(method1, method2)
@@ -388,14 +386,14 @@ final class ServiceDescriptorTests: XCTestCase {
       name: methodName,
       inputType: inputType,
       outputType: outputType,
-      options: ["intOption": 10]
+      options: ["intOption": .int(10)]
     )
 
     let method4 = ServiceDescriptor.MethodDescriptor(
       name: methodName,
       inputType: inputType,
       outputType: outputType,
-      options: ["intOption": 20]
+      options: ["intOption": .int(20)]
     )
 
     XCTAssertNotEqual(method3, method4)
@@ -405,34 +403,31 @@ final class ServiceDescriptorTests: XCTestCase {
       name: methodName,
       inputType: inputType,
       outputType: outputType,
-      options: ["stringOption": "value1"]
+      options: ["stringOption": .string("value1")]
     )
 
     let method6 = ServiceDescriptor.MethodDescriptor(
       name: methodName,
       inputType: inputType,
       outputType: outputType,
-      options: ["stringOption": "value2"]
+      options: ["stringOption": .string("value2")]
     )
 
     XCTAssertNotEqual(method5, method6)
 
-    // Custom type options
-    let customValue1 = ["key": "value"]
-    let customValue2 = ["key": "different"]
-
+    // Float options
     let method7 = ServiceDescriptor.MethodDescriptor(
       name: methodName,
       inputType: inputType,
       outputType: outputType,
-      options: ["customOption": customValue1]
+      options: ["floatOption": .float(1.0)]
     )
 
     let method8 = ServiceDescriptor.MethodDescriptor(
       name: methodName,
       inputType: inputType,
       outputType: outputType,
-      options: ["customOption": customValue2]
+      options: ["floatOption": .float(2.0)]
     )
 
     XCTAssertNotEqual(method7, method8)
@@ -467,8 +462,8 @@ final class ServiceDescriptorTests: XCTestCase {
 
   func testServiceDescriptorWithDifferentOptions() {
     // Arrange
-    let options1: [String: Any] = ["option1": true, "option2": "value"]
-    let options2: [String: Any] = ["option1": true, "option3": "different"]
+    let options1: [String: DescriptorOption] = ["option1": .bool(true), "option2": .string("value")]
+    let options2: [String: DescriptorOption] = ["option1": .bool(true), "option3": .string("different")]
 
     let service1 = ServiceDescriptor(name: serviceName, fullName: serviceFullName, options: options1)
     let service2 = ServiceDescriptor(name: serviceName, fullName: serviceFullName, options: options2)
@@ -482,13 +477,13 @@ final class ServiceDescriptorTests: XCTestCase {
     let service1 = ServiceDescriptor(
       name: serviceName,
       fullName: serviceFullName,
-      options: ["boolOption": true]
+      options: ["boolOption": .bool(true)]
     )
 
     let service2 = ServiceDescriptor(
       name: serviceName,
       fullName: serviceFullName,
-      options: ["boolOption": false]
+      options: ["boolOption": .bool(false)]
     )
 
     XCTAssertNotEqual(service1, service2)
@@ -497,13 +492,13 @@ final class ServiceDescriptorTests: XCTestCase {
     let service3 = ServiceDescriptor(
       name: serviceName,
       fullName: serviceFullName,
-      options: ["intOption": 10]
+      options: ["intOption": .int(10)]
     )
 
     let service4 = ServiceDescriptor(
       name: serviceName,
       fullName: serviceFullName,
-      options: ["intOption": 20]
+      options: ["intOption": .int(20)]
     )
 
     XCTAssertNotEqual(service3, service4)
@@ -512,80 +507,53 @@ final class ServiceDescriptorTests: XCTestCase {
     let service5 = ServiceDescriptor(
       name: serviceName,
       fullName: serviceFullName,
-      options: ["stringOption": "value1"]
+      options: ["stringOption": .string("value1")]
     )
 
     let service6 = ServiceDescriptor(
       name: serviceName,
       fullName: serviceFullName,
-      options: ["stringOption": "value2"]
+      options: ["stringOption": .string("value2")]
     )
 
     XCTAssertNotEqual(service5, service6)
 
-    // Custom type options
-    let customValue1 = ["key": "value"]
-    let customValue2 = ["key": "different"]
-
+    // Float options
     let service7 = ServiceDescriptor(
       name: serviceName,
       fullName: serviceFullName,
-      options: ["customOption": customValue1]
+      options: ["floatOption": .float(1.0)]
     )
 
     let service8 = ServiceDescriptor(
       name: serviceName,
       fullName: serviceFullName,
-      options: ["customOption": customValue2]
+      options: ["floatOption": .float(2.0)]
     )
 
     XCTAssertNotEqual(service7, service8)
   }
 
-  // Test for coverage of complex type comparison in options
   func testServiceDescriptorComplexOptionsComparison() {
-    // Use class to create complex data type
-    class ComplexValue: CustomStringConvertible {
-      let value: String
-
-      init(value: String) {
-        self.value = value
-      }
-
-      // Implementation of CustomStringConvertible protocol
-      var description: String {
-        return "ComplexValue(\(value))"
-      }
-    }
-
-    // Create two services with different complex options
-    let complex1 = ComplexValue(value: "value1")
-    let complex2 = ComplexValue(value: "value2")
-
     let service1 = ServiceDescriptor(
       name: serviceName,
       fullName: serviceFullName,
-      options: ["complexOption": complex1]
+      options: ["floatOption": .float(1.5), "nameOption": .string("alpha")]
     )
 
     let service2 = ServiceDescriptor(
       name: serviceName,
       fullName: serviceFullName,
-      options: ["complexOption": complex2]
+      options: ["floatOption": .float(1.5), "nameOption": .string("alpha")]
     )
 
-    // These services should be different due to different complex option values
-    XCTAssertNotEqual(service1, service2)
-
-    // Verify that services with the same complex options are equal
-    let complex3 = ComplexValue(value: "value1")
     let service3 = ServiceDescriptor(
       name: serviceName,
       fullName: serviceFullName,
-      options: ["complexOption": complex3]
+      options: ["floatOption": .float(9.9), "nameOption": .string("alpha")]
     )
 
-    // They should be equal because description is the same
-    XCTAssertEqual(service1, service3)
+    XCTAssertEqual(service1, service2)
+    XCTAssertNotEqual(service1, service3)
   }
 }

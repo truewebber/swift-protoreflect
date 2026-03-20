@@ -34,7 +34,7 @@ final class MessageDescriptorTests: XCTestCase {
     messageDescriptor = MessageDescriptor(
       name: "Person",
       parent: fileDescriptor,
-      options: ["deprecated": false]
+      options: ["deprecated": .bool(false)]
     )
   }
 
@@ -49,7 +49,7 @@ final class MessageDescriptorTests: XCTestCase {
   func testInitialization() {
     XCTAssertEqual(messageDescriptor.name, "Person")
     XCTAssertEqual(messageDescriptor.fullName, "example.person.Person")
-    XCTAssertEqual(messageDescriptor.options["deprecated"] as? Bool, false)
+    XCTAssertEqual(messageDescriptor.options["deprecated"], .bool(false))
     XCTAssertTrue(messageDescriptor.fields.isEmpty)
     XCTAssertTrue(messageDescriptor.nestedMessages.isEmpty)
     XCTAssertTrue(messageDescriptor.nestedEnums.isEmpty)

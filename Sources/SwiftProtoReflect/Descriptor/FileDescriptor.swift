@@ -25,7 +25,7 @@ public struct FileDescriptor {
   public let dependencies: [String]
 
   /// File options.
-  public let options: [String: Any]
+  public let options: [String: DescriptorOption]
 
   /// List of messages defined in the file.
   public private(set) var messages: [String: MessageDescriptor] = [:]
@@ -43,7 +43,7 @@ public struct FileDescriptor {
     name: String,
     package: String,
     dependencies: [String] = [],
-    options: [String: Any] = [:]
+    options: [String: DescriptorOption] = [:]
   ) {
     self.name = name
     self.package = package

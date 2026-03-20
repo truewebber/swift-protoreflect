@@ -40,7 +40,7 @@ public struct MessageDescriptor: @unchecked Sendable {
   public private(set) var nestedEnums: [String: EnumDescriptor] = [:]
 
   /// Message options.
-  public let options: [String: Any]
+  public let options: [String: DescriptorOption]
 
   // MARK: - Initialization
 
@@ -53,7 +53,7 @@ public struct MessageDescriptor: @unchecked Sendable {
   public init(
     name: String,
     fullName: String,
-    options: [String: Any] = [:]
+    options: [String: DescriptorOption] = [:]
   ) {
     self.name = name
     self.fullName = fullName
@@ -71,7 +71,7 @@ public struct MessageDescriptor: @unchecked Sendable {
   public init(
     name: String,
     parent: Any? = nil,
-    options: [String: Any] = [:]
+    options: [String: DescriptorOption] = [:]
   ) {
     self.name = name
     self.options = options

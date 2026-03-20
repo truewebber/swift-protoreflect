@@ -21,7 +21,7 @@ public struct OneofDescriptor: Equatable {
   public let index: Int
 
   /// Oneof options (mirrors `Google_Protobuf_OneofOptions`).
-  public let options: [String: Any]
+  public let options: [String: DescriptorOption]
 
   /// Creates a new `OneofDescriptor`.
   ///
@@ -29,7 +29,7 @@ public struct OneofDescriptor: Equatable {
   ///   - name: Group name as defined in the .proto file.
   ///   - index: Zero-based index within the parent message.
   ///   - options: Oneof options; defaults to empty.
-  public init(name: String, index: Int, options: [String: Any] = [:]) {
+  public init(name: String, index: Int, options: [String: DescriptorOption] = [:]) {
     self.name = name
     self.index = index
     self.options = options
