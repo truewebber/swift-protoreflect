@@ -145,6 +145,18 @@ let staticMessage: Person = try dynamicMessage.toStaticMessage()
 
 The library has comprehensive test coverage covering all functionality and edge cases.
 
+### Quality metrics
+
+Code coverage is measured with LLVM (`make coverage` after `make test`) over `Sources/SwiftProtoReflect/`:
+
+| Metric | Coverage |
+|--------|----------|
+| Lines | **94.82%** |
+| Regions | **92.82%** |
+| Functions | **96.67%** |
+
+Figures reflect the current test suite; re-run `make test` and `make coverage` locally for up-to-date numbers.
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
