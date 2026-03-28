@@ -68,23 +68,32 @@ public struct JSONDeserializer {
   public func deserializeFromJSONObject(_ jsonObject: [String: Any], using descriptor: MessageDescriptor) throws
     -> DynamicMessage
   {
+    return try deserializeFromJSONObject(jsonObject, using: descriptor, depth: 0)
+  }
+
+  private func deserializeFromJSONObject(
+    _ jsonObject: [String: Any],
+    using descriptor: MessageDescriptor,
+    depth: Int
+  ) throws -> DynamicMessage {
+    guard depth <= options.maxNestingDepth else {
+      throw JSONDeserializationError.nestingDepthExceeded(maxDepth: options.maxNestingDepth)
+    }
+
     let factory = MessageFactory()
     var message = factory.createMessage(from: descriptor)
 
-    // Process each field from JSON
     for (jsonFieldName, jsonValue) in jsonObject {
-      // Find field by name (support both original and camelCase names)
       guard let field = findField(byJSONName: jsonFieldName, in: descriptor) else {
         if options.ignoreUnknownFields {
-          continue  // Skip unknown fields
+          continue
         }
         else {
           throw JSONDeserializationError.unknownField(fieldName: jsonFieldName, messageName: descriptor.name)
         }
       }
 
-      // Deserialize field value
-      let fieldValue = try deserializeFieldValue(jsonValue, for: field)
+      let fieldValue = try deserializeFieldValue(jsonValue, for: field, depth: depth)
       try message.set(fieldValue, forField: field.name)
     }
 
@@ -109,25 +118,31 @@ public struct JSONDeserializer {
   }
 
   /// Deserializes field value from JSON.
-  private func deserializeFieldValue(_ jsonValue: Any, for field: FieldDescriptor) throws -> Any {
+  private func deserializeFieldValue(_ jsonValue: Any, for field: FieldDescriptor, depth: Int) throws -> Any {
     if field.isMap {
-      return try deserializeMapField(jsonValue, for: field)
+      return try deserializeMapField(jsonValue, for: field, depth: depth)
     }
     else if field.isRepeated {
-      return try deserializeRepeatedField(jsonValue, for: field)
+      return try deserializeRepeatedField(jsonValue, for: field, depth: depth)
     }
     else {
-      return try deserializeSingleField(jsonValue, for: field)
+      return try deserializeSingleField(jsonValue, for: field, depth: depth)
     }
   }
 
   /// Deserializes single field.
-  private func deserializeSingleField(_ jsonValue: Any, for field: FieldDescriptor) throws -> Any {
-    return try convertJSONValueToFieldType(jsonValue, type: field.type, typeName: field.typeName, fieldName: field.name)
+  private func deserializeSingleField(_ jsonValue: Any, for field: FieldDescriptor, depth: Int) throws -> Any {
+    return try convertJSONValueToFieldType(
+      jsonValue,
+      type: field.type,
+      typeName: field.typeName,
+      fieldName: field.name,
+      depth: depth
+    )
   }
 
   /// Deserializes repeated field.
-  private func deserializeRepeatedField(_ jsonValue: Any, for field: FieldDescriptor) throws -> Any {
+  private func deserializeRepeatedField(_ jsonValue: Any, for field: FieldDescriptor, depth: Int) throws -> Any {
     guard let jsonArray = jsonValue as? [Any] else {
       throw JSONDeserializationError.invalidFieldType(
         fieldName: field.name,
@@ -144,7 +159,8 @@ public struct JSONDeserializer {
           arrayElement,
           type: field.type,
           typeName: field.typeName,
-          fieldName: "\(field.name)[\(index)]"
+          fieldName: "\(field.name)[\(index)]",
+          depth: depth
         )
         resultArray.append(convertedValue)
       }
@@ -161,7 +177,7 @@ public struct JSONDeserializer {
   }
 
   /// Deserializes map field.
-  private func deserializeMapField(_ jsonValue: Any, for field: FieldDescriptor) throws -> Any {
+  private func deserializeMapField(_ jsonValue: Any, for field: FieldDescriptor, depth: Int) throws -> Any {
     guard let jsonObject = jsonValue as? [String: Any] else {
       throw JSONDeserializationError.invalidFieldType(
         fieldName: field.name,
@@ -177,19 +193,18 @@ public struct JSONDeserializer {
     var resultMap: [AnyHashable: Any] = [:]
 
     for (jsonKey, jsonMapValue) in jsonObject {
-      // Convert JSON key (always string) back to needed type
       let mapKey = try convertJSONStringToMapKey(
         jsonKey,
         keyType: mapEntryInfo.keyFieldInfo.type,
         fieldName: field.name
       )
 
-      // Convert value
       let mapValue = try convertJSONValueToFieldType(
         jsonMapValue,
         type: mapEntryInfo.valueFieldInfo.type,
         typeName: mapEntryInfo.valueFieldInfo.typeName,
-        fieldName: "\(field.name)[\(jsonKey)]"
+        fieldName: "\(field.name)[\(jsonKey)]",
+        depth: depth
       )
 
       guard let hashableKey = mapKey as? AnyHashable else {
@@ -210,7 +225,8 @@ public struct JSONDeserializer {
     _ jsonValue: Any,
     type: FieldType,
     typeName: String?,
-    fieldName: String
+    fieldName: String,
+    depth: Int
   ) throws -> Any {
 
     switch type {
@@ -242,7 +258,7 @@ public struct JSONDeserializer {
       return try convertJSONToBytes(jsonValue, fieldName: fieldName)
 
     case .message:
-      return try convertJSONToMessage(jsonValue, typeName: typeName, fieldName: fieldName)
+      return try convertJSONToMessage(jsonValue, typeName: typeName, fieldName: fieldName, depth: depth)
 
     case .enum:
       return try convertJSONToEnum(jsonValue, fieldName: fieldName)
@@ -455,9 +471,14 @@ public struct JSONDeserializer {
     return data
   }
 
-  /// Converts JSON value to DynamicMessage.
-  private func convertJSONToMessage(_ jsonValue: Any, typeName: String?, fieldName: String) throws -> DynamicMessage {
-    guard jsonValue is [String: Any] else {
+  /// Converts JSON value to DynamicMessage by resolving the descriptor from the type registry.
+  private func convertJSONToMessage(
+    _ jsonValue: Any,
+    typeName: String?,
+    fieldName: String,
+    depth: Int
+  ) throws -> DynamicMessage {
+    guard let jsonObject = jsonValue as? [String: Any] else {
       throw JSONDeserializationError.valueTypeMismatch(
         fieldName: fieldName,
         expected: "Object",
@@ -469,13 +490,21 @@ public struct JSONDeserializer {
       throw JSONDeserializationError.missingTypeName(fieldName: fieldName)
     }
 
-    // For nested message deserialization we need its descriptor
-    // In real implementation this should be obtained from TypeRegistry
-    // For now using stub
-    throw JSONDeserializationError.unsupportedNestedMessage(
-      fieldName: fieldName,
-      typeName: typeName
-    )
+    guard let registry = options.typeRegistry else {
+      throw JSONDeserializationError.unsupportedNestedMessage(
+        fieldName: fieldName,
+        typeName: typeName
+      )
+    }
+
+    guard let nestedDescriptor = registry.findMessage(named: typeName) else {
+      throw JSONDeserializationError.nestedMessageDescriptorNotFound(
+        fieldName: fieldName,
+        typeName: typeName
+      )
+    }
+
+    return try deserializeFromJSONObject(jsonObject, using: nestedDescriptor, depth: depth + 1)
   }
 
   /// Converts JSON value to enum.
@@ -578,13 +607,23 @@ public struct JSONDeserializationOptions {
   /// Strict type validation.
   public let strictTypeValidation: Bool
 
+  /// Type registry for resolving nested message descriptors by fully-qualified name.
+  public let typeRegistry: TypeRegistry?
+
+  /// Maximum allowed nesting depth for recursive message deserialization.
+  public let maxNestingDepth: Int
+
   /// Creates JSON deserialization options.
   public init(
     ignoreUnknownFields: Bool = true,
-    strictTypeValidation: Bool = true
+    strictTypeValidation: Bool = true,
+    typeRegistry: TypeRegistry? = nil,
+    maxNestingDepth: Int = 64
   ) {
     self.ignoreUnknownFields = ignoreUnknownFields
     self.strictTypeValidation = strictTypeValidation
+    self.typeRegistry = typeRegistry
+    self.maxNestingDepth = maxNestingDepth
   }
 }
 
@@ -608,6 +647,8 @@ public enum JSONDeserializationError: Error, Equatable {
   case missingMapEntryInfo(fieldName: String)
   case missingTypeName(fieldName: String)
   case unsupportedNestedMessage(fieldName: String, typeName: String)
+  case nestedMessageDescriptorNotFound(fieldName: String, typeName: String)
+  case nestingDepthExceeded(maxDepth: Int)
   case unsupportedFieldType(type: String)
 
   public var description: String {
@@ -644,6 +685,10 @@ public enum JSONDeserializationError: Error, Equatable {
       return "Missing type name for field '\(fieldName)'"
     case .unsupportedNestedMessage(let fieldName, let typeName):
       return "Unsupported nested message for field '\(fieldName)': \(typeName)"
+    case .nestedMessageDescriptorNotFound(let fieldName, let typeName):
+      return "Nested message descriptor not found for field '\(fieldName)': \(typeName)"
+    case .nestingDepthExceeded(let maxDepth):
+      return "Nesting depth exceeded maximum of \(maxDepth)"
     case .unsupportedFieldType(let type):
       return "Unsupported field type: \(type)"
     }
@@ -722,6 +767,13 @@ public enum JSONDeserializationError: Error, Equatable {
       .unsupportedNestedMessage(let rField, let rType)
     ):
       return lField == rField && lType == rType
+    case (
+      .nestedMessageDescriptorNotFound(let lField, let lType),
+      .nestedMessageDescriptorNotFound(let rField, let rType)
+    ):
+      return lField == rField && lType == rType
+    case (.nestingDepthExceeded(let lMax), .nestingDepthExceeded(let rMax)):
+      return lMax == rMax
     case (.unsupportedFieldType(let lType), .unsupportedFieldType(let rType)):
       return lType == rType
     default:
