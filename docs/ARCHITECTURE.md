@@ -38,30 +38,30 @@ SwiftProtoReflect utilizes a layered architecture with the following components:
 ## 4. Core Modules
 
 ### 4.1 Descriptor System
-- **FileDescriptor**: Manages proto file metadata and symbols
-- **MessageDescriptor**: Describes message structure and fields with nested type support
-- **FieldDescriptor**: Contains field metadata (type, name, number, options, map entry info)
-- **EnumDescriptor**: Defines enum types and values
+- **FileDescriptor**: Manages proto file metadata, symbols, and syntax version (proto2/proto3)
+- **MessageDescriptor**: Describes message structure and fields with nested type/enum support
+- **FieldDescriptor**: Contains field metadata (type, name, number, options, map entry info, proto3Optional)
+- **EnumDescriptor**: Defines enum types and values with proto3 validation (zero-value requirement)
 - **ServiceDescriptor**: Describes gRPC service definitions with method introspection
 
 ### 4.2 Dynamic Message
-- **DynamicMessage**: Runtime representation of a protobuf message with field validation
-- **MessageFactory**: Creates message instances from descriptors with comprehensive validation
+- **DynamicMessage**: Runtime representation of a protobuf message with field validation and unknown fields storage
+- **MessageFactory**: Creates message instances from descriptors with syntax-aware validation
 - **FieldAccessor**: Type-safe field access and modification with error handling
 
 ### 4.3 Serialization
-- **BinarySerializer**: Binary format serialization (wire format) with ZigZag encoding
-- **BinaryDeserializer**: Binary format deserialization with wire type validation
-- **JSONSerializer**: JSON format conversion with Protocol Buffers semantics
-- **JSONDeserializer**: JSON format parsing with type validation and error recovery
+- **BinarySerializer**: Binary format serialization (wire format) with ZigZag encoding and unknown fields passthrough
+- **BinaryDeserializer**: Binary format deserialization with wire type validation, unknown fields preservation, and recursive nested message support
+- **JSONSerializer**: JSON format with proto3 canonical encoding (int64 as string, bytes as base64, enums as names, includeDefaultValues)
+- **JSONDeserializer**: JSON format parsing with enum name resolution, type validation, and error recovery
 
 ### 4.4 Reflection Registry
 - **TypeRegistry**: Central registry for all known types with concurrent access support
 - **DescriptorPool**: Manages descriptor dependencies and resolution with caching
 
 ### 4.5 Integration Layer
-- **Bridge System**: Bidirectional conversion between static and dynamic messages
-- **Well-Known Types**: Support for Google's standard Protocol Buffer types
+- **Bridge System**: Bidirectional conversion between static and dynamic messages with Visitor-based descriptor extraction
+- **Well-Known Types**: 18 supported types including Timestamp, Duration, Empty, FieldMask, Struct, Value, ListValue, Any, and all 9 wrapper types
 - **Static Interoperability**: Seamless integration with existing Swift Protobuf code
 
 ## 5. Swift Protobuf Integration
@@ -175,55 +175,57 @@ let dynamicFromStatic = try DynamicMessage.fromStatic(staticPerson)
 ## 8. Project Structure
 
 ```
-Sources/SwiftProtoReflect/
-├── Core/                           # Foundation components
-│   ├── MessageDescriptor.swift     # Message schema definitions
-│   ├── FieldDescriptor.swift       # Field metadata and validation
-│   ├── EnumDescriptor.swift        # Enumeration type support
-│   ├── FileDescriptor.swift        # File-level schema management
-│   ├── ServiceDescriptor.swift     # gRPC service definitions
-│   ├── DynamicMessage.swift        # Runtime message representation
-│   ├── MessageFactory.swift        # Message creation and validation
-│   └── FieldAccessor.swift         # Type-safe field operations
+Sources/SwiftProtoReflect/          # 29 source files
+├── Descriptor/                     # Proto descriptor types
+│   ├── DescriptorOption.swift      # Descriptor option values
+│   ├── EnumDescriptor.swift        # Enum types with proto3 validation
+│   ├── FieldDescriptor.swift       # Field metadata (type, proto3Optional, mapEntryInfo)
+│   ├── FileDescriptor.swift        # File-level metadata with syntax tracking
+│   ├── MessageDescriptor.swift     # Message schema with nested types
+│   ├── OneofDescriptor.swift       # Oneof field grouping
+│   └── ServiceDescriptor.swift     # gRPC service definitions
+├── Dynamic/                        # Runtime message manipulation
+│   ├── DynamicMessage.swift        # Message representation with unknown fields
+│   ├── FieldAccessor.swift         # Type-safe field operations
+│   └── MessageFactory.swift        # Creation and syntax-aware validation
 ├── Serialization/                  # Binary and JSON serialization
-│   ├── BinarySerializer.swift      # Binary format encoding
-│   ├── BinaryDeserializer.swift    # Binary format decoding
-│   ├── JSONSerializer.swift        # JSON format encoding
-│   └── JSONDeserializer.swift      # JSON format decoding
+│   ├── BinarySerializer.swift      # Binary encoding with unknown fields passthrough
+│   ├── BinaryDeserializer.swift    # Binary decoding with nested message support
+│   ├── JSONSerializer.swift        # JSON with proto3 canonical encoding
+│   ├── JSONDeserializer.swift      # JSON with enum name resolution
+│   └── WireFormat.swift            # Wire type definitions
 ├── Registry/                       # Type management
-│   ├── TypeRegistry.swift          # Central type registry
+│   ├── TypeRegistry.swift          # Central type registry (actor)
 │   └── DescriptorPool.swift        # Descriptor dependency resolution
 ├── Bridge/                         # Static/Dynamic interoperability
-│   ├── StaticMessageBridge.swift   # Message conversion
-│   └── DescriptorBridge.swift      # Descriptor conversion
-├── Integration/                    # Well-Known Types support
-│   ├── WellKnownTypesRegistry.swift # Registry for standard types
-│   ├── TimestampHandler.swift      # google.protobuf.Timestamp
-│   ├── DurationHandler.swift       # google.protobuf.Duration
-│   ├── EmptyHandler.swift          # google.protobuf.Empty
-│   ├── FieldMaskHandler.swift      # google.protobuf.FieldMask
-│   ├── StructHandler.swift         # google.protobuf.Struct
-│   ├── ValueHandler.swift          # google.protobuf.Value
-│   └── AnyHandler.swift            # google.protobuf.Any
-└── SwiftProtoReflect.swift         # Main library interface
+│   ├── StaticMessageBridge.swift   # Message conversion with Visitor extraction
+│   └── DescriptorBridge.swift      # Descriptor conversion with syntax support
+└── Integration/                    # Well-Known Types (18 types)
+    ├── WellKnownTypes.swift        # Registry and type name constants
+    ├── TimestampHandler.swift      # google.protobuf.Timestamp
+    ├── DurationHandler.swift       # google.protobuf.Duration
+    ├── EmptyHandler.swift          # google.protobuf.Empty
+    ├── FieldMaskHandler.swift      # google.protobuf.FieldMask
+    ├── StructHandler.swift         # google.protobuf.Struct
+    ├── ValueHandler.swift          # google.protobuf.Value
+    ├── ListValueHandler.swift      # google.protobuf.ListValue
+    ├── AnyHandler.swift            # google.protobuf.Any
+    └── WrapperHandlers.swift       # All 9 wrapper types
 
-examples/                           # Comprehensive examples
-├── 01-basic-usage/                 # Foundation examples
-├── 02-dynamic-messages/            # Message manipulation
-├── 03-serialization/               # Encoding/decoding
-├── 04-registry/                    # Type management
-├── 05-well-known-types/            # Google standard types
-├── 06-advanced/                    # Complex patterns
-├── 07-real-world/                  # Production scenarios
-└── shared/                         # Common utilities
-
-Tests/SwiftProtoReflectTests/       # Comprehensive test suite
-├── Core/                           # Foundation tests
-├── Serialization/                  # Serialization tests
-├── Registry/                       # Registry tests
-├── Bridge/                         # Bridge tests
-├── Integration/                    # Integration tests
-└── Performance/                    # Performance benchmarks
+Tests/SwiftProtoReflectTests/       # 62 test files, 1266 tests
+├── Descriptor/                     # Descriptor system tests (12 files)
+├── Dynamic/                        # Dynamic message tests (7 files)
+├── Serialization/                  # Serialization tests (12 files)
+├── Registry/                       # Registry tests (2 files)
+├── Bridge/                         # Bridge tests (6 files)
+├── Integration/                    # Well-Known Types tests (11 files)
+├── Spec/                           # Proto3 spec compliance tests (3 files)
+├── Compatibility/                  # Cross-platform / C++ compat tests (3 files)
+├── Error/                          # Error handling tests (1 file)
+├── Performance/                    # Performance benchmarks (3 files)
+├── Fixtures/                       # Test data
+├── Mocks/                          # Test mocks
+└── TestUtils/                      # Test helpers
 ```
 
 ## 9. Development Phases
@@ -232,9 +234,10 @@ Tests/SwiftProtoReflectTests/       # Comprehensive test suite
 2. **Serialization Phase**: Binary and JSON serialization/deserialization integration with Swift Protobuf
 3. **Registry Phase**: Type management and descriptor pool implementation
 4. **Bridge Phase**: Develop static/dynamic message conversion capabilities
-5. **Integration Phase**: Well-Known Types support and ecosystem integration
+5. **Integration Phase**: Well-Known Types support (18 types) and ecosystem integration
 6. **Performance Phase**: Benchmarking and optimization
 7. **Examples Phase**: Comprehensive examples and documentation
+8. **Proto3 Compliance Phase**: Full proto3 spec conformance (syntax tracking, unknown fields, optional presence, JSON canonical encoding, enum validation, nested message deserialization)
 
 ## 10. Design Decisions
 
@@ -255,6 +258,7 @@ API uses Swift's throw/catch mechanism for error handling, with specific error t
 Google's Well-Known Types are supported through a handler pattern that allows for:
 - Type-safe conversions between Swift native types and Protocol Buffer representations
 - Automatic registry integration for seamless usage
+- 18 types supported: Timestamp, Duration, Empty, FieldMask, Struct, Value, ListValue, Any, and 9 wrapper types (DoubleValue, FloatValue, Int64Value, UInt64Value, Int32Value, UInt32Value, BoolValue, StringValue, BytesValue)
 - Extensibility for custom well-known type implementations
 
 ### Concurrency and Thread Safety

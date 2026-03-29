@@ -277,8 +277,8 @@ let package = Package(
       ],
       path: "05-well-known-types",
       exclude: [
-        "well-known-registry.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift",
-        "struct-demo.swift", "value-demo.swift", "any-demo.swift",
+        "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift",
+        "any-demo.swift", "well-known-registry.swift", "wrapper-types-demo.swift", "list-value-demo.swift",
       ],
       sources: ["timestamp-demo.swift"]
     ),
@@ -291,8 +291,8 @@ let package = Package(
       ],
       path: "05-well-known-types",
       exclude: [
-        "well-known-registry.swift", "timestamp-demo.swift", "empty-demo.swift", "field-mask-demo.swift",
-        "struct-demo.swift", "value-demo.swift", "any-demo.swift",
+        "timestamp-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift",
+        "any-demo.swift", "well-known-registry.swift", "wrapper-types-demo.swift", "list-value-demo.swift",
       ],
       sources: ["duration-demo.swift"]
     ),
@@ -305,8 +305,8 @@ let package = Package(
       ],
       path: "05-well-known-types",
       exclude: [
-        "well-known-registry.swift", "timestamp-demo.swift", "duration-demo.swift", "field-mask-demo.swift",
-        "struct-demo.swift", "value-demo.swift", "any-demo.swift",
+        "timestamp-demo.swift", "duration-demo.swift", "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift",
+        "any-demo.swift", "well-known-registry.swift", "wrapper-types-demo.swift", "list-value-demo.swift",
       ],
       sources: ["empty-demo.swift"]
     ),
@@ -319,8 +319,8 @@ let package = Package(
       ],
       path: "05-well-known-types",
       exclude: [
-        "well-known-registry.swift", "timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift",
-        "struct-demo.swift", "value-demo.swift", "any-demo.swift",
+        "timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "struct-demo.swift", "value-demo.swift",
+        "any-demo.swift", "well-known-registry.swift", "wrapper-types-demo.swift", "list-value-demo.swift",
       ],
       sources: ["field-mask-demo.swift"]
     ),
@@ -333,8 +333,8 @@ let package = Package(
       ],
       path: "05-well-known-types",
       exclude: [
-        "well-known-registry.swift", "timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift",
-        "field-mask-demo.swift", "value-demo.swift", "any-demo.swift",
+        "timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "value-demo.swift",
+        "any-demo.swift", "well-known-registry.swift", "wrapper-types-demo.swift", "list-value-demo.swift",
       ],
       sources: ["struct-demo.swift"]
     ),
@@ -347,8 +347,8 @@ let package = Package(
       ],
       path: "05-well-known-types",
       exclude: [
-        "well-known-registry.swift", "timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift",
-        "field-mask-demo.swift", "struct-demo.swift", "any-demo.swift",
+        "timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift",
+        "any-demo.swift", "well-known-registry.swift", "wrapper-types-demo.swift", "list-value-demo.swift",
       ],
       sources: ["value-demo.swift"]
     ),
@@ -361,8 +361,8 @@ let package = Package(
       ],
       path: "05-well-known-types",
       exclude: [
-        "well-known-registry.swift", "timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift",
-        "field-mask-demo.swift", "struct-demo.swift", "value-demo.swift", "well-known-registry.swift",
+        "timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift",
+        "value-demo.swift", "well-known-registry.swift", "wrapper-types-demo.swift", "list-value-demo.swift",
       ],
       sources: ["any-demo.swift"]
     ),
@@ -376,9 +376,37 @@ let package = Package(
       path: "05-well-known-types",
       exclude: [
         "timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift",
-        "value-demo.swift", "any-demo.swift",
+        "value-demo.swift", "any-demo.swift", "wrapper-types-demo.swift", "list-value-demo.swift",
       ],
       sources: ["well-known-registry.swift"]
+    ),
+
+    .executableTarget(
+      name: "WrapperTypesDemo",
+      dependencies: [
+        .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+        "ExampleUtils",
+      ],
+      path: "05-well-known-types",
+      exclude: [
+        "timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift",
+        "value-demo.swift", "any-demo.swift", "well-known-registry.swift", "list-value-demo.swift",
+      ],
+      sources: ["wrapper-types-demo.swift"]
+    ),
+
+    .executableTarget(
+      name: "ListValueDemo",
+      dependencies: [
+        .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+        "ExampleUtils",
+      ],
+      path: "05-well-known-types",
+      exclude: [
+        "timestamp-demo.swift", "duration-demo.swift", "empty-demo.swift", "field-mask-demo.swift", "struct-demo.swift",
+        "value-demo.swift", "any-demo.swift", "well-known-registry.swift", "wrapper-types-demo.swift",
+      ],
+      sources: ["list-value-demo.swift"]
     ),
 
     // 06-advanced examples
@@ -524,6 +552,91 @@ let package = Package(
         "configuration-system.swift", "api-gateway.swift", "message-transform.swift", "validation-framework.swift",
       ],
       sources: ["proto-repl.swift"]
+    ),
+
+    // 08-proto3-compliance examples
+    .executableTarget(
+      name: "SyntaxAndDefaults",
+      dependencies: [
+        .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+        "ExampleUtils",
+      ],
+      path: "08-proto3-compliance",
+      exclude: [
+        "optional-presence.swift", "unknown-fields.swift", "json-canonical.swift", "schema-evolution.swift",
+        "nested-messages.swift",
+      ],
+      sources: ["syntax-and-defaults.swift"]
+    ),
+
+    .executableTarget(
+      name: "OptionalPresence",
+      dependencies: [
+        .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+        "ExampleUtils",
+      ],
+      path: "08-proto3-compliance",
+      exclude: [
+        "syntax-and-defaults.swift", "unknown-fields.swift", "json-canonical.swift", "schema-evolution.swift",
+        "nested-messages.swift",
+      ],
+      sources: ["optional-presence.swift"]
+    ),
+
+    .executableTarget(
+      name: "UnknownFields",
+      dependencies: [
+        .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+        "ExampleUtils",
+      ],
+      path: "08-proto3-compliance",
+      exclude: [
+        "syntax-and-defaults.swift", "optional-presence.swift", "json-canonical.swift", "schema-evolution.swift",
+        "nested-messages.swift",
+      ],
+      sources: ["unknown-fields.swift"]
+    ),
+
+    .executableTarget(
+      name: "JsonCanonical",
+      dependencies: [
+        .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+        "ExampleUtils",
+      ],
+      path: "08-proto3-compliance",
+      exclude: [
+        "syntax-and-defaults.swift", "optional-presence.swift", "unknown-fields.swift", "schema-evolution.swift",
+        "nested-messages.swift",
+      ],
+      sources: ["json-canonical.swift"]
+    ),
+
+    .executableTarget(
+      name: "SchemaEvolution",
+      dependencies: [
+        .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+        "ExampleUtils",
+      ],
+      path: "08-proto3-compliance",
+      exclude: [
+        "syntax-and-defaults.swift", "optional-presence.swift", "unknown-fields.swift", "json-canonical.swift",
+        "nested-messages.swift",
+      ],
+      sources: ["schema-evolution.swift"]
+    ),
+
+    .executableTarget(
+      name: "NestedMessages",
+      dependencies: [
+        .product(name: "SwiftProtoReflect", package: "swift-protoreflect"),
+        "ExampleUtils",
+      ],
+      path: "08-proto3-compliance",
+      exclude: [
+        "syntax-and-defaults.swift", "optional-presence.swift", "unknown-fields.swift", "json-canonical.swift",
+        "schema-evolution.swift",
+      ],
+      sources: ["nested-messages.swift"]
     ),
   ]
 )

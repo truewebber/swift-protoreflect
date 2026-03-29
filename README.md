@@ -69,17 +69,21 @@ let unpackedMessage = try anyMessage.unpackFromAny(to: personSchema)
 
 - **Dynamic Message Creation**: Create and manipulate protobuf messages at runtime
 - **Schema Definition**: Build message descriptors programmatically
+- **Proto3 Compliance**: Syntax tracking, zero defaults, optional presence, enum validation, unknown fields preservation
+- **Canonical JSON**: int64/uint64 as strings, bytes as base64, enums as names, `includeDefaultValues`
+- **Nested Messages**: Recursive binary serialization/deserialization with type resolution
+- **Schema Evolution**: Safe field addition/removal/renaming with unknown field round-trip
 - **Typed Options**: `DescriptorOption` enum for type-safe, `Sendable` descriptor options
 - **Oneof Support**: First-class `OneofDescriptor` with full bridge round-trip
 - **Serialization**: Binary and JSON serialization/deserialization
-- **Well-Known Types**: Support for Google's standard protobuf types
-- **Swift Protobuf Compatibility**: Convert between static and dynamic messages
+- **Well-Known Types**: 18 types — Timestamp, Duration, Empty, FieldMask, Struct, Value, Any, ListValue, NullValue, and 9 wrapper types
+- **Swift Protobuf Compatibility**: Convert between static and dynamic messages, Visitor-based descriptor extraction
 - **Type Registry**: Centralized type management and lookup
 - **Swift 6 Ready**: All public types conform to `Sendable`
 
 ## Examples
 
-The library includes 38 working examples demonstrating various use cases:
+The library includes 47 working examples demonstrating various use cases:
 
 ```bash
 git clone https://github.com/truewebber/swift-protoreflect.git
@@ -90,20 +94,26 @@ swift run HelloWorld
 swift run FieldTypes
 swift run TimestampDemo
 
+# Proto3 compliance
+swift run SyntaxAndDefaults
+swift run OptionalPresence
+swift run UnknownFields
+swift run JsonCanonical
+
 # Advanced examples
 swift run ApiGateway
 swift run MessageTransform
-swift run ValidationFramework
 ```
 
 Examples are organized by topic:
-- **Basic Usage** (4 examples): Getting started
-- **Dynamic Messages** (6 examples): Message manipulation
-- **Serialization** (5 examples): Binary and JSON formats
-- **Registry** (4 examples): Type management
-- **Well-Known Types** (8 examples): Google standard types
-- **Advanced** (6 examples): Complex patterns
-- **Real-World** (5 examples): Production scenarios
+- **Basic Usage** (4): Getting started
+- **Dynamic Messages** (7): Message manipulation
+- **Serialization** (5): Binary and JSON formats
+- **Registry** (4): Type management
+- **Well-Known Types** (10): Google standard types, wrapper types, ListValue
+- **Advanced** (6): Complex patterns
+- **Real-World** (5): Production scenarios
+- **Proto3 Compliance** (6): Syntax, optional presence, unknown fields, canonical JSON, schema evolution, nested messages
 
 ## Requirements
 
