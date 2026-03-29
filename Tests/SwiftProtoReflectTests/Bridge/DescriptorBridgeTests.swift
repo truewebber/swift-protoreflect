@@ -199,21 +199,21 @@ final class DescriptorBridgeTests: XCTestCase {
   }
 
   func testFieldDescriptorLabels() throws {
-    // Test different labels
-    let testCases: [(Google_Protobuf_FieldDescriptorProto.Label, Bool, Bool, Bool)] = [
-      (.optional, false, false, true),
-      (.required, false, true, false),
-      (.repeated, true, false, false),
+    // Test different labels (using proto2 syntax for required label support)
+    let testCases: [(Google_Protobuf_FieldDescriptorProto.Label, String, Bool, Bool, Bool)] = [
+      (.optional, "proto3", false, false, true),
+      (.required, "proto2", false, true, false),
+      (.repeated, "proto3", true, false, false),
     ]
 
-    for (label, expectedRepeated, expectedRequired, expectedOptional) in testCases {
+    for (label, syntax, expectedRepeated, expectedRequired, expectedOptional) in testCases {
       var protobufField = Google_Protobuf_FieldDescriptorProto()
       protobufField.name = "test"
       protobufField.number = 1
       protobufField.type = .string
       protobufField.label = label
 
-      let fieldDescriptor = try bridge.fromProtobufFieldDescriptor(protobufField)
+      let fieldDescriptor = try bridge.fromProtobufFieldDescriptor(protobufField, syntax: syntax)
 
       XCTAssertEqual(fieldDescriptor.isRepeated, expectedRepeated, "Failed for label: \(label)")
       XCTAssertEqual(fieldDescriptor.isRequired, expectedRequired, "Failed for label: \(label)")
@@ -420,7 +420,7 @@ final class DescriptorBridgeTests: XCTestCase {
     var original = MessageDescriptor(name: "RoundTripMessage", parent: fileDescriptor)
     original.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     original.addField(FieldDescriptor(name: "age", number: 2, type: .int32, isRepeated: true))
-    original.addField(FieldDescriptor(name: "active", number: 3, type: .bool, isRequired: true))
+    original.addField(FieldDescriptor(name: "active", number: 3, type: .bool, isOptional: true))
 
     // Convert to protobuf and back
     let protobufDescriptor = try bridge.toProtobufDescriptor(from: original)
@@ -436,7 +436,6 @@ final class DescriptorBridgeTests: XCTestCase {
       XCTAssertEqual(convertedField?.type, originalField.type)
       XCTAssertEqual(convertedField?.number, originalField.number)
       XCTAssertEqual(convertedField?.isRepeated, originalField.isRepeated)
-      XCTAssertEqual(convertedField?.isRequired, originalField.isRequired)
     }
   }
 

@@ -58,6 +58,10 @@ public struct BinarySerializer: Sendable {
 
       try encodeField(field, from: message, to: &encoder)
     }
+
+    if !message.unknownFields.isEmpty {
+      encoder.writeRawData(message.unknownFields)
+    }
   }
 
   /// Encodes single field.

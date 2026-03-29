@@ -24,6 +24,9 @@ public struct FileDescriptor: Sendable {
   /// File dependencies (imported .proto files).
   public let dependencies: [String]
 
+  /// Proto syntax version (e.g. "proto2", "proto3").
+  public let syntax: String
+
   /// File options.
   public let options: [String: DescriptorOption]
 
@@ -39,15 +42,25 @@ public struct FileDescriptor: Sendable {
   // MARK: - Initialization
 
   /// Creates a new FileDescriptor instance.
+  ///
+  /// - Parameters:
+  ///   - name: File name (e.g. "person.proto").
+  ///   - package: Package name (e.g. "example.person").
+  ///   - dependencies: Imported .proto file names.
+  ///   - syntax: Proto syntax version. Defaults to `"proto3"`.
+  ///             Empty string is normalised to `"proto2"` per protobuf spec.
+  ///   - options: File-level options.
   public init(
     name: String,
     package: String,
     dependencies: [String] = [],
+    syntax: String = "proto3",
     options: [String: DescriptorOption] = [:]
   ) {
     self.name = name
     self.package = package
     self.dependencies = dependencies
+    self.syntax = syntax.isEmpty ? "proto2" : syntax
     self.options = options
   }
 

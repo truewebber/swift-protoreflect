@@ -45,6 +45,9 @@ public struct FieldDescriptor: Equatable, Sendable {
   /// Indicates if the field is part of a oneof group.
   public let oneofIndex: Int?
 
+  /// Whether this is a proto3 `optional` field with explicit presence.
+  public let proto3Optional: Bool
+
   /// Contains metadata for map type fields.
   public let mapEntryInfo: MapEntryInfo?
 
@@ -69,6 +72,7 @@ public struct FieldDescriptor: Equatable, Sendable {
   ///   - isRequired: Whether the field is required.
   ///   - isMap: Whether the field is a map.
   ///   - oneofIndex: Oneof group index if the field is part of a oneof.
+  ///   - proto3Optional: Whether this field uses proto3 `optional` keyword.
   ///   - mapEntryInfo: Metadata for map fields.
   ///   - defaultValue: Default value expressed as a `DescriptorOption`.
   ///   - options: Field options.
@@ -83,6 +87,7 @@ public struct FieldDescriptor: Equatable, Sendable {
     isRequired: Bool = false,
     isMap: Bool = false,
     oneofIndex: Int? = nil,
+    proto3Optional: Bool = false,
     mapEntryInfo: MapEntryInfo? = nil,
     defaultValue: DescriptorOption? = nil,
     options: [String: DescriptorOption] = [:]
@@ -98,6 +103,7 @@ public struct FieldDescriptor: Equatable, Sendable {
     self.isRequired = isRequired
     self.isMap = isMap
     self.oneofIndex = oneofIndex
+    self.proto3Optional = proto3Optional
     self.mapEntryInfo = mapEntryInfo
     self.defaultValue = defaultValue
     self.options = options
@@ -169,7 +175,7 @@ public struct FieldDescriptor: Equatable, Sendable {
     return lhs.name == rhs.name && lhs.jsonName == rhs.jsonName && lhs.number == rhs.number && lhs.type == rhs.type
       && lhs.typeName == rhs.typeName && lhs.isRepeated == rhs.isRepeated && lhs.isOptional == rhs.isOptional
       && lhs.isRequired == rhs.isRequired && lhs.isMap == rhs.isMap && lhs.oneofIndex == rhs.oneofIndex
-      && lhs.mapEntryInfo == rhs.mapEntryInfo && lhs.options == rhs.options
+      && lhs.proto3Optional == rhs.proto3Optional && lhs.mapEntryInfo == rhs.mapEntryInfo && lhs.options == rhs.options
   }
 }
 

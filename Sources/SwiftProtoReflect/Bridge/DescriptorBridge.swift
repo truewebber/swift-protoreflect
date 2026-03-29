@@ -178,16 +178,20 @@ public struct DescriptorBridge {
 
   /// Creates FieldDescriptor from Google_Protobuf_FieldDescriptorProto.
   ///
-  /// - Parameter protobufDescriptor: Field descriptor in Swift Protobuf format.
+  /// - Parameters:
+  ///   - protobufDescriptor: Field descriptor in Swift Protobuf format.
+  ///   - syntax: Proto syntax version. Defaults to `"proto3"`.
   /// - Returns: SwiftProtoReflect field descriptor.
   /// - Throws: Error if conversion is impossible.
   public func fromProtobufFieldDescriptor(
-    _ protobufDescriptor: Google_Protobuf_FieldDescriptorProto
+    _ protobufDescriptor: Google_Protobuf_FieldDescriptorProto,
+    syntax: String = "proto3"
   ) throws -> FieldDescriptor {
     return try fromProtobufFieldDescriptor(
       protobufDescriptor,
       messageDescriptor: nil,
-      nestedMessages: [:]
+      nestedMessages: [:],
+      syntax: syntax
     )
   }
 
@@ -202,14 +206,15 @@ public struct DescriptorBridge {
   private func fromProtobufFieldDescriptor(
     _ protobufDescriptor: Google_Protobuf_FieldDescriptorProto,
     messageDescriptor: Google_Protobuf_DescriptorProto?,
-    nestedMessages: [String: MessageDescriptor]
+    nestedMessages: [String: MessageDescriptor],
+    syntax: String = "proto3"
   ) throws -> FieldDescriptor {
     // Convert field type
     let fieldType = try fromProtobufFieldType(protobufDescriptor.type)
 
     // Determine flags
     let isRepeated = protobufDescriptor.label == .repeated
-    let isRequired = protobufDescriptor.label == .required
+    let isRequired = syntax != "proto3" && protobufDescriptor.label == .required
     let isOptional = protobufDescriptor.label == .optional
 
     // Check if this is a map field
@@ -342,6 +347,7 @@ public struct DescriptorBridge {
     if !fileDescriptor.package.isEmpty {
       proto.package = fileDescriptor.package
     }
+    proto.syntax = fileDescriptor.syntax
 
     // Convert messages
     proto.messageType = try Array(fileDescriptor.messages.values).map { message in
@@ -372,10 +378,12 @@ public struct DescriptorBridge {
   public func fromProtobufFileDescriptor(
     _ protobufDescriptor: Google_Protobuf_FileDescriptorProto
   ) throws -> FileDescriptor {
+    let syntax = protobufDescriptor.hasSyntax ? protobufDescriptor.syntax : ""
     var fileDescriptor = FileDescriptor(
       name: protobufDescriptor.name,
       package: protobufDescriptor.hasPackage ? protobufDescriptor.package : "",
-      dependencies: protobufDescriptor.dependency
+      dependencies: protobufDescriptor.dependency,
+      syntax: syntax
     )
 
     // Convert messages

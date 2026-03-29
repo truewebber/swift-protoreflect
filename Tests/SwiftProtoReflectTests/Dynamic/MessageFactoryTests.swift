@@ -330,7 +330,7 @@ final class MessageFactoryTests: XCTestCase {
   func testValidateMissingRequiredField() {
     let message = factory.createMessage(from: messageDescriptor)
 
-    let result = factory.validate(message)
+    let result = factory.validate(message, syntax: "proto2")
 
     XCTAssertFalse(result.isValid)
     XCTAssertEqual(result.errors.count, 1)
@@ -362,7 +362,7 @@ final class MessageFactoryTests: XCTestCase {
     try message.set("required value", forField: "required_field")
     try message.set(nested, forField: "nested")
 
-    let result = factory.validate(message)
+    let result = factory.validate(message, syntax: "proto2")
 
     XCTAssertFalse(result.isValid)
     XCTAssertEqual(result.errors.count, 1)
@@ -416,7 +416,7 @@ final class MessageFactoryTests: XCTestCase {
     try message.set("required value", forField: "required_field")
     try message.set([validNested, invalidNested], forField: "repeated_nested")
 
-    let result = factory.validate(message)
+    let result = factory.validate(message, syntax: "proto2")
 
     XCTAssertFalse(result.isValid)
     XCTAssertEqual(result.errors.count, 1)
@@ -469,7 +469,7 @@ final class MessageFactoryTests: XCTestCase {
     try message.setMapEntry(validNested, forKey: "valid", inField: "message_map")
     try message.setMapEntry(invalidNested, forKey: "invalid", inField: "message_map")
 
-    let result = factory.validate(message)
+    let result = factory.validate(message, syntax: "proto2")
 
     XCTAssertFalse(result.isValid)
     XCTAssertEqual(result.errors.count, 1)

@@ -168,6 +168,26 @@ public struct EnumDescriptor: Equatable, Sendable {
     return valuesByNumber.sorted { $0.key < $1.key }.map { $0.value }
   }
 
+  // MARK: - Validation
+
+  /// Validates the enum against proto3 rules.
+  ///
+  /// - Returns: Array of validation error strings. Empty if valid.
+  public func validateProto3() -> [String] {
+    var errors: [String] = []
+
+    if valuesByName.isEmpty && valuesByNumber.isEmpty {
+      errors.append("Enum '\(fullName)' must have at least one value")
+      return errors
+    }
+
+    if !valuesByNumber.keys.contains(0) {
+      errors.append("Proto3 enum '\(fullName)' must have a value with number 0")
+    }
+
+    return errors
+  }
+
   // MARK: - Equatable
 
   public static func == (lhs: EnumDescriptor, rhs: EnumDescriptor) -> Bool {

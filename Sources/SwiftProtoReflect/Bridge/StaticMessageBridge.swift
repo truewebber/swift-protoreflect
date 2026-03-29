@@ -158,7 +158,14 @@ public struct StaticMessageBridge {
 
   // MARK: - Helper Methods
 
-  /// Creates MessageDescriptor from static Swift Protobuf message.
+  /// Creates MessageDescriptor from a static SwiftProtobuf message by
+  /// traversing it with a `FieldExtractorVisitor` (for field numbers and
+  /// types) and correlating with JSON output (for field names).
+  ///
+  /// - Note: Only fields that have non-default values on the instance are
+  ///   extracted. Fields left at their default proto3 values will not
+  ///   appear in the descriptor — this is acceptable because proto3
+  ///   binary format omits default values anyway.
   ///
   /// - Parameter staticMessage: Static message.
   /// - Returns: Message descriptor.
@@ -166,19 +173,250 @@ public struct StaticMessageBridge {
   private func createDescriptor<T: SwiftProtobuf.Message>(
     from staticMessage: T
   ) throws -> MessageDescriptor {
-    // Get message type name
-    let typeName = String(describing: T.self)
+    let messageName = T.protoMessageName
 
-    // Create basic descriptor
-    // In real implementation there should be logic for extracting
-    // metadata from static message through reflection
-    let descriptor = MessageDescriptor(name: typeName)
+    var visitor = FieldExtractorVisitor()
+    try staticMessage.traverse(visitor: &visitor)
+    let fields = visitor.extractedFields
 
-    // TODO: Implement field extraction from static message
-    // This requires deeper integration with Swift Protobuf
+    let jsonNames = extractOrderedJSONKeys(from: staticMessage)
+
+    var descriptor = MessageDescriptor(name: messageName, fullName: messageName)
+    for (index, field) in fields.enumerated() {
+      let name = index < jsonNames.count ? jsonNames[index] : "field_\(field.number)"
+      descriptor.addField(
+        FieldDescriptor(
+          name: name,
+          number: field.number,
+          type: field.type,
+          typeName: field.typeName,
+          isRepeated: field.isRepeated
+        )
+      )
+    }
 
     return descriptor
   }
+
+  /// Parses ordered JSON keys from the raw JSON output of a SwiftProtobuf message.
+  ///
+  /// SwiftProtobuf's JSON encoder emits keys in field number order.
+  private func extractOrderedJSONKeys<T: SwiftProtobuf.Message>(from message: T) -> [String] {
+    guard let jsonData = try? message.jsonUTF8Data(),
+      let raw = String(data: jsonData, encoding: .utf8)
+    else {
+      return []
+    }
+
+    var keys: [String] = []
+    var i = raw.startIndex
+    let end = raw.endIndex
+    var depth = 0
+
+    while i < end {
+      let c = raw[i]
+      if c == "{" || c == "[" {
+        depth += 1
+      }
+      else if c == "}" || c == "]" {
+        depth -= 1
+      }
+      else if c == "\"" && depth == 1 {
+        let afterQuote = raw.index(after: i)
+        guard let closingQuote = raw[afterQuote...].firstIndex(of: "\"") else { break }
+        let key = String(raw[afterQuote..<closingQuote])
+        let afterClosing = raw.index(after: closingQuote)
+        if afterClosing < end {
+          let rest = raw[afterClosing...].drop(while: { $0 == " " || $0 == "\t" })
+          if rest.first == ":" {
+            keys.append(key)
+          }
+        }
+      }
+      i = raw.index(after: i)
+    }
+
+    return keys
+  }
+}
+
+// MARK: - FieldExtractorVisitor
+
+/// Visits a SwiftProtobuf message to extract field metadata.
+struct FieldExtractorVisitor: SwiftProtobuf.Visitor {
+
+  struct FieldInfo {
+    let number: Int
+    let type: FieldType
+    let isRepeated: Bool
+    let typeName: String?
+  }
+
+  private(set) var extractedFields: [FieldInfo] = []
+
+  private mutating func record(
+    _ number: Int,
+    _ type: FieldType,
+    repeated: Bool = false,
+    typeName: String? = nil
+  ) {
+    if !extractedFields.contains(where: { $0.number == number }) {
+      extractedFields.append(
+        FieldInfo(number: number, type: type, isRepeated: repeated, typeName: typeName)
+      )
+    }
+  }
+
+  mutating func visitSingularDoubleField(value: Double, fieldNumber: Int) throws {
+    record(fieldNumber, .double)
+  }
+  mutating func visitSingularInt64Field(value: Int64, fieldNumber: Int) throws {
+    record(fieldNumber, .int64)
+  }
+  mutating func visitSingularUInt64Field(value: UInt64, fieldNumber: Int) throws {
+    record(fieldNumber, .uint64)
+  }
+  mutating func visitSingularBoolField(value: Bool, fieldNumber: Int) throws {
+    record(fieldNumber, .bool)
+  }
+  mutating func visitSingularStringField(value: String, fieldNumber: Int) throws {
+    record(fieldNumber, .string)
+  }
+  mutating func visitSingularBytesField(value: Data, fieldNumber: Int) throws {
+    record(fieldNumber, .bytes)
+  }
+  mutating func visitSingularFloatField(value: Float, fieldNumber: Int) throws {
+    record(fieldNumber, .float)
+  }
+  mutating func visitSingularInt32Field(value: Int32, fieldNumber: Int) throws {
+    record(fieldNumber, .int32)
+  }
+  mutating func visitSingularUInt32Field(value: UInt32, fieldNumber: Int) throws {
+    record(fieldNumber, .uint32)
+  }
+  mutating func visitSingularSInt32Field(value: Int32, fieldNumber: Int) throws {
+    record(fieldNumber, .sint32)
+  }
+  mutating func visitSingularSInt64Field(value: Int64, fieldNumber: Int) throws {
+    record(fieldNumber, .sint64)
+  }
+  mutating func visitSingularFixed32Field(value: UInt32, fieldNumber: Int) throws {
+    record(fieldNumber, .fixed32)
+  }
+  mutating func visitSingularFixed64Field(value: UInt64, fieldNumber: Int) throws {
+    record(fieldNumber, .fixed64)
+  }
+  mutating func visitSingularSFixed32Field(value: Int32, fieldNumber: Int) throws {
+    record(fieldNumber, .sfixed32)
+  }
+  mutating func visitSingularSFixed64Field(value: Int64, fieldNumber: Int) throws {
+    record(fieldNumber, .sfixed64)
+  }
+  mutating func visitSingularEnumField<E: SwiftProtobuf.Enum>(value: E, fieldNumber: Int) throws {
+    record(fieldNumber, .enum, typeName: String(describing: E.self))
+  }
+  mutating func visitSingularMessageField<M: SwiftProtobuf.Message>(
+    value: M,
+    fieldNumber: Int
+  ) throws {
+    record(fieldNumber, .message, typeName: M.protoMessageName)
+  }
+  mutating func visitSingularGroupField<G: SwiftProtobuf.Message>(
+    value: G,
+    fieldNumber: Int
+  ) throws {
+    record(fieldNumber, .group)
+  }
+
+  // Repeated fields
+  mutating func visitRepeatedDoubleField(value: [Double], fieldNumber: Int) throws {
+    record(fieldNumber, .double, repeated: true)
+  }
+  mutating func visitRepeatedInt64Field(value: [Int64], fieldNumber: Int) throws {
+    record(fieldNumber, .int64, repeated: true)
+  }
+  mutating func visitRepeatedUInt64Field(value: [UInt64], fieldNumber: Int) throws {
+    record(fieldNumber, .uint64, repeated: true)
+  }
+  mutating func visitRepeatedBoolField(value: [Bool], fieldNumber: Int) throws {
+    record(fieldNumber, .bool, repeated: true)
+  }
+  mutating func visitRepeatedStringField(value: [String], fieldNumber: Int) throws {
+    record(fieldNumber, .string, repeated: true)
+  }
+  mutating func visitRepeatedBytesField(value: [Data], fieldNumber: Int) throws {
+    record(fieldNumber, .bytes, repeated: true)
+  }
+  mutating func visitRepeatedFloatField(value: [Float], fieldNumber: Int) throws {
+    record(fieldNumber, .float, repeated: true)
+  }
+  mutating func visitRepeatedInt32Field(value: [Int32], fieldNumber: Int) throws {
+    record(fieldNumber, .int32, repeated: true)
+  }
+  mutating func visitRepeatedUInt32Field(value: [UInt32], fieldNumber: Int) throws {
+    record(fieldNumber, .uint32, repeated: true)
+  }
+  mutating func visitRepeatedSInt32Field(value: [Int32], fieldNumber: Int) throws {
+    record(fieldNumber, .sint32, repeated: true)
+  }
+  mutating func visitRepeatedSInt64Field(value: [Int64], fieldNumber: Int) throws {
+    record(fieldNumber, .sint64, repeated: true)
+  }
+  mutating func visitRepeatedFixed32Field(value: [UInt32], fieldNumber: Int) throws {
+    record(fieldNumber, .fixed32, repeated: true)
+  }
+  mutating func visitRepeatedFixed64Field(value: [UInt64], fieldNumber: Int) throws {
+    record(fieldNumber, .fixed64, repeated: true)
+  }
+  mutating func visitRepeatedSFixed32Field(value: [Int32], fieldNumber: Int) throws {
+    record(fieldNumber, .sfixed32, repeated: true)
+  }
+  mutating func visitRepeatedSFixed64Field(value: [Int64], fieldNumber: Int) throws {
+    record(fieldNumber, .sfixed64, repeated: true)
+  }
+  mutating func visitRepeatedEnumField<E: SwiftProtobuf.Enum>(
+    value: [E],
+    fieldNumber: Int
+  ) throws {
+    record(fieldNumber, .enum, repeated: true, typeName: String(describing: E.self))
+  }
+  mutating func visitRepeatedMessageField<M: SwiftProtobuf.Message>(
+    value: [M],
+    fieldNumber: Int
+  ) throws {
+    record(fieldNumber, .message, repeated: true, typeName: M.protoMessageName)
+  }
+  mutating func visitRepeatedGroupField<G: SwiftProtobuf.Message>(
+    value: [G],
+    fieldNumber: Int
+  ) throws {
+    record(fieldNumber, .group, repeated: true)
+  }
+
+  // Map fields
+  mutating func visitMapField<KeyType, ValueType: MapValueType>(
+    fieldType: _ProtobufMap<KeyType, ValueType>.Type,
+    value: _ProtobufMap<KeyType, ValueType>.BaseType,
+    fieldNumber: Int
+  ) throws {
+    record(fieldNumber, .message, repeated: true)
+  }
+  mutating func visitMapField<KeyType, ValueType>(
+    fieldType: _ProtobufEnumMap<KeyType, ValueType>.Type,
+    value: _ProtobufEnumMap<KeyType, ValueType>.BaseType,
+    fieldNumber: Int
+  ) throws where ValueType.RawValue == Int {
+    record(fieldNumber, .message, repeated: true)
+  }
+  mutating func visitMapField<KeyType, ValueType>(
+    fieldType: _ProtobufMessageMap<KeyType, ValueType>.Type,
+    value: _ProtobufMessageMap<KeyType, ValueType>.BaseType,
+    fieldNumber: Int
+  ) throws {
+    record(fieldNumber, .message, repeated: true)
+  }
+
+  mutating func visitUnknown(bytes: Data) throws {}
 }
 
 /// Errors that occur when working with StaticMessageBridge.

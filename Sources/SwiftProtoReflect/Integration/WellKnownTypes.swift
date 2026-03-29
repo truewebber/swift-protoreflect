@@ -47,14 +47,53 @@ public struct WellKnownTypeNames {
   /// google.protobuf.NullValue.
   public static let nullValue = "google.protobuf.NullValue"
 
+  // MARK: - Wrapper Types
+
+  /// google.protobuf.DoubleValue.
+  public static let doubleValue = "google.protobuf.DoubleValue"
+
+  /// google.protobuf.FloatValue.
+  public static let floatValue = "google.protobuf.FloatValue"
+
+  /// google.protobuf.Int64Value.
+  public static let int64Value = "google.protobuf.Int64Value"
+
+  /// google.protobuf.UInt64Value.
+  public static let uint64Value = "google.protobuf.UInt64Value"
+
+  /// google.protobuf.Int32Value.
+  public static let int32Value = "google.protobuf.Int32Value"
+
+  /// google.protobuf.UInt32Value.
+  public static let uint32Value = "google.protobuf.UInt32Value"
+
+  /// google.protobuf.BoolValue.
+  public static let boolValue = "google.protobuf.BoolValue"
+
+  /// google.protobuf.StringValue.
+  public static let stringValue = "google.protobuf.StringValue"
+
+  /// google.protobuf.BytesValue.
+  public static let bytesValue = "google.protobuf.BytesValue"
+
+  /// All wrapper types.
+  public static let wrapperTypes: Set<String> = [
+    doubleValue, floatValue, int64Value, uint64Value,
+    int32Value, uint32Value, boolValue, stringValue, bytesValue,
+  ]
+
   // MARK: - Collections
 
   /// All supported well-known types.
-  public static let allTypes: Set<String> = [
-    timestamp, duration, empty,
-    fieldMask, structType, value,
-    any, listValue, nullValue,
-  ]
+  public static let allTypes: Set<String> = {
+    var types: Set<String> = [
+      timestamp, duration, empty,
+      fieldMask, structType, value,
+      any, listValue, nullValue,
+    ]
+    types.formUnion(wrapperTypes)
+    return types
+  }()
 
   /// Critical types (Phase 1).
   public static let criticalTypes: Set<String> = [
@@ -306,5 +345,17 @@ public final class WellKnownTypesRegistry: @unchecked Sendable {
 
     // Advanced types (Phase 3)
     register(AnyHandler.self)
+    register(ListValueHandler.self)
+
+    // Wrapper types
+    register(DoubleValueHandler.self)
+    register(FloatValueHandler.self)
+    register(Int64ValueHandler.self)
+    register(UInt64ValueHandler.self)
+    register(Int32ValueHandler.self)
+    register(UInt32ValueHandler.self)
+    register(BoolValueHandler.self)
+    register(StringValueHandler.self)
+    register(BytesValueHandler.self)
   }
 }

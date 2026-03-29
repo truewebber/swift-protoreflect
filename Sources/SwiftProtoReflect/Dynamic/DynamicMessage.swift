@@ -34,6 +34,9 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
   /// Information about which oneOf is active (if any).
   private var activeOneofFields: [Int: Int] = [:]
 
+  /// Raw bytes of fields not recognised by the descriptor.
+  public private(set) var unknownFields: Data = Data()
+
   // MARK: - Initialization
 
   /// Creates a new DynamicMessage instance.
@@ -191,7 +194,13 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
       return nestedMessages[fieldNumber]
     }
     else {
-      return values[fieldNumber] ?? field.defaultValue?.asAny
+      if let stored = values[fieldNumber] {
+        return stored
+      }
+      if field.proto3Optional {
+        return nil
+      }
+      return field.defaultValue?.asAny
     }
   }
 
@@ -280,6 +289,13 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
     }
 
     return self
+  }
+
+  /// Replaces the raw unknown fields data.
+  ///
+  /// - Parameter data: Raw bytes of unknown fields (tag + value pairs).
+  public mutating func setUnknownFields(_ data: Data) {
+    unknownFields = data
   }
 
   // MARK: - Repeated Field Methods
@@ -807,6 +823,10 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
         // On field access error consider messages not equal
         return false
       }
+    }
+
+    if lhs.unknownFields != rhs.unknownFields {
+      return false
     }
 
     return true

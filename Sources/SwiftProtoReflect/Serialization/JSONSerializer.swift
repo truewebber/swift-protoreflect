@@ -59,42 +59,99 @@ public struct JSONSerializer {
     let descriptor = message.descriptor
     let fieldAccess = FieldAccessor(message)
 
-    // Process all fields with data
-    for field in descriptor.allFields() where fieldAccess.hasValue(field.name) {
-
+    for field in descriptor.allFields() {
+      let hasValue = fieldAccess.hasValue(field.name)
       let fieldName = options.useOriginalFieldNames ? field.name : field.jsonName
-      result[fieldName] = try serializeFieldValue(field, from: fieldAccess)
+
+      if hasValue {
+        result[fieldName] = try serializeFieldValue(field, from: fieldAccess, descriptor: descriptor)
+      }
+      else if options.includeDefaultValues {
+        if field.proto3Optional { continue }
+        if case .message = field.type, !field.isMap { continue }
+
+        result[fieldName] = proto3DefaultJSON(for: field, in: descriptor)
+      }
     }
 
     return result
   }
 
+  /// Resolves an `EnumDescriptor` for a field from the message's nested enums.
+  private func resolveEnumDescriptor(
+    for field: FieldDescriptor,
+    in descriptor: MessageDescriptor
+  ) -> EnumDescriptor? {
+    guard case .enum = field.type, let typeName = field.typeName else { return nil }
+    let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
+    return descriptor.nestedEnum(named: simpleName)
+  }
+
+  /// Returns the proto3 JSON default for a field that has no value set.
+  private func proto3DefaultJSON(for field: FieldDescriptor, in descriptor: MessageDescriptor) -> Any {
+    if field.isMap {
+      return [String: Any]()
+    }
+    if field.isRepeated {
+      return [Any]()
+    }
+    switch field.type {
+    case .double, .float: return 0
+    case .int32, .sint32, .sfixed32, .uint32, .fixed32: return 0
+    case .int64, .sint64, .sfixed64, .uint64, .fixed64: return "0"
+    case .bool: return false
+    case .string: return ""
+    case .bytes: return ""
+    case .enum:
+      if let enumDesc = resolveEnumDescriptor(for: field, in: descriptor),
+        let zeroVal = enumDesc.value(number: 0)
+      {
+        return zeroVal.name
+      }
+      return 0
+    case .message, .group: return NSNull()
+    }
+  }
+
   // MARK: - Private Methods
 
   /// Serializes field value to JSON compatible object.
-  private func serializeFieldValue(_ field: FieldDescriptor, from fieldAccess: FieldAccessor) throws -> Any {
+  private func serializeFieldValue(
+    _ field: FieldDescriptor,
+    from fieldAccess: FieldAccessor,
+    descriptor: MessageDescriptor
+  ) throws -> Any {
     if field.isMap {
-      return try serializeMapField(field, from: fieldAccess)
+      return try serializeMapField(field, from: fieldAccess, descriptor: descriptor)
     }
     else if field.isRepeated {
-      return try serializeRepeatedField(field, from: fieldAccess)
+      return try serializeRepeatedField(field, from: fieldAccess, descriptor: descriptor)
     }
     else {
-      return try serializeSingleField(field, from: fieldAccess)
+      return try serializeSingleField(field, from: fieldAccess, descriptor: descriptor)
     }
   }
 
   /// Serializes single field.
-  private func serializeSingleField(_ field: FieldDescriptor, from fieldAccess: FieldAccessor) throws -> Any {
+  private func serializeSingleField(
+    _ field: FieldDescriptor,
+    from fieldAccess: FieldAccessor,
+    descriptor: MessageDescriptor
+  ) throws -> Any {
     guard let value = fieldAccess.getValue(field.name, as: Any.self) else {
       throw JSONSerializationError.missingFieldValue(fieldName: field.name)
     }
 
-    return try convertValueToJSON(value, type: field.type, typeName: field.typeName)
+    let enumDesc = resolveEnumDescriptor(for: field, in: descriptor)
+    return try convertValueToJSON(value, type: field.type, typeName: field.typeName, enumDescriptor: enumDesc)
   }
 
   /// Serializes repeated field.
-  private func serializeRepeatedField(_ field: FieldDescriptor, from fieldAccess: FieldAccessor) throws -> Any {
+  private func serializeRepeatedField(
+    _ field: FieldDescriptor,
+    from fieldAccess: FieldAccessor,
+    descriptor: MessageDescriptor
+  ) throws -> Any {
     guard let values = fieldAccess.getValue(field.name, as: [Any].self) else {
       throw JSONSerializationError.invalidFieldType(
         fieldName: field.name,
@@ -103,9 +160,15 @@ public struct JSONSerializer {
       )
     }
 
+    let enumDesc = resolveEnumDescriptor(for: field, in: descriptor)
     var jsonArray: [Any] = []
     for value in values {
-      let jsonValue = try convertValueToJSON(value, type: field.type, typeName: field.typeName)
+      let jsonValue = try convertValueToJSON(
+        value,
+        type: field.type,
+        typeName: field.typeName,
+        enumDescriptor: enumDesc
+      )
       jsonArray.append(jsonValue)
     }
 
@@ -113,7 +176,11 @@ public struct JSONSerializer {
   }
 
   /// Serializes map field.
-  private func serializeMapField(_ field: FieldDescriptor, from fieldAccess: FieldAccessor) throws -> Any {
+  private func serializeMapField(
+    _ field: FieldDescriptor,
+    from fieldAccess: FieldAccessor,
+    descriptor: MessageDescriptor
+  ) throws -> Any {
     guard let mapEntryInfo = field.mapEntryInfo else {
       throw JSONSerializationError.missingMapEntryInfo(fieldName: field.name)
     }
@@ -128,13 +195,21 @@ public struct JSONSerializer {
 
     var jsonObject: [String: Any] = [:]
 
+    let enumDesc: EnumDescriptor? = {
+      guard case .enum = mapEntryInfo.valueFieldInfo.type,
+        let typeName = mapEntryInfo.valueFieldInfo.typeName
+      else { return nil }
+      let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
+      return descriptor.nestedEnum(named: simpleName)
+    }()
+
     for (key, value) in mapValues {
-      // Convert key to string (JSON objects always have string keys)
       let jsonKey = try convertMapKeyToJSONString(key, keyType: mapEntryInfo.keyFieldInfo.type)
       let jsonValue = try convertValueToJSON(
         value,
         type: mapEntryInfo.valueFieldInfo.type,
-        typeName: mapEntryInfo.valueFieldInfo.typeName
+        typeName: mapEntryInfo.valueFieldInfo.typeName,
+        enumDescriptor: enumDesc
       )
       jsonObject[jsonKey] = jsonValue
     }
@@ -143,7 +218,12 @@ public struct JSONSerializer {
   }
 
   /// Converts value to JSON compatible type.
-  internal func convertValueToJSON(_ value: Any, type: FieldType, typeName: String?) throws -> Any {
+  internal func convertValueToJSON(
+    _ value: Any,
+    type: FieldType,
+    typeName: String?,
+    enumDescriptor: EnumDescriptor? = nil
+  ) throws -> Any {
     switch type {
     case .double:
       guard let doubleValue = value as? Double else {
@@ -246,8 +326,11 @@ public struct JSONSerializer {
           actual: String(describing: Swift.type(of: value))
         )
       }
-      // In JSON enum is represented as string with value name
-      // For now return number, can be extended to support enum names
+      if let enumDesc = enumDescriptor,
+        let enumVal = enumDesc.value(number: Int(enumValue))
+      {
+        return enumVal.name
+      }
       return Int(enumValue)
 
     case .group:

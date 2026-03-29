@@ -93,7 +93,7 @@ public struct JSONDeserializer {
         }
       }
 
-      let fieldValue = try deserializeFieldValue(jsonValue, for: field, depth: depth)
+      let fieldValue = try deserializeFieldValue(jsonValue, for: field, descriptor: descriptor, depth: depth)
       try message.set(fieldValue, forField: field.name)
     }
 
@@ -118,31 +118,48 @@ public struct JSONDeserializer {
   }
 
   /// Deserializes field value from JSON.
-  private func deserializeFieldValue(_ jsonValue: Any, for field: FieldDescriptor, depth: Int) throws -> Any {
+  private func deserializeFieldValue(
+    _ jsonValue: Any,
+    for field: FieldDescriptor,
+    descriptor: MessageDescriptor,
+    depth: Int
+  ) throws -> Any {
     if field.isMap {
-      return try deserializeMapField(jsonValue, for: field, depth: depth)
+      return try deserializeMapField(jsonValue, for: field, descriptor: descriptor, depth: depth)
     }
     else if field.isRepeated {
-      return try deserializeRepeatedField(jsonValue, for: field, depth: depth)
+      return try deserializeRepeatedField(jsonValue, for: field, descriptor: descriptor, depth: depth)
     }
     else {
-      return try deserializeSingleField(jsonValue, for: field, depth: depth)
+      return try deserializeSingleField(jsonValue, for: field, descriptor: descriptor, depth: depth)
     }
   }
 
   /// Deserializes single field.
-  private func deserializeSingleField(_ jsonValue: Any, for field: FieldDescriptor, depth: Int) throws -> Any {
+  private func deserializeSingleField(
+    _ jsonValue: Any,
+    for field: FieldDescriptor,
+    descriptor: MessageDescriptor,
+    depth: Int
+  ) throws -> Any {
+    let enumDesc = resolveEnumDescriptor(for: field, in: descriptor)
     return try convertJSONValueToFieldType(
       jsonValue,
       type: field.type,
       typeName: field.typeName,
       fieldName: field.name,
-      depth: depth
+      depth: depth,
+      enumDescriptor: enumDesc
     )
   }
 
   /// Deserializes repeated field.
-  private func deserializeRepeatedField(_ jsonValue: Any, for field: FieldDescriptor, depth: Int) throws -> Any {
+  private func deserializeRepeatedField(
+    _ jsonValue: Any,
+    for field: FieldDescriptor,
+    descriptor: MessageDescriptor,
+    depth: Int
+  ) throws -> Any {
     guard let jsonArray = jsonValue as? [Any] else {
       throw JSONDeserializationError.invalidFieldType(
         fieldName: field.name,
@@ -151,6 +168,7 @@ public struct JSONDeserializer {
       )
     }
 
+    let enumDesc = resolveEnumDescriptor(for: field, in: descriptor)
     var resultArray: [Any] = []
 
     for (index, arrayElement) in jsonArray.enumerated() {
@@ -160,7 +178,8 @@ public struct JSONDeserializer {
           type: field.type,
           typeName: field.typeName,
           fieldName: "\(field.name)[\(index)]",
-          depth: depth
+          depth: depth,
+          enumDescriptor: enumDesc
         )
         resultArray.append(convertedValue)
       }
@@ -177,7 +196,12 @@ public struct JSONDeserializer {
   }
 
   /// Deserializes map field.
-  private func deserializeMapField(_ jsonValue: Any, for field: FieldDescriptor, depth: Int) throws -> Any {
+  private func deserializeMapField(
+    _ jsonValue: Any,
+    for field: FieldDescriptor,
+    descriptor: MessageDescriptor,
+    depth: Int
+  ) throws -> Any {
     guard let jsonObject = jsonValue as? [String: Any] else {
       throw JSONDeserializationError.invalidFieldType(
         fieldName: field.name,
@@ -189,6 +213,14 @@ public struct JSONDeserializer {
     guard let mapEntryInfo = field.mapEntryInfo else {
       throw JSONDeserializationError.missingMapEntryInfo(fieldName: field.name)
     }
+
+    let enumDesc: EnumDescriptor? = {
+      guard case .enum = mapEntryInfo.valueFieldInfo.type,
+        let typeName = mapEntryInfo.valueFieldInfo.typeName
+      else { return nil }
+      let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
+      return descriptor.nestedEnum(named: simpleName)
+    }()
 
     var resultMap: [AnyHashable: Any] = [:]
 
@@ -204,7 +236,8 @@ public struct JSONDeserializer {
         type: mapEntryInfo.valueFieldInfo.type,
         typeName: mapEntryInfo.valueFieldInfo.typeName,
         fieldName: "\(field.name)[\(jsonKey)]",
-        depth: depth
+        depth: depth,
+        enumDescriptor: enumDesc
       )
 
       guard let hashableKey = mapKey as? AnyHashable else {
@@ -220,13 +253,24 @@ public struct JSONDeserializer {
     return resultMap
   }
 
+  /// Resolves an `EnumDescriptor` for a field from the message's nested enums.
+  private func resolveEnumDescriptor(
+    for field: FieldDescriptor,
+    in descriptor: MessageDescriptor
+  ) -> EnumDescriptor? {
+    guard case .enum = field.type, let typeName = field.typeName else { return nil }
+    let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
+    return descriptor.nestedEnum(named: simpleName)
+  }
+
   /// Converts JSON value to corresponding field type.
   private func convertJSONValueToFieldType(
     _ jsonValue: Any,
     type: FieldType,
     typeName: String?,
     fieldName: String,
-    depth: Int
+    depth: Int,
+    enumDescriptor: EnumDescriptor? = nil
   ) throws -> Any {
 
     switch type {
@@ -261,7 +305,7 @@ public struct JSONDeserializer {
       return try convertJSONToMessage(jsonValue, typeName: typeName, fieldName: fieldName, depth: depth)
 
     case .enum:
-      return try convertJSONToEnum(jsonValue, fieldName: fieldName)
+      return try convertJSONToEnum(jsonValue, fieldName: fieldName, enumDescriptor: enumDescriptor)
 
     case .group:
       throw JSONDeserializationError.unsupportedFieldType(type: "group")
@@ -508,12 +552,20 @@ public struct JSONDeserializer {
   }
 
   /// Converts JSON value to enum.
-  private func convertJSONToEnum(_ jsonValue: Any, fieldName: String) throws -> Int32 {
+  private func convertJSONToEnum(
+    _ jsonValue: Any,
+    fieldName: String,
+    enumDescriptor: EnumDescriptor? = nil
+  ) throws -> Int32 {
     if let numberValue = jsonValue as? NSNumber {
       return numberValue.int32Value
     }
     else if let stringValue = jsonValue as? String {
-      // In future can add support for enum names
+      if let enumDesc = enumDescriptor,
+        let enumVal = enumDesc.value(named: stringValue)
+      {
+        return Int32(enumVal.number)
+      }
       guard let enumValue = Int32(stringValue) else {
         throw JSONDeserializationError.invalidEnumValue(fieldName: fieldName, value: stringValue)
       }

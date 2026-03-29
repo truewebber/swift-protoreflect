@@ -95,7 +95,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     let dynamicMessage = try bridge.toDynamicMessage(from: staticMessage)
 
     XCTAssertNotNil(dynamicMessage)
-    XCTAssertEqual(dynamicMessage.descriptor.name, "Google_Protobuf_Empty")
+    XCTAssertEqual(dynamicMessage.descriptor.name, "google.protobuf.Empty")
   }
 
   // MARK: - Batch Conversion Tests

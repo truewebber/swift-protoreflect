@@ -27,7 +27,7 @@ final class WellKnownTypesTests: XCTestCase {
 
   func testTypeCollections() {
     // All types should contain all types
-    XCTAssertEqual(WellKnownTypeNames.allTypes.count, 9)
+    XCTAssertEqual(WellKnownTypeNames.allTypes.count, 18)
     XCTAssertTrue(WellKnownTypeNames.allTypes.contains(WellKnownTypeNames.timestamp))
     XCTAssertTrue(WellKnownTypeNames.allTypes.contains(WellKnownTypeNames.duration))
     XCTAssertTrue(WellKnownTypeNames.allTypes.contains(WellKnownTypeNames.empty))

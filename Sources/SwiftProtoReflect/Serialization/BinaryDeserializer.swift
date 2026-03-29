@@ -65,19 +65,30 @@ public struct BinaryDeserializer {
 
       // Find field by number
       if let field = descriptor.field(number: fieldNumber) {
-        try decodeField(field, wireType: wireType, from: &decoder, into: &message)
+        try decodeField(field, wireType: wireType, from: &decoder, into: &message, descriptor: descriptor)
       }
       else {
         // Unknown field - preserve for compatibility
         if options.preserveUnknownFields {
           let unknownFieldData = try skipUnknownField(wireType: wireType, from: &decoder)
-          unknownFields.append(Data([UInt8(tag)]))
+          var tagBytes = Data()
+          var tagVal = tag
+          while tagVal >= 0x80 {
+            tagBytes.append(UInt8(tagVal & 0x7F | 0x80))
+            tagVal >>= 7
+          }
+          tagBytes.append(UInt8(tagVal & 0x7F))
+          unknownFields.append(tagBytes)
           unknownFields.append(unknownFieldData)
         }
         else {
           _ = try skipUnknownField(wireType: wireType, from: &decoder)
         }
       }
+    }
+
+    if !unknownFields.isEmpty {
+      message.setUnknownFields(unknownFields)
     }
 
     return message
@@ -88,10 +99,10 @@ public struct BinaryDeserializer {
     _ field: FieldDescriptor,
     wireType: WireType,
     from decoder: inout BinaryDecoder,
-    into message: inout DynamicMessage
+    into message: inout DynamicMessage,
+    descriptor: MessageDescriptor
   ) throws {
 
-    // Check wire type compatibility with field type
     let expectedWireType = getWireType(for: field.type)
     let isPackedRepeated = field.isRepeated && wireType == .lengthDelimited && expectedWireType != .lengthDelimited
 
@@ -104,18 +115,18 @@ public struct BinaryDeserializer {
     }
 
     if field.isMap {
-      try decodeMapField(field, from: &decoder, into: &message)
+      try decodeMapField(field, from: &decoder, into: &message, descriptor: descriptor)
     }
     else if field.isRepeated {
       if isPackedRepeated {
-        try decodePackedRepeatedField(field, from: &decoder, into: &message)
+        try decodePackedRepeatedField(field, from: &decoder, into: &message, descriptor: descriptor)
       }
       else {
-        try decodeRepeatedField(field, from: &decoder, into: &message)
+        try decodeRepeatedField(field, from: &decoder, into: &message, descriptor: descriptor)
       }
     }
     else {
-      try decodeSingleField(field, from: &decoder, into: &message)
+      try decodeSingleField(field, from: &decoder, into: &message, descriptor: descriptor)
     }
   }
 
@@ -123,9 +134,10 @@ public struct BinaryDeserializer {
   private func decodeSingleField(
     _ field: FieldDescriptor,
     from decoder: inout BinaryDecoder,
-    into message: inout DynamicMessage
+    into message: inout DynamicMessage,
+    descriptor: MessageDescriptor
   ) throws {
-    let value = try decodeValue(type: field.type, typeName: field.typeName, from: &decoder)
+    let value = try decodeValue(type: field.type, typeName: field.typeName, from: &decoder, descriptor: descriptor)
     try message.set(value, forField: field.name)
   }
 
@@ -133,9 +145,10 @@ public struct BinaryDeserializer {
   private func decodeRepeatedField(
     _ field: FieldDescriptor,
     from decoder: inout BinaryDecoder,
-    into message: inout DynamicMessage
+    into message: inout DynamicMessage,
+    descriptor: MessageDescriptor
   ) throws {
-    let value = try decodeValue(type: field.type, typeName: field.typeName, from: &decoder)
+    let value = try decodeValue(type: field.type, typeName: field.typeName, from: &decoder, descriptor: descriptor)
 
     // Get existing array or create new one
     let fieldAccess = FieldAccessor(message)
@@ -153,7 +166,8 @@ public struct BinaryDeserializer {
   private func decodePackedRepeatedField(
     _ field: FieldDescriptor,
     from decoder: inout BinaryDecoder,
-    into message: inout DynamicMessage
+    into message: inout DynamicMessage,
+    descriptor: MessageDescriptor
   ) throws {
     let length = try decoder.readVarint()
     let endPosition = decoder.position + Int(length)
@@ -161,7 +175,7 @@ public struct BinaryDeserializer {
     var array: [Any] = []
 
     while decoder.position < endPosition {
-      let value = try decodeValue(type: field.type, typeName: field.typeName, from: &decoder)
+      let value = try decodeValue(type: field.type, typeName: field.typeName, from: &decoder, descriptor: descriptor)
       array.append(value)
     }
 
@@ -176,7 +190,8 @@ public struct BinaryDeserializer {
   private func decodeMapField(
     _ field: FieldDescriptor,
     from decoder: inout BinaryDecoder,
-    into message: inout DynamicMessage
+    into message: inout DynamicMessage,
+    descriptor: MessageDescriptor
   ) throws {
     guard let mapEntryInfo = field.mapEntryInfo else {
       throw DeserializationError.missingMapEntryInfo(fieldName: field.name)
@@ -188,7 +203,6 @@ public struct BinaryDeserializer {
     var key: Any?
     var value: Any?
 
-    // Read entry as regular message
     while decoder.position < entryEndPosition {
       let tag = try decoder.readVarint()
       let entryFieldNumber = Int(tag >> 3)
@@ -199,13 +213,19 @@ public struct BinaryDeserializer {
       }
 
       switch entryFieldNumber {
-      case 1:  // key
-        key = try decodeValue(type: mapEntryInfo.keyFieldInfo.type, typeName: nil, from: &decoder)
-      case 2:  // value
+      case 1:
+        key = try decodeValue(
+          type: mapEntryInfo.keyFieldInfo.type,
+          typeName: nil,
+          from: &decoder,
+          descriptor: descriptor
+        )
+      case 2:
         value = try decodeValue(
           type: mapEntryInfo.valueFieldInfo.type,
           typeName: mapEntryInfo.valueFieldInfo.typeName,
-          from: &decoder
+          from: &decoder,
+          descriptor: descriptor
         )
       default:
         // Skip unknown fields in map entry
@@ -232,7 +252,12 @@ public struct BinaryDeserializer {
   }
 
   /// Decodes value of specific type.
-  private func decodeValue(type: FieldType, typeName: String?, from decoder: inout BinaryDecoder) throws -> Any {
+  private func decodeValue(
+    type: FieldType,
+    typeName: String?,
+    from decoder: inout BinaryDecoder,
+    descriptor: MessageDescriptor
+  ) throws -> Any {
     switch type {
     case .double:
       return try decoder.readDouble()
@@ -299,12 +324,15 @@ public struct BinaryDeserializer {
       }
 
       let length = try decoder.readVarint()
-      _ = try decoder.readBytes(Int(length))
+      let messageData = try decoder.readBytes(Int(length))
 
-      // For nested message deserialization we need its descriptor
-      // In real implementation this should be obtained from TypeRegistry
-      // For now using stub
-      throw DeserializationError.unsupportedNestedMessage(typeName: typeName)
+      let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
+      guard let nestedDescriptor = descriptor.nestedMessage(named: simpleName) else {
+        throw DeserializationError.unsupportedNestedMessage(typeName: typeName)
+      }
+
+      var nestedDecoder = BinaryDecoder(data: messageData)
+      return try decodeMessage(from: &nestedDecoder, using: nestedDescriptor)
 
     case .enum:
       let varint = try decoder.readVarint()
