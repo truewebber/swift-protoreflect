@@ -1587,7 +1587,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeGroupTypeError() throws {
+  func testDeserializeGroupTypeError_missingTypeName() throws {
     var message = MessageDescriptor(name: "GroupMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "group_field", number: 1, type: .group))
     fileDescriptor.addMessage(message)
@@ -1602,8 +1602,8 @@ final class JSONDeserializationTests: XCTestCase {
 
     XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
       if let jsonError = error as? JSONDeserializationError {
-        if case .unsupportedFieldType(let type) = jsonError {
-          XCTAssertEqual(type, "group")
+        if case .missingTypeName(let fieldName) = jsonError {
+          XCTAssertEqual(fieldName, "group_field")
         }
         else {
           XCTFail("Wrong error type: \(jsonError)")

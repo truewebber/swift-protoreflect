@@ -9,6 +9,7 @@ public enum DescriptorOption: Equatable, Sendable {
   case int(Int)
   case string(String)
   case float(Float)
+  case double(Double)
   case bytes(Data)
 
   /// Returns the underlying value as `Any`, for interoperability with APIs that require `Any`.
@@ -18,6 +19,7 @@ public enum DescriptorOption: Equatable, Sendable {
     case .int(let v): return v
     case .string(let v): return v
     case .float(let v): return v
+    case .double(let v): return v
     case .bytes(let v): return v
     }
   }

@@ -6,13 +6,12 @@
 
 ## Version Information
 
-**Current Version:** 4.0.0+  
-**Recommended for Production:** 4.0.0 or higher
+**Current Version:** 5.0.0+  
+**Recommended for Production:** 5.0.0 or higher
 
-> **⚠️ Version 4.0.0 Breaking Changes:**  
-> - Removed all gRPC dependencies (grpc-swift, swift-nio, swift-log)
-> - Removed ServiceClient (users can integrate DynamicMessage with any gRPC library)
-> - Library is now focused purely on Protocol Buffers reflection
+> **⚠️ Version 5.0.0 Breaking Changes:**  
+> - See [Migration Guide](../MIGRATION_GUIDE.md) for details on breaking changes from 4.x
+> - Library is focused purely on Protocol Buffers reflection
 > - Only dependency: SwiftProtobuf 1.29.0+
 
 ## Workflow Considering Memory Loss
@@ -78,7 +77,7 @@
   - **Bridge/** - Swift Protobuf integration (StaticMessageBridge, DescriptorBridge)
   - **Integration/** - Well-Known Types support (18 types including wrappers and ListValue)
 
-- **Tests/SwiftProtoReflectTests/** - comprehensive test suite (62 files, 1266 tests):
+- **Tests/SwiftProtoReflectTests/** - comprehensive test suite (74 files, 1482 tests):
   - **Descriptor/** - descriptor system tests
   - **Dynamic/** - dynamic message tests
   - **Serialization/** - serialization tests (binary, JSON, wire format, unknown fields)
@@ -124,7 +123,7 @@
   - ✅ isRequired syntax-aware deprecation
   - ✅ FieldType.group deprecation
 
-**1266 tests passing**
+**1482 tests passing** (95.55% line coverage)
 
 **🎉 PROJECT READY FOR PRODUCTION USE**
 

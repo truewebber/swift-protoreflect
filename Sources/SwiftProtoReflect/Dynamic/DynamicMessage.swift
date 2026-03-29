@@ -46,6 +46,13 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
     self.descriptor = descriptor
   }
 
+  // MARK: - Field Resolution
+
+  /// Resolves a field descriptor by number, checking regular fields first, then extensions.
+  private func resolveField(number: Int) -> FieldDescriptor? {
+    descriptor.field(number: number) ?? descriptor.extensions[number]
+  }
+
   // MARK: - Field Access Methods
 
   /// Sets field value by name.
@@ -73,7 +80,7 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
   /// - Throws: Error if field doesn't exist or types are incompatible.
   @discardableResult
   public mutating func set(_ value: Any, forField fieldNumber: Int) throws -> Self {
-    guard let field = descriptor.field(number: fieldNumber) else {
+    guard let field = resolveField(number: fieldNumber) else {
       throw DynamicMessageError.fieldNotFoundByNumber(fieldNumber: fieldNumber)
     }
 
@@ -136,20 +143,26 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
       try validateValue(value, for: field)
 
       if case .message = field.type {
-        if let dynamicMessage = value as? DynamicMessage {
-          // Store nested dynamic message
-          nestedMessages[fieldNumber] = dynamicMessage
-        }
-        else {
+        guard let dynamicMessage = value as? DynamicMessage else {
           throw DynamicMessageError.typeMismatch(
             fieldName: field.name,
             expectedType: "DynamicMessage",
             actualType: String(describing: type(of: value))
           )
         }
+        nestedMessages[fieldNumber] = dynamicMessage
+      }
+      else if case .group = field.type {
+        guard let dynamicMessage = value as? DynamicMessage else {
+          throw DynamicMessageError.typeMismatch(
+            fieldName: field.name,
+            expectedType: "DynamicMessage (group)",
+            actualType: String(describing: type(of: value))
+          )
+        }
+        nestedMessages[fieldNumber] = dynamicMessage
       }
       else {
-        // Convert and store regular value
         let convertedValue = convertToCorrectType(value, for: field)
         values[fieldNumber] = convertedValue
       }
@@ -177,7 +190,7 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
   /// - Returns: Field value or nil if value is not set.
   /// - Throws: Error if field doesn't exist.
   public func get(forField fieldNumber: Int) throws -> Any? {
-    guard let field = descriptor.field(number: fieldNumber) else {
+    guard let field = resolveField(number: fieldNumber) else {
       throw DynamicMessageError.fieldNotFoundByNumber(fieldNumber: fieldNumber)
     }
 
@@ -191,6 +204,9 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
       }
     }
     else if case .message = field.type {
+      return nestedMessages[fieldNumber]
+    }
+    else if case .group = field.type {
       return nestedMessages[fieldNumber]
     }
     else {
@@ -223,7 +239,7 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
   /// - Returns: true if value is set.
   /// - Throws: Error if field doesn't exist.
   public func hasValue(forField fieldNumber: Int) throws -> Bool {
-    guard let field = descriptor.field(number: fieldNumber) else {
+    guard let field = resolveField(number: fieldNumber) else {
       throw DynamicMessageError.fieldNotFoundByNumber(fieldNumber: fieldNumber)
     }
 
@@ -236,6 +252,9 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
       }
     }
     else if case .message = field.type {
+      return nestedMessages[fieldNumber] != nil
+    }
+    else if case .group = field.type {
       return nestedMessages[fieldNumber] != nil
     }
     else {
@@ -264,7 +283,7 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
   /// - Throws: Error if field doesn't exist.
   @discardableResult
   public mutating func clearField(_ fieldNumber: Int) throws -> Self {
-    guard let field = descriptor.field(number: fieldNumber) else {
+    guard let field = resolveField(number: fieldNumber) else {
       throw DynamicMessageError.fieldNotFoundByNumber(fieldNumber: fieldNumber)
     }
 
@@ -277,6 +296,9 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
       }
     }
     else if case .message = field.type {
+      nestedMessages.removeValue(forKey: fieldNumber)
+    }
+    else if case .group = field.type {
       nestedMessages.removeValue(forKey: fieldNumber)
     }
     else {
@@ -325,7 +347,7 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
   /// - Throws: Error if field doesn't exist, is not repeated, or type doesn't match.
   @discardableResult
   public mutating func addRepeatedValue(_ value: Any, forField fieldNumber: Int) throws -> Self {
-    guard let field = descriptor.field(number: fieldNumber) else {
+    guard let field = resolveField(number: fieldNumber) else {
       throw DynamicMessageError.fieldNotFoundByNumber(fieldNumber: fieldNumber)
     }
 
@@ -376,7 +398,7 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
   /// - Throws: Error if field doesn't exist, is not map, or types don't match.
   @discardableResult
   public mutating func setMapEntry(_ value: Any, forKey key: AnyHashable, inField fieldNumber: Int) throws -> Self {
-    guard let field = descriptor.field(number: fieldNumber) else {
+    guard let field = resolveField(number: fieldNumber) else {
       throw DynamicMessageError.fieldNotFoundByNumber(fieldNumber: fieldNumber)
     }
 
@@ -410,8 +432,8 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
   ///
   /// - Parameter fieldNumber: Field number to clear.
   private mutating func clearOneofField(_ fieldNumber: Int) {
-    guard let field = descriptor.field(number: fieldNumber) else {
-      return  // Field not found, do nothing
+    guard let field = resolveField(number: fieldNumber) else {
+      return
     }
 
     // Clear value from appropriate storage based on field type

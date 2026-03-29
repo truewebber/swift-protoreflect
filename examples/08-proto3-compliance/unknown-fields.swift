@@ -67,7 +67,8 @@ struct UnknownFieldsExample {
     print("  Unknown fields hex: \(partial.unknownFields.map { String(format: "%02x", $0) }.joined(separator: " "))")
 
     ExampleUtils.printInfo(
-      "Fields 2 (name) and 3 (email) are preserved as unknown fields when not in the descriptor")
+      "Fields 2 (name) and 3 (email) are preserved as unknown fields when not in the descriptor"
+    )
   }
 
   // MARK: - Schema Evolution
@@ -94,10 +95,13 @@ struct UnknownFieldsExample {
     let timeout = try v2Read.get(forField: "timeout") as? Int32 ?? 0
     let retries = try v2Read.get(forField: "retries") as? Int32 ?? 0
     let maxConn = try v2Read.get(forField: "max_connections")
-    print("  v2 reads v1: timeout=\(timeout), retries=\(retries), max_connections=\(maxConn.map { "\($0)" } ?? "nil (not in v1)")")
+    print(
+      "  v2 reads v1: timeout=\(timeout), retries=\(retries), max_connections=\(maxConn.map { "\($0)" } ?? "nil (not in v1)")"
+    )
 
     ExampleUtils.printInfo(
-      "New fields are simply absent when reading old data — no errors, safe evolution")
+      "New fields are simply absent when reading old data — no errors, safe evolution"
+    )
   }
 
   // MARK: - Round Trip
@@ -128,10 +132,15 @@ struct UnknownFieldsExample {
     let restoredPayload = try restored.get(forField: "payload") as? Data ?? Data()
 
     print("  Original: id=42, type=\"click\", payload=0xCAFE")
-    print("  After proxy round-trip: id=\(restoredId), type=\"\(restoredType)\", payload=0x\(restoredPayload.map { String(format: "%02X", $0) }.joined())")
-    print("  Data preserved: \(restoredId == 42 && restoredType == "click" && restoredPayload == Data([0xCA, 0xFE]) ? "YES" : "NO")")
+    print(
+      "  After proxy round-trip: id=\(restoredId), type=\"\(restoredType)\", payload=0x\(restoredPayload.map { String(format: "%02X", $0) }.joined())"
+    )
+    print(
+      "  Data preserved: \(restoredId == 42 && restoredType == "click" && restoredPayload == Data([0xCA, 0xFE]) ? "YES" : "NO")"
+    )
 
     ExampleUtils.printInfo(
-      "Unknown fields survive a full round-trip through a proxy that only knows about field 1")
+      "Unknown fields survive a full round-trip through a proxy that only knows about field 1"
+    )
   }
 }

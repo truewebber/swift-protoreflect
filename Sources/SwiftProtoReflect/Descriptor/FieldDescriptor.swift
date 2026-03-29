@@ -54,6 +54,13 @@ public struct FieldDescriptor: Equatable, Sendable {
   /// Default value for the field (if defined).
   public let defaultValue: DescriptorOption?
 
+  /// Whether this repeated field uses packed encoding.
+  ///
+  /// - `nil`: not explicitly set — use syntax default (proto3 → packed, proto2 → unpacked).
+  /// - `true`: explicitly `[packed = true]`.
+  /// - `false`: explicitly `[packed = false]`.
+  public let isPacked: Bool?
+
   /// Field options.
   public let options: [String: DescriptorOption]
 
@@ -90,6 +97,7 @@ public struct FieldDescriptor: Equatable, Sendable {
     proto3Optional: Bool = false,
     mapEntryInfo: MapEntryInfo? = nil,
     defaultValue: DescriptorOption? = nil,
+    isPacked: Bool? = nil,
     options: [String: DescriptorOption] = [:]
   ) {
     self.name = name
@@ -97,7 +105,6 @@ public struct FieldDescriptor: Equatable, Sendable {
     self.type = type
     self.typeName = typeName
     self.jsonName = jsonName ?? name
-    // Map fields are automatically repeated fields in Protocol Buffers
     self.isRepeated = isMap ? true : isRepeated
     self.isOptional = isOptional
     self.isRequired = isRequired
@@ -106,6 +113,7 @@ public struct FieldDescriptor: Equatable, Sendable {
     self.proto3Optional = proto3Optional
     self.mapEntryInfo = mapEntryInfo
     self.defaultValue = defaultValue
+    self.isPacked = isPacked
     self.options = options
 
     // Validation: ensure typeName is specified for message and enum types
@@ -169,13 +177,25 @@ public struct FieldDescriptor: Equatable, Sendable {
     return mapEntryInfo
   }
 
+  /// Returns the effective packed encoding setting, resolving `nil` via syntax default.
+  ///
+  /// In proto3, repeated numeric fields are packed by default.
+  /// In proto2, they are unpacked unless explicitly marked `[packed = true]`.
+  ///
+  /// - Parameter syntax: The proto syntax version (`"proto2"` or `"proto3"`).
+  /// - Returns: `true` if packed encoding should be used.
+  public func effectiveIsPacked(syntax: String) -> Bool {
+    isPacked ?? (syntax == "proto3")
+  }
+
   // MARK: - Equatable
 
   public static func == (lhs: FieldDescriptor, rhs: FieldDescriptor) -> Bool {
     return lhs.name == rhs.name && lhs.jsonName == rhs.jsonName && lhs.number == rhs.number && lhs.type == rhs.type
       && lhs.typeName == rhs.typeName && lhs.isRepeated == rhs.isRepeated && lhs.isOptional == rhs.isOptional
       && lhs.isRequired == rhs.isRequired && lhs.isMap == rhs.isMap && lhs.oneofIndex == rhs.oneofIndex
-      && lhs.proto3Optional == rhs.proto3Optional && lhs.mapEntryInfo == rhs.mapEntryInfo && lhs.options == rhs.options
+      && lhs.proto3Optional == rhs.proto3Optional && lhs.mapEntryInfo == rhs.mapEntryInfo
+      && lhs.defaultValue == rhs.defaultValue && lhs.isPacked == rhs.isPacked && lhs.options == rhs.options
   }
 }
 

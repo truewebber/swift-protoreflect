@@ -59,8 +59,11 @@ public struct JSONSerializer {
     let descriptor = message.descriptor
     let fieldAccess = FieldAccessor(message)
 
-    for field in descriptor.allFields() {
-      let hasValue = fieldAccess.hasValue(field.name)
+    var allFields = descriptor.allFields()
+    allFields.append(contentsOf: descriptor.extensions.values)
+
+    for field in allFields {
+      let hasValue = fieldAccess.hasValue(field.number)
       let fieldName = options.useOriginalFieldNames ? field.name : field.jsonName
 
       if hasValue {
@@ -138,7 +141,7 @@ public struct JSONSerializer {
     from fieldAccess: FieldAccessor,
     descriptor: MessageDescriptor
   ) throws -> Any {
-    guard let value = fieldAccess.getValue(field.name, as: Any.self) else {
+    guard let value = fieldAccess.getValue(field.number, as: Any.self) else {
       throw JSONSerializationError.missingFieldValue(fieldName: field.name)
     }
 
@@ -152,11 +155,11 @@ public struct JSONSerializer {
     from fieldAccess: FieldAccessor,
     descriptor: MessageDescriptor
   ) throws -> Any {
-    guard let values = fieldAccess.getValue(field.name, as: [Any].self) else {
+    guard let values = fieldAccess.getValue(field.number, as: [Any].self) else {
       throw JSONSerializationError.invalidFieldType(
         fieldName: field.name,
         expectedType: "Array",
-        actualType: String(describing: type(of: fieldAccess.getValue(field.name, as: Any.self)))
+        actualType: String(describing: type(of: fieldAccess.getValue(field.number, as: Any.self)))
       )
     }
 
@@ -185,11 +188,11 @@ public struct JSONSerializer {
       throw JSONSerializationError.missingMapEntryInfo(fieldName: field.name)
     }
 
-    guard let mapValues = fieldAccess.getValue(field.name, as: [AnyHashable: Any].self) else {
+    guard let mapValues = fieldAccess.getValue(field.number, as: [AnyHashable: Any].self) else {
       throw JSONSerializationError.invalidFieldType(
         fieldName: field.name,
         expectedType: "Dictionary",
-        actualType: String(describing: type(of: fieldAccess.getValue(field.name, as: Any.self)))
+        actualType: String(describing: type(of: fieldAccess.getValue(field.number, as: Any.self)))
       )
     }
 
@@ -334,7 +337,13 @@ public struct JSONSerializer {
       return Int(enumValue)
 
     case .group:
-      throw JSONSerializationError.unsupportedFieldType(type: "group")
+      guard let groupMessage = value as? DynamicMessage else {
+        throw JSONSerializationError.valueTypeMismatch(
+          expected: "DynamicMessage (group)",
+          actual: String(describing: Swift.type(of: value))
+        )
+      }
+      return try serializeToJSONObject(groupMessage)
     }
   }
 

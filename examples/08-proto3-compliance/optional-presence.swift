@@ -48,7 +48,8 @@ struct OptionalPresenceExample {
     var desc = MessageDescriptor(name: "Config", fullName: "example.Config")
     desc.addField(FieldDescriptor(name: "timeout", number: 1, type: .int32))
     desc.addField(
-      FieldDescriptor(name: "max_retries", number: 2, type: .int32, proto3Optional: true))
+      FieldDescriptor(name: "max_retries", number: 2, type: .int32, proto3Optional: true)
+    )
 
     let msg = MessageFactory().createMessage(from: desc)
 
@@ -59,7 +60,8 @@ struct OptionalPresenceExample {
     print("  Optional field 'max_retries' (unset):   \(maxRetries.map { "\($0)" } ?? "nil")")
 
     ExampleUtils.printInfo(
-      "Both return nil when unset. The difference shows when set to zero.")
+      "Both return nil when unset. The difference shows when set to zero."
+    )
   }
 
   // MARK: - Presence Tracking
@@ -69,9 +71,11 @@ struct OptionalPresenceExample {
 
     var desc = MessageDescriptor(name: "Settings", fullName: "example.Settings")
     desc.addField(
-      FieldDescriptor(name: "score", number: 1, type: .int32, proto3Optional: true))
+      FieldDescriptor(name: "score", number: 1, type: .int32, proto3Optional: true)
+    )
     desc.addField(
-      FieldDescriptor(name: "label", number: 2, type: .string, proto3Optional: true))
+      FieldDescriptor(name: "label", number: 2, type: .string, proto3Optional: true)
+    )
 
     let factory = MessageFactory()
 
@@ -97,7 +101,8 @@ struct OptionalPresenceExample {
     print("    label: \(String(describing: try nonZero.get(forField: "label")))")
 
     ExampleUtils.printInfo(
-      "proto3 optional lets you distinguish 'field was not set' from 'field was set to zero'")
+      "proto3 optional lets you distinguish 'field was not set' from 'field was set to zero'"
+    )
   }
 
   // MARK: - JSON Behavior
@@ -108,11 +113,13 @@ struct OptionalPresenceExample {
     var desc = MessageDescriptor(name: "Msg", fullName: "example.Msg")
     desc.addField(FieldDescriptor(name: "regular", number: 1, type: .int32))
     desc.addField(
-      FieldDescriptor(name: "optional_val", number: 2, type: .int32, proto3Optional: true))
+      FieldDescriptor(name: "optional_val", number: 2, type: .int32, proto3Optional: true)
+    )
 
     let factory = MessageFactory()
     let serializer = JSONSerializer(
-      options: JSONSerializationOptions(includeDefaultValues: true))
+      options: JSONSerializationOptions(includeDefaultValues: true)
+    )
 
     var msg = factory.createMessage(from: desc)
     try msg.set(Int32(0), forField: "regular")
@@ -123,6 +130,7 @@ struct OptionalPresenceExample {
     print("    optional_val (not set):    \(json["optional_val"] ?? "absent")")
 
     ExampleUtils.printInfo(
-      "includeDefaultValues emits zero for regular fields but omits unset optional fields")
+      "includeDefaultValues emits zero for regular fields but omits unset optional fields"
+    )
   }
 }

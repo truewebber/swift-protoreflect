@@ -212,7 +212,7 @@ Sources/SwiftProtoReflect/          # 29 source files
     ├── AnyHandler.swift            # google.protobuf.Any
     └── WrapperHandlers.swift       # All 9 wrapper types
 
-Tests/SwiftProtoReflectTests/       # 62 test files, 1266 tests
+Tests/SwiftProtoReflectTests/       # 74 test files, 1482 tests
 ├── Descriptor/                     # Descriptor system tests (12 files)
 ├── Dynamic/                        # Dynamic message tests (7 files)
 ├── Serialization/                  # Serialization tests (12 files)

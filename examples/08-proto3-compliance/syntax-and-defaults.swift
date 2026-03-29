@@ -47,22 +47,32 @@ struct SyntaxAndDefaultsExample {
     ExampleUtils.printStep(1, "FileDescriptor Syntax Tracking")
 
     let proto3File = FileDescriptor(
-      name: "user.proto", package: "example", syntax: "proto3")
+      name: "user.proto",
+      package: "example",
+      syntax: "proto3"
+    )
     print("  Proto3 file syntax: \"\(proto3File.syntax)\"")
 
     let proto2File = FileDescriptor(
-      name: "legacy.proto", package: "example", syntax: "proto2")
+      name: "legacy.proto",
+      package: "example",
+      syntax: "proto2"
+    )
     print("  Proto2 file syntax: \"\(proto2File.syntax)\"")
 
     let defaultFile = FileDescriptor(name: "default.proto", package: "example")
     print("  Default syntax:     \"\(defaultFile.syntax)\"")
 
     let emptyFile = FileDescriptor(
-      name: "empty.proto", package: "example", syntax: "")
+      name: "empty.proto",
+      package: "example",
+      syntax: ""
+    )
     print("  Empty syntax:       \"\(emptyFile.syntax)\" (normalized to proto2)")
 
     ExampleUtils.printInfo(
-      "FileDescriptor.syntax defaults to \"proto3\" and normalizes empty string to \"proto2\"")
+      "FileDescriptor.syntax defaults to \"proto3\" and normalizes empty string to \"proto2\""
+    )
   }
 
   // MARK: - Zero Defaults
@@ -87,7 +97,8 @@ struct SyntaxAndDefaultsExample {
     }
 
     ExampleUtils.printInfo(
-      "In proto3, unset fields return nil (no explicit default) — they are treated as zero on the wire")
+      "In proto3, unset fields return nil (no explicit default) — they are treated as zero on the wire"
+    )
   }
 
   // MARK: - Enum Validation
@@ -136,6 +147,7 @@ struct SyntaxAndDefaultsExample {
     print("  Populated message binary size: \(fullData.count) bytes")
 
     ExampleUtils.printInfo(
-      "Proto3: unset/zero-valued fields produce 0 bytes on wire")
+      "Proto3: unset/zero-valued fields produce 0 bytes on wire"
+    )
   }
 }

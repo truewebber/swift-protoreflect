@@ -134,25 +134,37 @@ public struct MessageFactory: @unchecked Sendable {
 
   /// Validates dynamic message according to its descriptor.
   ///
+  /// Syntax is read from `message.descriptor.syntax`.
+  ///
+  /// - Parameter message: Message to validate.
+  /// - Returns: Validation result with error information if any.
+  public func validate(_ message: DynamicMessage) -> ValidationResult {
+    return performValidation(message, syntax: message.descriptor.syntax)
+  }
+
+  /// Validates dynamic message with an explicit syntax override.
+  ///
   /// - Parameters:
   ///   - message: Message to validate.
-  ///   - syntax: Proto syntax version (`"proto2"` or `"proto3"`). Defaults to `"proto3"`.
+  ///   - syntax: Proto syntax version (`"proto2"` or `"proto3"`).
   /// - Returns: Validation result with error information if any.
-  public func validate(_ message: DynamicMessage, syntax: String = "proto3") -> ValidationResult {
+  @available(*, deprecated, message: "Use validate(_:) instead; syntax is now read from descriptor.syntax")
+  public func validate(_ message: DynamicMessage, syntax: String) -> ValidationResult {
+    return performValidation(message, syntax: syntax)
+  }
+
+  private func performValidation(_ message: DynamicMessage, syntax: String) -> ValidationResult {
     var errors: [ValidationError] = []
 
-    // Check all fields in descriptor
     for field in message.descriptor.allFields() {
       do {
         let hasValue = try message.hasValue(forField: field.number)
 
-        // Check required fields only for proto2
         if syntax != "proto3" && field.isRequired && !hasValue {
           errors.append(.missingRequiredField(fieldName: field.name))
           continue
         }
 
-        // If value is set, check its correctness
         if hasValue {
           let value = try message.get(forField: field.number)
           if let actualValue = value {
@@ -193,7 +205,7 @@ public struct MessageFactory: @unchecked Sendable {
       if let map = value as? [AnyHashable: Any] {
         for (key, mapValue) in map {
           if let messageValue = mapValue as? DynamicMessage {
-            let nestedResult = validate(messageValue, syntax: syntax)
+            let nestedResult = performValidation(messageValue, syntax: syntax)
             if !nestedResult.isValid {
               errors.append(
                 .mapFieldValidationFailed(
@@ -212,7 +224,7 @@ public struct MessageFactory: @unchecked Sendable {
       if let array = value as? [Any] {
         for (index, item) in array.enumerated() {
           if let messageItem = item as? DynamicMessage {
-            let nestedResult = validate(messageItem, syntax: syntax)
+            let nestedResult = performValidation(messageItem, syntax: syntax)
             if !nestedResult.isValid {
               errors.append(
                 .repeatedFieldValidationFailed(
@@ -229,7 +241,7 @@ public struct MessageFactory: @unchecked Sendable {
     else if field.type == .message && !field.isRepeated && !field.isMap {
       // For simple nested messages
       if let nestedMessage = value as? DynamicMessage {
-        let nestedResult = validate(nestedMessage, syntax: syntax)
+        let nestedResult = performValidation(nestedMessage, syntax: syntax)
         if !nestedResult.isValid {
           errors.append(
             .nestedMessageValidationFailed(

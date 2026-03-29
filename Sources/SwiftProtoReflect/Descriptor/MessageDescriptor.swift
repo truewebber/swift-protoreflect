@@ -21,6 +21,14 @@ public struct MessageDescriptor: Sendable {
   /// Full message name including package (e.g., "example.person.Person").
   public let fullName: String
 
+  /// Proto syntax version inherited from the parent `FileDescriptor`.
+  ///
+  /// Defaults to `"proto3"` for backward compatibility.
+  /// Empty string is normalised to `"proto2"` per protobuf spec.
+  /// When the descriptor is added to a `FileDescriptor` or a parent
+  /// `MessageDescriptor`, the syntax is overwritten with the parent's value.
+  public var syntax: String
+
   /// Path to parent file (for reference resolution).
   public var fileDescriptorPath: String?
 
@@ -42,6 +50,12 @@ public struct MessageDescriptor: Sendable {
   /// Oneof group declarations for this message, ordered by insertion.
   public private(set) var oneofDecls: [OneofDescriptor] = []
 
+  /// Extension ranges declared by this message (proto2 feature).
+  public private(set) var extensionRanges: [ExtensionRange] = []
+
+  /// Extension field descriptors registered for this message, keyed by field number.
+  public private(set) var extensions: [Int: FieldDescriptor] = [:]
+
   /// Message options.
   public let options: [String: DescriptorOption]
 
@@ -52,20 +66,25 @@ public struct MessageDescriptor: Sendable {
   /// - Parameters:
   ///   - name: Message name.
   ///   - fullName: Full message name.
+  ///   - syntax: Proto syntax version. Defaults to `"proto3"`.
+  ///             Empty string is normalised to `"proto2"` per protobuf spec.
   ///   - options: Message options.
   public init(
     name: String,
     fullName: String,
+    syntax: String = "proto3",
     options: [String: DescriptorOption] = [:]
   ) {
     self.name = name
     self.fullName = fullName
+    self.syntax = syntax.isEmpty ? "proto2" : syntax
     self.options = options
   }
 
   /// Creates a new MessageDescriptor instance with a base name.
   ///
   /// Full name will be generated automatically based on parent file or message.
+  /// Syntax is inherited from the parent when available.
   ///
   /// - Parameters:
   ///   - name: Message name.
@@ -83,13 +102,16 @@ public struct MessageDescriptor: Sendable {
       self.fullName = "\(parentMessage.fullName).\(name)"
       self.parentMessageFullName = parentMessage.fullName
       self.fileDescriptorPath = parentMessage.fileDescriptorPath
+      self.syntax = parentMessage.syntax
     }
     else if let fileDescriptor = parent as? FileDescriptor {
       self.fullName = fileDescriptor.getFullName(for: name)
       self.fileDescriptorPath = fileDescriptor.name
+      self.syntax = fileDescriptor.syntax
     }
     else {
       self.fullName = name
+      self.syntax = "proto3"
     }
   }
 
@@ -169,6 +191,8 @@ public struct MessageDescriptor: Sendable {
 
   /// Adds a nested message.
   ///
+  /// The nested message inherits this message's `syntax` and `fileDescriptorPath`.
+  ///
   /// - Parameter message: Nested message descriptor.
   /// - Returns: Updated MessageDescriptor.
   @discardableResult
@@ -176,6 +200,7 @@ public struct MessageDescriptor: Sendable {
     var messageCopy = message
     messageCopy.parentMessageFullName = self.fullName
     messageCopy.fileDescriptorPath = self.fileDescriptorPath
+    messageCopy.syntax = self.syntax
     nestedMessages[message.name] = messageCopy
     return self
   }
@@ -221,6 +246,55 @@ public struct MessageDescriptor: Sendable {
   public func nestedEnum(named name: String) -> EnumDescriptor? {
     return nestedEnums[name]
   }
+  // MARK: - Extension Range Methods
+
+  /// Adds an extension range to the message (proto2 feature).
+  ///
+  /// - Parameter range: Extension range to add.
+  /// - Returns: Updated MessageDescriptor.
+  @discardableResult
+  public mutating func addExtensionRange(_ range: ExtensionRange) -> Self {
+    extensionRanges.append(range)
+    return self
+  }
+
+  /// Registers an extension field descriptor for this message.
+  ///
+  /// - Parameter field: Extension field descriptor to register.
+  /// - Returns: Updated MessageDescriptor.
+  @discardableResult
+  public mutating func addExtension(_ field: FieldDescriptor) -> Self {
+    extensions[field.number] = field
+    return self
+  }
+
+  /// Checks whether the given field number falls within any declared extension range.
+  ///
+  /// - Parameter number: Field number to check.
+  /// - Returns: `true` if the number is inside an extension range.
+  public func isExtensionNumber(_ number: Int) -> Bool {
+    extensionRanges.contains { number >= $0.start && number < $0.end }
+  }
 }
 
-// FieldDescriptor is defined in FieldDescriptor.swift file
+/// Declared extension range for a proto2 message.
+///
+/// Represents a half-open range `[start, end)` of field numbers
+/// reserved for extensions.
+public struct ExtensionRange: Equatable, Hashable, Sendable {
+  /// Start of the range (inclusive).
+  public let start: Int
+
+  /// End of the range (exclusive).
+  public let end: Int
+
+  /// Creates a new extension range.
+  ///
+  /// - Parameters:
+  ///   - start: Start of range (inclusive).
+  ///   - end: End of range (exclusive).
+  public init(start: Int, end: Int) {
+    self.start = start
+    self.end = end
+  }
+}

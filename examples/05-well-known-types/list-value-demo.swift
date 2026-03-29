@@ -67,7 +67,8 @@ struct ListValueDemo {
     }
 
     ExampleUtils.printInfo(
-      "ListValue stores an ordered array of Value elements")
+      "ListValue stores an ordered array of Value elements"
+    )
   }
 
   // MARK: - Mixed Type List
@@ -96,7 +97,8 @@ struct ListValueDemo {
     }
 
     ExampleUtils.printInfo(
-      "ListValue supports mixed types: strings, numbers, bools, and nulls in the same list")
+      "ListValue supports mixed types: strings, numbers, bools, and nulls in the same list"
+    )
   }
 
   // MARK: - Empty List

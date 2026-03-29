@@ -431,30 +431,27 @@ final class JSONSerializationTests: XCTestCase {
 
   // MARK: - Error Handling Tests
 
-  func testSerializationErrors() throws {
+  func testSerializationErrors_groupField_succeeds() throws {
+    var groupDescriptor = MessageDescriptor(name: "MyGroup", parent: fileDescriptor)
+    groupDescriptor.addField(FieldDescriptor(name: "value", number: 1, type: .int32))
+    fileDescriptor.addMessage(groupDescriptor)
+
     var message = MessageDescriptor(name: "ErrorMessage", parent: fileDescriptor)
-    message.addField(FieldDescriptor(name: "group_field", number: 1, type: .group))
+    message.addField(FieldDescriptor(name: "group_field", number: 2, type: .group, typeName: "MyGroup"))
+    message.addNestedMessage(groupDescriptor)
     fileDescriptor.addMessage(message)
 
-    // Create message with group field (unsupported type)
-    var dynamicMessage = messageFactory.createMessage(from: message)
-    let groupMessage = messageFactory.createMessage(from: message)
-    try dynamicMessage.set(groupMessage, forField: "group_field")
+    var groupMsg = messageFactory.createMessage(from: groupDescriptor)
+    try groupMsg.set(42, forField: 1)
 
-    // Group type is not supported
-    XCTAssertThrowsError(try serializer.serialize(dynamicMessage)) { error in
-      if let jsonError = error as? JSONSerializationError {
-        if case .unsupportedFieldType(let type) = jsonError {
-          XCTAssertEqual(type, "group")
-        }
-        else {
-          XCTFail("Wrong error type: \(jsonError)")
-        }
-      }
-      else {
-        XCTFail("Expected JSONSerializationError, got: \(error)")
-      }
-    }
+    var dynamicMessage = messageFactory.createMessage(from: message)
+    try dynamicMessage.set(groupMsg, forField: 2)
+
+    let data = try serializer.serialize(dynamicMessage)
+    XCTAssertFalse(data.isEmpty)
+
+    let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+    XCTAssertNotNil(json?["group_field"] as? [String: Any])
   }
 
   func testJSONSerializationErrorDescriptions() {

@@ -90,7 +90,9 @@ struct SchemaEvolutionExample {
     newer.addField(FieldDescriptor(name: "retries", number: 3, type: .int32))
 
     let decoded = try BinaryDeserializer().deserialize(data, using: newer)
-    print("  Known:   timeout=\(try decoded.get(forField: "timeout") as? Int32 ?? 0), retries=\(try decoded.get(forField: "retries") as? Int32 ?? 0)")
+    print(
+      "  Known:   timeout=\(try decoded.get(forField: "timeout") as? Int32 ?? 0), retries=\(try decoded.get(forField: "retries") as? Int32 ?? 0)"
+    )
     print("  Unknown: \(decoded.unknownFields.count) bytes preserved (was debug_mode)")
 
     let reencoded = try BinarySerializer().serialize(decoded)
@@ -122,7 +124,8 @@ struct SchemaEvolutionExample {
     print("  Same data: \(value == "Alice" ? "YES" : "NO")")
 
     ExampleUtils.printInfo(
-      "Binary format uses field numbers, not names — renaming is always safe")
+      "Binary format uses field numbers, not names — renaming is always safe"
+    )
   }
 
   // MARK: - New Enum Value
@@ -137,7 +140,8 @@ struct SchemaEvolutionExample {
 
     var writerDesc = MessageDescriptor(name: "Doc", fullName: "example.Doc")
     writerDesc.addField(
-      FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "example.Status"))
+      FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "example.Status")
+    )
     writerDesc.addNestedEnum(newEnum)
 
     var msg = MessageFactory().createMessage(from: writerDesc)
@@ -150,7 +154,8 @@ struct SchemaEvolutionExample {
 
     var readerDesc = MessageDescriptor(name: "Doc", fullName: "example.Doc")
     readerDesc.addField(
-      FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "example.Status"))
+      FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "example.Status")
+    )
     readerDesc.addNestedEnum(oldEnum)
 
     let decoded = try BinaryDeserializer().deserialize(data, using: readerDesc)
@@ -159,6 +164,7 @@ struct SchemaEvolutionExample {
     print("  Old reader gets: raw value \(status) (name unknown to old schema)")
 
     ExampleUtils.printInfo(
-      "Unknown enum values are preserved as raw numbers — no data loss")
+      "Unknown enum values are preserved as raw numbers — no data loss"
+    )
   }
 }

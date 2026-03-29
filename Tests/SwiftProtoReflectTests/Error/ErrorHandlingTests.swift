@@ -113,16 +113,22 @@ final class ErrorHandlingTests: XCTestCase {
 
   // MARK: - Serialization of unsupported type
 
-  func test_serialize_groupField_throws() throws {
+  func test_serialize_groupField_succeeds() throws {
+    var innerDesc = MessageDescriptor(name: "G", fullName: "test.G")
+    innerDesc.addField(FieldDescriptor(name: "v", number: 1, type: .int32))
+
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(
       FieldDescriptor(name: "g", number: 1, type: .group, typeName: "test.G")
     )
+    desc.addNestedMessage(innerDesc)
 
-    let innerDesc = MessageDescriptor(name: "G", fullName: "test.G")
     var msg = DynamicMessage(descriptor: desc)
-    try msg.set(DynamicMessage(descriptor: innerDesc), forField: 1)
+    var group = DynamicMessage(descriptor: innerDesc)
+    try group.set(Int32(1), forField: "v")
+    try msg.set(group, forField: 1)
 
-    XCTAssertThrowsError(try BinarySerializer().serialize(msg))
+    let data = try BinarySerializer().serialize(msg)
+    XCTAssertFalse(data.isEmpty)
   }
 }

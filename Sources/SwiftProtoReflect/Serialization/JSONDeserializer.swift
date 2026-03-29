@@ -94,7 +94,7 @@ public struct JSONDeserializer {
       }
 
       let fieldValue = try deserializeFieldValue(jsonValue, for: field, descriptor: descriptor, depth: depth)
-      try message.set(fieldValue, forField: field.name)
+      try message.set(fieldValue, forField: field.number)
     }
 
     return message
@@ -102,16 +102,22 @@ public struct JSONDeserializer {
 
   // MARK: - Private Methods
 
-  /// Finds field by JSON name (supports original names and camelCase).
+  /// Finds field by JSON name (supports original names, camelCase, and extension fields).
   private func findField(byJSONName jsonName: String, in descriptor: MessageDescriptor) -> FieldDescriptor? {
     for field in descriptor.allFields() {
-      // Check original name
       if field.name == jsonName {
         return field
       }
-      // Check JSON name (camelCase)
       if field.jsonName == jsonName {
         return field
+      }
+    }
+    for (_, extField) in descriptor.extensions {
+      if extField.name == jsonName {
+        return extField
+      }
+      if extField.jsonName == jsonName {
+        return extField
       }
     }
     return nil
@@ -308,7 +314,7 @@ public struct JSONDeserializer {
       return try convertJSONToEnum(jsonValue, fieldName: fieldName, enumDescriptor: enumDescriptor)
 
     case .group:
-      throw JSONDeserializationError.unsupportedFieldType(type: "group")
+      return try convertJSONToMessage(jsonValue, typeName: typeName, fieldName: fieldName, depth: depth)
     }
   }
 

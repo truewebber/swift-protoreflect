@@ -473,34 +473,30 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(data.count, 0)  // Empty fields are not serialized in proto3
   }
 
-  func testSerializeUnsupportedFieldType() throws {
+  func testSerializeGroupFieldRoundTrip() throws {
+    var groupDesc = MessageDescriptor(name: "InnerGroup", fullName: "test.InnerGroup")
+    groupDesc.addField(FieldDescriptor(name: "val", number: 1, type: .int32))
+
     var message = MessageDescriptor(name: "GroupMessage", parent: fileDescriptor)
-    message.addField(FieldDescriptor(name: "group_field", number: 1, type: .group))
+    message.addField(
+      FieldDescriptor(name: "group_field", number: 1, type: .group, typeName: "test.InnerGroup")
+    )
+    message.addNestedMessage(groupDesc)
     fileDescriptor.addMessage(message)
 
-    // Create message and force set value through low-level API
     var dynamicMessage = messageFactory.createMessage(from: message)
+    var group = DynamicMessage(descriptor: groupDesc)
+    try group.set(Int32(7), forField: "val")
+    try dynamicMessage.set(group, forField: "group_field")
 
-    // For testing we will create message that passes hasValue check but causes encoding error
+    let data = try serializer.serialize(dynamicMessage)
+    XCTAssertFalse(data.isEmpty)
 
-    // Simple way: create DynamicMessage for group field
-    let groupMessage = messageFactory.createMessage(from: message)
-    try dynamicMessage.set(groupMessage, forField: "group_field")
-
-    // Group type is not supported in value encoding
-    XCTAssertThrowsError(try serializer.serialize(dynamicMessage)) { error in
-      if let serializationError = error as? SerializationError {
-        if case .unsupportedFieldType(let type) = serializationError {
-          XCTAssertEqual(type, "group")
-        }
-        else {
-          XCTFail("Wrong error type: \(serializationError)")
-        }
-      }
-      else {
-        XCTFail("Expected SerializationError, got: \(error)")
-      }
-    }
+    let decoded = try BinaryDeserializer().deserialize(data, using: message)
+    let decodedGroup = try decoded.get(forField: 1) as? DynamicMessage
+    XCTAssertNotNil(decodedGroup)
+    let val = try decodedGroup?.get(forField: "val") as? Int32
+    XCTAssertEqual(val, 7)
   }
 
   func testSerializationErrorDescriptions() {

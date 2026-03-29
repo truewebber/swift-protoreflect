@@ -53,7 +53,12 @@ struct NestedMessagesExample {
     outerDesc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     outerDesc.addField(
       FieldDescriptor(
-        name: "address", number: 2, type: .message, typeName: "example.Address"))
+        name: "address",
+        number: 2,
+        type: .message,
+        typeName: "example.Address"
+      )
+    )
     outerDesc.addNestedMessage(addressDesc)
 
     var address = DynamicMessage(descriptor: addressDesc)
@@ -78,7 +83,8 @@ struct NestedMessagesExample {
     }
 
     ExampleUtils.printInfo(
-      "Nested messages are recursively serialized and deserialized using descriptor lookups")
+      "Nested messages are recursively serialized and deserialized using descriptor lookups"
+    )
   }
 
   // MARK: - Deep Nesting
@@ -92,13 +98,15 @@ struct NestedMessagesExample {
     var midDesc = MessageDescriptor(name: "Mid", fullName: "example.Mid")
     midDesc.addField(FieldDescriptor(name: "value", number: 1, type: .string))
     midDesc.addField(
-      FieldDescriptor(name: "leaf", number: 2, type: .message, typeName: "example.Leaf"))
+      FieldDescriptor(name: "leaf", number: 2, type: .message, typeName: "example.Leaf")
+    )
     midDesc.addNestedMessage(leafDesc)
 
     var rootDesc = MessageDescriptor(name: "Root", fullName: "example.Root")
     rootDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
     rootDesc.addField(
-      FieldDescriptor(name: "mid", number: 2, type: .message, typeName: "example.Mid"))
+      FieldDescriptor(name: "mid", number: 2, type: .message, typeName: "example.Mid")
+    )
     rootDesc.addNestedMessage(midDesc)
 
     var leaf = DynamicMessage(descriptor: leafDesc)
@@ -145,7 +153,12 @@ struct NestedMessagesExample {
     outerDesc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     outerDesc.addField(
       FieldDescriptor(
-        name: "location", number: 2, type: .message, typeName: "example.Coord"))
+        name: "location",
+        number: 2,
+        type: .message,
+        typeName: "example.Coord"
+      )
+    )
     outerDesc.addNestedMessage(innerDesc)
 
     var coord = DynamicMessage(descriptor: innerDesc)

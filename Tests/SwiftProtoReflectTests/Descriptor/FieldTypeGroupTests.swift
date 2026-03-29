@@ -11,42 +11,58 @@ final class FieldTypeGroupTests: XCTestCase {
 
   // MARK: - Binary Serialization
 
-  func test_binarySerialize_groupField_throwsUnsupported() throws {
+  func test_binarySerialize_groupField_succeeds() throws {
+    var innerDesc = MessageDescriptor(name: "MyGroup", fullName: "test.MyGroup")
+    innerDesc.addField(FieldDescriptor(name: "v", number: 1, type: .int32))
+
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     desc.addField(
       FieldDescriptor(name: "my_group", number: 1, type: .group, typeName: "test.MyGroup")
     )
+    desc.addNestedMessage(innerDesc)
 
-    let innerDesc = MessageDescriptor(name: "MyGroup", fullName: "test.MyGroup")
     var msg = DynamicMessage(descriptor: desc)
-    try msg.set(DynamicMessage(descriptor: innerDesc), forField: 1)
+    var group = DynamicMessage(descriptor: innerDesc)
+    try group.set(Int32(99), forField: "v")
+    try msg.set(group, forField: 1)
 
     let serializer = BinarySerializer()
-    XCTAssertThrowsError(try serializer.serialize(msg)) { error in
-      guard let serError = error as? SerializationError,
-        case .unsupportedFieldType(let typeName) = serError
-      else {
-        XCTFail("Expected unsupportedFieldType error, got \(error)")
-        return
-      }
-      XCTAssertEqual(typeName, "group")
-    }
+    let data = try serializer.serialize(msg)
+    XCTAssertFalse(data.isEmpty)
+
+    let decoded = try BinaryDeserializer().deserialize(data, using: desc)
+    let decodedGroup = try decoded.get(forField: 1) as? DynamicMessage
+    XCTAssertNotNil(decodedGroup)
+    let v = try decodedGroup?.get(forField: "v") as? Int32
+    XCTAssertEqual(v, 99)
   }
 
   // MARK: - JSON Serialization
 
-  func test_jsonSerialize_groupField_throwsUnsupported() throws {
+  func test_jsonSerialize_groupField_succeeds() throws {
+    var innerDesc = MessageDescriptor(name: "MyGroup", fullName: "test.MyGroup")
+    innerDesc.addField(FieldDescriptor(name: "v", number: 1, type: .int32))
+
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     desc.addField(
       FieldDescriptor(name: "my_group", number: 1, type: .group, typeName: "test.MyGroup")
     )
+    desc.addNestedMessage(innerDesc)
 
-    let innerDesc = MessageDescriptor(name: "MyGroup", fullName: "test.MyGroup")
+    var group = DynamicMessage(descriptor: innerDesc)
+    try group.set(Int32(42), forField: "v")
+
     var msg = DynamicMessage(descriptor: desc)
-    try msg.set(DynamicMessage(descriptor: innerDesc), forField: 1)
+    try msg.set(group, forField: 1)
 
-    let serializer = JSONSerializer()
-    XCTAssertThrowsError(try serializer.serialize(msg))
+    let serializer = JSONSerializer(options: JSONSerializationOptions(useOriginalFieldNames: true))
+    let data = try serializer.serialize(msg)
+    XCTAssertFalse(data.isEmpty)
+
+    let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+    let groupJson = json?["my_group"] as? [String: Any]
+    XCTAssertNotNil(groupJson)
+    XCTAssertEqual(groupJson?["v"] as? Int, 42)
   }
 
   // MARK: - Binary Deserialization

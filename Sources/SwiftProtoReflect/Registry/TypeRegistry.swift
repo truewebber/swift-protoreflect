@@ -193,6 +193,26 @@ public class TypeRegistry: @unchecked Sendable {
     }
   }
 
+  // MARK: - Proto2-aware Lookup Methods
+
+  /// Returns the syntax of a registered message type.
+  ///
+  /// - Parameter fullName: Full message name.
+  /// - Returns: Syntax string (`"proto2"` or `"proto3"`) or nil if not found.
+  public func syntaxForType(_ fullName: String) -> String? {
+    return findMessage(named: fullName)?.syntax
+  }
+
+  /// Finds an extension field descriptor for a registered message.
+  ///
+  /// - Parameters:
+  ///   - messageFullName: Full name of the message that declares the extension range.
+  ///   - fieldNumber: Extension field number.
+  /// - Returns: `FieldDescriptor` for the extension or nil if not found.
+  public func findExtension(forMessage messageFullName: String, fieldNumber: Int) -> FieldDescriptor? {
+    return findMessage(named: messageFullName)?.extensions[fieldNumber]
+  }
+
   // MARK: - Query Methods
 
   /// Checks if file is registered.

@@ -72,13 +72,13 @@ public struct FileDescriptor: Sendable {
   /// - Returns: Updated FileDescriptor.
   @discardableResult
   public mutating func addMessage(_ messageDescriptor: MessageDescriptor) -> Self {
-    // Create new message considering parent file
     var newMessage = messageDescriptor
 
-    // Set file descriptor path if not specified
     if newMessage.fileDescriptorPath == nil && newMessage.parentMessageFullName == nil {
       newMessage.fileDescriptorPath = self.name
     }
+
+    newMessage.syntax = self.syntax
 
     messages[messageDescriptor.name] = newMessage
     return self

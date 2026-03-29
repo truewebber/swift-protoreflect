@@ -57,7 +57,8 @@ struct WrapperTypesDemo {
     print("  Invalid:     \(StringValueHandler.validate(42))")
 
     ExampleUtils.printInfo(
-      "StringValue wraps a string — useful for nullable string fields in proto3")
+      "StringValue wraps a string — useful for nullable string fields in proto3"
+    )
   }
 
   // MARK: - Numeric Wrappers
@@ -82,7 +83,8 @@ struct WrapperTypesDemo {
     }
 
     ExampleUtils.printInfo(
-      "Each numeric wrapper wraps a single primitive — all support round-trip conversion")
+      "Each numeric wrapper wraps a single primitive — all support round-trip conversion"
+    )
   }
 
   // MARK: - Bool and Bytes
@@ -103,10 +105,12 @@ struct WrapperTypesDemo {
     let bytesDynamic = try BytesValueHandler.createDynamic(from: testData)
     let bytesBack = try BytesValueHandler.createSpecialized(from: bytesDynamic) as? Data ?? Data()
     print(
-      "  BytesValue: 0xCAFEBABE → 0x\(bytesBack.map { String(format: "%02X", $0) }.joined())")
+      "  BytesValue: 0xCAFEBABE → 0x\(bytesBack.map { String(format: "%02X", $0) }.joined())"
+    )
 
     ExampleUtils.printInfo(
-      "BoolValue distinguishes unset from false; BytesValue wraps arbitrary binary data")
+      "BoolValue distinguishes unset from false; BytesValue wraps arbitrary binary data"
+    )
   }
 
   // MARK: - Nullable Pattern
@@ -142,6 +146,7 @@ struct WrapperTypesDemo {
     }
 
     ExampleUtils.printInfo(
-      "All 9 wrapper types are automatically registered in WellKnownTypesRegistry")
+      "All 9 wrapper types are automatically registered in WellKnownTypesRegistry"
+    )
   }
 }

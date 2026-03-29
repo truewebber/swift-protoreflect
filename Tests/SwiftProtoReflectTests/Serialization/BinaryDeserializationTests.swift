@@ -543,21 +543,26 @@ final class BinaryDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserialize_groupWireTypeInUnknownField_throwsError() {
+  func testDeserialize_groupWireTypeInUnknownField_skipsGroup() throws {
     var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "known", number: 1, type: .int32))
 
-    // Field 2 is NOT in the descriptor (unknown field)
-    // Tag = (2 << 3) | 3 = 19 = 0x13 (field 2, startGroup wire type)
+    // Field 1 (known): tag=0x08, value=42=0x2A
+    // Field 2 (unknown startGroup): tag=0x13 (field 2, startGroup)
+    // Inside group: field 1 varint tag=0x08, value=10=0x0A
+    // endGroup for field 2: tag=0x14 (field 2, endGroup)
+    let data = Data([0x08, 0x2A, 0x13, 0x08, 0x0A, 0x14])
+    let result = try deserializer.deserialize(data, using: message)
+    XCTAssertEqual(try result.get(forField: "known") as? Int32, Int32(42))
+  }
+
+  func testDeserialize_groupWireTypeInUnknownField_truncated_throwsError() {
+    var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
+    message.addField(FieldDescriptor(name: "known", number: 1, type: .int32))
+
+    // startGroup without endGroup → truncated
     let groupData = Data([0x13])
-    XCTAssertThrowsError(try deserializer.deserialize(groupData, using: message)) { error in
-      if case .unsupportedFieldType(let type) = error as? DeserializationError {
-        XCTAssertEqual(type, "group")
-      }
-      else {
-        XCTFail("Expected unsupportedFieldType error, got: \(error)")
-      }
-    }
+    XCTAssertThrowsError(try deserializer.deserialize(groupData, using: message))
   }
 
   func testDeserialize_preserveUnknownFieldsFalse_discardsUnknownData() throws {

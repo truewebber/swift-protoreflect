@@ -188,6 +188,22 @@ public struct EnumDescriptor: Equatable, Sendable {
     return errors
   }
 
+  /// Validates the enum against proto2 rules.
+  ///
+  /// Proto2 enums must have at least one value but do not require
+  /// a value with number 0 (unlike proto3).
+  ///
+  /// - Returns: Array of validation error strings. Empty if valid.
+  public func validateProto2() -> [String] {
+    var errors: [String] = []
+
+    if valuesByName.isEmpty && valuesByNumber.isEmpty {
+      errors.append("Enum '\(fullName)' must have at least one value")
+    }
+
+    return errors
+  }
+
   // MARK: - Equatable
 
   public static func == (lhs: EnumDescriptor, rhs: EnumDescriptor) -> Bool {

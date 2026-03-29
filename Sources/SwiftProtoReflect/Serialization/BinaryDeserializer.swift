@@ -63,8 +63,7 @@ public struct BinaryDeserializer {
         throw DeserializationError.invalidWireType(tag: UInt32(tag))
       }
 
-      // Find field by number
-      if let field = descriptor.field(number: fieldNumber) {
+      if let field = descriptor.field(number: fieldNumber) ?? descriptor.extensions[fieldNumber] {
         try decodeField(field, wireType: wireType, from: &decoder, into: &message, descriptor: descriptor)
       }
       else {
@@ -138,7 +137,7 @@ public struct BinaryDeserializer {
     descriptor: MessageDescriptor
   ) throws {
     let value = try decodeValue(type: field.type, typeName: field.typeName, from: &decoder, descriptor: descriptor)
-    try message.set(value, forField: field.name)
+    try message.set(value, forField: field.number)
   }
 
   /// Decodes repeated field.
@@ -150,7 +149,6 @@ public struct BinaryDeserializer {
   ) throws {
     let value = try decodeValue(type: field.type, typeName: field.typeName, from: &decoder, descriptor: descriptor)
 
-    // Get existing array or create new one
     let fieldAccess = FieldAccessor(message)
     var array: [Any] = []
 
@@ -159,7 +157,7 @@ public struct BinaryDeserializer {
     }
 
     array.append(value)
-    try message.set(array, forField: field.name)
+    try message.set(array, forField: field.number)
   }
 
   /// Decodes packed repeated field.
@@ -183,7 +181,7 @@ public struct BinaryDeserializer {
       throw DeserializationError.malformedPackedField(fieldName: field.name)
     }
 
-    try message.set(array, forField: field.name)
+    try message.set(array, forField: field.number)
   }
 
   /// Decodes map field.
@@ -247,7 +245,7 @@ public struct BinaryDeserializer {
 
     if let key = key as? AnyHashable, let value = value {
       map[key] = value
-      try message.set(map, forField: field.name)
+      try message.set(map, forField: field.number)
     }
   }
 
@@ -339,8 +337,49 @@ public struct BinaryDeserializer {
       return Int32(truncatingIfNeeded: varint)
 
     case .group:
-      throw DeserializationError.unsupportedFieldType(type: "group")
+      guard let typeName = typeName else {
+        throw DeserializationError.missingTypeName(fieldType: "group")
+      }
+
+      let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
+      guard let groupDescriptor = descriptor.nestedMessage(named: simpleName) else {
+        throw DeserializationError.unsupportedNestedMessage(typeName: typeName)
+      }
+
+      return try decodeGroupMessage(from: &decoder, using: groupDescriptor)
     }
+  }
+
+  /// Decodes a group message, reading fields until endGroup tag.
+  private func decodeGroupMessage(
+    from decoder: inout BinaryDecoder,
+    using descriptor: MessageDescriptor
+  ) throws -> DynamicMessage {
+    let factory = MessageFactory()
+    var message = factory.createMessage(from: descriptor)
+
+    while decoder.hasMoreData {
+      let tag = try decoder.readVarint()
+      let fieldNumber = Int(tag >> 3)
+      let wireType = WireType(rawValue: UInt32(tag & 0x7))
+
+      guard let wireType = wireType else {
+        throw DeserializationError.invalidWireType(tag: UInt32(tag))
+      }
+
+      if wireType == .endGroup {
+        return message
+      }
+
+      if let field = descriptor.field(number: fieldNumber) {
+        try decodeField(field, wireType: wireType, from: &decoder, into: &message, descriptor: descriptor)
+      }
+      else {
+        _ = try skipUnknownField(wireType: wireType, from: &decoder)
+      }
+    }
+
+    throw DeserializationError.truncatedMessage
   }
 
   /// Skips unknown field and returns its data.
@@ -361,12 +400,35 @@ public struct BinaryDeserializer {
       let length = try decoder.readVarint()
       _ = try decoder.readBytes(Int(length))
 
-    case .startGroup, .endGroup:
-      throw DeserializationError.unsupportedFieldType(type: "group")
+    case .startGroup:
+      try skipGroup(from: &decoder)
+
+    case .endGroup:
+      break
     }
 
     let endPosition = decoder.position
     return decoder.data.subdata(in: startPosition..<endPosition)
+  }
+
+  /// Skips an entire group by reading until the matching endGroup tag.
+  private func skipGroup(from decoder: inout BinaryDecoder) throws {
+    while decoder.hasMoreData {
+      let tag = try decoder.readVarint()
+      let wireType = WireType(rawValue: UInt32(tag & 0x7))
+
+      guard let wireType = wireType else {
+        throw DeserializationError.invalidWireType(tag: UInt32(tag))
+      }
+
+      if wireType == .endGroup {
+        return
+      }
+
+      _ = try skipUnknownField(wireType: wireType, from: &decoder)
+    }
+
+    throw DeserializationError.truncatedMessage
   }
 
   /// Determines wire type for field.

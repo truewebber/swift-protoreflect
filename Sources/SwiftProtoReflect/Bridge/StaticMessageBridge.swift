@@ -325,7 +325,7 @@ struct FieldExtractorVisitor: SwiftProtobuf.Visitor {
     value: G,
     fieldNumber: Int
   ) throws {
-    record(fieldNumber, .group)
+    record(fieldNumber, .group, typeName: G.protoMessageName)
   }
 
   // Repeated fields
@@ -390,7 +390,7 @@ struct FieldExtractorVisitor: SwiftProtobuf.Visitor {
     value: [G],
     fieldNumber: Int
   ) throws {
-    record(fieldNumber, .group, repeated: true)
+    record(fieldNumber, .group, repeated: true, typeName: G.protoMessageName)
   }
 
   // Map fields

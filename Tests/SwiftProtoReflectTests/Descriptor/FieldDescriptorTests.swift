@@ -702,8 +702,6 @@ final class FieldDescriptorTests: XCTestCase {
     // Verify properties
     XCTAssertEqual(field.defaultValue, .string(defaultVal))
 
-    // Verify that fields with different defaultValue are considered equal,
-    // since defaultValue is not compared in == method
     let field2 = FieldDescriptor(
       name: "field",
       number: 1,
@@ -711,17 +709,24 @@ final class FieldDescriptorTests: XCTestCase {
       defaultValue: .string("different_default")
     )
 
-    // Note that although defaultValue differs, FieldDescriptor.== doesn't consider this
-    XCTAssertEqual(field, field2)
+    XCTAssertNotEqual(field, field2)
 
-    // Fields with and without defaultValue are also considered equal
     let field3 = FieldDescriptor(
       name: "field",
       number: 1,
       type: .string
     )
 
-    XCTAssertEqual(field, field3)
+    XCTAssertNotEqual(field, field3)
+
+    let field4 = FieldDescriptor(
+      name: "field",
+      number: 1,
+      type: .string,
+      defaultValue: .string(defaultVal)
+    )
+
+    XCTAssertEqual(field, field4)
   }
 
   func testValueFieldInfoWithScalarType() {

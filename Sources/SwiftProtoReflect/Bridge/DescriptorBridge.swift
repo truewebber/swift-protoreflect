@@ -59,6 +59,14 @@ public struct DescriptorBridge {
       return oneofProto
     }
 
+    // Convert extension ranges
+    proto.extensionRange = messageDescriptor.extensionRanges.map { range in
+      var rangeProto = Google_Protobuf_DescriptorProto.ExtensionRange()
+      rangeProto.start = Int32(range.start)
+      rangeProto.end = Int32(range.end)
+      return rangeProto
+    }
+
     // Set options if present
     if !messageDescriptor.options.isEmpty {
       proto.options = try toProtobufMessageOptions(from: messageDescriptor.options)
@@ -96,11 +104,13 @@ public struct DescriptorBridge {
     }
 
     // Convert fields (now with nested messages available for map detection)
+    let syntax = messageDescriptor.syntax
     for fieldProto in protobufDescriptor.field {
       let field = try fromProtobufFieldDescriptor(
         fieldProto,
         messageDescriptor: protobufDescriptor,
-        nestedMessages: messageDescriptor.nestedMessages
+        nestedMessages: messageDescriptor.nestedMessages,
+        syntax: syntax
       )
       messageDescriptor.addField(field)
     }
@@ -109,6 +119,12 @@ public struct DescriptorBridge {
     for (index, oneofProto) in protobufDescriptor.oneofDecl.enumerated() {
       let oneof = OneofDescriptor(name: oneofProto.name, index: index)
       messageDescriptor.addOneofDecl(oneof)
+    }
+
+    // Convert extension ranges
+    for rangeProto in protobufDescriptor.extensionRange {
+      let range = ExtensionRange(start: Int(rangeProto.start), end: Int(rangeProto.end))
+      messageDescriptor.addExtensionRange(range)
     }
 
     // Convert options
@@ -235,7 +251,9 @@ public struct DescriptorBridge {
 
     let oneofIndex: Int? = protobufDescriptor.hasOneofIndex ? Int(protobufDescriptor.oneofIndex) : nil
 
-    // Create field descriptor
+    let defaultValue = parseDefaultValue(protobufDescriptor, fieldType: fieldType)
+    let isPacked = parseIsPacked(protobufDescriptor)
+
     let fieldDescriptor = FieldDescriptor(
       name: protobufDescriptor.name,
       number: Int(protobufDescriptor.number),
@@ -247,16 +265,14 @@ public struct DescriptorBridge {
       isRequired: isRequired,
       isMap: isMap,
       oneofIndex: oneofIndex,
-      mapEntryInfo: mapEntryInfo
+      mapEntryInfo: mapEntryInfo,
+      defaultValue: defaultValue,
+      isPacked: isPacked
     )
 
     // Convert options
     if protobufDescriptor.hasOptions {
       _ = try fromProtobufFieldOptions(protobufDescriptor.options)
-      // TODO: Add options support to FieldDescriptor
-      // for (key, value) in options {
-      //   fieldDescriptor.setOption(key: key, value: value)
-      // }
     }
 
     return fieldDescriptor
@@ -466,6 +482,63 @@ public struct DescriptorBridge {
     }
 
     return serviceDescriptor
+  }
+
+  // MARK: - Proto2 Parsing Helpers
+
+  /// Parses default value from a protobuf field descriptor.
+  ///
+  /// The default value in protobuf descriptors is always a string representation.
+  /// This method converts it to the appropriate `DescriptorOption` type.
+  private func parseDefaultValue(
+    _ proto: Google_Protobuf_FieldDescriptorProto,
+    fieldType: FieldType
+  ) -> DescriptorOption? {
+    guard proto.hasDefaultValue, !proto.defaultValue.isEmpty else {
+      return nil
+    }
+
+    let raw = proto.defaultValue
+    switch fieldType {
+    case .string:
+      return .string(raw)
+    case .bytes:
+      return .bytes(Data(raw.utf8))
+    case .bool:
+      return .bool(raw == "true" || raw == "1")
+    case .float:
+      guard let val = Float(raw) else { return .string(raw) }
+      return .float(val)
+    case .double:
+      guard let val = Double(raw) else { return .string(raw) }
+      return .double(val)
+    case .int32, .sint32, .sfixed32:
+      guard let val = Int(raw) else { return .string(raw) }
+      return .int(val)
+    case .int64, .sint64, .sfixed64:
+      guard let val = Int(raw) else { return .string(raw) }
+      return .int(val)
+    case .uint32, .fixed32:
+      guard let val = Int(raw) else { return .string(raw) }
+      return .int(val)
+    case .uint64, .fixed64:
+      guard let val = Int(raw) else { return .string(raw) }
+      return .int(val)
+    case .enum:
+      return .string(raw)
+    case .message, .group:
+      return nil
+    }
+  }
+
+  /// Extracts packed option from a protobuf field descriptor.
+  ///
+  /// Returns `nil` if the option is not explicitly set.
+  private func parseIsPacked(_ proto: Google_Protobuf_FieldDescriptorProto) -> Bool? {
+    guard proto.hasOptions, proto.options.hasPacked else {
+      return nil
+    }
+    return proto.options.packed
   }
 
   // MARK: - Helper Methods

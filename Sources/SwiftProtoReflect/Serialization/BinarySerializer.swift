@@ -47,15 +47,13 @@ public struct BinarySerializer: Sendable {
   /// Encodes message to binary encoder.
   private func encodeMessage(_ message: DynamicMessage, to encoder: inout BinaryEncoder) throws {
     let descriptor = message.descriptor
-
-    // Get all fields with data
     let fieldAccess = FieldAccessor(message)
 
-    // Sort fields by numbers for deterministic output
-    let sortedFields = descriptor.allFields().sorted { $0.number < $1.number }
+    var allFields = descriptor.allFields()
+    allFields.append(contentsOf: descriptor.extensions.values)
+    let sortedFields = allFields.sorted { $0.number < $1.number }
 
-    for field in sortedFields where fieldAccess.hasValue(field.name) {
-
+    for field in sortedFields where fieldAccess.hasValue(field.number) {
       try encodeField(field, from: message, to: &encoder)
     }
 
@@ -69,12 +67,13 @@ public struct BinarySerializer: Sendable {
     throws
   {
     let fieldAccess = FieldAccessor(message)
+    let syntax = message.descriptor.syntax
 
     if field.isMap {
       try encodeMapField(field, from: fieldAccess, to: &encoder)
     }
     else if field.isRepeated {
-      try encodeRepeatedField(field, from: fieldAccess, to: &encoder)
+      try encodeRepeatedField(field, from: fieldAccess, syntax: syntax, to: &encoder)
     }
     else {
       try encodeSingleField(field, from: fieldAccess, to: &encoder)
@@ -87,7 +86,7 @@ public struct BinarySerializer: Sendable {
     from fieldAccess: FieldAccessor,
     to encoder: inout BinaryEncoder
   ) throws {
-    guard let value = fieldAccess.getValue(field.name, as: Any.self) else {
+    guard let value = fieldAccess.getValue(field.number, as: Any.self) else {
       throw SerializationError.missingFieldValue(fieldName: field.name)
     }
 
@@ -95,24 +94,29 @@ public struct BinarySerializer: Sendable {
     encoder.writeVarint(UInt64(tag))
 
     try encodeValue(value, type: field.type, typeName: field.typeName, to: &encoder)
+
+    if case .group = field.type {
+      let endTag = UInt32((UInt32(field.number) << 3) | WireType.endGroup.rawValue)
+      encoder.writeVarint(UInt64(endTag))
+    }
   }
 
   /// Encodes repeated field.
   private func encodeRepeatedField(
     _ field: FieldDescriptor,
     from fieldAccess: FieldAccessor,
+    syntax: String,
     to encoder: inout BinaryEncoder
   ) throws {
-    guard let values = fieldAccess.getValue(field.name, as: [Any].self) else {
+    guard let values = fieldAccess.getValue(field.number, as: [Any].self) else {
       throw SerializationError.invalidFieldType(
         fieldName: field.name,
         expectedType: "Array",
-        actualType: String(describing: type(of: fieldAccess.getValue(field.name, as: Any.self)))
+        actualType: String(describing: type(of: fieldAccess.getValue(field.number, as: Any.self)))
       )
     }
 
-    // For packed repeated fields (numeric types in proto3)
-    if isPackable(field.type) && options.usePackedRepeated {
+    if isPackable(field.type) && field.effectiveIsPacked(syntax: syntax) {
       try encodePackedRepeatedField(field, values: values, to: &encoder)
     }
     else {
@@ -155,11 +159,11 @@ public struct BinarySerializer: Sendable {
       throw SerializationError.missingMapEntryInfo(fieldName: field.name)
     }
 
-    guard let mapValues = fieldAccess.getValue(field.name, as: [AnyHashable: Any].self) else {
+    guard let mapValues = fieldAccess.getValue(field.number, as: [AnyHashable: Any].self) else {
       throw SerializationError.invalidFieldType(
         fieldName: field.name,
         expectedType: "Dictionary",
-        actualType: String(describing: type(of: fieldAccess.getValue(field.name, as: Any.self)))
+        actualType: String(describing: type(of: fieldAccess.getValue(field.number, as: Any.self)))
       )
     }
 
@@ -331,7 +335,13 @@ public struct BinarySerializer: Sendable {
       encoder.writeVarint(UInt64(bitPattern: Int64(enumValue)))
 
     case .group:
-      throw SerializationError.unsupportedFieldType(type: "group")
+      guard let groupMessage = value as? DynamicMessage else {
+        throw SerializationError.valueTypeMismatch(
+          expected: "DynamicMessage (group)",
+          actual: String(describing: Swift.type(of: value))
+        )
+      }
+      try encodeMessage(groupMessage, to: &encoder)
     }
   }
 

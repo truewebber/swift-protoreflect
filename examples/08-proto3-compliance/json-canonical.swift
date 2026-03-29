@@ -62,7 +62,8 @@ struct JsonCanonicalExample {
     print("  regular_int type:  \(type(of: json["regular_int"]!)) = \(json["regular_int"]!)")
 
     ExampleUtils.printInfo(
-      "int64/uint64 are JSON strings to avoid JavaScript precision loss; int32 stays a number")
+      "int64/uint64 are JSON strings to avoid JavaScript precision loss; int32 stays a number"
+    )
   }
 
   // MARK: - Bytes as Base64
@@ -88,7 +89,8 @@ struct JsonCanonicalExample {
     print("  Decoded data:      \"\(String(data: decoded, encoding: .utf8)!)\"")
 
     ExampleUtils.printInfo(
-      "bytes fields use standard base64 encoding in JSON per proto3 spec")
+      "bytes fields use standard base64 encoding in JSON per proto3 spec"
+    )
   }
 
   // MARK: - Enum as Name
@@ -105,7 +107,8 @@ struct JsonCanonicalExample {
     var desc = MessageDescriptor(name: "Account", fullName: "example.Account")
     desc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     desc.addField(
-      FieldDescriptor(name: "status", number: 2, type: .enum, typeName: "example.Status"))
+      FieldDescriptor(name: "status", number: 2, type: .enum, typeName: "example.Status")
+    )
     desc.addNestedEnum(statusEnum)
 
     var msg = MessageFactory().createMessage(from: desc)
@@ -122,7 +125,8 @@ struct JsonCanonicalExample {
     print("  Round-trip:   enum name → Int32(\(roundTripped))")
 
     ExampleUtils.printInfo(
-      "Enum fields serialize as string names in JSON and deserialize back to numbers")
+      "Enum fields serialize as string names in JSON and deserialize back to numbers"
+    )
   }
 
   // MARK: - Include Default Values
@@ -139,7 +143,8 @@ struct JsonCanonicalExample {
     desc.addField(FieldDescriptor(name: "age", number: 2, type: .int32))
     desc.addField(FieldDescriptor(name: "active", number: 3, type: .bool))
     desc.addField(
-      FieldDescriptor(name: "role", number: 4, type: .enum, typeName: "example.Role"))
+      FieldDescriptor(name: "role", number: 4, type: .enum, typeName: "example.Role")
+    )
     desc.addNestedEnum(statusEnum)
 
     let msg = MessageFactory().createMessage(from: desc)
@@ -149,11 +154,13 @@ struct JsonCanonicalExample {
     print("  Default mode (empty message):  \(jsonDefault)")
 
     let fullSerializer = JSONSerializer(
-      options: JSONSerializationOptions(includeDefaultValues: true))
+      options: JSONSerializationOptions(includeDefaultValues: true)
+    )
     let jsonFull = try fullSerializer.serializeToJSONObject(msg)
     print("  includeDefaultValues=true:     \(jsonFull)")
 
     ExampleUtils.printInfo(
-      "includeDefaultValues emits zero/empty/false for all unset scalar fields")
+      "includeDefaultValues emits zero/empty/false for all unset scalar fields"
+    )
   }
 }
