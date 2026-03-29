@@ -28,7 +28,7 @@ help:
 	@echo "  make format                   - Format the Swift code in-place."
 	@echo "  make test                     - Run unit tests."
 	@echo "  make coverage                 - Generate a code coverage report."
-	@echo "  make test-examples            - Run all 38 working examples to verify they work correctly."
+	@echo "  make test-examples            - Run all 47 working examples to verify they work correctly."
 	@echo "  make list-toolchains          - List available Swift toolchains."
 	@echo ""
 	@echo "Environment variables:"
@@ -67,9 +67,9 @@ coverage:
 		-use-color
 
 
-## Run all 38 working examples to verify they work correctly
+## Run all 47 working examples to verify they work correctly
 test-examples:
-	@echo "Running all 38 working examples to verify they work correctly..."
+	@echo "Running all 47 working examples to verify they work correctly..."
 	@echo "(Excluding ProtoREPL - interactive example that requires user input)"
 	@cd examples && \
 	examples=( \
@@ -77,9 +77,10 @@ test-examples:
 		"ComplexMessages" "NestedOperations" "NestedTypes" "FieldManipulation" "MessageCloning" "ConditionalLogic" "PerformanceOptimization" \
 		"ProtobufSerialization" "JsonConversion" "BinaryData" "Streaming" "Compression" \
 		"TypeRegistry" "FileLoading" "DependencyResolution" "SchemaValidation" \
-		"TimestampDemo" "DurationDemo" "EmptyDemo" "FieldMaskDemo" "StructDemo" "ValueDemo" "AnyDemo" "WellKnownRegistry" \
+		"TimestampDemo" "DurationDemo" "EmptyDemo" "FieldMaskDemo" "StructDemo" "ValueDemo" "AnyDemo" "WellKnownRegistry" "WrapperTypesDemo" "ListValueDemo" \
 		"DescriptorBridge" "StaticMessageBridge" "BatchOperations" "MemoryOptimization" "ThreadSafety" "CustomExtensions" \
 		"ConfigurationSystem" "ApiGateway" "MessageTransform" "ValidationFramework" \
+		"SyntaxAndDefaults" "OptionalPresence" "UnknownFields" "JsonCanonical" "SchemaEvolution" "NestedMessages" \
 	); \
 	failed=(); \
 	passed=0; \
