@@ -43,6 +43,7 @@ SwiftProtoReflect utilizes a layered architecture with the following components:
 - **FieldDescriptor**: Contains field metadata (type, name, number, options, map entry info, proto3Optional)
 - **EnumDescriptor**: Defines enum types and values with proto3 validation (zero-value requirement)
 - **ServiceDescriptor**: Describes gRPC service definitions with method introspection
+- **DescriptorParent**: Protocol implemented by `FileDescriptor` and `MessageDescriptor` to provide a typed parent context; enables `MessageDescriptor` and `EnumDescriptor` to derive their fully-qualified `fullName`, `syntax`, and `fileDescriptorPath` from the parent without `Any?` casts
 
 ### 4.2 Dynamic Message
 - **DynamicMessage**: Runtime representation of a protobuf message with field validation and unknown fields storage
@@ -178,6 +179,7 @@ let dynamicFromStatic = try DynamicMessage.fromStatic(staticPerson)
 Sources/SwiftProtoReflect/          # 29 source files
 ├── Descriptor/                     # Proto descriptor types
 │   ├── DescriptorOption.swift      # Descriptor option values
+│   ├── DescriptorParent.swift      # Protocol for parent context (FileDescriptor/MessageDescriptor)
 │   ├── EnumDescriptor.swift        # Enum types with proto3 validation
 │   ├── FieldDescriptor.swift       # Field metadata (type, proto3Optional, mapEntryInfo)
 │   ├── FileDescriptor.swift        # File-level metadata with syntax tracking
@@ -212,12 +214,12 @@ Sources/SwiftProtoReflect/          # 29 source files
     ├── AnyHandler.swift            # google.protobuf.Any
     └── WrapperHandlers.swift       # All 9 wrapper types
 
-Tests/SwiftProtoReflectTests/       # 74 test files, 1482 tests
-├── Descriptor/                     # Descriptor system tests (12 files)
+Tests/SwiftProtoReflectTests/       # 85 test files, 1689 tests
+├── Descriptor/                     # Descriptor system tests (13 files)
 ├── Dynamic/                        # Dynamic message tests (7 files)
-├── Serialization/                  # Serialization tests (12 files)
-├── Registry/                       # Registry tests (2 files)
-├── Bridge/                         # Bridge tests (6 files)
+├── Serialization/                  # Serialization tests (13 files)
+├── Registry/                       # Registry tests (4 files)
+├── Bridge/                         # Bridge tests (10 files)
 ├── Integration/                    # Well-Known Types tests (11 files)
 ├── Spec/                           # Proto3 spec compliance tests (3 files)
 ├── Compatibility/                  # Cross-platform / C++ compat tests (3 files)
