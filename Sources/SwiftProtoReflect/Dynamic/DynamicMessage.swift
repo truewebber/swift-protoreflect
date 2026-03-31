@@ -550,7 +550,11 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
 
       // Check if message type matches expected
       let message = value as! DynamicMessage
-      let expectedTypeName = field.typeName ?? ""
+      let rawExpectedTypeName = field.typeName ?? ""
+      // Proto typeName may have a leading dot (e.g. ".pkg.Foo"); strip it before comparing.
+      let expectedTypeName =
+        rawExpectedTypeName.hasPrefix(".")
+        ? String(rawExpectedTypeName.dropFirst()) : rawExpectedTypeName
       let actualTypeName = message.descriptor.fullName
 
       guard expectedTypeName == actualTypeName else {

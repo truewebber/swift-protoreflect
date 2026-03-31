@@ -81,38 +81,50 @@ public struct MessageDescriptor: Sendable {
     self.options = options
   }
 
-  /// Creates a new MessageDescriptor instance with a base name.
-  ///
-  /// Full name will be generated automatically based on parent file or message.
-  /// Syntax is inherited from the parent when available.
+  /// Creates a new `MessageDescriptor` with its `fullName` derived from the parent.
   ///
   /// - Parameters:
-  ///   - name: Message name.
-  ///   - parent: Parent file or message.
+  ///   - name: Simple message name (e.g., `"Person"`).
+  ///   - parent: Parent descriptor context. Pass a `FileDescriptor` for top-level
+  ///     messages or a `MessageDescriptor` for nested messages. Pass `nil` to use
+  ///     `name` as both the simple name and `fullName`.
   ///   - options: Message options.
   public init(
     name: String,
-    parent: Any? = nil,
+    parent: (any DescriptorParent)? = nil,
     options: [String: DescriptorOption] = [:]
   ) {
     self.name = name
     self.options = options
 
-    if let parentMessage = parent as? MessageDescriptor {
-      self.fullName = "\(parentMessage.fullName).\(name)"
-      self.parentMessageFullName = parentMessage.fullName
-      self.fileDescriptorPath = parentMessage.fileDescriptorPath
-      self.syntax = parentMessage.syntax
-    }
-    else if let fileDescriptor = parent as? FileDescriptor {
-      self.fullName = fileDescriptor.getFullName(for: name)
-      self.fileDescriptorPath = fileDescriptor.name
-      self.syntax = fileDescriptor.syntax
+    if let parent {
+      let prefix = parent.descriptorFullNamePrefix
+      self.fullName = prefix.isEmpty ? name : "\(prefix).\(name)"
+      self.parentMessageFullName = parent.descriptorParentMessageFullName
+      self.fileDescriptorPath = parent.descriptorFilePath
+      self.syntax = parent.descriptorSyntax
     }
     else {
       self.fullName = name
       self.syntax = "proto3"
     }
+  }
+
+  /// Creates a new `MessageDescriptor` with its `fullName` derived from the parent.
+  ///
+  /// - Deprecated: Pass a `FileDescriptor` or `MessageDescriptor` directly.
+  ///   Both types conform to `DescriptorParent`.
+  @available(
+    *,
+    deprecated,
+    message: "Pass a FileDescriptor or MessageDescriptor, both conform to DescriptorParent."
+  )
+  public init(
+    name: String,
+    parent: Any?,  // no default — avoids nil-ambiguity
+    options: [String: DescriptorOption] = [:]
+  ) {
+    self.init(name: name, parent: parent as? (any DescriptorParent), options: options)
   }
 
   // MARK: - Field Methods

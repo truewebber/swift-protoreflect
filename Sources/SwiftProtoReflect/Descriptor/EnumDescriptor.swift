@@ -86,34 +86,46 @@ public struct EnumDescriptor: Equatable, Sendable {
     self.options = options
   }
 
-  /// Creates a new EnumDescriptor instance with a base name.
-  ///
-  /// Full name will be generated automatically based on parent file or message.
+  /// Creates a new `EnumDescriptor` with its `fullName` derived from the parent.
   ///
   /// - Parameters:
-  ///   - name: Enum name.
-  ///   - parent: Parent file or message.
+  ///   - name: Simple enum name.
+  ///   - parent: Parent context (`FileDescriptor` or `MessageDescriptor`).
   ///   - options: Enum options.
   public init(
     name: String,
-    parent: Any? = nil,
+    parent: (any DescriptorParent)? = nil,
     options: [String: DescriptorOption] = [:]
   ) {
     self.name = name
     self.options = options
 
-    if let parentMessage = parent as? MessageDescriptor {
-      self.fullName = "\(parentMessage.fullName).\(name)"
-      self.parentMessageFullName = parentMessage.fullName
-      self.fileDescriptorPath = parentMessage.fileDescriptorPath
-    }
-    else if let fileDescriptor = parent as? FileDescriptor {
-      self.fullName = fileDescriptor.getFullName(for: name)
-      self.fileDescriptorPath = fileDescriptor.name
+    if let parent {
+      let prefix = parent.descriptorFullNamePrefix
+      self.fullName = prefix.isEmpty ? name : "\(prefix).\(name)"
+      self.parentMessageFullName = parent.descriptorParentMessageFullName
+      self.fileDescriptorPath = parent.descriptorFilePath
     }
     else {
       self.fullName = name
     }
+  }
+
+  /// Creates a new `EnumDescriptor` with its `fullName` derived from the parent.
+  ///
+  /// - Deprecated: Pass a `FileDescriptor` or `MessageDescriptor` directly.
+  ///   Both types conform to `DescriptorParent`.
+  @available(
+    *,
+    deprecated,
+    message: "Pass a FileDescriptor or MessageDescriptor, both conform to DescriptorParent."
+  )
+  public init(
+    name: String,
+    parent: Any?,  // no default — avoids nil-ambiguity
+    options: [String: DescriptorOption] = [:]
+  ) {
+    self.init(name: name, parent: parent as? (any DescriptorParent), options: options)
   }
 
   // MARK: - Value Methods

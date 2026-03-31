@@ -322,8 +322,8 @@ final class WellKnownTypesTests: XCTestCase {
     let handler = registry.getHandler(for: "google.protobuf.Timestamp")
     XCTAssertNil(handler)
 
-    // Restore registry state for other tests
-    registry.register(TimestampHandler.self)
+    // Restore ALL default handlers so subsequent tests are not affected
+    registry.resetToDefaults()
 
     // Check restoration
     let restoredTypes = registry.getRegisteredTypes()

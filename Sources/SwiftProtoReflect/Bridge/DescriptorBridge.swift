@@ -75,31 +75,32 @@ public struct DescriptorBridge {
     return proto
   }
 
-  /// Creates MessageDescriptor from Google_Protobuf_DescriptorProto.
+  /// Creates `MessageDescriptor` from `Google_Protobuf_DescriptorProto`.
   ///
   /// - Parameters:
   ///   - protobufDescriptor: Message descriptor in Swift Protobuf format.
-  ///   - parent: Parent file descriptor (optional).
-  /// - Returns: SwiftProtoReflect message descriptor.
-  /// - Throws: Error if conversion is impossible.
+  ///   - parent: Parent context. Pass a `FileDescriptor` for top-level messages,
+  ///     or a `MessageDescriptor` for nested messages.
+  /// - Returns: SwiftProtoReflect message descriptor with correctly qualified `fullName`.
+  /// - Throws: `DescriptorBridgeError` on conversion failure.
   public func fromProtobufDescriptor(
     _ protobufDescriptor: Google_Protobuf_DescriptorProto,
-    parent: FileDescriptor? = nil
+    parent: (any DescriptorParent)? = nil
   ) throws -> MessageDescriptor {
     var messageDescriptor = MessageDescriptor(
       name: protobufDescriptor.name,
       parent: parent
     )
 
-    // First, convert nested messages (needed for map entry detection)
+    // Recurse with messageDescriptor as parent so nested fullNames are qualified.
     for nestedProto in protobufDescriptor.nestedType {
-      let nestedMessage = try fromProtobufDescriptor(nestedProto, parent: nil)
+      let nestedMessage = try fromProtobufDescriptor(nestedProto, parent: messageDescriptor)
       messageDescriptor.addNestedMessage(nestedMessage)
     }
 
-    // Convert nested enums
+    // Pass messageDescriptor as parent to nested enums for the same reason.
     for enumProto in protobufDescriptor.enumType {
-      let nestedEnum = try fromProtobufEnumDescriptor(enumProto)
+      let nestedEnum = try fromProtobufEnumDescriptor(enumProto, parent: messageDescriptor)
       messageDescriptor.addNestedEnum(nestedEnum)
     }
 
@@ -115,28 +116,39 @@ public struct DescriptorBridge {
       messageDescriptor.addField(field)
     }
 
-    // Convert oneof declarations
     for (index, oneofProto) in protobufDescriptor.oneofDecl.enumerated() {
-      let oneof = OneofDescriptor(name: oneofProto.name, index: index)
-      messageDescriptor.addOneofDecl(oneof)
+      messageDescriptor.addOneofDecl(OneofDescriptor(name: oneofProto.name, index: index))
     }
 
-    // Convert extension ranges
     for rangeProto in protobufDescriptor.extensionRange {
-      let range = ExtensionRange(start: Int(rangeProto.start), end: Int(rangeProto.end))
-      messageDescriptor.addExtensionRange(range)
+      messageDescriptor.addExtensionRange(
+        ExtensionRange(start: Int(rangeProto.start), end: Int(rangeProto.end))
+      )
     }
 
-    // Convert options
     if protobufDescriptor.hasOptions {
       _ = try fromProtobufMessageOptions(protobufDescriptor.options)
-      // TODO: Add options support to MessageDescriptor
-      // for (key, value) in options {
-      //   messageDescriptor.setOption(key: key, value: value)
-      // }
     }
 
     return messageDescriptor
+  }
+
+  /// Creates `MessageDescriptor` from `Google_Protobuf_DescriptorProto`.
+  ///
+  /// - Deprecated: Use `fromProtobufDescriptor(_:parent:)` with `DescriptorParent`.
+  @available(
+    *,
+    deprecated,
+    message: "Use fromProtobufDescriptor(_:parent:) where parent conforms to DescriptorParent."
+  )
+  public func fromProtobufDescriptor(
+    _ protobufDescriptor: Google_Protobuf_DescriptorProto,
+    parent: FileDescriptor? = nil
+  ) throws -> MessageDescriptor {
+    return try fromProtobufDescriptor(
+      protobufDescriptor,
+      parent: parent as (any DescriptorParent)?
+    )
   }
 
   // MARK: - Field Descriptor Conversion
@@ -317,33 +329,45 @@ public struct DescriptorBridge {
     return proto
   }
 
-  /// Creates EnumDescriptor from Google_Protobuf_EnumDescriptorProto.
+  /// Creates `EnumDescriptor` from `Google_Protobuf_EnumDescriptorProto`.
   ///
   /// - Parameters:
   ///   - protobufDescriptor: Enum descriptor in Swift Protobuf format.
-  ///   - parent: Parent descriptor (optional).
+  ///   - parent: Parent context (`FileDescriptor` or `MessageDescriptor`).
   /// - Returns: SwiftProtoReflect enum descriptor.
-  /// - Throws: Error if conversion is impossible.
+  /// - Throws: `DescriptorBridgeError` on conversion failure.
   public func fromProtobufEnumDescriptor(
     _ protobufDescriptor: Google_Protobuf_EnumDescriptorProto,
-    parent: Any? = nil
+    parent: (any DescriptorParent)? = nil
   ) throws -> EnumDescriptor {
     var enumDescriptor = EnumDescriptor(
       name: protobufDescriptor.name,
       parent: parent
     )
-
-    // Convert enum values
     for valueProto in protobufDescriptor.value {
       enumDescriptor.addValue(
-        EnumDescriptor.EnumValue(
-          name: valueProto.name,
-          number: Int(valueProto.number)
-        )
+        EnumDescriptor.EnumValue(name: valueProto.name, number: Int(valueProto.number))
       )
     }
-
     return enumDescriptor
+  }
+
+  /// Creates `EnumDescriptor` from `Google_Protobuf_EnumDescriptorProto`.
+  ///
+  /// - Deprecated: Use `fromProtobufEnumDescriptor(_:parent:)` where parent conforms to `DescriptorParent`.
+  @available(
+    *,
+    deprecated,
+    message: "Use fromProtobufEnumDescriptor(_:parent:) where parent conforms to DescriptorParent."
+  )
+  public func fromProtobufEnumDescriptor(
+    _ protobufDescriptor: Google_Protobuf_EnumDescriptorProto,
+    parent: Any?
+  ) throws -> EnumDescriptor {
+    return try fromProtobufEnumDescriptor(
+      protobufDescriptor,
+      parent: parent as? (any DescriptorParent)
+    )
   }
 
   // MARK: - File Descriptor Conversion
@@ -402,15 +426,21 @@ public struct DescriptorBridge {
       syntax: syntax
     )
 
-    // Convert messages
+    // Convert messages — explicit cast ensures typed overload is used (avoids deprecated wrapper)
     for messageProto in protobufDescriptor.messageType {
-      let message = try fromProtobufDescriptor(messageProto, parent: fileDescriptor)
+      let message = try fromProtobufDescriptor(
+        messageProto,
+        parent: fileDescriptor as (any DescriptorParent)?
+      )
       fileDescriptor.addMessage(message)
     }
 
-    // Convert enums
+    // Convert enums — same explicit cast
     for enumProto in protobufDescriptor.enumType {
-      let enumDesc = try fromProtobufEnumDescriptor(enumProto, parent: fileDescriptor)
+      let enumDesc = try fromProtobufEnumDescriptor(
+        enumProto,
+        parent: fileDescriptor as (any DescriptorParent)?
+      )
       fileDescriptor.addEnum(enumDesc)
     }
 

@@ -521,6 +521,15 @@ public struct JSONDeserializer {
     return data
   }
 
+  /// Normalises a proto type name for registry lookup.
+  ///
+  /// Proto descriptors store type names with a leading dot (e.g. `.pkg.Msg`).
+  /// `TypeRegistry` stores them without the dot. This function removes the leading
+  /// dot so lookups succeed regardless of which format the caller uses.
+  private func normaliseTypeName(_ typeName: String) -> String {
+    typeName.hasPrefix(".") ? String(typeName.dropFirst()) : typeName
+  }
+
   /// Converts JSON value to DynamicMessage by resolving the descriptor from the type registry.
   private func convertJSONToMessage(
     _ jsonValue: Any,
@@ -536,21 +545,26 @@ public struct JSONDeserializer {
       )
     }
 
-    guard let typeName = typeName else {
+    guard let rawTypeName = typeName else {
+      throw JSONDeserializationError.missingTypeName(fieldName: fieldName)
+    }
+
+    let lookupName = normaliseTypeName(rawTypeName)
+    guard !lookupName.isEmpty else {
       throw JSONDeserializationError.missingTypeName(fieldName: fieldName)
     }
 
     guard let registry = options.typeRegistry else {
       throw JSONDeserializationError.unsupportedNestedMessage(
         fieldName: fieldName,
-        typeName: typeName
+        typeName: lookupName
       )
     }
 
-    guard let nestedDescriptor = registry.findMessage(named: typeName) else {
+    guard let nestedDescriptor = registry.findMessage(named: lookupName) else {
       throw JSONDeserializationError.nestedMessageDescriptorNotFound(
         fieldName: fieldName,
-        typeName: typeName
+        typeName: lookupName
       )
     }
 

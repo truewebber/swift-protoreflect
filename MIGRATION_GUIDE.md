@@ -479,6 +479,96 @@ class MessageFactory {
 }
 ```
 
+---
+
+## Nested Type `fullName` Fix (Breaking Change in Descriptor API)
+
+### What changed
+
+Previously, `MessageDescriptor` and `EnumDescriptor` initializers accepted `parent: Any?`.
+Their `fullName` was set to the **bare name** (e.g., `"Cursor"`) instead of the
+**fully-qualified name** (e.g., `"pkg.GetGroupedAdsResponse.Cursor"`).
+
+This caused two failures when using `DescriptorBridge`:
+1. `RegistryError.duplicateType` when iterating `DescriptorPool.allMessageTypeNames()` and
+   re-registering each type independently.
+2. `JSONDeserializationError.nestedMessageDescriptorNotFound` during deserialization of
+   messages with nested message fields.
+
+### New API — `DescriptorParent` protocol
+
+`FileDescriptor` and `MessageDescriptor` now both conform to `DescriptorParent`:
+
+```swift
+public protocol DescriptorParent: Sendable {
+  var descriptorFullNamePrefix: String { get }
+  var descriptorFilePath: String { get }
+  var descriptorSyntax: String { get }
+  var descriptorParentMessageFullName: String? { get }
+}
+```
+
+Pass a typed parent to `MessageDescriptor.init` and `EnumDescriptor.init`:
+
+```swift
+// ✅ New (preferred)
+let fileDesc = FileDescriptor(name: "ads.proto", package: "pkg")
+let nested   = MessageDescriptor(name: "Cursor", parent: fileDesc)
+// nested.fullName == "pkg.Cursor"
+
+let parent   = MessageDescriptor(name: "Response", parent: fileDesc)
+let child    = MessageDescriptor(name: "Cursor", parent: parent)
+// child.fullName == "pkg.Response.Cursor"
+```
+
+### Deprecated API
+
+The old `parent: Any?` signature is still available but deprecated:
+
+```swift
+// ⚠️ Deprecated — still compiles, emits deprecation warning
+let nested = MessageDescriptor(name: "Cursor", parent: someFileDescriptor as Any?)
+```
+
+### `DescriptorBridge` changes
+
+`fromProtobufDescriptor(_:parent:)` and `fromProtobufEnumDescriptor(_:parent:)` now prefer
+`(any DescriptorParent)?` over `FileDescriptor?`:
+
+```swift
+// ✅ New (preferred)
+let msg = try bridge.fromProtobufDescriptor(proto, parent: fileDesc)
+
+// ⚠️ Deprecated — still works, emits deprecation warning
+let msg = try bridge.fromProtobufDescriptor(proto, parent: fileDesc as FileDescriptor?)
+```
+
+The `fromProtobufFileDescriptor(_:)` function was updated internally and requires no
+call-site changes.
+
+### `DynamicMessage` type-name comparison fix
+
+`DynamicMessage.set(value:forField:)` now strips a leading dot from `field.typeName` before
+comparing against the nested message's `fullName`. This is transparent — no call-site
+changes required.
+
+### Recommended migration
+
+If you build nested descriptors manually, replace the `Any?` parent with a typed one:
+
+```swift
+// Before
+var child = MessageDescriptor(name: "Child", parent: parentMessage as Any?)
+
+// After
+var child = MessageDescriptor(name: "Child", parent: parentMessage)
+```
+
+If you use `DescriptorBridge.fromProtobufFileDescriptor`, no changes are required — the
+fix is applied automatically.
+
+---
+
 ## 🤝 Need Help?
 
 **Migration Questions?**

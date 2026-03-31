@@ -329,33 +329,43 @@ public final class WellKnownTypesRegistry: @unchecked Sendable {
     handlers.removeAll()
   }
 
+  /// Resets registry to the built-in default handlers.
+  ///
+  /// Use in tests that call `clear()` to restore the shared registry
+  /// state so subsequent tests are not affected.
+  public func resetToDefaults() {
+    handlersMutex.lock()
+    defer { handlersMutex.unlock() }
+
+    handlers.removeAll()
+    populateDefaultHandlers()
+  }
+
   // MARK: - Private Methods
 
-  /// Registers default handlers.
+  /// Registers default handlers (called during init).
   private func registerDefaultHandlers() {
-    // Critical types (Phase 1)
-    register(TimestampHandler.self)
-    register(DurationHandler.self)
-    register(EmptyHandler.self)
+    populateDefaultHandlers()
+  }
 
-    // Important types (Phase 2)
-    register(FieldMaskHandler.self)
-    register(StructHandler.self)
-    register(ValueHandler.self)
-
-    // Advanced types (Phase 3)
-    register(AnyHandler.self)
-    register(ListValueHandler.self)
-
-    // Wrapper types
-    register(DoubleValueHandler.self)
-    register(FloatValueHandler.self)
-    register(Int64ValueHandler.self)
-    register(UInt64ValueHandler.self)
-    register(Int32ValueHandler.self)
-    register(UInt32ValueHandler.self)
-    register(BoolValueHandler.self)
-    register(StringValueHandler.self)
-    register(BytesValueHandler.self)
+  /// Populates handlers dictionary with all built-in handlers (must be called under lock or during init).
+  private func populateDefaultHandlers() {
+    handlers[TimestampHandler.handledTypeName] = TimestampHandler.self
+    handlers[DurationHandler.handledTypeName] = DurationHandler.self
+    handlers[EmptyHandler.handledTypeName] = EmptyHandler.self
+    handlers[FieldMaskHandler.handledTypeName] = FieldMaskHandler.self
+    handlers[StructHandler.handledTypeName] = StructHandler.self
+    handlers[ValueHandler.handledTypeName] = ValueHandler.self
+    handlers[AnyHandler.handledTypeName] = AnyHandler.self
+    handlers[ListValueHandler.handledTypeName] = ListValueHandler.self
+    handlers[DoubleValueHandler.handledTypeName] = DoubleValueHandler.self
+    handlers[FloatValueHandler.handledTypeName] = FloatValueHandler.self
+    handlers[Int64ValueHandler.handledTypeName] = Int64ValueHandler.self
+    handlers[UInt64ValueHandler.handledTypeName] = UInt64ValueHandler.self
+    handlers[Int32ValueHandler.handledTypeName] = Int32ValueHandler.self
+    handlers[UInt32ValueHandler.handledTypeName] = UInt32ValueHandler.self
+    handlers[BoolValueHandler.handledTypeName] = BoolValueHandler.self
+    handlers[StringValueHandler.handledTypeName] = StringValueHandler.self
+    handlers[BytesValueHandler.handledTypeName] = BytesValueHandler.self
   }
 }
