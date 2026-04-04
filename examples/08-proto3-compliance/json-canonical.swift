@@ -56,7 +56,7 @@ struct JsonCanonicalExample {
     try msg.set(UInt64(18_446_744_073_709_551_615), forField: "unsigned_big")
     try msg.set(Int32(42), forField: "regular_int")
 
-    let json = try JSONSerializer().serializeToJSONObject(msg)
+    let json = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
     print("  signed_big type:   \(type(of: json["signed_big"]!)) = \(json["signed_big"]!)")
     print("  unsigned_big type: \(type(of: json["unsigned_big"]!)) = \(json["unsigned_big"]!)")
     print("  regular_int type:  \(type(of: json["regular_int"]!)) = \(json["regular_int"]!)")
@@ -79,7 +79,7 @@ struct JsonCanonicalExample {
     try msg.set("Hello, Proto3!".data(using: .utf8)!, forField: "data")
     try msg.set(Data([0xDE, 0xAD, 0xBE, 0xEF]), forField: "checksum")
 
-    let json = try JSONSerializer().serializeToJSONObject(msg)
+    let json = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
     let dataB64 = json["data"] as? String ?? ""
     let checksumB64 = json["checksum"] as? String ?? ""
     print("  data (base64):     \"\(dataB64)\"")
@@ -116,12 +116,16 @@ struct JsonCanonicalExample {
     try msg.set("Alice", forField: "name")
     try msg.set(Int32(1), forField: "status")
 
-    let json = try JSONSerializer().serializeToJSONObject(msg)
+    let enumRegistry = TypeRegistry()
+    let json = try JSONSerializer(options: .init(typeRegistry: enumRegistry)).serializeToJSONObject(msg)
     print("  status value: \(json["status"]!)")
     print("  status type:  \(type(of: json["status"]!))")
 
-    let jsonData = try JSONSerializer().serialize(msg)
-    let deserialized = try JSONDeserializer().deserialize(jsonData, using: desc)
+    let jsonData = try JSONSerializer(options: .init(typeRegistry: enumRegistry)).serialize(msg)
+    let deserialized = try JSONDeserializer(options: .init(typeRegistry: enumRegistry)).deserialize(
+      jsonData,
+      using: desc
+    )
     let roundTripped = try deserialized.get(forField: "status") as? Int32 ?? -1
     print("  Round-trip:   enum name → Int32(\(roundTripped))")
 
@@ -151,12 +155,12 @@ struct JsonCanonicalExample {
 
     let msg = MessageFactory().createMessage(from: desc)
 
-    let defaultSerializer = JSONSerializer()
+    let defaultSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let jsonDefault = try defaultSerializer.serializeToJSONObject(msg)
     print("  Default mode (empty message):  \(jsonDefault)")
 
     let fullSerializer = JSONSerializer(
-      options: JSONSerializationOptions(includeDefaultValues: true)
+      options: JSONSerializationOptions(includeDefaultValues: true, typeRegistry: TypeRegistry())
     )
     let jsonFull = try fullSerializer.serializeToJSONObject(msg)
     print("  includeDefaultValues=true:     \(jsonFull)")

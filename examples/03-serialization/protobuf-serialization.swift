@@ -72,7 +72,7 @@ struct ProtobufSerializationExample {
 
     // Deserialize back
     let (deserializedPerson, deserializeTime) = try ExampleUtils.measureTime {
-      let deserializer = BinaryDeserializer()
+      let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
       return try deserializer.deserialize(binaryData, using: person.descriptor)
     }
 
@@ -114,7 +114,7 @@ struct ProtobufSerializationExample {
 
     // Deserialization
     let (deserializedCompany, complexDeserializeTime) = try ExampleUtils.measureTime {
-      let deserializer = BinaryDeserializer()
+      let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
       return try deserializer.deserialize(complexBinaryData, using: company.descriptor)
     }
 
@@ -151,7 +151,7 @@ struct ProtobufSerializationExample {
 
       // Deserialization
       let (newMessage, deserializeTime) = try ExampleUtils.measureTime {
-        let deserializer = BinaryDeserializer()
+        let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
         return try deserializer.deserialize(binaryData, using: currentMessage.descriptor)
       }
       totalDeserializeTime += deserializeTime
@@ -253,7 +253,7 @@ struct ProtobufSerializationExample {
     message.prettyPrint()
 
     // Check deserialization
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let reconstructed = try deserializer.deserialize(binaryData, using: message.descriptor)
 
     print("  📋 Reconstructed message:")
@@ -365,7 +365,7 @@ struct ProtobufSerializationExample {
     [DynamicMessage], Data, TimeInterval, TimeInterval
   ) {
     let serializer = BinarySerializer()
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     // Create test messages
     var messages: [DynamicMessage] = []

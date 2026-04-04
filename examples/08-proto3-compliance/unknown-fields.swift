@@ -61,7 +61,10 @@ struct UnknownFieldsExample {
     var reducedDesc = MessageDescriptor(name: "User", fullName: "example.User")
     reducedDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
-    let partial = try BinaryDeserializer().deserialize(data, using: reducedDesc)
+    let partial = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      data,
+      using: reducedDesc
+    )
     print("  Known field 'id': \(try partial.get(forField: "id") as? Int32 ?? 0)")
     print("  Unknown fields preserved: \(partial.unknownFields.count) bytes")
     print("  Unknown fields hex: \(partial.unknownFields.map { String(format: "%02x", $0) }.joined(separator: " "))")
@@ -91,7 +94,10 @@ struct UnknownFieldsExample {
     v2Desc.addField(FieldDescriptor(name: "retries", number: 2, type: .int32))
     v2Desc.addField(FieldDescriptor(name: "max_connections", number: 3, type: .int32))
 
-    let v2Read = try BinaryDeserializer().deserialize(v1Data, using: v2Desc)
+    let v2Read = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      v1Data,
+      using: v2Desc
+    )
     let timeout = try v2Read.get(forField: "timeout") as? Int32 ?? 0
     let retries = try v2Read.get(forField: "retries") as? Int32 ?? 0
     let maxConn = try v2Read.get(forField: "max_connections")
@@ -123,10 +129,17 @@ struct UnknownFieldsExample {
     var proxyDesc = MessageDescriptor(name: "Event", fullName: "example.Event")
     proxyDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
-    let proxy = try BinaryDeserializer().deserialize(originalData, using: proxyDesc)
+    let roundTripRegistry = TypeRegistry()
+    let proxy = try BinaryDeserializer(options: .init(typeRegistry: roundTripRegistry)).deserialize(
+      originalData,
+      using: proxyDesc
+    )
     let proxyData = try BinarySerializer().serialize(proxy)
 
-    let restored = try BinaryDeserializer().deserialize(proxyData, using: fullDesc)
+    let restored = try BinaryDeserializer(options: .init(typeRegistry: roundTripRegistry)).deserialize(
+      proxyData,
+      using: fullDesc
+    )
     let restoredId = try restored.get(forField: "id") as? Int32 ?? 0
     let restoredType = try restored.get(forField: "type") as? String ?? ""
     let restoredPayload = try restored.get(forField: "payload") as? Data ?? Data()

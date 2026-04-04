@@ -159,7 +159,7 @@ struct StreamingExample {
     inputStream.open()
     defer { inputStream.close() }
 
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let (recordDescriptor, _) = try createStreamingRecordMessage()
 
     var recordsProcessed = 0

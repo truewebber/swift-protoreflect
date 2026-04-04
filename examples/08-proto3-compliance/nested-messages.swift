@@ -73,7 +73,10 @@ struct NestedMessagesExample {
     let data = try BinarySerializer().serialize(person)
     print("  Serialized size: \(data.count) bytes")
 
-    let decoded = try BinaryDeserializer().deserialize(data, using: outerDesc)
+    let decoded = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      data,
+      using: outerDesc
+    )
     let decodedName = try decoded.get(forField: "name") as? String ?? ""
     print("  Name: \(decodedName)")
 
@@ -126,7 +129,10 @@ struct NestedMessagesExample {
     let data = try BinarySerializer().serialize(root)
     print("  3-level message size: \(data.count) bytes")
 
-    let decoded = try BinaryDeserializer().deserialize(data, using: rootDesc)
+    let decoded = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      data,
+      using: rootDesc
+    )
     let decodedId = try decoded.get(forField: "id") as? Int32 ?? 0
     print("  Root.id: \(decodedId)")
 
@@ -173,7 +179,7 @@ struct NestedMessagesExample {
     try place.set("San Francisco", forField: "name")
     try place.set(coord, forField: 2)
 
-    let jsonData = try JSONSerializer().serialize(place)
+    let jsonData = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serialize(place)
     let jsonString = String(data: jsonData, encoding: .utf8) ?? ""
     print("  JSON: \(jsonString)")
 

@@ -61,7 +61,7 @@ struct JsonConversionExample {
 
     // JSON serialization
     let (jsonData, serializeTime) = try ExampleUtils.measureTime {
-      let serializer = JSONSerializer()
+      let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
       return try serializer.serialize(person)
     }
 
@@ -75,7 +75,7 @@ struct JsonConversionExample {
 
     // JSON deserialization
     let (deserializedPerson, deserializeTime) = try ExampleUtils.measureTime {
-      let deserializer = JSONDeserializer()
+      let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
       return try deserializer.deserialize(jsonData, using: person.descriptor)
     }
 
@@ -107,7 +107,7 @@ struct JsonConversionExample {
 
     // JSON serialization of complex structure
     let (complexJsonData, complexSerializeTime) = try ExampleUtils.measureTime {
-      let serializer = JSONSerializer()
+      let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
       return try serializer.serialize(company)
     }
 
@@ -134,7 +134,7 @@ struct JsonConversionExample {
 
     // Deserialization and check
     let (deserializedCompany, complexDeserializeTime) = try ExampleUtils.measureTime {
-      let deserializer = JSONDeserializer()
+      let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
       return try deserializer.deserialize(complexJsonData, using: company.descriptor)
     }
 
@@ -209,10 +209,11 @@ struct JsonConversionExample {
     originalMessage.prettyPrint()
 
     // Path 1: Original → JSON → Binary → Message
-    let jsonSerializer = JSONSerializer()
+    let registry = TypeRegistry()
+    let jsonSerializer = JSONSerializer(options: .init(typeRegistry: registry))
     let binarySerializer = BinarySerializer()
-    let jsonDeserializer = JSONDeserializer()
-    let binaryDeserializer = BinaryDeserializer()
+    let jsonDeserializer = JSONDeserializer(options: .init(typeRegistry: registry))
+    let binaryDeserializer = BinaryDeserializer(options: .init(typeRegistry: registry))
 
     let jsonData = try jsonSerializer.serialize(originalMessage)
     let jsonMessage = try jsonDeserializer.deserialize(jsonData, using: originalMessage.descriptor)
@@ -263,7 +264,7 @@ struct JsonConversionExample {
     debugMessage.prettyPrint()
 
     // JSON serialization for debugging
-    let jsonSerializer = JSONSerializer()
+    let jsonSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let debugJsonData = try jsonSerializer.serialize(debugMessage)
 
     if let prettyJsonData = try? JSONSerialization.jsonObject(with: debugJsonData),
@@ -302,7 +303,10 @@ struct JsonConversionExample {
 
     if let invalidJsonData = invalidJsonString.data(using: .utf8) {
       do {
-        let _ = try JSONDeserializer().deserialize(invalidJsonData, using: debugMessage.descriptor)
+        let _ = try JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+          invalidJsonData,
+          using: debugMessage.descriptor
+        )
         print("    😱 Unexpected: Corrupted JSON was accepted!")
       }
       catch {
@@ -440,7 +444,7 @@ struct JsonConversionExample {
   }
 
   private static func benchmarkJsonSerialization(messageCount: Int) throws -> (Int, TimeInterval) {
-    let jsonSerializer = JSONSerializer()
+    let jsonSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
 
     // Create test messages
     var messages: [DynamicMessage] = []
