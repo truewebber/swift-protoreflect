@@ -382,19 +382,21 @@ public struct BinaryDeserializer {
     return try decodeGroupMessage(from: &decoder, using: groupDescriptor)
   }
 
-  /// Resolves a `MessageDescriptor` for `typeName` via two-step lookup.
+  /// Resolves a `MessageDescriptor` for `typeName`.
   ///
-  /// 1. Structural nesting on `descriptor` (backward-compatible, no registry needed).
-  /// 2. `options.typeRegistry` by fully-qualified name (sibling / cross-file resolution).
+  /// 1. `options.typeRegistry` by fully-qualified name (primary — correct, strict resolution).
+  /// 2. Structural nesting on `descriptor` (deprecated fallback — legacy path).
   private func resolveMessageDescriptor(typeName: String, in descriptor: MessageDescriptor) throws
     -> MessageDescriptor
   {
-    let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
-    if let desc = descriptor.nestedMessage(named: simpleName) {
-      return desc
-    }
     let normalizedTypeName = typeName.hasPrefix(".") ? String(typeName.dropFirst()) : typeName
     if let desc = options.typeRegistry.findMessage(named: normalizedTypeName) {
+      return desc
+    }
+    // DEPRECATED: Legacy structural nesting fallback. Will be removed in a future major version.
+    // Users should register all types in TypeRegistry instead of relying on addNestedMessage().
+    let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
+    if let desc = descriptor.nestedMessage(named: simpleName) {
       return desc
     }
     throw DeserializationError.unsupportedNestedMessage(typeName: typeName)
