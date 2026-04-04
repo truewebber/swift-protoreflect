@@ -305,32 +305,16 @@ public struct BinaryDeserializer {
       return varint != 0
 
     case .string:
-      let length = try decoder.readVarint()
-      let data = try decoder.readBytes(Int(length))
-      guard let string = String(data: data, encoding: .utf8) else {
-        throw DeserializationError.invalidUTF8String
-      }
-      return string
+      return try decodeString(from: &decoder)
 
     case .bytes:
-      let length = try decoder.readVarint()
-      return try decoder.readBytes(Int(length))
+      return try decodeLengthDelimitedBytes(from: &decoder)
 
     case .message:
       guard let typeName = typeName else {
         throw DeserializationError.missingTypeName(fieldType: "message")
       }
-
-      let length = try decoder.readVarint()
-      let messageData = try decoder.readBytes(Int(length))
-
-      let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
-      guard let nestedDescriptor = descriptor.nestedMessage(named: simpleName) else {
-        throw DeserializationError.unsupportedNestedMessage(typeName: typeName)
-      }
-
-      var nestedDecoder = BinaryDecoder(data: messageData)
-      return try decodeMessage(from: &nestedDecoder, using: nestedDescriptor)
+      return try decodeMessageField(typeName: typeName, from: &decoder, descriptor: descriptor)
 
     case .enum:
       let varint = try decoder.readVarint()
@@ -340,14 +324,65 @@ public struct BinaryDeserializer {
       guard let typeName = typeName else {
         throw DeserializationError.missingTypeName(fieldType: "group")
       }
-
-      let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
-      guard let groupDescriptor = descriptor.nestedMessage(named: simpleName) else {
-        throw DeserializationError.unsupportedNestedMessage(typeName: typeName)
-      }
-
-      return try decodeGroupMessage(from: &decoder, using: groupDescriptor)
+      return try decodeGroupField(typeName: typeName, from: &decoder, descriptor: descriptor)
     }
+  }
+
+  /// Reads a length-delimited byte sequence and decodes it as a UTF-8 string.
+  private func decodeString(from decoder: inout BinaryDecoder) throws -> String {
+    let length = try decoder.readVarint()
+    let data = try decoder.readBytes(Int(length))
+    guard let string = String(data: data, encoding: .utf8) else {
+      throw DeserializationError.invalidUTF8String
+    }
+    return string
+  }
+
+  /// Reads a length-delimited byte sequence and returns it as raw `Data`.
+  private func decodeLengthDelimitedBytes(from decoder: inout BinaryDecoder) throws -> Data {
+    let length = try decoder.readVarint()
+    return try decoder.readBytes(Int(length))
+  }
+
+  /// Reads a length-delimited embedded message and decodes it using the resolved descriptor.
+  private func decodeMessageField(
+    typeName: String,
+    from decoder: inout BinaryDecoder,
+    descriptor: MessageDescriptor
+  ) throws -> DynamicMessage {
+    let length = try decoder.readVarint()
+    let messageData = try decoder.readBytes(Int(length))
+    let nestedDescriptor = try resolveMessageDescriptor(typeName: typeName, in: descriptor)
+    var nestedDecoder = BinaryDecoder(data: messageData)
+    return try decodeMessage(from: &nestedDecoder, using: nestedDescriptor)
+  }
+
+  /// Reads a proto2 group field and decodes it using the resolved descriptor.
+  private func decodeGroupField(
+    typeName: String,
+    from decoder: inout BinaryDecoder,
+    descriptor: MessageDescriptor
+  ) throws -> DynamicMessage {
+    let groupDescriptor = try resolveMessageDescriptor(typeName: typeName, in: descriptor)
+    return try decodeGroupMessage(from: &decoder, using: groupDescriptor)
+  }
+
+  /// Resolves a `MessageDescriptor` for `typeName` via two-step lookup.
+  ///
+  /// 1. Structural nesting on `descriptor` (backward-compatible, no registry needed).
+  /// 2. `options.typeRegistry` by fully-qualified name (sibling / cross-file resolution).
+  private func resolveMessageDescriptor(typeName: String, in descriptor: MessageDescriptor) throws
+    -> MessageDescriptor
+  {
+    let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
+    if let desc = descriptor.nestedMessage(named: simpleName) {
+      return desc
+    }
+    let normalizedTypeName = typeName.hasPrefix(".") ? String(typeName.dropFirst()) : typeName
+    if let desc = options.typeRegistry?.findMessage(named: normalizedTypeName) {
+      return desc
+    }
+    throw DeserializationError.unsupportedNestedMessage(typeName: typeName)
   }
 
   /// Decodes a group message, reading fields until endGroup tag.
