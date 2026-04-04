@@ -44,6 +44,25 @@ public class TypeRegistry: @unchecked Sendable {
     // Registry is initialized empty
   }
 
+  /// Creates a new TypeRegistry pre-populated from an array of file descriptors.
+  ///
+  /// Registers every type found in each file — messages (recursively, including nested),
+  /// top-level enums, and services. This is the recommended initializer for production
+  /// use with `DescriptorBridge`.
+  ///
+  /// For hand-built descriptors that are not wrapped in a `FileDescriptor`, use `TypeRegistry()`
+  /// and register types explicitly via `registerMessage(_:)` / `registerEnum(_:)`.
+  ///
+  /// - Parameter fileDescriptors: File descriptors to register.
+  /// - Throws: `RegistryError.duplicateFile` if the same file name appears more than once.
+  ///           `RegistryError.duplicateType` if the same type full name appears across files.
+  public convenience init(fileDescriptors: [FileDescriptor]) throws {
+    self.init()
+    for file in fileDescriptors {
+      try registerFile(file)
+    }
+  }
+
   // MARK: - File Registration Methods
 
   /// Registers FileDescriptor and automatically extracts all types contained in it.
