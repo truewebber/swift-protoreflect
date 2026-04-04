@@ -7,13 +7,50 @@ This module handles serialization and deserialization of Protocol Buffers messag
 - JSON serialization according to Protocol Buffers JSON mapping
 - JSON deserialization according to Protocol Buffers JSON mapping
 
+> **Required dependency:** All serializers and deserializers require a `TypeRegistry` passed
+> through their options structs (`DeserializationOptions`, `JSONDeserializationOptions`,
+> `JSONSerializationOptions`). TypeRegistry is the primary type-resolution mechanism for nested
+> messages and enums. The no-argument constructors `BinaryDeserializer()`, `JSONDeserializer()`,
+> and `JSONSerializer()` are **deprecated**.
+
+## Quick Start
+
+```swift
+// 1. Build a TypeRegistry with all types your message references.
+let registry = TypeRegistry()
+try registry.registerMessage(addressDescriptor)   // if Msg has a message field
+try registry.registerEnum(statusEnum)             // if Msg has an enum field
+
+// For production use with FileDescriptors:
+// let registry = TypeRegistry(fileDescriptors: [myFile, otherFile])
+
+// 2. Serialize
+let serializer = JSONSerializer(options: .init(typeRegistry: registry))
+let jsonData = try serializer.serialize(message)
+
+// 3. Deserialize
+let deserializer = BinaryDeserializer(options: .init(typeRegistry: registry))
+let decoded = try deserializer.deserialize(binaryData, using: descriptor)
+```
+
 ## Module Status
 
-- [x] **BinarySerializer** ✅ - fully implemented with 90.77% test coverage
-- [x] **BinaryDeserializer** ✅ - fully implemented with 89.69% test coverage
+- [x] **BinarySerializer** ✅ - fully implemented
+- [x] **BinaryDeserializer** ✅ - fully implemented; TypeRegistry-primary resolution
 - [x] **WireFormat** ✅ - common definitions for Protocol Buffers wire types
-- [x] **JSONSerializer** ✅ - fully implemented with 81.85% test coverage
-- [x] **JSONDeserializer** ✅ - fully implemented with 60.25% test coverage
+- [x] **JSONSerializer** ✅ - fully implemented; TypeRegistry-primary enum resolution
+- [x] **JSONDeserializer** ✅ - fully implemented; TypeRegistry-primary enum/message resolution
+
+## Type Resolution
+
+All serializers and deserializers perform type resolution in this priority order:
+
+1. **TypeRegistry** (primary) — looks up the type by fully-qualified name (e.g., `"pkg.Status"`).
+2. **Structural nesting** (deprecated fallback) — falls back to `nestedMessage(named:)` /
+   `nestedEnum(named:)` on the parent `MessageDescriptor`.
+
+The deprecated fallback is retained for backward compatibility but **will be removed in a
+future major version**. Migrate all type resolution to TypeRegistry.
 
 ## Implemented Components
 
@@ -32,6 +69,7 @@ This module handles serialization and deserialization of Protocol Buffers messag
 - Packed repeated fields handling
 - Correct UTF-8 string validation
 - Detailed error handling
+- TypeRegistry-primary nested/sibling message resolution
 
 ### JSONSerializer
 - JSON serialization according to official Protocol Buffers JSON mapping
@@ -42,7 +80,8 @@ This module handles serialization and deserialization of Protocol Buffers messag
 - Nested messages as nested JSON objects
 - Bytes fields as base64 strings
 - int64/uint64 as strings in JSON (according to specification)
-- Configurable serialization options (field names, formatting)
+- Configurable serialization options (field names, formatting, includeDefaultValues)
+- TypeRegistry-primary enum name resolution
 
 ### JSONDeserializer
 - JSON deserialization according to official Protocol Buffers JSON mapping
@@ -55,6 +94,7 @@ This module handles serialization and deserialization of Protocol Buffers messag
 - Strict typing with detailed validation errors
 - Configurable options (ignoring unknown fields)
 - Handling of both original and camelCase field names
+- TypeRegistry-primary enum and nested message resolution
 
 ### WireFormat
 - Public WireType definitions for shared usage
@@ -62,17 +102,10 @@ This module handles serialization and deserialization of Protocol Buffers messag
 
 ## Interactions with Other Modules
 
+- **Registry**: TypeRegistry is a required input for all serializer/deserializer options
 - **Dynamic**: for working with dynamic messages
 - **Descriptor**: for getting type metadata during serialization/deserialization
 - **Bridge**: for integration with Swift Protobuf serialization
-
-## Test Coverage
-
-- **BinarySerializer**: 90.77% code coverage (27 tests)
-- **BinaryDeserializer**: 89.69% code coverage (20 tests)
-- **JSONSerializer**: 81.85% code coverage (16 tests)
-- **JSONDeserializer**: 60.25% code coverage (24 tests)
-- **Round-trip testing**: all field types verified for serialization/deserialization compatibility
 
 ## JSON Round-trip Compatibility
 

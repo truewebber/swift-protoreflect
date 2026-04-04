@@ -46,6 +46,11 @@ swift run ValidationFramework # Comprehensive validation system
 - **JSONSerializer/Deserializer**: JSON format with protobuf semantics
 - **Round-trip compatibility**: Full fidelity preservation
 
+> **Breaking change:** `TypeRegistry` is now required for all serializers and deserializers.
+> The no-argument constructors `BinaryDeserializer()`, `JSONDeserializer()`, and `JSONSerializer()` are deprecated.
+> TypeRegistry is the primary type-resolution mechanism; `nestedMessage(named:)` / `nestedEnum(named:)` is a deprecated fallback that will be removed in a future major version.
+> See [MIGRATION_GUIDE.md](../MIGRATION_GUIDE.md#mandatory-typeregistry-for-serialization-breaking-change) for migration steps.
+
 #### ✅ Phase 3: Registry & Discovery (COMPLETED)
 - **TypeRegistry**: Centralized type management
 - **DescriptorPool**: Efficient type lookup and caching

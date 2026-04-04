@@ -52,12 +52,14 @@ SwiftProtoReflect utilizes a layered architecture with the following components:
 
 ### 4.3 Serialization
 - **BinarySerializer**: Binary format serialization (wire format) with ZigZag encoding and unknown fields passthrough
-- **BinaryDeserializer**: Binary format deserialization with wire type validation, unknown fields preservation, and recursive nested message support
-- **JSONSerializer**: JSON format with proto3 canonical encoding (int64 as string, bytes as base64, enums as names, includeDefaultValues)
-- **JSONDeserializer**: JSON format parsing with enum name resolution, type validation, and error recovery
+- **BinaryDeserializer**: Binary format deserialization with wire type validation, unknown fields preservation, and recursive nested message support. Requires `TypeRegistry` (via `DeserializationOptions`) for nested/sibling message resolution.
+- **JSONSerializer**: JSON format with proto3 canonical encoding (int64 as string, bytes as base64, enums as names, includeDefaultValues). Requires `TypeRegistry` (via `JSONSerializationOptions`) for enum name resolution.
+- **JSONDeserializer**: JSON format parsing with enum name resolution, type validation, and error recovery. Requires `TypeRegistry` (via `JSONDeserializationOptions`) for enum and nested message resolution.
+
+> **Note:** All serializers and deserializers require a `TypeRegistry` passed through their options. The no-argument constructors `BinaryDeserializer()`, `JSONDeserializer()`, and `JSONSerializer()` are deprecated. TypeRegistry is consulted first (primary lookup by fully-qualified name); `nestedMessage(named:)` / `nestedEnum(named:)` serves as a deprecated fallback that will be removed in a future major version.
 
 ### 4.4 Reflection Registry
-- **TypeRegistry**: Central registry for all known types with concurrent access support
+- **TypeRegistry**: Central registry for all known types with concurrent access support. Acts as a **required dependency** for all serializers and deserializers — register all message and enum types before performing serialization or deserialization of messages with non-scalar fields.
 - **DescriptorPool**: Manages descriptor dependencies and resolution with caching
 
 ### 4.5 Integration Layer
@@ -152,12 +154,18 @@ try message.set("age", value: Int32(30))
 let name: String = try message.get("name")
 let age: Int32 = try message.get("age")
 
-// Serialization
+// Serialization — TypeRegistry is required for all serializers/deserializers
+let registry = TypeRegistry()
+// Register nested/sibling types if your message has message or enum fields:
+// try registry.registerMessage(addressDescriptor)
+// try registry.registerEnum(statusEnum)
+
 let binaryData = try BinarySerializer().serialize(message: message)
-let jsonString = try JSONSerializer().serialize(message: message)
+let jsonData = try JSONSerializer(options: .init(typeRegistry: registry)).serialize(message)
 
 // Deserialization
-let parsedMessage = try BinaryDeserializer().deserialize(data: binaryData, descriptor: personDescriptor)
+let parsedMessage = try BinaryDeserializer(options: .init(typeRegistry: registry))
+    .deserialize(binaryData, using: personDescriptor)
 
 // Converting between static and dynamic
 let staticMessage: Person = try message.toStaticMessage()
