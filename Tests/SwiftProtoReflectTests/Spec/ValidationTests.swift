@@ -16,25 +16,25 @@ final class ValidationTests: XCTestCase {
 
   func test_validate_proto3_ignoresRequired() {
     let factory = MessageFactory()
-    var desc = MessageDescriptor(name: "M", fullName: "test.M")
+    var desc = MessageDescriptor(name: "M", fullName: "test.M", syntax: "proto3")
     desc.addField(
       FieldDescriptor(name: "name", number: 1, type: .string, isRequired: true)
     )
     let msg = factory.createMessage(from: desc)
 
-    let result = factory.validate(msg, syntax: "proto3")
+    let result = factory.validate(msg)
     XCTAssertTrue(result.isValid, "Proto3 must ignore isRequired flag")
   }
 
   func test_validate_proto2_enforcesRequired() {
     let factory = MessageFactory()
-    var desc = MessageDescriptor(name: "M", fullName: "test.M")
+    var desc = MessageDescriptor(name: "M", fullName: "test.M", syntax: "proto2")
     desc.addField(
       FieldDescriptor(name: "name", number: 1, type: .string, isRequired: true)
     )
     let msg = factory.createMessage(from: desc)
 
-    let result = factory.validate(msg, syntax: "proto2")
+    let result = factory.validate(msg)
     XCTAssertFalse(result.isValid, "Proto2 must enforce required fields")
   }
 
@@ -42,13 +42,13 @@ final class ValidationTests: XCTestCase {
 
   func test_validate_proto3Optional_unset_isValid() {
     let factory = MessageFactory()
-    var desc = MessageDescriptor(name: "M", fullName: "test.M")
+    var desc = MessageDescriptor(name: "M", fullName: "test.M", syntax: "proto3")
     desc.addField(
       FieldDescriptor(name: "val", number: 1, type: .int32, proto3Optional: true)
     )
     let msg = factory.createMessage(from: desc)
 
-    let result = factory.validate(msg, syntax: "proto3")
+    let result = factory.validate(msg)
     XCTAssertTrue(result.isValid, "Unset proto3 optional is valid")
   }
 

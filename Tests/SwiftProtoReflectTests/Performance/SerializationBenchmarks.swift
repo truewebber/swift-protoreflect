@@ -33,9 +33,9 @@ final class SerializationBenchmarks: XCTestCase {
 
     registry = TypeRegistry()
     binarySerializer = BinarySerializer()
-    binaryDeserializer = BinaryDeserializer()
-    jsonSerializer = JSONSerializer()
-    jsonDeserializer = JSONDeserializer()
+    binaryDeserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
+    jsonSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
+    jsonDeserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     // Create test messages of different sizes
     try setupTestMessages()

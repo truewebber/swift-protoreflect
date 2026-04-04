@@ -30,7 +30,7 @@ final class FieldTypeGroupTests: XCTestCase {
     let data = try serializer.serialize(msg)
     XCTAssertFalse(data.isEmpty)
 
-    let decoded = try BinaryDeserializer().deserialize(data, using: desc)
+    let decoded = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(data, using: desc)
     let decodedGroup = try decoded.get(forField: 1) as? DynamicMessage
     XCTAssertNotNil(decodedGroup)
     let v = try decodedGroup?.get(forField: "v") as? Int32
@@ -55,7 +55,9 @@ final class FieldTypeGroupTests: XCTestCase {
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(group, forField: 1)
 
-    let serializer = JSONSerializer(options: JSONSerializationOptions(useOriginalFieldNames: true))
+    let serializer = JSONSerializer(
+      options: JSONSerializationOptions(useOriginalFieldNames: true, typeRegistry: TypeRegistry())
+    )
     let data = try serializer.serialize(msg)
     XCTAssertFalse(data.isEmpty)
 
@@ -72,7 +74,7 @@ final class FieldTypeGroupTests: XCTestCase {
     desc.addField(FieldDescriptor(name: "value", number: 1, type: .int32))
     // Wire type 3 = start group, field number 1 => tag = (1 << 3) | 3 = 11 = 0x0B
     let data = Data([0x0B])
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     XCTAssertThrowsError(try deserializer.deserialize(data, using: desc))
   }
 }

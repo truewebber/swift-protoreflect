@@ -11,10 +11,7 @@ import XCTest
 
 final class DeserializationOptionsTests: XCTestCase {
 
-  func test_init_defaultOptions_typeRegistryIsEmpty() {
-    let options = DeserializationOptions()
-    XCTAssertEqual(options.typeRegistry.allFiles().count, 0)
-  }
+  // MARK: - New API (with explicit TypeRegistry)
 
   func test_init_withTypeRegistry_storesRegistry() {
     let registry = TypeRegistry()
@@ -27,30 +24,13 @@ final class DeserializationOptionsTests: XCTestCase {
   }
 
   func test_init_preserveUnknownFieldsDefault_isTrue() {
-    let options = DeserializationOptions()
+    let options = DeserializationOptions(typeRegistry: TypeRegistry())
     XCTAssertTrue(options.preserveUnknownFields)
   }
 
   func test_init_strictUTF8ValidationDefault_isTrue() {
-    let options = DeserializationOptions()
+    let options = DeserializationOptions(typeRegistry: TypeRegistry())
     XCTAssertTrue(options.strictUTF8Validation)
-  }
-
-  // MARK: - OPE-256: Non-optional TypeRegistry API
-
-  func test_deserializationOptions_deprecatedInit_createsEmptyRegistry() {
-    let options = DeserializationOptions()
-    XCTAssertEqual(options.typeRegistry.allFiles().count, 0)
-  }
-
-  func test_jsonDeserializationOptions_deprecatedInit_createsEmptyRegistry() {
-    let options = JSONDeserializationOptions()
-    XCTAssertEqual(options.typeRegistry.allFiles().count, 0)
-  }
-
-  func test_jsonSerializationOptions_deprecatedInit_createsEmptyRegistry() {
-    let options = JSONSerializationOptions()
-    XCTAssertEqual(options.typeRegistry.allFiles().count, 0)
   }
 
   func test_deserializationOptions_newInit_storesRegistry() throws {
@@ -71,6 +51,17 @@ final class DeserializationOptionsTests: XCTestCase {
       includeDefaultValues: false,
       typeRegistry: registry
     )
+    XCTAssertEqual(options.typeRegistry.allFiles().count, 0)
+  }
+
+  func test_jsonDeserializationOptions_newInit_storesRegistry() throws {
+    let registry = try TypeRegistry(fileDescriptors: [])
+    let options = JSONDeserializationOptions(
+      typeRegistry: registry
+    )
+    XCTAssertTrue(options.ignoreUnknownFields)
+    XCTAssertTrue(options.strictTypeValidation)
+    XCTAssertEqual(options.maxNestingDepth, 64)
     XCTAssertEqual(options.typeRegistry.allFiles().count, 0)
   }
 }

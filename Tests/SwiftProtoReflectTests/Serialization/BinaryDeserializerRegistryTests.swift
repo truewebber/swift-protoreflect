@@ -396,7 +396,9 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     let descB = makeSiblingB()
     let data = try serialiseBContainingA(descA: descA, aValue: "test")
 
-    XCTAssertThrowsError(try BinaryDeserializer().deserialize(data, using: descB)) { error in
+    XCTAssertThrowsError(
+      try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(data, using: descB)
+    ) { error in
       guard case .unsupportedNestedMessage(let typeName) = error as? DeserializationError else {
         XCTFail("Expected unsupportedNestedMessage, got \(error)")
         return

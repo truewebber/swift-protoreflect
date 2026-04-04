@@ -36,7 +36,7 @@ final class ErrorHandlingTests: XCTestCase {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
-    let msg = try BinaryDeserializer().deserialize(Data(), using: desc)
+    let msg = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(Data(), using: desc)
     XCTAssertNil(try msg.get(forField: "id"))
   }
 
@@ -45,7 +45,9 @@ final class ErrorHandlingTests: XCTestCase {
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
     let truncated = Data([0x08, 0x80])
-    XCTAssertThrowsError(try BinaryDeserializer().deserialize(truncated, using: desc))
+    XCTAssertThrowsError(
+      try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(truncated, using: desc)
+    )
   }
 
   func test_deserialize_truncatedFixed32_throws() {
@@ -53,7 +55,9 @@ final class ErrorHandlingTests: XCTestCase {
     desc.addField(FieldDescriptor(name: "val", number: 1, type: .fixed32))
 
     let truncated = Data([0x0D, 0x01, 0x02])
-    XCTAssertThrowsError(try BinaryDeserializer().deserialize(truncated, using: desc))
+    XCTAssertThrowsError(
+      try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(truncated, using: desc)
+    )
   }
 
   func test_deserialize_truncatedLengthDelimited_throws() {
@@ -61,7 +65,9 @@ final class ErrorHandlingTests: XCTestCase {
     desc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
 
     let truncated = Data([0x0A, 0x05, 0x41])
-    XCTAssertThrowsError(try BinaryDeserializer().deserialize(truncated, using: desc))
+    XCTAssertThrowsError(
+      try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(truncated, using: desc)
+    )
   }
 
   // MARK: - Incorrect JSON data
@@ -71,7 +77,9 @@ final class ErrorHandlingTests: XCTestCase {
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
     let badJSON = Data("not json".utf8)
-    XCTAssertThrowsError(try JSONDeserializer().deserialize(badJSON, using: desc))
+    XCTAssertThrowsError(
+      try JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(badJSON, using: desc)
+    )
   }
 
   func test_deserializeJSON_wrongType_throws() {
@@ -79,7 +87,9 @@ final class ErrorHandlingTests: XCTestCase {
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
     let json = Data("{\"id\": \"not_a_number\"}".utf8)
-    XCTAssertThrowsError(try JSONDeserializer().deserialize(json, using: desc))
+    XCTAssertThrowsError(
+      try JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(json, using: desc)
+    )
   }
 
   func test_deserializeJSON_emptyObject_returnsEmptyMessage() throws {
@@ -87,7 +97,7 @@ final class ErrorHandlingTests: XCTestCase {
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
     let json = Data("{}".utf8)
-    let msg = try JSONDeserializer().deserialize(json, using: desc)
+    let msg = try JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(json, using: desc)
     XCTAssertNil(try msg.get(forField: "id"))
   }
 
@@ -108,7 +118,9 @@ final class ErrorHandlingTests: XCTestCase {
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
     let badWireType = Data([0x0F])
-    XCTAssertThrowsError(try BinaryDeserializer().deserialize(badWireType, using: desc))
+    XCTAssertThrowsError(
+      try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(badWireType, using: desc)
+    )
   }
 
   // MARK: - Serialization of unsupported type

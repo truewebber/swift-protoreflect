@@ -21,23 +21,23 @@ final class FieldDescriptorDeprecationTests: XCTestCase {
   // MARK: - Validation Gated on Syntax
 
   func test_validate_proto3Message_requiredFieldIgnored() {
-    var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
+    var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg", syntax: "proto3")
     desc.addField(FieldDescriptor(name: "value", number: 1, type: .int32, isRequired: true))
 
     let msg = DynamicMessage(descriptor: desc)
     let factory = MessageFactory()
-    let result = factory.validate(msg, syntax: "proto3")
+    let result = factory.validate(msg)
 
     XCTAssertTrue(result.isValid, "Proto3 should ignore isRequired: \(result.errors)")
   }
 
   func test_validate_proto2Message_requiredFieldChecked() {
-    var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
+    var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg", syntax: "proto2")
     desc.addField(FieldDescriptor(name: "value", number: 1, type: .int32, isRequired: true))
 
     let msg = DynamicMessage(descriptor: desc)
     let factory = MessageFactory()
-    let result = factory.validate(msg, syntax: "proto2")
+    let result = factory.validate(msg)
 
     XCTAssertFalse(result.isValid, "Proto2 should report missing required field")
   }

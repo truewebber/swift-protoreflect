@@ -53,17 +53,17 @@ final class Proto3SpecTests: XCTestCase {
     desc.addField(FieldDescriptor(name: "x", number: 1, type: .int32, isRequired: true))
     let msg = factory.createMessage(from: desc)
 
-    let result = factory.validate(msg, syntax: "proto3")
+    let result = factory.validate(msg)
     XCTAssertTrue(result.isValid, "Proto3 must not enforce required fields")
   }
 
   func test_requiredField_proto2_enforced() {
     let factory = MessageFactory()
-    var desc = MessageDescriptor(name: "M", fullName: "test.M")
+    var desc = MessageDescriptor(name: "M", fullName: "test.M", syntax: "proto2")
     desc.addField(FieldDescriptor(name: "x", number: 1, type: .int32, isRequired: true))
     let msg = factory.createMessage(from: desc)
 
-    let result = factory.validate(msg, syntax: "proto2")
+    let result = factory.validate(msg)
     XCTAssertFalse(result.isValid, "Proto2 must enforce required fields")
   }
 
@@ -99,7 +99,7 @@ final class Proto3SpecTests: XCTestCase {
     let serializer = BinarySerializer()
     let data = try serializer.serialize(msg)
 
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let decoded = try deserializer.deserialize(data, using: desc)
 
     XCTAssertEqual(decoded.unknownFields, unknownData)
@@ -115,7 +115,7 @@ final class Proto3SpecTests: XCTestCase {
     var msg = factory.createMessage(from: desc)
     try msg.set(Int64(9_007_199_254_740_993), forField: "val")
 
-    let serializer = JSONSerializer()
+    let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let json = try serializer.serializeToJSONObject(msg)
     XCTAssertTrue(json["val"] is String, "int64 must be serialized as string in JSON")
   }
@@ -128,7 +128,7 @@ final class Proto3SpecTests: XCTestCase {
     var msg = factory.createMessage(from: desc)
     try msg.set("Hello".data(using: .utf8)!, forField: "data")
 
-    let serializer = JSONSerializer()
+    let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let json = try serializer.serializeToJSONObject(msg)
     XCTAssertEqual(json["data"] as? String, "SGVsbG8=")
   }
@@ -148,7 +148,7 @@ final class Proto3SpecTests: XCTestCase {
     var msg = factory.createMessage(from: desc)
     try msg.set(Int32(1), forField: "status")
 
-    let serializer = JSONSerializer()
+    let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let json = try serializer.serializeToJSONObject(msg)
     XCTAssertEqual(json["status"] as? String, "ACTIVE")
   }

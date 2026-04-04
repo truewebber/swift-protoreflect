@@ -18,7 +18,7 @@ final class SerializationErrorPathTests: XCTestCase {
       )
     )
     let json = #"{"items": "not_an_array"}"#.data(using: .utf8)!
-    let deserializer = JSONDeserializer()
+    let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
   }
@@ -39,7 +39,7 @@ final class SerializationErrorPathTests: XCTestCase {
       )
     )
     let json = #"{"labels": [1,2,3]}"#.data(using: .utf8)!
-    let deserializer = JSONDeserializer()
+    let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
   }
@@ -48,7 +48,7 @@ final class SerializationErrorPathTests: XCTestCase {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(FieldDescriptor(name: "val", number: 1, type: .int32))
     let json = #"{"val": 9999999999999}"#.data(using: .utf8)!
-    let deserializer = JSONDeserializer()
+    let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
   }
@@ -57,7 +57,7 @@ final class SerializationErrorPathTests: XCTestCase {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(FieldDescriptor(name: "data", number: 1, type: .bytes))
     let json = #"{"data": "!!!not-base64!!!"}"#.data(using: .utf8)!
-    let deserializer = JSONDeserializer()
+    let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
   }
@@ -66,7 +66,7 @@ final class SerializationErrorPathTests: XCTestCase {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(FieldDescriptor(name: "flag", number: 1, type: .bool))
     let json = #"{"flag": "yes"}"#.data(using: .utf8)!
-    let deserializer = JSONDeserializer()
+    let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
   }
@@ -75,7 +75,7 @@ final class SerializationErrorPathTests: XCTestCase {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(FieldDescriptor(name: "val", number: 1, type: .double))
     let json = #"{"val": [1,2,3]}"#.data(using: .utf8)!
-    let deserializer = JSONDeserializer()
+    let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
   }
@@ -84,7 +84,7 @@ final class SerializationErrorPathTests: XCTestCase {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     let json = #"{"name": 42}"#.data(using: .utf8)!
-    let deserializer = JSONDeserializer()
+    let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
   }
@@ -105,7 +105,7 @@ final class SerializationErrorPathTests: XCTestCase {
       )
     )
     let json = #"{"counts": {"not_a_number": "v"}}"#.data(using: .utf8)!
-    let deserializer = JSONDeserializer()
+    let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
   }
@@ -126,7 +126,7 @@ final class SerializationErrorPathTests: XCTestCase {
       )
     )
     let json = #"{"data": {"not_int": "v"}}"#.data(using: .utf8)!
-    let deserializer = JSONDeserializer()
+    let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
   }
@@ -137,7 +137,7 @@ final class SerializationErrorPathTests: XCTestCase {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     let truncatedData = Data([0x0A, 0x10])
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     XCTAssertThrowsError(try deserializer.deserialize(truncatedData, using: desc))
   }
@@ -153,7 +153,7 @@ final class SerializationErrorPathTests: XCTestCase {
       )
     )
     let data = Data([0x0A, 0x02, 0x08, 0x01])
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     XCTAssertThrowsError(try deserializer.deserialize(data, using: desc))
   }

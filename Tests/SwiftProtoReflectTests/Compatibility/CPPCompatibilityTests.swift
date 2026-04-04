@@ -17,7 +17,7 @@ final class CPPCompatibilityTests: XCTestCase {
   // MARK: - Helpers
 
   private let serializer = BinarySerializer()
-  private let deserializer = BinaryDeserializer()
+  private let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
   private let factory = MessageFactory()
 
   // MARK: - Unknown fields preserved across round-trip

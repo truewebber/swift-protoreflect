@@ -101,7 +101,7 @@ final class GoogleConformanceTests: XCTestCase {
     var msg = MessageFactory().createMessage(from: desc)
     try msg.set(Int64.max, forField: "big")
 
-    let json = try JSONSerializer().serializeToJSONObject(msg)
+    let json = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
     XCTAssertTrue(json["big"] is String, "int64 must be a JSON string per proto3 spec")
   }
 
@@ -112,7 +112,7 @@ final class GoogleConformanceTests: XCTestCase {
     var msg = MessageFactory().createMessage(from: desc)
     try msg.set(UInt64.max, forField: "big")
 
-    let json = try JSONSerializer().serializeToJSONObject(msg)
+    let json = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
     XCTAssertTrue(json["big"] is String, "uint64 must be a JSON string per proto3 spec")
   }
 
@@ -123,7 +123,7 @@ final class GoogleConformanceTests: XCTestCase {
     var msg = MessageFactory().createMessage(from: desc)
     try msg.set(Data([0x00, 0x01, 0x02, 0xFF]), forField: "payload")
 
-    let json = try JSONSerializer().serializeToJSONObject(msg)
+    let json = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
     let b64 = json["payload"] as? String
     XCTAssertNotNil(b64)
     XCTAssertEqual(Data(base64Encoded: b64!)!, Data([0x00, 0x01, 0x02, 0xFF]))

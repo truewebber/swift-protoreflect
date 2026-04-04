@@ -328,9 +328,10 @@ final class MessageFactoryTests: XCTestCase {
   }
 
   func testValidateMissingRequiredField() {
+    messageDescriptor.syntax = "proto2"
     let message = factory.createMessage(from: messageDescriptor)
 
-    let result = factory.validate(message, syntax: "proto2")
+    let result = factory.validate(message)
 
     XCTAssertFalse(result.isValid)
     XCTAssertEqual(result.errors.count, 1)
@@ -353,6 +354,8 @@ final class MessageFactoryTests: XCTestCase {
         isRequired: true
       )
     )
+    nestedMessageDescriptor.syntax = "proto2"
+    messageDescriptor.syntax = "proto2"
 
     var nested = factory.createMessage(from: nestedMessageDescriptor)
     try nested.set("value", forField: "value")
@@ -362,7 +365,7 @@ final class MessageFactoryTests: XCTestCase {
     try message.set("required value", forField: "required_field")
     try message.set(nested, forField: "nested")
 
-    let result = factory.validate(message, syntax: "proto2")
+    let result = factory.validate(message)
 
     XCTAssertFalse(result.isValid)
     XCTAssertEqual(result.errors.count, 1)
@@ -403,6 +406,8 @@ final class MessageFactoryTests: XCTestCase {
         isRequired: true
       )
     )
+    nestedMessageDescriptor.syntax = "proto2"
+    messageDescriptor.syntax = "proto2"
 
     var validNested = factory.createMessage(from: nestedMessageDescriptor)
     try validNested.set("value", forField: "value")
@@ -416,7 +421,7 @@ final class MessageFactoryTests: XCTestCase {
     try message.set("required value", forField: "required_field")
     try message.set([validNested, invalidNested], forField: "repeated_nested")
 
-    let result = factory.validate(message, syntax: "proto2")
+    let result = factory.validate(message)
 
     XCTAssertFalse(result.isValid)
     XCTAssertEqual(result.errors.count, 1)
@@ -455,6 +460,8 @@ final class MessageFactoryTests: XCTestCase {
         isRequired: true
       )
     )
+    nestedMessageDescriptor.syntax = "proto2"
+    messageDescriptor.syntax = "proto2"
 
     var validNested = factory.createMessage(from: nestedMessageDescriptor)
     try validNested.set("value", forField: "value")
@@ -469,7 +476,7 @@ final class MessageFactoryTests: XCTestCase {
     try message.setMapEntry(validNested, forKey: "valid", inField: "message_map")
     try message.setMapEntry(invalidNested, forKey: "invalid", inField: "message_map")
 
-    let result = factory.validate(message, syntax: "proto2")
+    let result = factory.validate(message)
 
     XCTAssertFalse(result.isValid)
     XCTAssertEqual(result.errors.count, 1)

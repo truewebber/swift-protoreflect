@@ -87,7 +87,7 @@ final class Proto2BinarySerializationTests: XCTestCase {
     let serializer = BinarySerializer()
     let data = try serializer.serialize(msg)
 
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let decoded = try deserializer.deserialize(data, using: desc)
     let values = try decoded.get(forField: "values") as? [Any]
     XCTAssertEqual(values?.count, 3)
@@ -101,7 +101,7 @@ final class Proto2BinarySerializationTests: XCTestCase {
     let serializer = BinarySerializer()
     let data = try serializer.serialize(msg)
 
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let decoded = try deserializer.deserialize(data, using: desc)
     let values = try decoded.get(forField: "values") as? [Any]
     XCTAssertEqual(values?.count, 2)
@@ -115,7 +115,7 @@ final class Proto2BinarySerializationTests: XCTestCase {
     let serializer = BinarySerializer()
     let data = try serializer.serialize(msg)
 
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let decoded = try deserializer.deserialize(data, using: desc)
     let values = try decoded.get(forField: "values") as? [Any]
     XCTAssertEqual(values?.count, 2)
@@ -129,7 +129,7 @@ final class Proto2BinarySerializationTests: XCTestCase {
     let serializer = BinarySerializer()
     let data = try serializer.serialize(msg)
 
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let decoded = try deserializer.deserialize(data, using: desc)
     let values = try decoded.get(forField: "values") as? [Any]
     XCTAssertEqual(values?.count, 2)
@@ -146,7 +146,7 @@ final class Proto2BinarySerializationTests: XCTestCase {
     let serializer = BinarySerializer()
     let data = try serializer.serialize(msg)
 
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let decoded = try deserializer.deserialize(data, using: desc)
 
     let id = try decoded.get(forField: 1) as? Int32
@@ -167,7 +167,7 @@ final class Proto2BinarySerializationTests: XCTestCase {
     let packedData = try serializer.serialize(msg)
 
     let unpackedDesc = makeMessageWithPackedField(syntax: "proto2")
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let decoded = try deserializer.deserialize(packedData, using: unpackedDesc)
     let values = try decoded.get(forField: "values") as? [Any]
     XCTAssertEqual(values?.count, 2)

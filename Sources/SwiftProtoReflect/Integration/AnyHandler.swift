@@ -88,7 +88,7 @@ public struct AnyHandler: WellKnownTypeHandler {
         return factory.createMessage(from: targetDescriptor)
       }
       else {
-        let deserializer = BinaryDeserializer()
+        let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
         return try deserializer.deserialize(value, using: targetDescriptor)
       }
     }

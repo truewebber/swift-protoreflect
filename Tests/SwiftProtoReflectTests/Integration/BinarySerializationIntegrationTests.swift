@@ -82,7 +82,7 @@ final class BinarySerializationIntegrationTests: XCTestCase {
     let binaryData = try binarySerializer.serialize(msgB)
 
     // Serialise to JSON.
-    let jsonData = try JSONSerializer().serialize(msgB)
+    let jsonData = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serialize(msgB)
     let jsonObject = try XCTUnwrap(
       try JSONSerialization.jsonObject(with: jsonData) as? [String: Any]
     )

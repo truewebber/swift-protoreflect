@@ -492,7 +492,7 @@ final class BinarySerializationTests: XCTestCase {
     let data = try serializer.serialize(dynamicMessage)
     XCTAssertFalse(data.isEmpty)
 
-    let decoded = try BinaryDeserializer().deserialize(data, using: message)
+    let decoded = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(data, using: message)
     let decodedGroup = try decoded.get(forField: 1) as? DynamicMessage
     XCTAssertNotNil(decodedGroup)
     let val = try decodedGroup?.get(forField: "val") as? Int32
@@ -639,7 +639,10 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(tagCount, 1)
 
     // Round-trip
-    let deserialized = try BinaryDeserializer().deserialize(data, using: message)
+    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      data,
+      using: message
+    )
     let flags = try deserialized.get(forField: "flags") as? [Bool]
     XCTAssertEqual(flags, [true, false, true])
   }
@@ -656,7 +659,10 @@ final class BinarySerializationTests: XCTestCase {
     let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
-    let deserialized = try BinaryDeserializer().deserialize(data, using: message)
+    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      data,
+      using: message
+    )
     let values = try deserialized.get(forField: "values") as? [UInt32]
     XCTAssertEqual(values, [UInt32(100), UInt32(200), UInt32(300)])
   }
@@ -673,7 +679,10 @@ final class BinarySerializationTests: XCTestCase {
     let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
-    let deserialized = try BinaryDeserializer().deserialize(data, using: message)
+    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      data,
+      using: message
+    )
     let values = try deserialized.get(forField: "values") as? [Int32]
     XCTAssertEqual(values, [Int32(-1), Int32(-2), Int32(3)])
   }
@@ -690,7 +699,10 @@ final class BinarySerializationTests: XCTestCase {
     let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
-    let deserialized = try BinaryDeserializer().deserialize(data, using: message)
+    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      data,
+      using: message
+    )
     let values = try deserialized.get(forField: "values") as? [UInt32]
     XCTAssertEqual(values, [UInt32(10), UInt32(20), UInt32(30)])
   }
@@ -707,7 +719,10 @@ final class BinarySerializationTests: XCTestCase {
     let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
-    let deserialized = try BinaryDeserializer().deserialize(data, using: message)
+    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      data,
+      using: message
+    )
     let values = try deserialized.get(forField: "values") as? [UInt64]
     XCTAssertEqual(values, [UInt64(1_000_000), UInt64(2_000_000)])
   }
@@ -724,7 +739,10 @@ final class BinarySerializationTests: XCTestCase {
     let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
-    let deserialized = try BinaryDeserializer().deserialize(data, using: message)
+    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      data,
+      using: message
+    )
     let values = try deserialized.get(forField: "values") as? [Int32]
     XCTAssertEqual(values, [Int32(-100), Int32(0), Int32(100)])
   }
@@ -741,7 +759,10 @@ final class BinarySerializationTests: XCTestCase {
     let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
-    let deserialized = try BinaryDeserializer().deserialize(data, using: message)
+    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      data,
+      using: message
+    )
     let values = try deserialized.get(forField: "values") as? [Int64]
     XCTAssertEqual(values, [Int64(-1_000_000), Int64(1_000_000)])
   }
@@ -832,7 +853,10 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertGreaterThan(data.count, 0)
 
     // Deserialize and verify
-    let deserialized = try BinaryDeserializer().deserialize(data, using: message)
+    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      data,
+      using: message
+    )
     let blobs = try deserialized.get(forField: "blobs") as? [Data]
     XCTAssertEqual(blobs?.count, 2)
     XCTAssertEqual(blobs?[0], Data([0x01, 0x02]))
