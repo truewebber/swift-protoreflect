@@ -45,18 +45,19 @@ struct NestedMessagesExample {
   private static func demonstrateSimpleNesting() throws {
     ExampleUtils.printStep(1, "Simple Nested Message")
 
-    var addressDesc = MessageDescriptor(name: "Address", fullName: "example.Address")
+    var outerDesc = MessageDescriptor(name: "Person", fullName: "example.Person")
+    outerDesc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
+
+    var addressDesc = MessageDescriptor(name: "Address", parent: outerDesc)
     addressDesc.addField(FieldDescriptor(name: "street", number: 1, type: .string))
     addressDesc.addField(FieldDescriptor(name: "city", number: 2, type: .string))
 
-    var outerDesc = MessageDescriptor(name: "Person", fullName: "example.Person")
-    outerDesc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     outerDesc.addField(
       FieldDescriptor(
         name: "address",
         number: 2,
         type: .message,
-        typeName: "example.Address"
+        typeName: "example.Person.Address"
       )
     )
     outerDesc.addNestedMessage(addressDesc)
@@ -92,20 +93,22 @@ struct NestedMessagesExample {
   private static func demonstrateDeepNesting() throws {
     ExampleUtils.printStep(2, "Multi-Level Nesting")
 
-    var leafDesc = MessageDescriptor(name: "Leaf", fullName: "example.Leaf")
+    var rootDesc = MessageDescriptor(name: "Root", fullName: "example.Root")
+    rootDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
+
+    var midDesc = MessageDescriptor(name: "Mid", parent: rootDesc)
+    midDesc.addField(FieldDescriptor(name: "value", number: 1, type: .string))
+
+    var leafDesc = MessageDescriptor(name: "Leaf", parent: midDesc)
     leafDesc.addField(FieldDescriptor(name: "data", number: 1, type: .int32))
 
-    var midDesc = MessageDescriptor(name: "Mid", fullName: "example.Mid")
-    midDesc.addField(FieldDescriptor(name: "value", number: 1, type: .string))
     midDesc.addField(
-      FieldDescriptor(name: "leaf", number: 2, type: .message, typeName: "example.Leaf")
+      FieldDescriptor(name: "leaf", number: 2, type: .message, typeName: "example.Root.Mid.Leaf")
     )
     midDesc.addNestedMessage(leafDesc)
 
-    var rootDesc = MessageDescriptor(name: "Root", fullName: "example.Root")
-    rootDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
     rootDesc.addField(
-      FieldDescriptor(name: "mid", number: 2, type: .message, typeName: "example.Mid")
+      FieldDescriptor(name: "mid", number: 2, type: .message, typeName: "example.Root.Mid")
     )
     rootDesc.addNestedMessage(midDesc)
 
@@ -145,18 +148,19 @@ struct NestedMessagesExample {
   private static func demonstrateJsonNesting() throws {
     ExampleUtils.printStep(3, "Nested Messages in JSON")
 
-    var innerDesc = MessageDescriptor(name: "Coord", fullName: "example.Coord")
+    var outerDesc = MessageDescriptor(name: "Place", fullName: "example.Place")
+    outerDesc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
+
+    var innerDesc = MessageDescriptor(name: "Coord", parent: outerDesc)
     innerDesc.addField(FieldDescriptor(name: "lat", number: 1, type: .double))
     innerDesc.addField(FieldDescriptor(name: "lng", number: 2, type: .double))
 
-    var outerDesc = MessageDescriptor(name: "Place", fullName: "example.Place")
-    outerDesc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     outerDesc.addField(
       FieldDescriptor(
         name: "location",
         number: 2,
         type: .message,
-        typeName: "example.Coord"
+        typeName: "example.Place.Coord"
       )
     )
     outerDesc.addNestedMessage(innerDesc)

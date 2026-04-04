@@ -98,16 +98,17 @@ struct JsonCanonicalExample {
   private static func demonstrateEnumAsName() throws {
     ExampleUtils.printStep(3, "Enum Values as String Names")
 
-    var statusEnum = EnumDescriptor(name: "Status", fullName: "example.Status")
+    var desc = MessageDescriptor(name: "Account", fullName: "example.Account")
+    desc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
+
+    var statusEnum = EnumDescriptor(name: "Status", parent: desc)
     statusEnum.addValue(.init(name: "UNKNOWN", number: 0))
     statusEnum.addValue(.init(name: "ACTIVE", number: 1))
     statusEnum.addValue(.init(name: "SUSPENDED", number: 2))
     statusEnum.addValue(.init(name: "DELETED", number: 3))
 
-    var desc = MessageDescriptor(name: "Account", fullName: "example.Account")
-    desc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     desc.addField(
-      FieldDescriptor(name: "status", number: 2, type: .enum, typeName: "example.Status")
+      FieldDescriptor(name: "status", number: 2, type: .enum, typeName: "example.Account.Status")
     )
     desc.addNestedEnum(statusEnum)
 
@@ -134,18 +135,19 @@ struct JsonCanonicalExample {
   private static func demonstrateIncludeDefaultValues() throws {
     ExampleUtils.printStep(4, "includeDefaultValues Option")
 
-    var statusEnum = EnumDescriptor(name: "Role", fullName: "example.Role")
-    statusEnum.addValue(.init(name: "GUEST", number: 0))
-    statusEnum.addValue(.init(name: "ADMIN", number: 1))
-
     var desc = MessageDescriptor(name: "Profile", fullName: "example.Profile")
     desc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     desc.addField(FieldDescriptor(name: "age", number: 2, type: .int32))
     desc.addField(FieldDescriptor(name: "active", number: 3, type: .bool))
+
+    var roleEnum = EnumDescriptor(name: "Role", parent: desc)
+    roleEnum.addValue(.init(name: "GUEST", number: 0))
+    roleEnum.addValue(.init(name: "ADMIN", number: 1))
+
     desc.addField(
-      FieldDescriptor(name: "role", number: 4, type: .enum, typeName: "example.Role")
+      FieldDescriptor(name: "role", number: 4, type: .enum, typeName: "example.Profile.Role")
     )
-    desc.addNestedEnum(statusEnum)
+    desc.addNestedEnum(roleEnum)
 
     let msg = MessageFactory().createMessage(from: desc)
 

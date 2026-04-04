@@ -142,7 +142,6 @@ struct SchemaEvolutionExample {
     writerDesc.addField(
       FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "example.Status")
     )
-    writerDesc.addNestedEnum(newEnum)
 
     var msg = MessageFactory().createMessage(from: writerDesc)
     try msg.set(Int32(2), forField: "status")
@@ -156,7 +155,6 @@ struct SchemaEvolutionExample {
     readerDesc.addField(
       FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "example.Status")
     )
-    readerDesc.addNestedEnum(oldEnum)
 
     let decoded = try BinaryDeserializer().deserialize(data, using: readerDesc)
     let status = try decoded.get(forField: "status") as? Int32 ?? -1
