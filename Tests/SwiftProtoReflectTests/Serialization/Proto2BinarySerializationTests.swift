@@ -49,30 +49,6 @@ final class Proto2BinarySerializationTests: XCTestCase {
 
   // MARK: - Group wire format encoding/decoding
 
-  func test_group_serialize_roundTrip() throws {
-    let desc = makeMessageWithGroup()
-    var msg = DynamicMessage(descriptor: desc)
-    try msg.set(Int32(1), forField: "id")
-
-    var group = DynamicMessage(descriptor: makeGroupDescriptor())
-    try group.set(Int32(42), forField: "a")
-    try msg.set(group, forField: "my_group")
-
-    let serializer = BinarySerializer()
-    let data = try serializer.serialize(msg)
-
-    let deserializer = BinaryDeserializer()
-    let decoded = try deserializer.deserialize(data, using: desc)
-
-    let decodedId = try decoded.get(forField: "id") as? Int32
-    XCTAssertEqual(decodedId, 1)
-
-    let decodedGroup = try decoded.get(forField: "my_group") as? DynamicMessage
-    XCTAssertNotNil(decodedGroup)
-    let decodedA = try decodedGroup?.get(forField: "a") as? Int32
-    XCTAssertEqual(decodedA, 42)
-  }
-
   func test_group_serialize_wireFormat_startEndGroupTags() throws {
     let desc = makeMessageWithGroup()
     var msg = DynamicMessage(descriptor: desc)

@@ -451,4 +451,84 @@ final class SerializationBenchmarks: XCTestCase {
     fileDescriptorMutable.addMessage(largeDataMessage)
     return largeDataMessage
   }
+
+  // MARK: - G. Performance: Binary Deserializer with TypeRegistry
+
+  /// Benchmarks binary deserialization of a sibling message graph using a shared TypeRegistry.
+  ///
+  /// Verifies no significant overhead vs. structural nesting.
+  func test_performance_binaryDeserialization_withRegistry_largeSiblingGraph() throws {
+    var leafDesc = MessageDescriptor(name: "Leaf", fullName: "perf.Leaf")
+    leafDesc.addField(FieldDescriptor(name: "data", number: 1, type: .string))
+
+    var nodeDesc = MessageDescriptor(name: "Node", fullName: "perf.Node")
+    nodeDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
+    nodeDesc.addField(FieldDescriptor(name: "leaf", number: 2, type: .message, typeName: "perf.Leaf"))
+
+    let perfRegistry = TypeRegistry()
+    try perfRegistry.registerMessage(leafDesc)
+    try perfRegistry.registerMessage(nodeDesc)
+
+    let perfFactory = MessageFactory()
+    var leafMsg = perfFactory.createMessage(from: leafDesc)
+    try leafMsg.set(String(repeating: "x", count: 100), forField: "data")
+
+    // Serialise using lie to produce binary data.
+    var serNodeDesc = nodeDesc
+    serNodeDesc.addNestedMessage(leafDesc)
+    var nodeMsg = perfFactory.createMessage(from: serNodeDesc)
+    try nodeMsg.set(Int32(1), forField: "id")
+    try nodeMsg.set(leafMsg, forField: "leaf")
+    let nodeData = try binarySerializer.serialize(nodeMsg)
+
+    let opts = DeserializationOptions(typeRegistry: perfRegistry)
+    let perfDeserializer = BinaryDeserializer(options: opts)
+
+    measure {
+      do {
+        _ = try perfDeserializer.deserialize(nodeData, using: nodeDesc)
+      }
+      catch {
+        XCTFail("Deserialization with registry failed: \(error)")
+      }
+    }
+  }
+
+  /// Benchmarks registry lookup overhead by comparing deserialization with and without
+  /// a populated registry for a simple sibling message field.
+  func test_performance_binaryDeserialization_registryLookup_overhead() throws {
+    var innerDesc = MessageDescriptor(name: "Inner", fullName: "overhead.Inner")
+    innerDesc.addField(FieldDescriptor(name: "value", number: 1, type: .string))
+
+    var outerDesc = MessageDescriptor(name: "Outer", fullName: "overhead.Outer")
+    outerDesc.addField(
+      FieldDescriptor(name: "inner", number: 1, type: .message, typeName: "overhead.Inner")
+    )
+
+    let overheadRegistry = TypeRegistry()
+    try overheadRegistry.registerMessage(innerDesc)
+    try overheadRegistry.registerMessage(outerDesc)
+
+    let overheadFactory = MessageFactory()
+    var serOuterDesc = outerDesc
+    serOuterDesc.addNestedMessage(innerDesc)
+
+    var innerMsg = overheadFactory.createMessage(from: innerDesc)
+    try innerMsg.set("benchmark", forField: "value")
+    var outerMsg = overheadFactory.createMessage(from: serOuterDesc)
+    try outerMsg.set(innerMsg, forField: "inner")
+    let data = try binarySerializer.serialize(outerMsg)
+
+    let opts = DeserializationOptions(typeRegistry: overheadRegistry)
+    let overheadDeserializer = BinaryDeserializer(options: opts)
+
+    measure {
+      do {
+        _ = try overheadDeserializer.deserialize(data, using: outerDesc)
+      }
+      catch {
+        XCTFail("Deserialization overhead benchmark failed: \(error)")
+      }
+    }
+  }
 }

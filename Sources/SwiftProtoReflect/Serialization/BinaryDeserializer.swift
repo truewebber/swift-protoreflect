@@ -562,10 +562,26 @@ public struct DeserializationOptions {
   /// Strict UTF-8 string validation.
   public let strictUTF8Validation: Bool
 
+  /// Registry used to resolve message-type fields by fully-qualified name.
+  ///
+  /// When `nil` (default), only structurally-nested types are resolved — identical to legacy behaviour.
+  /// Pass a populated `TypeRegistry` to enable cross-file and sibling-message resolution.
+  public let typeRegistry: TypeRegistry?
+
   /// Creates deserialization options.
-  public init(preserveUnknownFields: Bool = true, strictUTF8Validation: Bool = true) {
+  ///
+  /// - Parameters:
+  ///   - preserveUnknownFields: Whether to preserve unknown fields. Defaults to `true`.
+  ///   - strictUTF8Validation: Whether to enforce strict UTF-8 string validation. Defaults to `true`.
+  ///   - typeRegistry: Optional registry for resolving message types by fully-qualified name. Defaults to `nil`.
+  public init(
+    preserveUnknownFields: Bool = true,
+    strictUTF8Validation: Bool = true,
+    typeRegistry: TypeRegistry? = nil
+  ) {
     self.preserveUnknownFields = preserveUnknownFields
     self.strictUTF8Validation = strictUTF8Validation
+    self.typeRegistry = typeRegistry
   }
 }
 
