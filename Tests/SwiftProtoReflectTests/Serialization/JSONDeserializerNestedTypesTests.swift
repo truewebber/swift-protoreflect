@@ -351,16 +351,16 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     XCTAssertEqual(try result.get(forField: "limit") as? Int32, 10)
   }
 
-  // MARK: - Group 7.5 — No registry
+  // MARK: - Group 7.5 — No registry (empty registry)
 
-  func test_deserialize_nestedFieldWithoutRegistry_throwsUnsupportedNestedMessage() throws {
+  func test_deserialize_nestedFieldWithoutRegistry_throwsNestedMessageDescriptorNotFound() throws {
     let fd = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
-    let deserializer = JSONDeserializer()  // no registry
+    let deserializer = JSONDeserializer()  // deprecated init — empty TypeRegistry
     let json: [String: Any] = ["search_filters": ["title": "test"]]
     XCTAssertThrowsError(try deserializer.deserializeFromJSONObject(json, using: requestDesc)) { error in
-      guard case JSONDeserializationError.unsupportedNestedMessage = error else {
-        XCTFail("Expected unsupportedNestedMessage, got \(error)")
+      guard case JSONDeserializationError.nestedMessageDescriptorNotFound = error else {
+        XCTFail("Expected nestedMessageDescriptorNotFound, got \(error)")
         return
       }
     }

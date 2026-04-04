@@ -1630,7 +1630,7 @@ final class JSONDeserializationTests: XCTestCase {
 
     XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
       if let jsonError = error as? JSONDeserializationError {
-        if case .unsupportedNestedMessage(let fieldName, let typeName) = jsonError {
+        if case .nestedMessageDescriptorNotFound(let fieldName, let typeName) = jsonError {
           XCTAssertEqual(fieldName, "nested_message")
           XCTAssertEqual(typeName, "NestedMessage")
         }

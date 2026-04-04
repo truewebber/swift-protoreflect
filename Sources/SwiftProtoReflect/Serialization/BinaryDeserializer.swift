@@ -25,8 +25,23 @@ public struct BinaryDeserializer {
   /// Creates new BinaryDeserializer instance.
   ///
   /// - Parameter options: Deserialization options.
-  public init(options: DeserializationOptions = DeserializationOptions()) {
+  public init(options: DeserializationOptions) {
     self.options = options
+  }
+
+  /// Creates a BinaryDeserializer with default options and an empty TypeRegistry.
+  ///
+  /// - Note: Deprecated. Use `init(options:)` with an explicit `TypeRegistry` so that
+  ///   cross-file message types can be resolved correctly.
+  @available(*, deprecated, message: "Use init(options:) with an explicit TypeRegistry")
+  public init() {
+    self.init(
+      options: DeserializationOptions(
+        preserveUnknownFields: true,
+        strictUTF8Validation: true,
+        typeRegistry: TypeRegistry()
+      )
+    )
   }
 
   // MARK: - Deserialization Methods
@@ -379,7 +394,7 @@ public struct BinaryDeserializer {
       return desc
     }
     let normalizedTypeName = typeName.hasPrefix(".") ? String(typeName.dropFirst()) : typeName
-    if let desc = options.typeRegistry?.findMessage(named: normalizedTypeName) {
+    if let desc = options.typeRegistry.findMessage(named: normalizedTypeName) {
       return desc
     }
     throw DeserializationError.unsupportedNestedMessage(typeName: typeName)
@@ -599,24 +614,44 @@ public struct DeserializationOptions {
 
   /// Registry used to resolve message-type fields by fully-qualified name.
   ///
-  /// When `nil` (default), only structurally-nested types are resolved — identical to legacy behaviour.
   /// Pass a populated `TypeRegistry` to enable cross-file and sibling-message resolution.
-  public let typeRegistry: TypeRegistry?
+  /// For hand-built descriptors without cross-file references, an empty `TypeRegistry()` is sufficient.
+  public let typeRegistry: TypeRegistry
 
-  /// Creates deserialization options.
+  /// Creates deserialization options with a required TypeRegistry.
   ///
   /// - Parameters:
   ///   - preserveUnknownFields: Whether to preserve unknown fields. Defaults to `true`.
   ///   - strictUTF8Validation: Whether to enforce strict UTF-8 string validation. Defaults to `true`.
-  ///   - typeRegistry: Optional registry for resolving message types by fully-qualified name. Defaults to `nil`.
+  ///   - typeRegistry: Registry for resolving message types by fully-qualified name.
   public init(
     preserveUnknownFields: Bool = true,
     strictUTF8Validation: Bool = true,
-    typeRegistry: TypeRegistry? = nil
+    typeRegistry: TypeRegistry
   ) {
     self.preserveUnknownFields = preserveUnknownFields
     self.strictUTF8Validation = strictUTF8Validation
     self.typeRegistry = typeRegistry
+  }
+
+  /// Creates deserialization options with an empty TypeRegistry.
+  ///
+  /// - Note: Deprecated. Use `init(preserveUnknownFields:strictUTF8Validation:typeRegistry:)` with an
+  ///   explicit `TypeRegistry` so that cross-file message types can be resolved correctly.
+  @available(
+    *,
+    deprecated,
+    message: "Use init(preserveUnknownFields:strictUTF8Validation:typeRegistry:) with an explicit TypeRegistry"
+  )
+  public init(
+    preserveUnknownFields: Bool = true,
+    strictUTF8Validation: Bool = true
+  ) {
+    self.init(
+      preserveUnknownFields: preserveUnknownFields,
+      strictUTF8Validation: strictUTF8Validation,
+      typeRegistry: TypeRegistry()
+    )
   }
 }
 

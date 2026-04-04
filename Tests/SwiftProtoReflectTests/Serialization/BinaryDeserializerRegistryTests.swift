@@ -438,7 +438,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     let descB = makeSiblingB()
     let data = try serialiseBContainingA(descA: descA, aValue: "test")
 
-    let opts = DeserializationOptions(typeRegistry: nil)
+    let opts = DeserializationOptions(typeRegistry: TypeRegistry())
     XCTAssertThrowsError(
       try BinaryDeserializer(options: opts).deserialize(data, using: descB)
     ) { error in
