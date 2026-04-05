@@ -1,0 +1,162 @@
+syntax = "proto3";
+package testcompat;
+
+import "common_types.proto";
+import "scalar_types.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+// --- Nullable pattern: oneof with NullValue ---
+// Very common in production: nullable scalars via oneof
+message NullableUint32 {
+  oneof kind {
+    google.protobuf.NullValue null_val = 1;
+    uint32 value = 2;
+  }
+}
+
+message NullableDouble {
+  oneof kind {
+    google.protobuf.NullValue null_val = 1;
+    double value = 2;
+  }
+}
+
+message NullableBool {
+  oneof kind {
+    google.protobuf.NullValue null_val = 1;
+    bool value = 2;
+  }
+}
+
+message NullableString {
+  oneof kind {
+    google.protobuf.NullValue null_val = 1;
+    string value = 2;
+  }
+}
+
+message NullableMessage {
+  oneof kind {
+    google.protobuf.NullValue null_val = 1;
+    SimpleMessage value = 2;
+  }
+}
+
+// Message using nullable fields
+message WithNullables {
+  NullableUint32 count = 1;
+  NullableDouble rate = 2;
+  NullableBool active = 3;
+  NullableString label = 4;
+  NullableMessage detail = 5;
+  string name = 10;
+}
+
+// --- Non-sequential field numbers + large numbers ---
+message NonSequentialFields {
+  string name = 1;
+  int32 code = 2;
+  // gap: 3-9 skipped
+  string description = 10;
+  // gap: 11-49 skipped
+  int64 big_number = 50;
+  // gap: 51-99 skipped
+  bool flag = 100;
+  google.protobuf.Timestamp created_at = 71;
+  google.protobuf.Timestamp updated_at = 72;
+}
+
+// --- Reserved fields ---
+message WithReserved {
+  string name = 1;
+  // fields 2,3,4 are reserved (were removed in schema evolution)
+  reserved 2, 3, 4;
+  reserved "old_field", "deprecated_field";
+  int32 version = 5;
+  // gap: 6-8 reserved range
+  reserved 6 to 8;
+  string status = 9;
+  int32 priority = 10;
+}
+
+// --- Enum with non-sequential values (bitmask pattern) ---
+enum IntentFlag {
+  INTENT_DEFAULT = 0;
+  INTENT_INFORMATIONAL = 1;
+  INTENT_NAVIGATIONAL = 2;
+  INTENT_TRANSACTIONAL = 4;  // gap: 3 skipped
+  INTENT_COMMERCIAL = 8;  // power-of-2
+}
+
+// --- Deeply nested sibling definitions (real-world report pattern) ---
+message ReportResponse {
+  message Metrics {
+    int32 position = 1;
+    float visibility = 2;
+    float traffic = 3;
+  }
+
+  message Position {
+    Metrics metrics = 1;
+    repeated Status serp_features = 2;
+    string url = 3;
+  }
+
+  message CompetitorData {
+    SimpleMessage competitor = 1;
+    Position position = 2;
+  }
+
+  message DateEntry {
+    string date = 1;
+    bool is_crawled = 2;
+    repeated CompetitorData competitors = 3;
+  }
+
+  message Interval {
+    DateEntry begin = 1;
+    DateEntry end = 2;
+    repeated CompetitorData diff = 3;
+  }
+
+  message Keyword {
+    string keyword = 1;
+    repeated string tags = 2;
+    NullableDouble cpc = 3;
+    NullableUint32 volume = 4;
+    Interval serps = 5;
+  }
+
+  uint32 total = 1;
+  uint32 limit = 2;
+  uint32 offset = 3;
+  repeated Keyword keywords = 4;
+}
+
+// --- Duplicate message name across packages (tested via cross_file) ---
+// This DateValue is in package testcompat, while proto2_types.proto is in testcompat2.
+// Cross-file tests verify correct resolution.
+message DateValue {
+  int32 year = 1;
+  int32 month = 2;
+  int32 day = 3;
+}
+
+// --- optional message fields in proto3 ---
+message Proto3OptionalMessages {
+  optional SimpleMessage opt_simple = 1;
+  optional ScalarMessage opt_scalar = 2;
+  optional google.protobuf.Timestamp opt_ts = 3;
+  optional google.protobuf.Int64Value opt_wrapper = 4;
+  SimpleMessage plain_simple = 5;  // implicit presence for comparison
+  string label = 10;
+}
+
+// --- Message with enum with gaps + repeated of it ---
+message IntentHolder {
+  IntentFlag intent = 1;
+  repeated IntentFlag all_intents = 2;
+  map<string, IntentFlag> by_name = 3;
+}

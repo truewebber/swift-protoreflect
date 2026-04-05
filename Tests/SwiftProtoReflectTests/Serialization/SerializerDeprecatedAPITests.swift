@@ -13,6 +13,7 @@ import XCTest
 @testable import SwiftProtoReflect
 
 // swiftlint:disable deprecated_usage
+@available(*, deprecated)
 final class SerializerDeprecatedAPITests: XCTestCase {
 
   // MARK: - BinaryDeserializer deprecated init

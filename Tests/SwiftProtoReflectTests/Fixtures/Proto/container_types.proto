@@ -1,0 +1,67 @@
+syntax = "proto3";
+package testcompat;
+
+import "scalar_types.proto";
+import "common_types.proto";
+
+// Repeated fields — all scalar types + message + enum
+message RepeatedAllTypes {
+  repeated double rep_double = 1;
+  repeated float rep_float = 2;
+  repeated int32 rep_int32 = 3;
+  repeated int64 rep_int64 = 4;
+  repeated uint32 rep_uint32 = 5;
+  repeated uint64 rep_uint64 = 6;
+  repeated sint32 rep_sint32 = 7;
+  repeated sint64 rep_sint64 = 8;
+  repeated fixed32 rep_fixed32 = 9;
+  repeated fixed64 rep_fixed64 = 10;
+  repeated sfixed32 rep_sfixed32 = 11;
+  repeated sfixed64 rep_sfixed64 = 12;
+  repeated bool rep_bool = 13;
+  repeated string rep_string = 14;
+  repeated bytes rep_bytes = 15;
+  repeated ScalarMessage rep_msg = 16;
+  repeated Status rep_enum = 17;
+  repeated SimpleMessage rep_simple = 18;
+}
+
+// Maps — all 7 key types (int32, int64, uint32, uint64, sint32, sint64, bool, string, fixed32, fixed64, sfixed32, sfixed64)
+message MapAllKeyTypes {
+  map<string, string> map_string_string = 1;
+  map<int32, string> map_int32_string = 2;
+  map<int64, string> map_int64_string = 3;
+  map<uint32, string> map_uint32_string = 4;
+  map<uint64, string> map_uint64_string = 5;
+  map<sint32, string> map_sint32_string = 6;
+  map<sint64, string> map_sint64_string = 7;
+  map<fixed32, string> map_fixed32_string = 8;
+  map<fixed64, string> map_fixed64_string = 9;
+  map<sfixed32, string> map_sfixed32_string = 10;
+  map<sfixed64, string> map_sfixed64_string = 11;
+  map<bool, string> map_bool_string = 12;
+}
+
+// Maps — diverse value types
+message MapAllValueTypes {
+  map<string, int32> map_s_int32 = 1;
+  map<string, int64> map_s_int64 = 2;
+  map<string, double> map_s_double = 3;
+  map<string, float> map_s_float = 4;
+  map<string, bool> map_s_bool = 5;
+  map<string, bytes> map_s_bytes = 6;
+  map<string, string> map_s_string = 7;
+  map<string, ScalarMessage> map_s_msg = 8;
+  map<string, Status> map_s_enum = 9;
+  map<string, SimpleMessage> map_s_simple = 10;
+}
+
+// Mixed map + repeated in one message
+message MixedContainers {
+  repeated int32 ids = 1;
+  repeated string names = 2;
+  map<string, int32> scores = 3;
+  map<int64, SimpleMessage> entries = 4;
+  repeated SimpleMessage items = 5;
+  map<string, Status> statuses = 6;
+}

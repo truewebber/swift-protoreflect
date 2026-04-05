@@ -1,0 +1,81 @@
+syntax = "proto3";
+package testcompat;
+
+import "common_types.proto";
+
+// 4-level nesting (top-level messages)
+message Nested4 {
+  int32 value = 1;
+  repeated string tags = 2;
+  Status status = 3;
+}
+message Nested3 {
+  Nested4 child = 1;
+  map<string, int32> props = 2;
+  bool flag = 3;
+}
+message Nested2 {
+  Nested3 child = 1;
+  int32 count = 2;
+  oneof variant {
+    string text = 3;
+    int32 number = 4;
+  }
+}
+message Nested1 {
+  Nested2 child = 1;
+  string name = 2;
+  repeated Nested2 siblings = 3;
+}
+
+// Nested message DEFINITIONS (message inside message)
+message OuterWithNestedDefs {
+  message MiddleDef {
+    message InnerDef {
+      int32 code = 1;
+      string reason = 2;
+    }
+    InnerDef detail = 1;
+    string label = 2;
+  }
+
+  enum OuterEnum {
+    OUTER_UNSPECIFIED = 0;
+    OUTER_A = 1;
+    OUTER_B = 2;
+  }
+
+  MiddleDef primary = 1;
+  repeated MiddleDef secondary = 2;
+  OuterEnum kind = 3;
+  map<string, MiddleDef.InnerDef> errors = 4;
+}
+
+// Recursive (self-referential) message
+message Recursive {
+  int32 value = 1;
+  string label = 2;
+  Recursive child = 3;
+  repeated Recursive children = 4;
+}
+
+// Mixed nesting with all features at each level
+message MixedNest1 {
+  message MixedNest2 {
+    message MixedNest3 {
+      int32 val = 1;
+      repeated string items = 2;
+      map<string, int32> kv = 3;
+    }
+    MixedNest3 inner = 1;
+    oneof pick {
+      string s = 2;
+      int32 n = 3;
+    }
+    repeated MixedNest3 list = 4;
+  }
+  MixedNest2 child = 1;
+  string name = 2;
+  map<string, MixedNest2> branches = 3;
+  repeated Status flags = 4;
+}

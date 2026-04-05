@@ -1,0 +1,67 @@
+syntax = "proto3";
+package testcompat;
+
+// Simple enum
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_ACTIVE = 1;
+  STATUS_INACTIVE = 2;
+  STATUS_DELETED = 3;
+}
+
+// Enum with aliases
+enum Priority {
+  option allow_alias = true;
+  PRIORITY_UNSPECIFIED = 0;
+  PRIORITY_LOW = 1;
+  PRIORITY_NORMAL = 2;
+  PRIORITY_MEDIUM = 2;  // alias for NORMAL
+  PRIORITY_HIGH = 3;
+  PRIORITY_CRITICAL = 4;
+}
+
+// Enum with negative values
+enum Direction {
+  DIRECTION_UNSPECIFIED = 0;
+  DIRECTION_UP = 1;
+  DIRECTION_DOWN = -1;
+  DIRECTION_LEFT = -2;
+  DIRECTION_RIGHT = 2;
+}
+
+// Minimal message (building block)
+message SimpleMessage {
+  int32 id = 1;
+  string name = 2;
+}
+
+// Empty message
+message EmptyCustom {}
+
+// Message with nested enum
+message WithNestedEnum {
+  enum InnerEnum {
+    INNER_UNSPECIFIED = 0;
+    INNER_ALPHA = 1;
+    INNER_BETA = 2;
+    INNER_GAMMA = 3;
+  }
+  InnerEnum kind = 1;
+  string label = 2;
+}
+
+// Holder for Direction enum (enables bidirectional testing of negative values)
+message DirectionHolder {
+  Direction dir = 1;
+  repeated Direction dirs = 2;
+}
+
+// Message with nested message
+message WithNestedMessage {
+  message Inner {
+    int32 code = 1;
+    string detail = 2;
+  }
+  Inner error = 1;
+  int32 status = 2;
+}

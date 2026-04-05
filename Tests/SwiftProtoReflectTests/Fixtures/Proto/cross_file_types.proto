@@ -1,0 +1,160 @@
+syntax = "proto3";
+package testcompat;
+
+import "common_types.proto";
+import "scalar_types.proto";
+import "container_types.proto";
+import "oneof_types.proto";
+import "nesting_types.proto";
+import "wkt_types.proto";
+import "proto2_types.proto";
+import "realworld_types.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
+
+// References types from every other file
+message CrossFileAll {
+  SimpleMessage simple = 1;  // common_types
+  ScalarMessage scalar = 2;  // scalar_types
+  RepeatedAllTypes repeated_all = 3;  // container_types
+  OneofComplex oneof_msg = 4;  // oneof_types
+  Nested1 nested = 5;  // nesting_types
+  WKTHolder wkt = 6;  // wkt_types
+  Status status = 7;  // common_types enum
+  Priority priority = 8;  // common_types enum
+}
+
+// Cross-file in repeated/map/oneof
+message CrossFileMixed {
+  repeated SimpleMessage items = 1;
+  map<string, ScalarMessage> details = 2;
+  oneof pick {
+    SimpleMessage simple_pick = 3;
+    WKTHolder wkt_pick = 4;
+    Nested1 nested_pick = 5;
+  }
+  repeated Status statuses = 6;
+  map<string, Status> status_map = 7;
+}
+
+// Cross-package: reference proto2 types from proto3 file
+message CrossPackageRef {
+  testcompat2.Proto2Basic p2_basic = 1;
+  testcompat2.Proto2Defaults p2_defaults = 2;
+  repeated testcompat2.Proto2Basic p2_list = 4;
+  string label = 10;
+  google.protobuf.Timestamp created = 11;
+  google.protobuf.Int64Value count = 12;
+}
+
+// Deeply mixed: nesting + cross-file + WKT + oneof + map
+message MegaMixed {
+  message Layer2 {
+    message Layer3 {
+      SimpleMessage simple = 1;
+      ScalarMessage scalar = 2;
+      WKTHolder wkt = 3;
+      map<string, Status> flags = 4;
+    }
+    Layer3 inner = 1;
+    repeated Layer3 list = 2;
+    oneof choice {
+      string text = 3;
+      SimpleMessage msg = 4;
+    }
+  }
+  Layer2 child = 1;
+  string name = 2;
+  map<string, Layer2> branches = 3;
+  repeated OneofComplex oneofs = 4;
+  google.protobuf.Timestamp ts = 5;
+  Nested1 nested = 6;
+}
+
+// Kitchen Sink — flat, all features, maximum diversity
+message KitchenSinkFlat {
+  // Scalars
+  int32 int32_val = 1;
+  int64 int64_val = 2;
+  uint32 uint32_val = 3;
+  uint64 uint64_val = 4;
+  sint32 sint32_val = 5;
+  sint64 sint64_val = 6;
+  fixed32 fixed32_val = 7;
+  fixed64 fixed64_val = 8;
+  sfixed32 sfixed32_val = 9;
+  sfixed64 sfixed64_val = 10;
+  double double_val = 11;
+  float float_val = 12;
+  bool bool_val = 13;
+  string string_val = 14;
+  bytes bytes_val = 15;
+
+  // Enum
+  Status status = 16;
+  Priority priority = 17;
+
+  // Repeated
+  repeated int32 rep_int32 = 18;
+  repeated string rep_string = 19;
+  repeated Status rep_status = 20;
+  repeated SimpleMessage rep_msg = 21;
+
+  // Map
+  map<string, string> map_ss = 22;
+  map<int32, string> map_is = 23;
+  map<string, SimpleMessage> map_sm = 24;
+  map<string, Status> map_se = 25;
+
+  // Oneof
+  oneof choice {
+    string oneof_str = 26;
+    int32 oneof_int = 27;
+    SimpleMessage oneof_msg = 28;
+  }
+
+  // WKTs
+  google.protobuf.Timestamp ts = 29;
+  google.protobuf.Duration dur = 30;
+  google.protobuf.Int64Value i64_w = 31;
+  google.protobuf.StringValue str_w = 32;
+  google.protobuf.Struct struct_v = 33;
+
+  // Nested
+  ScalarMessage scalar_detail = 34;
+  Nested1 deep_nested = 35;
+  WKTHolder wkt_all = 36;
+}
+
+// Kitchen Sink — deep 4 levels, each with repeated/map/oneof
+message DeepLevel4 {
+  int32 value = 1;
+  repeated string items = 2;
+  Status status = 3;
+}
+message DeepLevel3 {
+  DeepLevel4 child = 1;
+  map<string, string> props = 2;
+  bool flag = 3;
+  SimpleMessage aux = 4;
+}
+message DeepLevel2 {
+  DeepLevel3 child = 1;
+  int32 count = 2;
+  repeated int32 numbers = 3;
+  oneof pick {
+    string text = 4;
+    bool active = 5;
+  }
+  google.protobuf.Timestamp ts = 6;
+}
+message DeepLevel1 {
+  DeepLevel2 child = 1;
+  string name = 2;
+  repeated string tags = 3;
+  map<string, int32> scores = 4;
+  repeated DeepLevel2 extras = 5;
+  google.protobuf.Int64Value count_w = 6;
+}

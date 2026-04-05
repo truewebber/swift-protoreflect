@@ -54,24 +54,513 @@ public struct JSONDeserializer {
   /// - Returns: Deserialized dynamic message.
   /// - Throws: JSONDeserializationError if deserialization failed.
   public func deserialize(_ data: Data, using descriptor: MessageDescriptor) throws -> DynamicMessage {
-    // Parse JSON to object
-    let jsonObject: Any
+    // Use .fragmentsAllowed so that WKTs with non-object canonical JSON (bare string,
+    // number, boolean, or null) can be parsed at the top level.
+    let jsonValue: Any
     do {
-      jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
+      jsonValue = try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
     }
     catch {
       throw JSONDeserializationError.invalidJSON(underlyingError: error)
     }
 
-    // JSON object should be dictionary for message
-    guard let jsonDictionary = jsonObject as? [String: Any] else {
+    // Route well-known types through the WKT dispatch layer.
+    if WellKnownTypeDetector.isWellKnownType(descriptor.fullName) {
+      return try deserializeWKTFromAny(jsonValue, using: descriptor, depth: 0)
+    }
+
+    guard let jsonDictionary = jsonValue as? [String: Any] else {
       throw JSONDeserializationError.invalidJSONStructure(
         expected: "Object",
-        actual: String(describing: type(of: jsonObject))
+        actual: String(describing: type(of: jsonValue))
       )
     }
 
     return try deserializeFromJSONObject(jsonDictionary, using: descriptor)
+  }
+
+  /// Deserializes a `Any` JSON value to a well-known type message.
+  ///
+  /// Dispatches to a WKT-specific canonical JSON decoder. Unimplemented WKT decoders
+  /// throw `JSONDeserializationError.unsupportedWellKnownTypeDecoding` rather than
+  /// silently falling through to field-by-field decoding (which would produce incorrect output).
+  ///
+  /// - Parameters:
+  ///   - jsonValue: JSON value parsed from the wire (can be any JSON type).
+  ///   - descriptor: Message descriptor whose `fullName` identifies the WKT.
+  ///   - depth: Current nesting depth for cycle/depth checks.
+  /// - Returns: Deserialized dynamic message.
+  /// - Throws: `JSONDeserializationError.unsupportedWellKnownTypeDecoding` for unimplemented WKTs.
+  internal func deserializeWKTFromAny(
+    _ jsonValue: Any,
+    using descriptor: MessageDescriptor,
+    depth: Int
+  ) throws -> DynamicMessage {
+    switch descriptor.fullName {
+    case WellKnownTypeNames.empty:
+      guard let jsonObj = jsonValue as? [String: Any] else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Object",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      return try deserializeFromJSONObject(jsonObj, using: descriptor, depth: depth)
+    case WellKnownTypeNames.timestamp:
+      return try decodeTimestampFromAny(jsonValue, using: descriptor)
+    case WellKnownTypeNames.duration:
+      return try decodeDurationFromAny(jsonValue, using: descriptor)
+    case WellKnownTypeNames.fieldMask:
+      return try decodeFieldMaskFromAny(jsonValue, using: descriptor)
+    case WellKnownTypeNames.value:
+      return try decodeValueFromAny(jsonValue, depth: depth)
+    case WellKnownTypeNames.structType:
+      guard let jsonObj = jsonValue as? [String: Any] else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Object",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      return try decodeStructFromObject(jsonObj, depth: depth)
+    case WellKnownTypeNames.listValue:
+      guard let jsonArr = jsonValue as? [Any] else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Array",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      return try decodeListValueFromArray(jsonArr, depth: depth)
+    case WellKnownTypeNames.any:
+      return try decodeAnyFromAny(jsonValue, using: descriptor)
+    case WellKnownTypeNames.doubleValue,
+      WellKnownTypeNames.floatValue,
+      WellKnownTypeNames.int32Value,
+      WellKnownTypeNames.uint32Value,
+      WellKnownTypeNames.int64Value,
+      WellKnownTypeNames.uint64Value,
+      WellKnownTypeNames.boolValue,
+      WellKnownTypeNames.stringValue,
+      WellKnownTypeNames.bytesValue:
+      return try decodeWrapperFromAny(jsonValue, using: descriptor)
+    default:
+      throw JSONDeserializationError.unsupportedWellKnownTypeDecoding(typeName: descriptor.fullName)
+    }
+  }
+
+  /// Decodes `google.protobuf.Any` from its canonical expanded JSON object form.
+  ///
+  /// Reads `@type` from the JSON object, looks up the packed message descriptor in
+  /// `options.typeRegistry`, then decodes either a WKT (via `value` key) or a regular
+  /// message (remaining keys), binary-serializes the result, and builds the Any message
+  /// with `type_url` (field 1) and `value` bytes (field 2).
+  private func decodeAnyFromAny(_ jsonValue: Any, using descriptor: MessageDescriptor) throws -> DynamicMessage {
+    guard let jsonObj = jsonValue as? [String: Any] else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "Object",
+        actual: String(describing: type(of: jsonValue))
+      )
+    }
+    guard let typeUrl = jsonObj["@type"] as? String else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "Object with @type key",
+        actual: "Object without @type"
+      )
+    }
+
+    guard let slashIdx = typeUrl.lastIndex(of: "/") else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "Valid type URL (e.g. type.googleapis.com/pkg.Msg)",
+        actual: typeUrl
+      )
+    }
+    let typeName = String(typeUrl[typeUrl.index(after: slashIdx)...])
+
+    guard let packedDescriptor = options.typeRegistry.findMessage(named: typeName) else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "Registered message type",
+        actual: typeName
+      )
+    }
+
+    let packedMessage: DynamicMessage
+    if WellKnownTypeDetector.isWellKnownType(typeName) {
+      let canonicalValue = jsonObj["value"] ?? NSNull()
+      packedMessage = try deserializeWKTFromAny(canonicalValue, using: packedDescriptor, depth: 0)
+    }
+    else {
+      var fieldsOnly = jsonObj
+      fieldsOnly.removeValue(forKey: "@type")
+      packedMessage = try deserializeFromJSONObject(fieldsOnly, using: packedDescriptor)
+    }
+
+    let binaryData = try BinarySerializer().serialize(packedMessage)
+
+    var anyMsg = DynamicMessage(descriptor: descriptor)
+    try anyMsg.set(typeUrl, forField: 1)
+    try anyMsg.set(binaryData, forField: 2)
+    return anyMsg
+  }
+
+  /// Decodes any of the 9 protobuf wrapper types from a raw canonical JSON value.
+  ///
+  /// A JSON `null` means the wrapper is absent — returns an empty message (field 1 unset).
+  /// Int64/UInt64 are expected as quoted decimal strings.
+  /// BytesValue is expected as a base64 string.
+  /// All other wrappers match their natural JSON types.
+  private func decodeWrapperFromAny(_ jsonValue: Any, using descriptor: MessageDescriptor) throws -> DynamicMessage {
+    let fullName = descriptor.fullName
+    var msg = DynamicMessage(descriptor: descriptor)
+
+    // null means "wrapper field absent" — return empty message
+    if jsonValue is NSNull {
+      return msg
+    }
+
+    switch fullName {
+    case WellKnownTypeNames.doubleValue:
+      guard let number = jsonValue as? NSNumber, !isJSONBool(number) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Number",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(number.doubleValue, forField: 1)
+
+    case WellKnownTypeNames.floatValue:
+      guard let number = jsonValue as? NSNumber, !isJSONBool(number) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Number",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(Float(number.doubleValue), forField: 1)
+
+    case WellKnownTypeNames.int32Value:
+      guard let number = jsonValue as? NSNumber, !isJSONBool(number) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Number",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(Int32(truncatingIfNeeded: number.int64Value), forField: 1)
+
+    case WellKnownTypeNames.uint32Value:
+      guard let number = jsonValue as? NSNumber, !isJSONBool(number) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Number",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(UInt32(truncatingIfNeeded: number.uint64Value), forField: 1)
+
+    case WellKnownTypeNames.int64Value:
+      guard let str = jsonValue as? String, let value = Int64(str) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "String (Int64)",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(value, forField: 1)
+
+    case WellKnownTypeNames.uint64Value:
+      guard let str = jsonValue as? String, let value = UInt64(str) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "String (UInt64)",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(value, forField: 1)
+
+    case WellKnownTypeNames.boolValue:
+      guard let number = jsonValue as? NSNumber, isJSONBool(number) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Boolean",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(number.boolValue, forField: 1)
+
+    case WellKnownTypeNames.stringValue:
+      guard let str = jsonValue as? String else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "String",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(str, forField: 1)
+
+    case WellKnownTypeNames.bytesValue:
+      guard let str = jsonValue as? String, let data = Data(base64Encoded: str) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "String (base64)",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(data, forField: 1)
+
+    default:
+      throw JSONDeserializationError.unsupportedWellKnownTypeDecoding(typeName: fullName)
+    }
+
+    return msg
+  }
+
+  /// Decodes a canonical RFC 3339 JSON string to `google.protobuf.Timestamp`.
+  ///
+  /// Accepts strings with Z or ±HH:MM timezone offsets and optional fractional seconds
+  /// with up to 9 digits of precision.  Non-string JSON input throws
+  /// `invalidJSONStructure`.
+  private func decodeTimestampFromAny(_ jsonValue: Any, using descriptor: MessageDescriptor) throws -> DynamicMessage {
+    guard let str = jsonValue as? String else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "String",
+        actual: String(describing: type(of: jsonValue))
+      )
+    }
+
+    // Separate optional fractional-seconds digits from the rest of the timestamp.
+    var datePart = str
+    var nanosDigits: String? = nil
+
+    if let dotIdx = str.firstIndex(of: ".") {
+      let beforeDot = String(str[str.startIndex..<dotIdx])
+      let afterDot = String(str[str.index(after: dotIdx)...])
+
+      // The timezone indicator follows the fractional digits: Z, +, or -
+      let tzChars: Set<Character> = ["Z", "+", "-"]
+      if let tzIdx = afterDot.firstIndex(where: { tzChars.contains($0) }) {
+        nanosDigits = String(afterDot[afterDot.startIndex..<tzIdx])
+        let tz = String(afterDot[tzIdx...])
+        datePart = beforeDot + tz
+      }
+      else {
+        nanosDigits = afterDot
+        datePart = beforeDot + "Z"
+      }
+    }
+
+    // Parse the whole-second timestamp using DateFormatter.
+    // Format XXX handles both Z and ±HH:MM offsets (RFC 3339 / ISO 8601 extended).
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssXXX"
+    guard let date = formatter.date(from: datePart) else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "RFC 3339 timestamp string",
+        actual: str
+      )
+    }
+
+    let seconds = Int64(date.timeIntervalSince1970)
+
+    // Parse fractional digits, padding/truncating to exactly 9 nanosecond digits.
+    let nanos: Int32
+    if let digits = nanosDigits, !digits.isEmpty {
+      var padded = digits
+      while padded.count < 9 { padded += "0" }
+      if padded.count > 9 { padded = String(padded.prefix(9)) }
+      guard let value = Int32(padded) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Valid fractional seconds",
+          actual: str
+        )
+      }
+      nanos = value
+    }
+    else {
+      nanos = 0
+    }
+
+    var msg = DynamicMessage(descriptor: descriptor)
+    try msg.set(seconds, forField: 1)
+    if nanos != 0 {
+      try msg.set(nanos, forField: 2)
+    }
+    return msg
+  }
+
+  /// Decodes a canonical duration JSON string (e.g. `"1.5s"`, `"-300s"`) to
+  /// `google.protobuf.Duration`.
+  ///
+  /// Accepts strings matching `^-?\d+(\.\d+)?s$` with up to 9 fractional digits.
+  /// Non-string input or malformed strings throw `invalidJSONStructure`.
+  private func decodeDurationFromAny(_ jsonValue: Any, using descriptor: MessageDescriptor) throws -> DynamicMessage {
+    guard let str = jsonValue as? String else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "String",
+        actual: String(describing: type(of: jsonValue))
+      )
+    }
+
+    guard str.hasSuffix("s") else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "Duration string ending in 's'",
+        actual: str
+      )
+    }
+
+    let withoutSuffix = String(str.dropLast())
+    let isNegative = withoutSuffix.hasPrefix("-")
+    let numericPart = isNegative ? String(withoutSuffix.dropFirst()) : withoutSuffix
+
+    // Split on the optional decimal point
+    let dotComponents = numericPart.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
+    guard let firstComponent = dotComponents.first, !firstComponent.isEmpty else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "Valid duration string",
+        actual: str
+      )
+    }
+
+    guard let absSeconds = Int64(firstComponent) else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "Valid duration string",
+        actual: str
+      )
+    }
+
+    let absNanos: Int32
+    if dotComponents.count > 1 {
+      let fracPart = String(dotComponents[1])
+      guard !fracPart.isEmpty, fracPart.allSatisfy({ $0.isNumber }) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Valid duration string",
+          actual: str
+        )
+      }
+      var padded = fracPart
+      while padded.count < 9 { padded += "0" }
+      if padded.count > 9 { padded = String(padded.prefix(9)) }
+      guard let value = Int32(padded) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Valid duration string",
+          actual: str
+        )
+      }
+      absNanos = value
+    }
+    else {
+      absNanos = 0
+    }
+
+    let seconds: Int64 = isNegative ? -absSeconds : absSeconds
+    let nanos: Int32 = isNegative ? -absNanos : absNanos
+
+    var msg = DynamicMessage(descriptor: descriptor)
+    try msg.set(seconds, forField: 1)
+    if nanos != 0 {
+      try msg.set(nanos, forField: 2)
+    }
+    return msg
+  }
+
+  /// Decodes a canonical comma-separated camelCase JSON string to `google.protobuf.FieldMask`.
+  ///
+  /// Each camelCase segment is converted to snake_case and stored in the repeated `paths` field.
+  /// An empty string produces an empty paths array. Non-string input throws `invalidJSONStructure`.
+  private func decodeFieldMaskFromAny(_ jsonValue: Any, using descriptor: MessageDescriptor) throws -> DynamicMessage {
+    guard let str = jsonValue as? String else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "String",
+        actual: String(describing: type(of: jsonValue))
+      )
+    }
+
+    var msg = DynamicMessage(descriptor: descriptor)
+    guard !str.isEmpty else {
+      return msg
+    }
+
+    let paths = str.split(separator: ",", omittingEmptySubsequences: false).map { camelToSnakeCase(String($0)) }
+    try msg.set(paths, forField: 1)
+    return msg
+  }
+
+  /// Converts a lowerCamelCase string to snake_case.
+  private func camelToSnakeCase(_ camel: String) -> String {
+    var result = ""
+    for char in camel {
+      if char.isUppercase {
+        result += "_" + char.lowercased()
+      }
+      else {
+        result.append(char)
+      }
+    }
+    return result
+  }
+
+  /// Decodes any JSON value to `google.protobuf.Value`.
+  ///
+  /// Field layout: 1 null_value, 2 number_value, 3 string_value, 4 bool_value,
+  /// 5 struct_value, 6 list_value. JSON booleans are distinguished from numbers
+  /// via `CFBooleanGetTypeID()` on Darwin; objcType "c"/"B" on Linux.
+  private func decodeValueFromAny(_ jsonValue: Any, depth: Int) throws -> DynamicMessage {
+    guard depth <= options.maxNestingDepth else {
+      throw JSONDeserializationError.nestingDepthExceeded(maxDepth: options.maxNestingDepth)
+    }
+    var msg = DynamicMessage(descriptor: StructProtoDescriptors.valueDescriptor)
+    if jsonValue is NSNull {
+      try msg.set(Int32(0), forField: 1)
+    }
+    else if let number = jsonValue as? NSNumber {
+      if isJSONBool(number) {
+        try msg.set(number.boolValue, forField: 4)
+      }
+      else {
+        try msg.set(number.doubleValue, forField: 2)
+      }
+    }
+    else if let string = jsonValue as? String {
+      try msg.set(string, forField: 3)
+    }
+    else if let dict = jsonValue as? [String: Any] {
+      let nested = try decodeStructFromObject(dict, depth: depth + 1)
+      try msg.set(nested, forField: 5)
+    }
+    else if let arr = jsonValue as? [Any] {
+      let nested = try decodeListValueFromArray(arr, depth: depth + 1)
+      try msg.set(nested, forField: 6)
+    }
+    else {
+      try msg.set(Int32(0), forField: 1)
+    }
+    return msg
+  }
+
+  /// Decodes a `[String: Any]` JSON object to `google.protobuf.Struct`.
+  private func decodeStructFromObject(_ jsonObj: [String: Any], depth: Int) throws -> DynamicMessage {
+    guard depth <= options.maxNestingDepth else {
+      throw JSONDeserializationError.nestingDepthExceeded(maxDepth: options.maxNestingDepth)
+    }
+    var msg = DynamicMessage(descriptor: StructProtoDescriptors.structDescriptor)
+    for (key, value) in jsonObj {
+      let valueMsg = try decodeValueFromAny(value, depth: depth + 1)
+      try msg.setMapEntry(valueMsg, forKey: key, inField: 1)
+    }
+    return msg
+  }
+
+  /// Decodes a `[Any]` JSON array to `google.protobuf.ListValue`.
+  private func decodeListValueFromArray(_ jsonArr: [Any], depth: Int) throws -> DynamicMessage {
+    guard depth <= options.maxNestingDepth else {
+      throw JSONDeserializationError.nestingDepthExceeded(maxDepth: options.maxNestingDepth)
+    }
+    var msg = DynamicMessage(descriptor: StructProtoDescriptors.listValueDescriptor)
+    for item in jsonArr {
+      let valueMsg = try decodeValueFromAny(item, depth: depth + 1)
+      try msg.addRepeatedValue(valueMsg, forField: 1)
+    }
+    return msg
+  }
+
+  /// Returns `true` when `number` was produced from a JSON boolean literal.
+  private func isJSONBool(_ number: NSNumber) -> Bool {
+    #if canImport(CoreFoundation) && !os(Linux)
+      return CFGetTypeID(number) == CFBooleanGetTypeID()
+    #else
+      let objCType = String(cString: number.objCType)
+      return objCType == "c" || objCType == "B"
+    #endif
   }
 
   /// Deserializes JSON object to dynamic message.
@@ -568,14 +1057,6 @@ public struct JSONDeserializer {
     fieldName: String,
     depth: Int
   ) throws -> DynamicMessage {
-    guard let jsonObject = jsonValue as? [String: Any] else {
-      throw JSONDeserializationError.valueTypeMismatch(
-        fieldName: fieldName,
-        expected: "Object",
-        actual: String(describing: type(of: jsonValue))
-      )
-    }
-
     guard let rawTypeName = typeName else {
       throw JSONDeserializationError.missingTypeName(fieldName: fieldName)
     }
@@ -583,6 +1064,22 @@ public struct JSONDeserializer {
     let lookupName = normaliseTypeName(rawTypeName)
     guard !lookupName.isEmpty else {
       throw JSONDeserializationError.missingTypeName(fieldName: fieldName)
+    }
+
+    // Route well-known type nested fields through the WKT dispatch layer.
+    if WellKnownTypeDetector.isWellKnownType(lookupName) {
+      if let nestedDescriptor = options.typeRegistry.findMessage(named: lookupName) {
+        return try deserializeWKTFromAny(jsonValue, using: nestedDescriptor, depth: depth + 1)
+      }
+      throw JSONDeserializationError.unsupportedWellKnownTypeDecoding(typeName: lookupName)
+    }
+
+    guard let jsonObject = jsonValue as? [String: Any] else {
+      throw JSONDeserializationError.valueTypeMismatch(
+        fieldName: fieldName,
+        expected: "Object",
+        actual: String(describing: type(of: jsonValue))
+      )
     }
 
     guard let nestedDescriptor = options.typeRegistry.findMessage(named: lookupName) else {
@@ -601,6 +1098,18 @@ public struct JSONDeserializer {
     fieldName: String,
     enumDescriptor: EnumDescriptor? = nil
   ) throws -> Int32 {
+    // JSON `null` is the canonical representation of google.protobuf.NullValue (NULL_VALUE = 0).
+    // SwiftProtobuf serializes NullValue enum fields as JSON literal null per the proto3 JSON spec.
+    if jsonValue is NSNull {
+      if let enumDesc = enumDescriptor, enumDesc.fullName == WellKnownTypeNames.nullValue {
+        return Int32(0)
+      }
+      throw JSONDeserializationError.valueTypeMismatch(
+        fieldName: fieldName,
+        expected: "Number or String",
+        actual: "NSNull"
+      )
+    }
     if let numberValue = jsonValue as? NSNumber {
       return numberValue.int32Value
     }
@@ -778,6 +1287,8 @@ public enum JSONDeserializationError: Error, Equatable {
   case nestedMessageDescriptorNotFound(fieldName: String, typeName: String)
   case nestingDepthExceeded(maxDepth: Int)
   case unsupportedFieldType(type: String)
+  /// Canonical JSON decoding for a well-known type is not yet implemented.
+  case unsupportedWellKnownTypeDecoding(typeName: String)
 
   public var description: String {
     switch self {
@@ -819,6 +1330,8 @@ public enum JSONDeserializationError: Error, Equatable {
       return "Nesting depth exceeded maximum of \(maxDepth)"
     case .unsupportedFieldType(let type):
       return "Unsupported field type: \(type)"
+    case .unsupportedWellKnownTypeDecoding(let typeName):
+      return "Canonical JSON decoding for well-known type '\(typeName)' is not yet implemented"
     }
   }
 
@@ -903,6 +1416,11 @@ public enum JSONDeserializationError: Error, Equatable {
     case (.nestingDepthExceeded(let lMax), .nestingDepthExceeded(let rMax)):
       return lMax == rMax
     case (.unsupportedFieldType(let lType), .unsupportedFieldType(let rType)):
+      return lType == rType
+    case (
+      .unsupportedWellKnownTypeDecoding(let lType),
+      .unsupportedWellKnownTypeDecoding(let rType)
+    ):
       return lType == rType
     default:
       return false

@@ -1,0 +1,67 @@
+syntax = "proto3";
+package testcompat;
+
+import "scalar_types.proto";
+import "common_types.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/struct.proto";
+
+// Simple oneof with all scalar variant types
+message OneofScalars {
+  oneof value {
+    double double_val = 1;
+    float float_val = 2;
+    int32 int32_val = 3;
+    int64 int64_val = 4;
+    uint32 uint32_val = 5;
+    uint64 uint64_val = 6;
+    bool bool_val = 7;
+    string string_val = 8;
+    bytes bytes_val = 9;
+  }
+}
+
+// Oneof with message, enum, bytes variants
+message OneofComplex {
+  oneof choice {
+    int32 int_val = 1;
+    string string_val = 2;
+    ScalarMessage msg_val = 3;
+    bytes bytes_val = 4;
+    Status enum_val = 5;
+    SimpleMessage simple_val = 6;
+  }
+  string name = 10;
+}
+
+// Multiple oneof blocks in one message
+message MultiOneof {
+  oneof first_choice {
+    int32 first_int = 1;
+    string first_str = 2;
+    bool first_bool = 3;
+  }
+  oneof second_choice {
+    double second_dbl = 4;
+    bytes second_bytes = 5;
+    Status second_enum = 6;
+  }
+  oneof third_choice {
+    SimpleMessage third_msg = 7;
+    ScalarMessage third_scalar = 8;
+  }
+  string label = 20;
+}
+
+// Oneof with WKT variants
+message OneofWKT {
+  oneof wkt_choice {
+    google.protobuf.Timestamp ts_val = 1;
+    google.protobuf.Int64Value i64w_val = 2;
+    google.protobuf.StringValue strw_val = 3;
+    google.protobuf.Struct struct_val = 4;
+    google.protobuf.BoolValue boolw_val = 5;
+  }
+  int32 tag = 10;
+}

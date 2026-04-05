@@ -155,7 +155,8 @@ final class JSONSerializationTests: XCTestCase {
 
     XCTAssertEqual(jsonObject["simple"] as! String, "Hello")
     XCTAssertEqual(jsonObject["unicode"] as! String, "Hello, 世界! 🌟")
-    XCTAssertEqual(jsonObject["empty"] as! String, "")
+    // Per proto3 JSON spec, empty string equals the scalar default and must be omitted.
+    XCTAssertNil(jsonObject["empty"], "Empty string field must be omitted per proto3 JSON spec")
   }
 
   func testSerializeBytesValues() throws {
@@ -179,7 +180,8 @@ final class JSONSerializationTests: XCTestCase {
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     XCTAssertEqual(jsonObject["data"] as! String, "SGVsbG8=")  // base64 encoded "Hello"
-    XCTAssertEqual(jsonObject["empty_data"] as! String, "")  // empty base64
+    // Per proto3 JSON spec, empty bytes equals the scalar default and must be omitted.
+    XCTAssertNil(jsonObject["empty_data"], "Empty bytes field must be omitted per proto3 JSON spec")
   }
 
   // MARK: - Nested Messages Tests
