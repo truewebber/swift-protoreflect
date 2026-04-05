@@ -107,6 +107,8 @@ public struct JSONSerializer {
       return try encodeStructMessage(message)
     case WellKnownTypeNames.listValue:
       return try encodeListValueMessage(message)
+    case WellKnownTypeNames.any:
+      return try encodeAnyMessage(message)
     case WellKnownTypeNames.doubleValue,
       WellKnownTypeNames.floatValue,
       WellKnownTypeNames.int32Value,
@@ -234,6 +236,39 @@ public struct JSONSerializer {
       }
     }
     return result
+  }
+
+  /// Encodes `google.protobuf.Any` to its canonical expanded JSON form.
+  ///
+  /// Reads `type_url` (field 1) and `value` (field 2, bytes) from the Any message.
+  /// The type is looked up in `options.typeRegistry`:
+  /// - If found and is a WKT: `{"@type": url, "value": <canonical WKT>}`.
+  /// - If found and is a regular message: `serializeToJSONObject` result + `"@type"` key.
+  /// - If not found: falls back to standard field-by-field encoding (no `@type` expansion).
+  private func encodeAnyMessage(_ message: DynamicMessage) throws -> Any {
+    let typeUrl = (try? message.get(forField: 1) as? String) ?? ""
+    let valueBytes = (try? message.get(forField: 2) as? Data) ?? Data()
+
+    // Extract the fully-qualified type name from the URL (everything after the last '/').
+    guard !typeUrl.isEmpty, let slashIdx = typeUrl.lastIndex(of: "/") else {
+      return try serializeToJSONObject(message)
+    }
+    let typeName = String(typeUrl[typeUrl.index(after: slashIdx)...])
+
+    guard let packedDescriptor = options.typeRegistry.findMessage(named: typeName) else {
+      return try serializeToJSONObject(message)
+    }
+
+    let packedMessage = try BinaryDeserializer().deserialize(valueBytes, using: packedDescriptor)
+
+    if WellKnownTypeDetector.isWellKnownType(typeName) {
+      let canonicalValue = try encodeWellKnownType(packedMessage, fullName: typeName)
+      return ["@type": typeUrl, "value": canonicalValue]
+    }
+
+    var jsonObject = try serializeToJSONObject(packedMessage)
+    jsonObject["@type"] = typeUrl
+    return jsonObject
   }
 
   /// Encodes `google.protobuf.Value` to its canonical JSON form.

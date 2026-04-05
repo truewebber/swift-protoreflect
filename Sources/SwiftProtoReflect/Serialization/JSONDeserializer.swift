@@ -129,6 +129,8 @@ public struct JSONDeserializer {
         )
       }
       return try decodeListValueFromArray(jsonArr, depth: depth)
+    case WellKnownTypeNames.any:
+      return try decodeAnyFromAny(jsonValue, using: descriptor)
     case WellKnownTypeNames.doubleValue,
       WellKnownTypeNames.floatValue,
       WellKnownTypeNames.int32Value,
@@ -142,6 +144,60 @@ public struct JSONDeserializer {
     default:
       throw JSONDeserializationError.unsupportedWellKnownTypeDecoding(typeName: descriptor.fullName)
     }
+  }
+
+  /// Decodes `google.protobuf.Any` from its canonical expanded JSON object form.
+  ///
+  /// Reads `@type` from the JSON object, looks up the packed message descriptor in
+  /// `options.typeRegistry`, then decodes either a WKT (via `value` key) or a regular
+  /// message (remaining keys), binary-serializes the result, and builds the Any message
+  /// with `type_url` (field 1) and `value` bytes (field 2).
+  private func decodeAnyFromAny(_ jsonValue: Any, using descriptor: MessageDescriptor) throws -> DynamicMessage {
+    guard let jsonObj = jsonValue as? [String: Any] else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "Object",
+        actual: String(describing: type(of: jsonValue))
+      )
+    }
+    guard let typeUrl = jsonObj["@type"] as? String else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "Object with @type key",
+        actual: "Object without @type"
+      )
+    }
+
+    guard let slashIdx = typeUrl.lastIndex(of: "/") else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "Valid type URL (e.g. type.googleapis.com/pkg.Msg)",
+        actual: typeUrl
+      )
+    }
+    let typeName = String(typeUrl[typeUrl.index(after: slashIdx)...])
+
+    guard let packedDescriptor = options.typeRegistry.findMessage(named: typeName) else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "Registered message type",
+        actual: typeName
+      )
+    }
+
+    let packedMessage: DynamicMessage
+    if WellKnownTypeDetector.isWellKnownType(typeName) {
+      let canonicalValue = jsonObj["value"] ?? NSNull()
+      packedMessage = try deserializeWKTFromAny(canonicalValue, using: packedDescriptor, depth: 0)
+    }
+    else {
+      var fieldsOnly = jsonObj
+      fieldsOnly.removeValue(forKey: "@type")
+      packedMessage = try deserializeFromJSONObject(fieldsOnly, using: packedDescriptor)
+    }
+
+    let binaryData = try BinarySerializer().serialize(packedMessage)
+
+    var anyMsg = DynamicMessage(descriptor: descriptor)
+    try anyMsg.set(typeUrl, forField: 1)
+    try anyMsg.set(binaryData, forField: 2)
+    return anyMsg
   }
 
   /// Decodes any of the 9 protobuf wrapper types from a raw canonical JSON value.
