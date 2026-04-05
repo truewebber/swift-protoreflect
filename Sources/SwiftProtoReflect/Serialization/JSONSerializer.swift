@@ -97,6 +97,8 @@ public struct JSONSerializer {
       return [String: Any]()
     case WellKnownTypeNames.timestamp:
       return try encodeTimestampMessage(message)
+    case WellKnownTypeNames.duration:
+      return try encodeDurationMessage(message)
     case WellKnownTypeNames.value:
       return try encodeValueMessage(message)
     case WellKnownTypeNames.structType:
@@ -136,6 +138,29 @@ public struct JSONSerializer {
     else {
       return String(format: "\(base).%09dZ", nanos)
     }
+  }
+
+  /// Encodes `google.protobuf.Duration` to its canonical JSON string with `s` suffix.
+  ///
+  /// Field layout: 1 seconds (int64), 2 nanos (int32).
+  /// If nanos is zero the output is `"Xs"`. Otherwise the 9-digit nanosecond fraction
+  /// is appended with trailing zeros trimmed, e.g. `"1.5s"`. Negative durations
+  /// carry a single leading `-` sign covering both the seconds and nanos parts.
+  private func encodeDurationMessage(_ message: DynamicMessage) throws -> Any {
+    let seconds = (try? message.get(forField: 1) as? Int64) ?? 0
+    let nanos = (try? message.get(forField: 2) as? Int32) ?? 0
+
+    let isNegative = seconds < 0 || (seconds == 0 && nanos < 0)
+    let absSeconds: Int64 = seconds < 0 ? -seconds : seconds
+    let absNanos: Int32 = nanos < 0 ? -nanos : nanos
+    let sign = isNegative ? "-" : ""
+
+    if absNanos == 0 {
+      return "\(sign)\(absSeconds)s"
+    }
+    var fracStr = String(format: "%09d", absNanos)
+    while fracStr.last == "0" { fracStr.removeLast() }
+    return "\(sign)\(absSeconds).\(fracStr)s"
   }
 
   /// Encodes `google.protobuf.Value` to its canonical JSON form.

@@ -107,6 +107,8 @@ public struct JSONDeserializer {
       return try deserializeFromJSONObject(jsonObj, using: descriptor, depth: depth)
     case WellKnownTypeNames.timestamp:
       return try decodeTimestampFromAny(jsonValue, using: descriptor)
+    case WellKnownTypeNames.duration:
+      return try decodeDurationFromAny(jsonValue, using: descriptor)
     case WellKnownTypeNames.value:
       return try decodeValueFromAny(jsonValue, depth: depth)
     case WellKnownTypeNames.structType:
@@ -195,6 +197,81 @@ public struct JSONDeserializer {
     else {
       nanos = 0
     }
+
+    var msg = DynamicMessage(descriptor: descriptor)
+    try msg.set(seconds, forField: 1)
+    if nanos != 0 {
+      try msg.set(nanos, forField: 2)
+    }
+    return msg
+  }
+
+  /// Decodes a canonical duration JSON string (e.g. `"1.5s"`, `"-300s"`) to
+  /// `google.protobuf.Duration`.
+  ///
+  /// Accepts strings matching `^-?\d+(\.\d+)?s$` with up to 9 fractional digits.
+  /// Non-string input or malformed strings throw `invalidJSONStructure`.
+  private func decodeDurationFromAny(_ jsonValue: Any, using descriptor: MessageDescriptor) throws -> DynamicMessage {
+    guard let str = jsonValue as? String else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "String",
+        actual: String(describing: type(of: jsonValue))
+      )
+    }
+
+    guard str.hasSuffix("s") else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "Duration string ending in 's'",
+        actual: str
+      )
+    }
+
+    let withoutSuffix = String(str.dropLast())
+    let isNegative = withoutSuffix.hasPrefix("-")
+    let numericPart = isNegative ? String(withoutSuffix.dropFirst()) : withoutSuffix
+
+    // Split on the optional decimal point
+    let dotComponents = numericPart.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
+    guard let firstComponent = dotComponents.first, !firstComponent.isEmpty else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "Valid duration string",
+        actual: str
+      )
+    }
+
+    guard let absSeconds = Int64(firstComponent) else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "Valid duration string",
+        actual: str
+      )
+    }
+
+    let absNanos: Int32
+    if dotComponents.count > 1 {
+      let fracPart = String(dotComponents[1])
+      guard !fracPart.isEmpty, fracPart.allSatisfy({ $0.isNumber }) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Valid duration string",
+          actual: str
+        )
+      }
+      var padded = fracPart
+      while padded.count < 9 { padded += "0" }
+      if padded.count > 9 { padded = String(padded.prefix(9)) }
+      guard let value = Int32(padded) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Valid duration string",
+          actual: str
+        )
+      }
+      absNanos = value
+    }
+    else {
+      absNanos = 0
+    }
+
+    let seconds: Int64 = isNegative ? -absSeconds : absSeconds
+    let nanos: Int32 = isNegative ? -absNanos : absNanos
 
     var msg = DynamicMessage(descriptor: descriptor)
     try msg.set(seconds, forField: 1)
