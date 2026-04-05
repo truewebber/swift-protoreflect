@@ -191,7 +191,7 @@ final class Proto2BridgeTests: XCTestCase {
     range.end = 200
     msgProto.extensionRange = [range]
 
-    let desc = try bridge.fromProtobufDescriptor(msgProto)
+    let desc = try bridge.fromProtobufDescriptor(msgProto, parent: nil as (any DescriptorParent)?)
     XCTAssertEqual(desc.extensionRanges.count, 1)
     XCTAssertEqual(desc.extensionRanges[0].start, 100)
     XCTAssertEqual(desc.extensionRanges[0].end, 200)
@@ -209,7 +209,7 @@ final class Proto2BridgeTests: XCTestCase {
     range2.end = 400
     msgProto.extensionRange = [range1, range2]
 
-    let desc = try bridge.fromProtobufDescriptor(msgProto)
+    let desc = try bridge.fromProtobufDescriptor(msgProto, parent: nil as (any DescriptorParent)?)
     XCTAssertEqual(desc.extensionRanges.count, 2)
   }
 

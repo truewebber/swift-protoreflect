@@ -437,7 +437,7 @@ final class JSONCompatOneofTests: XCTestCase {
     }
 
     let structDesc = CompatDescriptors.wktStruct()
-    var structDyn = DynamicMessage(descriptor: structDesc)
+    let structDyn = DynamicMessage(descriptor: structDesc)
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(structDyn, forField: 4)

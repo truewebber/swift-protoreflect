@@ -63,9 +63,9 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
   }
 
   func test_deserialize_doublyNestedMessageField_succeeds() throws {
-    let registry = try makeRegistry(from: deepNestingFileProto)
+    _ = try makeRegistry(from: deepNestingFileProto)
     let fd = try bridge.fromProtobufFileDescriptor(deepNestingFileProto)
-    let aDesc = fd.messages["A"]!
+    _ = fd.messages["A"]!
     let aRegistry = TypeRegistry()
     try aRegistry.registerFile(fd)
 

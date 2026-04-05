@@ -161,7 +161,6 @@ final class JSONCompatEdgeCasesTests: XCTestCase {
     var proto = Testcompat_ScalarMessage()
     proto.int64Field = 0
 
-    let desc = CompatDescriptors.scalarMessage()
     let jsonStr = try proto.jsonString()
     // proto3: zero int64 is omitted (default value)
     XCTAssertFalse(

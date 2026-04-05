@@ -161,7 +161,7 @@ final class DescriptorBridgeNestedMessageTests: XCTestCase {
   func test_fromProtobufDescriptor_withFileDescriptorParent_behaviorUnchanged() throws {
     let fileDesc = FileDescriptor(name: "t.proto", package: "pkg")
     let msgProto = makeMessageProto(name: "Message")
-    let result = try bridge.fromProtobufDescriptor(msgProto, parent: fileDesc)
+    let result = try bridge.fromProtobufDescriptor(msgProto, parent: fileDesc as any DescriptorParent)
     XCTAssertEqual(result.fullName, "pkg.Message")
   }
 

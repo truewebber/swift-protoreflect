@@ -413,7 +413,7 @@ final class JSONCompatWKTTests: XCTestCase {
     try sw1.set("a", forField: 1)
     var sw2 = DynamicMessage(descriptor: strWrapDesc)
     try sw2.set("b", forField: 1)
-    var sw3 = DynamicMessage(descriptor: strWrapDesc)
+    let sw3 = DynamicMessage(descriptor: strWrapDesc)
     // empty string (default)
 
     var dynamic = DynamicMessage(descriptor: desc)

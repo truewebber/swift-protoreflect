@@ -21,7 +21,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     ]
     let msgProto = makeMessageProto(name: "Scalars", fields: fields)
     let fd = FileDescriptor(name: "t.proto", package: "pkg")
-    let result = try bridge.fromProtobufDescriptor(msgProto, parent: fd)
+    let result = try bridge.fromProtobufDescriptor(msgProto, parent: fd as any DescriptorParent)
     XCTAssertNotNil(result.field(named: "f_bool"))
     XCTAssertNotNil(result.field(named: "f_int32"))
     XCTAssertNotNil(result.field(named: "f_int64"))
@@ -36,7 +36,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
   func test_fromProtobufDescriptor_repeatedField_isRepeatedTrue() throws {
     let field = makeFieldProto(name: "items", number: 1, type: .string, label: .repeated)
     let msgProto = makeMessageProto(name: "Msg", fields: [field])
-    let result = try bridge.fromProtobufDescriptor(msgProto)
+    let result = try bridge.fromProtobufDescriptor(msgProto, parent: nil as (any DescriptorParent)?)
     XCTAssertTrue(result.field(named: "items")!.isRepeated)
   }
 
@@ -48,7 +48,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     fieldProto.label = .required
     let msgProto = makeMessageProto(name: "Msg", fields: [fieldProto])
     let fd = FileDescriptor(name: "t.proto", package: "pkg", syntax: "proto2")
-    let result = try bridge.fromProtobufDescriptor(msgProto, parent: fd)
+    let result = try bridge.fromProtobufDescriptor(msgProto, parent: fd as any DescriptorParent)
     XCTAssertTrue(result.field(named: "name")!.isRequired)
   }
 
@@ -80,7 +80,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
       typeName: ".Msg.DataEntry"
     )
     let msgProto = makeMessageProto(name: "Msg", fields: [mapField], nestedMessages: [mapEntryProto])
-    let result = try bridge.fromProtobufDescriptor(msgProto)
+    let result = try bridge.fromProtobufDescriptor(msgProto, parent: nil as (any DescriptorParent)?)
     XCTAssertTrue(result.field(named: "data")!.isMap)
     XCTAssertNotNil(result.field(named: "data")!.mapEntryInfo)
   }
@@ -95,7 +95,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     opts.packed = true
     fieldProto.options = opts
     let msgProto = makeMessageProto(name: "Msg", fields: [fieldProto])
-    let result = try bridge.fromProtobufDescriptor(msgProto)
+    let result = try bridge.fromProtobufDescriptor(msgProto, parent: nil as (any DescriptorParent)?)
     XCTAssertEqual(result.field(named: "nums")?.isPacked, true)
   }
 
@@ -112,7 +112,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     msgProto.name = "Msg"
     msgProto.field = [oneofField]
     msgProto.oneofDecl = [oneof]
-    let result = try bridge.fromProtobufDescriptor(msgProto)
+    let result = try bridge.fromProtobufDescriptor(msgProto, parent: nil as (any DescriptorParent)?)
     XCTAssertEqual(result.oneofDecls.count, 1)
     XCTAssertEqual(result.oneofDecls[0].name, "payload")
   }
@@ -124,7 +124,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     var msgProto = Google_Protobuf_DescriptorProto()
     msgProto.name = "Msg"
     msgProto.extensionRange = [rangeProto]
-    let result = try bridge.fromProtobufDescriptor(msgProto)
+    let result = try bridge.fromProtobufDescriptor(msgProto, parent: nil as (any DescriptorParent)?)
     XCTAssertEqual(result.extensionRanges.count, 1)
     XCTAssertEqual(result.extensionRanges[0].start, 100)
     XCTAssertEqual(result.extensionRanges[0].end, 200)
@@ -139,7 +139,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     fieldProto.defaultValue = "hello"
     let msgProto = makeMessageProto(name: "Msg", fields: [fieldProto])
     let fd = FileDescriptor(name: "t.proto", package: "pkg", syntax: "proto2")
-    let result = try bridge.fromProtobufDescriptor(msgProto, parent: fd)
+    let result = try bridge.fromProtobufDescriptor(msgProto, parent: fd as any DescriptorParent)
     XCTAssertNotNil(result.field(named: "name")?.defaultValue)
   }
 
@@ -182,7 +182,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     let field = makeFieldProto(name: "name", number: 1, type: .string)
     let msgProto = makeMessageProto(name: "Person", fields: [field])
     let fd = FileDescriptor(name: "t.proto", package: "pkg")
-    let descriptor = try bridge.fromProtobufDescriptor(msgProto, parent: fd)
+    let descriptor = try bridge.fromProtobufDescriptor(msgProto, parent: fd as any DescriptorParent)
     let backToProto = try bridge.toProtobufDescriptor(from: descriptor)
     XCTAssertEqual(backToProto.name, "Person")
     XCTAssertEqual(backToProto.field.count, 1)
@@ -215,7 +215,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     fieldProto.label = .optional
     fieldProto.jsonName = "firstName"
     let msgProto = makeMessageProto(name: "Msg", fields: [fieldProto])
-    let result = try bridge.fromProtobufDescriptor(msgProto)
+    let result = try bridge.fromProtobufDescriptor(msgProto, parent: nil as (any DescriptorParent)?)
     XCTAssertEqual(result.field(named: "first_name")?.jsonName, "firstName")
   }
 }

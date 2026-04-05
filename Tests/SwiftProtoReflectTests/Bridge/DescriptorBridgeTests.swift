@@ -90,7 +90,10 @@ final class DescriptorBridgeTests: XCTestCase {
     protobufDescriptor.field = [field1, field2]
 
     // Convert to our format
-    let messageDescriptor = try bridge.fromProtobufDescriptor(protobufDescriptor, parent: fileDescriptor)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(
+      protobufDescriptor,
+      parent: fileDescriptor as any DescriptorParent
+    )
 
     // Verify result
     XCTAssertEqual(messageDescriptor.name, "TestMessage")
@@ -122,7 +125,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
     // Convert to protobuf and back
     let protobufDescriptor = try bridge.toProtobufDescriptor(from: messageDescriptor)
-    let convertedBack = try bridge.fromProtobufDescriptor(protobufDescriptor)
+    let convertedBack = try bridge.fromProtobufDescriptor(protobufDescriptor, parent: nil as (any DescriptorParent)?)
 
     // Verify result
     XCTAssertEqual(convertedBack.name, "ComplexMessage")
@@ -424,7 +427,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
     // Convert to protobuf and back
     let protobufDescriptor = try bridge.toProtobufDescriptor(from: original)
-    let converted = try bridge.fromProtobufDescriptor(protobufDescriptor)
+    let converted = try bridge.fromProtobufDescriptor(protobufDescriptor, parent: nil as (any DescriptorParent)?)
 
     // Verify data is preserved
     XCTAssertEqual(converted.name, original.name)
@@ -558,7 +561,10 @@ final class DescriptorBridgeTests: XCTestCase {
     protobufDescriptor.options = Google_Protobuf_MessageOptions()
 
     // Convert to our format (should cover lines 99-103)
-    let messageDescriptor = try bridge.fromProtobufDescriptor(protobufDescriptor, parent: fileDescriptor)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(
+      protobufDescriptor,
+      parent: fileDescriptor as any DescriptorParent
+    )
 
     // Verify result
     XCTAssertEqual(messageDescriptor.name, "MessageWithOptions")
@@ -834,7 +840,7 @@ final class DescriptorBridgeTests: XCTestCase {
     proto.field = [emailField]
     proto.oneofDecl = [oneof]
 
-    let msg = try bridge.fromProtobufDescriptor(proto)
+    let msg = try bridge.fromProtobufDescriptor(proto, parent: nil as (any DescriptorParent)?)
 
     XCTAssertEqual(msg.oneofDecls.count, 1)
     XCTAssertEqual(msg.oneofDecls[0].name, "contact")
@@ -855,7 +861,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
     proto.oneofDecl = [oneof0, oneof1]
 
-    let msg = try bridge.fromProtobufDescriptor(proto)
+    let msg = try bridge.fromProtobufDescriptor(proto, parent: nil as (any DescriptorParent)?)
 
     XCTAssertEqual(msg.oneofDecls.count, 2)
     XCTAssertEqual(msg.oneofDecls[0].name, "contact")
@@ -890,7 +896,7 @@ final class DescriptorBridgeTests: XCTestCase {
     proto.field = [emailField, phoneField]
     proto.oneofDecl = [oneof]
 
-    let msg = try bridge.fromProtobufDescriptor(proto)
+    let msg = try bridge.fromProtobufDescriptor(proto, parent: nil as (any DescriptorParent)?)
 
     let emailDescriptor = msg.field(named: "email")
     let phoneDescriptor = msg.field(named: "phone")
@@ -917,7 +923,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
     proto.field = [field]
 
-    let msg = try bridge.fromProtobufDescriptor(proto)
+    let msg = try bridge.fromProtobufDescriptor(proto, parent: nil as (any DescriptorParent)?)
 
     XCTAssertTrue(msg.oneofDecls.isEmpty)
   }
@@ -988,7 +994,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(proto.oneofDecl[0].name, "contact")
     XCTAssertEqual(proto.field.first { $0.name == "email" }?.oneofIndex, 0)
 
-    let roundTripped = try bridge.fromProtobufDescriptor(proto)
+    let roundTripped = try bridge.fromProtobufDescriptor(proto, parent: nil as (any DescriptorParent)?)
     XCTAssertEqual(roundTripped.oneofDecls.count, 1)
     XCTAssertEqual(roundTripped.oneof(at: 0)?.name, "contact")
     XCTAssertEqual(roundTripped.field(named: "email")?.oneofIndex, 0)
@@ -1058,7 +1064,7 @@ final class DescriptorBridgeTests: XCTestCase {
     messageProto.nestedType = [entryMessage]
     messageProto.field = [mapField]
 
-    let msg = try bridge.fromProtobufDescriptor(messageProto)
+    let msg = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
     let labels = try XCTUnwrap(msg.field(named: "labels"))
     XCTAssertTrue(labels.isMap)
     XCTAssertNil(labels.oneofIndex)
@@ -1089,7 +1095,7 @@ final class DescriptorBridgeTests: XCTestCase {
     proto.field = [idField, emailField]
     proto.oneofDecl = [oneof]
 
-    let msg = try bridge.fromProtobufDescriptor(proto)
+    let msg = try bridge.fromProtobufDescriptor(proto, parent: nil as (any DescriptorParent)?)
     XCTAssertNil(msg.field(named: "id")?.oneofIndex)
     XCTAssertEqual(msg.field(named: "email")?.oneofIndex, 0)
   }
@@ -1136,7 +1142,7 @@ final class DescriptorBridgeTests: XCTestCase {
     outer.oneofDecl = [outerOneof]
     outer.nestedType = [inner]
 
-    let msg = try bridge.fromProtobufDescriptor(outer)
+    let msg = try bridge.fromProtobufDescriptor(outer, parent: nil as (any DescriptorParent)?)
     XCTAssertEqual(msg.oneofDecls.count, 1)
     XCTAssertEqual(msg.oneof(at: 0)?.name, "kind")
     let innerMsg = try XCTUnwrap(msg.nestedMessage(named: "Inner"))
@@ -1168,7 +1174,7 @@ final class DescriptorBridgeTests: XCTestCase {
     proto.field = [a, b]
     proto.oneofDecl = [oneof]
 
-    let msg = try bridge.fromProtobufDescriptor(proto)
+    let msg = try bridge.fromProtobufDescriptor(proto, parent: nil as (any DescriptorParent)?)
     XCTAssertEqual(msg.fields.count, 2)
     XCTAssertEqual(msg.oneofDecls.count, 1)
     XCTAssertEqual(msg.field(named: "a")?.oneofIndex, 0)
@@ -1192,7 +1198,7 @@ final class DescriptorBridgeTests: XCTestCase {
     proto.field = [nickField]
     proto.oneofDecl = [syntheticOneof]
 
-    let msg = try bridge.fromProtobufDescriptor(proto)
+    let msg = try bridge.fromProtobufDescriptor(proto, parent: nil as (any DescriptorParent)?)
     XCTAssertEqual(msg.oneofDecls.count, 1)
     XCTAssertEqual(msg.oneofDecls[0].name, "_nickname")
     XCTAssertEqual(msg.field(named: "nickname")?.oneofIndex, 0)
@@ -1212,7 +1218,7 @@ final class DescriptorBridgeTests: XCTestCase {
     proto.field = [f]
     proto.oneofDecl = [oneof]
 
-    let msg = try bridge.fromProtobufDescriptor(proto)
+    let msg = try bridge.fromProtobufDescriptor(proto, parent: nil as (any DescriptorParent)?)
     XCTAssertEqual(msg.oneofDecls[0].name, "")
     XCTAssertEqual(msg.oneofDecls[0].index, 0)
   }
@@ -1243,7 +1249,7 @@ final class DescriptorBridgeTests: XCTestCase {
     proto.oneofDecl = [oneofPayment, oneofContact]
     proto.field = [payField, mailField]
 
-    let msg = try bridge.fromProtobufDescriptor(proto)
+    let msg = try bridge.fromProtobufDescriptor(proto, parent: nil as (any DescriptorParent)?)
     XCTAssertEqual(msg.oneof(at: 0)?.name, "payment")
     XCTAssertEqual(msg.oneof(at: 1)?.name, "contact")
     XCTAssertEqual(msg.field(named: "card")?.oneofIndex, 0)
@@ -1276,7 +1282,7 @@ final class DescriptorBridgeTests: XCTestCase {
     messageProto.field = [mapField, emailField]
     messageProto.oneofDecl = [oneof]
 
-    let msg = try bridge.fromProtobufDescriptor(messageProto)
+    let msg = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
     XCTAssertTrue(try XCTUnwrap(msg.field(named: "labels")).isMap)
     XCTAssertNil(msg.field(named: "labels")?.oneofIndex)
     XCTAssertEqual(msg.field(named: "email")?.oneofIndex, 0)
@@ -1324,7 +1330,7 @@ final class DescriptorBridgeTests: XCTestCase {
     msg.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
 
     let proto = try bridge.toProtobufDescriptor(from: msg)
-    let round = try bridge.fromProtobufDescriptor(proto)
+    let round = try bridge.fromProtobufDescriptor(proto, parent: nil as (any DescriptorParent)?)
 
     XCTAssertEqual(round.oneofDecls.count, 1)
     XCTAssertEqual(round.oneof(at: 0)?.name, "contact")
@@ -1343,7 +1349,7 @@ final class DescriptorBridgeTests: XCTestCase {
     outer.addNestedMessage(inner)
 
     let proto = try bridge.toProtobufDescriptor(from: outer)
-    let round = try bridge.fromProtobufDescriptor(proto)
+    let round = try bridge.fromProtobufDescriptor(proto, parent: nil as (any DescriptorParent)?)
 
     XCTAssertEqual(round.oneof(at: 0)?.name, "kind")
     let innerRound = try XCTUnwrap(round.nestedMessage(named: "Inner"))

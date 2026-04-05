@@ -31,6 +31,7 @@ final class JSONSerializationOptionsTests: XCTestCase {
   }
 
   // swiftlint:disable deprecated_usage
+  @available(*, deprecated)
   func test_options_deprecatedInit_hasCanonicalWKTEncodingTrue() {
     let options = JSONSerializationOptions()
     XCTAssertTrue(options.useCanonicalWellKnownTypeEncoding)

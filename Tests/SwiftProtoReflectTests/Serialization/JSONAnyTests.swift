@@ -89,7 +89,7 @@ final class JSONAnyTests: XCTestCase {
   func test_serialize_any_wktValue_usesValueKey() throws {
     // Pack a google.protobuf.StringValue inside Any
     let strDesc = MessageDescriptor(name: "StringValue", fullName: WellKnownTypeNames.stringValue)
-    var strMsg = DynamicMessage(descriptor: strDesc)
+    _ = DynamicMessage(descriptor: strDesc)
     // StringValue wraps a string in field 1, but for Any packing we binary-serialize it.
     // We'll use a regular string field since the WKT canonical encoder handles it.
     // Actually we need a proper descriptor with field 1 as string:
@@ -155,7 +155,10 @@ final class JSONAnyTests: XCTestCase {
 
     // Verify the packed message decodes back to id=42
     let (_, pingDesc) = makePingFileAndDescriptor()
-    let unpacked = try BinaryDeserializer().deserialize(valueBytes, using: pingDesc)
+    let unpacked = try BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry())).deserialize(
+      valueBytes,
+      using: pingDesc
+    )
     XCTAssertEqual(try unpacked.get(forField: 1) as? Int32, 42)
   }
 
@@ -178,7 +181,10 @@ final class JSONAnyTests: XCTestCase {
     XCTAssertEqual(typeUrl, "type.googleapis.com/google.protobuf.StringValue")
 
     let actualStrDesc = fileWKT.messages["StringValue"]!
-    let unpacked = try BinaryDeserializer().deserialize(valueBytes, using: actualStrDesc)
+    let unpacked = try BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry())).deserialize(
+      valueBytes,
+      using: actualStrDesc
+    )
     XCTAssertEqual(try unpacked.get(forField: 1) as? String, "hello")
   }
 
@@ -196,7 +202,10 @@ final class JSONAnyTests: XCTestCase {
     let roundTripped = try deserializer(registry: registry).deserialize(serialized, using: anyDesc)
 
     let valueBytes = try XCTUnwrap(try roundTripped.get(forField: 2) as? Data)
-    let unpacked = try BinaryDeserializer().deserialize(valueBytes, using: pingDesc)
+    let unpacked = try BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry())).deserialize(
+      valueBytes,
+      using: pingDesc
+    )
     XCTAssertEqual(try unpacked.get(forField: 1) as? Int32, 99)
   }
 
@@ -222,7 +231,10 @@ final class JSONAnyTests: XCTestCase {
     let roundTripped = try deserializer(registry: registry).deserialize(serialized, using: anyDesc)
 
     let valueBytes = try XCTUnwrap(try roundTripped.get(forField: 2) as? Data)
-    let unpacked = try BinaryDeserializer().deserialize(valueBytes, using: actualStrDesc)
+    let unpacked = try BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry())).deserialize(
+      valueBytes,
+      using: actualStrDesc
+    )
     XCTAssertEqual(try unpacked.get(forField: 1) as? String, "round-trip")
   }
 }
