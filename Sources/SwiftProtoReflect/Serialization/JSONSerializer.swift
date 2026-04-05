@@ -107,8 +107,55 @@ public struct JSONSerializer {
       return try encodeStructMessage(message)
     case WellKnownTypeNames.listValue:
       return try encodeListValueMessage(message)
+    case WellKnownTypeNames.doubleValue,
+      WellKnownTypeNames.floatValue,
+      WellKnownTypeNames.int32Value,
+      WellKnownTypeNames.uint32Value,
+      WellKnownTypeNames.int64Value,
+      WellKnownTypeNames.uint64Value,
+      WellKnownTypeNames.boolValue,
+      WellKnownTypeNames.stringValue,
+      WellKnownTypeNames.bytesValue:
+      return try encodeWrapperMessage(message, fullName: fullName)
     default:
       throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: fullName)
+    }
+  }
+
+  /// Encodes any of the 9 protobuf wrapper types to their canonical JSON value.
+  ///
+  /// Each wrapper holds a single `value` field (field 1). The field is read and
+  /// returned as the raw JSON-compatible value:
+  /// - Int64/UInt64 → quoted decimal string (to preserve precision beyond JS Number)
+  /// - Data (BytesValue) → base64 string
+  /// - All others → the native Swift value (Double, Float, Int32, UInt32, Bool, String)
+  private func encodeWrapperMessage(_ message: DynamicMessage, fullName: String) throws -> Any {
+    let rawValue = try? message.get(forField: 1)
+
+    switch fullName {
+    case WellKnownTypeNames.int64Value:
+      let v = rawValue as? Int64 ?? 0
+      return String(v)
+    case WellKnownTypeNames.uint64Value:
+      let v = rawValue as? UInt64 ?? 0
+      return String(v)
+    case WellKnownTypeNames.bytesValue:
+      let v = rawValue as? Data ?? Data()
+      return v.base64EncodedString()
+    case WellKnownTypeNames.doubleValue:
+      let v = rawValue as? Double ?? 0.0
+      return convertDoubleToJSON(v)
+    case WellKnownTypeNames.floatValue:
+      let v = rawValue as? Float ?? 0.0
+      return convertDoubleToJSON(Double(v))
+    case WellKnownTypeNames.int32Value:
+      return rawValue as? Int32 ?? Int32(0)
+    case WellKnownTypeNames.uint32Value:
+      return rawValue as? UInt32 ?? UInt32(0)
+    case WellKnownTypeNames.boolValue:
+      return rawValue as? Bool ?? false
+    default:
+      return rawValue as? String ?? ""
     }
   }
 

@@ -129,9 +129,123 @@ public struct JSONDeserializer {
         )
       }
       return try decodeListValueFromArray(jsonArr, depth: depth)
+    case WellKnownTypeNames.doubleValue,
+      WellKnownTypeNames.floatValue,
+      WellKnownTypeNames.int32Value,
+      WellKnownTypeNames.uint32Value,
+      WellKnownTypeNames.int64Value,
+      WellKnownTypeNames.uint64Value,
+      WellKnownTypeNames.boolValue,
+      WellKnownTypeNames.stringValue,
+      WellKnownTypeNames.bytesValue:
+      return try decodeWrapperFromAny(jsonValue, using: descriptor)
     default:
       throw JSONDeserializationError.unsupportedWellKnownTypeDecoding(typeName: descriptor.fullName)
     }
+  }
+
+  /// Decodes any of the 9 protobuf wrapper types from a raw canonical JSON value.
+  ///
+  /// A JSON `null` means the wrapper is absent — returns an empty message (field 1 unset).
+  /// Int64/UInt64 are expected as quoted decimal strings.
+  /// BytesValue is expected as a base64 string.
+  /// All other wrappers match their natural JSON types.
+  private func decodeWrapperFromAny(_ jsonValue: Any, using descriptor: MessageDescriptor) throws -> DynamicMessage {
+    let fullName = descriptor.fullName
+    var msg = DynamicMessage(descriptor: descriptor)
+
+    // null means "wrapper field absent" — return empty message
+    if jsonValue is NSNull {
+      return msg
+    }
+
+    switch fullName {
+    case WellKnownTypeNames.doubleValue:
+      guard let number = jsonValue as? NSNumber, !isJSONBool(number) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Number",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(number.doubleValue, forField: 1)
+
+    case WellKnownTypeNames.floatValue:
+      guard let number = jsonValue as? NSNumber, !isJSONBool(number) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Number",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(Float(number.doubleValue), forField: 1)
+
+    case WellKnownTypeNames.int32Value:
+      guard let number = jsonValue as? NSNumber, !isJSONBool(number) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Number",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(Int32(truncatingIfNeeded: number.int64Value), forField: 1)
+
+    case WellKnownTypeNames.uint32Value:
+      guard let number = jsonValue as? NSNumber, !isJSONBool(number) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Number",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(UInt32(truncatingIfNeeded: number.uint64Value), forField: 1)
+
+    case WellKnownTypeNames.int64Value:
+      guard let str = jsonValue as? String, let value = Int64(str) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "String (Int64)",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(value, forField: 1)
+
+    case WellKnownTypeNames.uint64Value:
+      guard let str = jsonValue as? String, let value = UInt64(str) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "String (UInt64)",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(value, forField: 1)
+
+    case WellKnownTypeNames.boolValue:
+      guard let number = jsonValue as? NSNumber, isJSONBool(number) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Boolean",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(number.boolValue, forField: 1)
+
+    case WellKnownTypeNames.stringValue:
+      guard let str = jsonValue as? String else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "String",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(str, forField: 1)
+
+    case WellKnownTypeNames.bytesValue:
+      guard let str = jsonValue as? String, let data = Data(base64Encoded: str) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "String (base64)",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      try msg.set(data, forField: 1)
+
+    default:
+      throw JSONDeserializationError.unsupportedWellKnownTypeDecoding(typeName: fullName)
+    }
+
+    return msg
   }
 
   /// Decodes a canonical RFC 3339 JSON string to `google.protobuf.Timestamp`.
