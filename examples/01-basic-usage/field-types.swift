@@ -174,24 +174,28 @@ struct FieldTypesExample {
     let factory = MessageFactory()
     var message = factory.createMessage(from: messageDescriptor)
 
-    // Enum in Protocol Buffers is represented as int32
+    // Enum values are stored as Int32 in dynamic messages
     try message.set(Int32(1), forField: "status")  // ACTIVE = 1
     try message.set(Int32(2), forField: "priority")  // HIGH = 2
 
-    print("  ✅ Enum fields set")
+    print("  ✅ Enum fields set (type: .enum, resolved via typeName)")
 
-    // Read enum fields
-    if let status = try message.get(forField: "status") as? Int32 {
-      let statusName = getStatusName(status)
-      print("  📊 status: \(status) (\(statusName))")
+    // Enum fields are retrieved as Int32; serializers use typeName for name resolution
+    if let status = try message.get(forField: "status") as? Int32,
+      let statusEnum = fileDescriptor.enums.values.first(where: { $0.name == "Status" }),
+      let statusValue = statusEnum.allValues().first(where: { $0.number == status })
+    {
+      print("  📊 status: \(status) (\(statusValue.name))")
     }
 
-    if let priority = try message.get(forField: "priority") as? Int32 {
-      let priorityName = getPriorityName(priority)
-      print("  ⚡ priority: \(priority) (\(priorityName))")
+    if let priority = try message.get(forField: "priority") as? Int32,
+      let priorityEnum = fileDescriptor.enums.values.first(where: { $0.name == "Priority" }),
+      let priorityValue = priorityEnum.allValues().first(where: { $0.number == priority })
+    {
+      print("  ⚡ priority: \(priority) (\(priorityValue.name))")
     }
 
-    // Show all available enum values
+    // Show all available enum values from the descriptor
     if let statusEnum = fileDescriptor.enums.values.first(where: { $0.name == "Status" }) {
       print("  📋 Available Status values:")
       for value in statusEnum.allValues() {
@@ -317,28 +321,11 @@ struct FieldTypesExample {
 
     // Create message with enum fields
     var messageDescriptor = MessageDescriptor(name: "EnumMessage", parent: fileDescriptor)
-    messageDescriptor.addField(FieldDescriptor(name: "status", number: 1, type: .int32))  // enum as int32
-    messageDescriptor.addField(FieldDescriptor(name: "priority", number: 2, type: .int32))  // enum as int32
+    messageDescriptor.addField(FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "example.Status"))
+    messageDescriptor.addField(FieldDescriptor(name: "priority", number: 2, type: .enum, typeName: "example.Priority"))
 
     fileDescriptor.addMessage(messageDescriptor)
     return (messageDescriptor, fileDescriptor)
   }
 
-  private static func getStatusName(_ value: Int32) -> String {
-    switch value {
-    case 0: return "UNKNOWN"
-    case 1: return "ACTIVE"
-    case 2: return "INACTIVE"
-    default: return "INVALID"
-    }
-  }
-
-  private static func getPriorityName(_ value: Int32) -> String {
-    switch value {
-    case 0: return "LOW"
-    case 1: return "MEDIUM"
-    case 2: return "HIGH"
-    default: return "INVALID"
-    }
-  }
 }

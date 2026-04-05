@@ -467,5 +467,121 @@ final class TypeRegistryTests: XCTestCase {
     }
   }
 
+  // MARK: - init(fileDescriptors:) Tests
+
+  func test_initFileDescriptors_emptyArray_createsEmptyRegistry() throws {
+    let registry = try TypeRegistry(fileDescriptors: [])
+    XCTAssertEqual(registry.allFiles().count, 0)
+    XCTAssertEqual(registry.allMessages().count, 0)
+    XCTAssertEqual(registry.allEnums().count, 0)
+    XCTAssertEqual(registry.allServices().count, 0)
+  }
+
+  func test_initFileDescriptors_singleFile_registersAllTypes() throws {
+    let registry = try TypeRegistry(fileDescriptors: [fileDescriptor])
+
+    XCTAssertTrue(registry.hasFile(named: "test.proto"))
+    XCTAssertTrue(registry.hasMessage(named: "test.TestMessage"))
+    XCTAssertTrue(registry.hasEnum(named: "test.Status"))
+    XCTAssertTrue(registry.hasService(named: "test.TestService"))
+  }
+
+  func test_initFileDescriptors_registersTopLevelEnums() throws {
+    var file = FileDescriptor(name: "enums.proto", package: "enums")
+    var topLevelEnum = EnumDescriptor(name: "Color", parent: file)
+    topLevelEnum.addValue(EnumDescriptor.EnumValue(name: "RED", number: 0))
+    topLevelEnum.addValue(EnumDescriptor.EnumValue(name: "GREEN", number: 1))
+    file.addEnum(topLevelEnum)
+
+    let registry = try TypeRegistry(fileDescriptors: [file])
+
+    XCTAssertTrue(registry.hasEnum(named: "enums.Color"))
+    XCTAssertNotNil(registry.findEnum(named: "enums.Color"))
+  }
+
+  func test_initFileDescriptors_registersNestedMessages() throws {
+    var file = FileDescriptor(name: "nested.proto", package: "nested")
+    var outer = MessageDescriptor(name: "Outer", parent: file)
+    let inner = MessageDescriptor(name: "Inner", parent: outer)
+    outer.addNestedMessage(inner)
+    file.addMessage(outer)
+
+    let registry = try TypeRegistry(fileDescriptors: [file])
+
+    XCTAssertTrue(registry.hasMessage(named: "nested.Outer"))
+    XCTAssertTrue(registry.hasMessage(named: "nested.Outer.Inner"))
+  }
+
+  func test_initFileDescriptors_registersNestedEnums() throws {
+    var file = FileDescriptor(name: "nested_enums.proto", package: "nested_enums")
+    var outer = MessageDescriptor(name: "Outer", parent: file)
+    var nestedEnum = EnumDescriptor(name: "State", parent: outer)
+    nestedEnum.addValue(EnumDescriptor.EnumValue(name: "ACTIVE", number: 0))
+    outer.addNestedEnum(nestedEnum)
+    file.addMessage(outer)
+
+    let registry = try TypeRegistry(fileDescriptors: [file])
+
+    XCTAssertTrue(registry.hasEnum(named: "nested_enums.Outer.State"))
+  }
+
+  func test_initFileDescriptors_multipleFiles_registersAll() throws {
+    var file1 = FileDescriptor(name: "file1.proto", package: "file1")
+    let msg1 = MessageDescriptor(name: "Msg1", parent: file1)
+    file1.addMessage(msg1)
+
+    var file2 = FileDescriptor(name: "file2.proto", package: "file2")
+    let msg2 = MessageDescriptor(name: "Msg2", parent: file2)
+    file2.addMessage(msg2)
+
+    let registry = try TypeRegistry(fileDescriptors: [file1, file2])
+
+    XCTAssertTrue(registry.hasFile(named: "file1.proto"))
+    XCTAssertTrue(registry.hasFile(named: "file2.proto"))
+    XCTAssertTrue(registry.hasMessage(named: "file1.Msg1"))
+    XCTAssertTrue(registry.hasMessage(named: "file2.Msg2"))
+  }
+
+  func test_initFileDescriptors_duplicateFileName_throwsDuplicateFile() throws {
+    let file1 = FileDescriptor(name: "dup.proto", package: "pkg1")
+    let file2 = FileDescriptor(name: "dup.proto", package: "pkg2")
+
+    XCTAssertThrowsError(try TypeRegistry(fileDescriptors: [file1, file2])) { error in
+      XCTAssertEqual(error as? RegistryError, .duplicateFile("dup.proto"))
+    }
+  }
+
+  func test_initFileDescriptors_duplicateTypeName_throwsDuplicateType() throws {
+    var file1 = FileDescriptor(name: "a.proto", package: "shared")
+    let msg1 = MessageDescriptor(name: "Common", parent: file1)
+    file1.addMessage(msg1)
+
+    var file2 = FileDescriptor(name: "b.proto", package: "shared")
+    let msg2 = MessageDescriptor(name: "Common", parent: file2)
+    file2.addMessage(msg2)
+
+    XCTAssertThrowsError(try TypeRegistry(fileDescriptors: [file1, file2])) { error in
+      XCTAssertEqual(error as? RegistryError, .duplicateType("shared.Common"))
+    }
+  }
+
+  func test_initFileDescriptors_registersServices() throws {
+    var file = FileDescriptor(name: "svc.proto", package: "svc")
+    var svc = ServiceDescriptor(name: "MyService", parent: file)
+    svc.addMethod(
+      ServiceDescriptor.MethodDescriptor(
+        name: "DoWork",
+        inputType: "svc.Request",
+        outputType: "svc.Response"
+      )
+    )
+    file.addService(svc)
+
+    let registry = try TypeRegistry(fileDescriptors: [file])
+
+    XCTAssertTrue(registry.hasService(named: "svc.MyService"))
+    XCTAssertNotNil(registry.findService(named: "svc.MyService"))
+  }
+
   // MARK: - Helpers
 }

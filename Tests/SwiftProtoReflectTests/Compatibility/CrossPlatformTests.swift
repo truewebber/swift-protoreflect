@@ -17,7 +17,7 @@ final class CrossPlatformTests: XCTestCase {
   // MARK: - Helpers
 
   private let serializer = BinarySerializer()
-  private let deserializer = BinaryDeserializer()
+  private let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
   // MARK: - Deterministic field ordering
 
@@ -101,8 +101,8 @@ final class CrossPlatformTests: XCTestCase {
     try msg.set("Alice", forField: "name")
     try msg.set(true, forField: "active")
 
-    let jsonData = try JSONSerializer().serialize(msg)
-    let restored = try JSONDeserializer().deserialize(jsonData, using: desc)
+    let jsonData = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serialize(msg)
+    let restored = try JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(jsonData, using: desc)
 
     XCTAssertEqual(try restored.get(forField: "id") as? Int32, 42)
     XCTAssertEqual(try restored.get(forField: "name") as? String, "Alice")

@@ -87,7 +87,7 @@ struct BinaryDataExample {
     )
 
     // Check deserialization
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let restoredMessage = try deserializer.deserialize(binaryData, using: binaryMessage.descriptor)
 
     // Verify binary data integrity
@@ -199,7 +199,7 @@ struct BinaryDataExample {
     print("    Integrity: \(originalMD5 == corruptedMD5 ? "❌ CORRUPTED" : "✅ DETECTED")")
 
     // Check restored data
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let restoredMessage = try deserializer.deserialize(serializedData, using: integrityMessage.descriptor)
 
     if let restoredData = try restoredMessage.get(forField: "data") as? Data,
@@ -251,7 +251,7 @@ struct BinaryDataExample {
     // Demonstrate protocol parsing
     print("  🔍 Protocol parsing simulation:")
 
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let parsedMessage = try deserializer.deserialize(protocolData, using: protocolMessage.descriptor)
 
     if let parsedHeader = try parsedMessage.get(forField: "header") as? Data,

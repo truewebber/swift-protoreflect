@@ -260,6 +260,7 @@ final class Proto2DynamicMessageTests: XCTestCase {
     XCTAssertTrue(result.isValid)
   }
 
+  // swiftlint:disable:next deprecated_usage
   func test_validate_deprecatedSyntaxParam_stillWorks() throws {
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg", syntax: "proto3")
     desc.addField(FieldDescriptor(name: "req", number: 1, type: .string, isRequired: true))
@@ -267,6 +268,7 @@ final class Proto2DynamicMessageTests: XCTestCase {
     let msg = DynamicMessage(descriptor: desc)
     let factory = MessageFactory()
 
+    // swiftlint:disable:next deprecated_usage
     let result = factory.validate(msg, syntax: "proto2")
     XCTAssertFalse(result.isValid, "Explicit syntax parameter should override descriptor.syntax")
   }

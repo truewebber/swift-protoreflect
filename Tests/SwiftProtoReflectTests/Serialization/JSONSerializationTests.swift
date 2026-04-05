@@ -23,7 +23,7 @@ final class JSONSerializationTests: XCTestCase {
 
     fileDescriptor = FileDescriptor(name: "test_json_serialization.proto", package: "test.json")
     messageFactory = MessageFactory()
-    serializer = JSONSerializer()
+    serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
   }
 
   override func tearDown() {
@@ -411,19 +411,23 @@ final class JSONSerializationTests: XCTestCase {
     )
 
     // Test with camelCase names (default)
-    let defaultSerializer = JSONSerializer()
+    let defaultSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let defaultJsonData = try defaultSerializer.serialize(dynamicMessage)
     let defaultJsonObject = try JSONSerialization.jsonObject(with: defaultJsonData) as! [String: Any]
     XCTAssertEqual(defaultJsonObject["testField"] as! String, "test_value")
 
     // Test with original field names
-    let originalNamesSerializer = JSONSerializer(options: JSONSerializationOptions(useOriginalFieldNames: true))
+    let originalNamesSerializer = JSONSerializer(
+      options: JSONSerializationOptions(useOriginalFieldNames: true, typeRegistry: TypeRegistry())
+    )
     let originalJsonData = try originalNamesSerializer.serialize(dynamicMessage)
     let originalJsonObject = try JSONSerialization.jsonObject(with: originalJsonData) as! [String: Any]
     XCTAssertEqual(originalJsonObject["test_field"] as! String, "test_value")
 
     // Test with pretty printing
-    let prettySerializer = JSONSerializer(options: JSONSerializationOptions(prettyPrinted: true))
+    let prettySerializer = JSONSerializer(
+      options: JSONSerializationOptions(prettyPrinted: true, typeRegistry: TypeRegistry())
+    )
     let prettyJsonData = try prettySerializer.serialize(dynamicMessage)
     let prettyJsonString = String(data: prettyJsonData, encoding: .utf8)!
     XCTAssertTrue(prettyJsonString.contains("\n"))  // Should have line breaks
@@ -801,7 +805,7 @@ final class JSONSerializationTests: XCTestCase {
     )
 
     // Default options - don't include default values
-    let defaultSerializer = JSONSerializer()
+    let defaultSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let defaultJsonData = try defaultSerializer.serialize(dynamicMessage)
     let defaultJsonObject = try JSONSerialization.jsonObject(with: defaultJsonData) as! [String: Any]
 

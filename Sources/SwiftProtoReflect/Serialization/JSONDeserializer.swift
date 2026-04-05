@@ -24,8 +24,24 @@ public struct JSONDeserializer {
   /// Creates new JSONDeserializer instance.
   ///
   /// - Parameter options: JSON deserialization options.
-  public init(options: JSONDeserializationOptions = JSONDeserializationOptions()) {
+  public init(options: JSONDeserializationOptions) {
     self.options = options
+  }
+
+  /// Creates a JSONDeserializer with default options and an empty TypeRegistry.
+  ///
+  /// - Note: Deprecated. Use `init(options:)` with an explicit `TypeRegistry` so that
+  ///   cross-file message types can be resolved correctly.
+  @available(*, deprecated, message: "Use init(options:) with an explicit TypeRegistry")
+  public init() {
+    self.init(
+      options: JSONDeserializationOptions(
+        ignoreUnknownFields: true,
+        strictTypeValidation: true,
+        typeRegistry: TypeRegistry(),
+        maxNestingDepth: 64
+      )
+    )
   }
 
   // MARK: - Deserialization Methods
@@ -224,6 +240,12 @@ public struct JSONDeserializer {
       guard case .enum = mapEntryInfo.valueFieldInfo.type,
         let typeName = mapEntryInfo.valueFieldInfo.typeName
       else { return nil }
+      let normalized = typeName.hasPrefix(".") ? String(typeName.dropFirst()) : typeName
+      if let desc = options.typeRegistry.findEnum(named: normalized) {
+        return desc
+      }
+      // DEPRECATED: Legacy structural nesting fallback. Will be removed in a future major version.
+      // Users should register all types in TypeRegistry instead of relying on addNestedEnum().
       let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
       return descriptor.nestedEnum(named: simpleName)
     }()
@@ -259,12 +281,21 @@ public struct JSONDeserializer {
     return resultMap
   }
 
-  /// Resolves an `EnumDescriptor` for a field from the message's nested enums.
+  /// Resolves an `EnumDescriptor` for a field.
+  ///
+  /// 1. `options.typeRegistry` by fully-qualified name (primary).
+  /// 2. Structural nesting on `descriptor` (deprecated fallback).
   private func resolveEnumDescriptor(
     for field: FieldDescriptor,
     in descriptor: MessageDescriptor
   ) -> EnumDescriptor? {
     guard case .enum = field.type, let typeName = field.typeName else { return nil }
+    let normalized = typeName.hasPrefix(".") ? String(typeName.dropFirst()) : typeName
+    if let desc = options.typeRegistry.findEnum(named: normalized) {
+      return desc
+    }
+    // DEPRECATED: Legacy structural nesting fallback. Will be removed in a future major version.
+    // Users should register all types in TypeRegistry instead of relying on addNestedEnum().
     let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
     return descriptor.nestedEnum(named: simpleName)
   }
@@ -554,14 +585,7 @@ public struct JSONDeserializer {
       throw JSONDeserializationError.missingTypeName(fieldName: fieldName)
     }
 
-    guard let registry = options.typeRegistry else {
-      throw JSONDeserializationError.unsupportedNestedMessage(
-        fieldName: fieldName,
-        typeName: lookupName
-      )
-    }
-
-    guard let nestedDescriptor = registry.findMessage(named: lookupName) else {
+    guard let nestedDescriptor = options.typeRegistry.findMessage(named: lookupName) else {
       throw JSONDeserializationError.nestedMessageDescriptorNotFound(
         fieldName: fieldName,
         typeName: lookupName
@@ -679,23 +703,55 @@ public struct JSONDeserializationOptions {
   /// Strict type validation.
   public let strictTypeValidation: Bool
 
-  /// Type registry for resolving nested message descriptors by fully-qualified name.
-  public let typeRegistry: TypeRegistry?
+  /// Registry for resolving nested message descriptors by fully-qualified name.
+  ///
+  /// Pass a populated `TypeRegistry` to enable cross-file and sibling-message resolution.
+  /// For hand-built descriptors without cross-file references, an empty `TypeRegistry()` is sufficient.
+  public let typeRegistry: TypeRegistry
 
   /// Maximum allowed nesting depth for recursive message deserialization.
   public let maxNestingDepth: Int
 
-  /// Creates JSON deserialization options.
+  /// Creates JSON deserialization options with a required TypeRegistry.
+  ///
+  /// - Parameters:
+  ///   - ignoreUnknownFields: Whether to ignore unknown JSON fields. Defaults to `true`.
+  ///   - strictTypeValidation: Whether to enforce strict type validation. Defaults to `true`.
+  ///   - typeRegistry: Registry for resolving nested message types by fully-qualified name.
+  ///   - maxNestingDepth: Maximum allowed nesting depth. Defaults to `64`.
   public init(
     ignoreUnknownFields: Bool = true,
     strictTypeValidation: Bool = true,
-    typeRegistry: TypeRegistry? = nil,
+    typeRegistry: TypeRegistry,
     maxNestingDepth: Int = 64
   ) {
     self.ignoreUnknownFields = ignoreUnknownFields
     self.strictTypeValidation = strictTypeValidation
     self.typeRegistry = typeRegistry
     self.maxNestingDepth = maxNestingDepth
+  }
+
+  /// Creates JSON deserialization options with an empty TypeRegistry.
+  ///
+  /// - Note: Deprecated. Use `init(ignoreUnknownFields:strictTypeValidation:typeRegistry:maxNestingDepth:)`
+  ///   with an explicit `TypeRegistry` so that cross-file message types can be resolved correctly.
+  @available(
+    *,
+    deprecated,
+    message:
+      "Use init(ignoreUnknownFields:strictTypeValidation:typeRegistry:maxNestingDepth:) with an explicit TypeRegistry"
+  )
+  public init(
+    ignoreUnknownFields: Bool = true,
+    strictTypeValidation: Bool = true,
+    maxNestingDepth: Int = 64
+  ) {
+    self.init(
+      ignoreUnknownFields: ignoreUnknownFields,
+      strictTypeValidation: strictTypeValidation,
+      typeRegistry: TypeRegistry(),
+      maxNestingDepth: maxNestingDepth
+    )
   }
 }
 

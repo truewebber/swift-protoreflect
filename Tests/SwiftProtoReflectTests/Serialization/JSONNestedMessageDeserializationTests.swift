@@ -426,7 +426,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
     let registry = try makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
-    let serializer = JSONSerializer()
+    let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
 
     let innerMsg = DynamicMessage(descriptor: file.messages["Inner"]!)
     var outerMsg = DynamicMessage(descriptor: file.messages["Outer"]!)
@@ -458,7 +458,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
     let registry = try makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
-    let serializer = JSONSerializer()
+    let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
 
     var e1 = DynamicMessage(descriptor: file.messages["Entry"]!)
     try e1.set("alpha", forField: "key")
@@ -474,9 +474,9 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     XCTAssertEqual(col, deserialized)
   }
 
-  // MARK: - Error: No Registry
+  // MARK: - Error: No Registry (empty registry)
 
-  func test_deserialize_noRegistryWithNestedMessage_throwsUnsupported() throws {
+  func test_deserialize_noRegistryWithNestedMessage_throwsDescriptorNotFound() throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var inner = MessageDescriptor(name: "Inner", parent: file)
@@ -487,7 +487,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     outer.addField(FieldDescriptor(name: "inner", number: 1, type: .message, typeName: "test.Inner"))
     file.addMessage(outer)
 
-    let deserializer = JSONDeserializer()
+    let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     let data = json(
       """
@@ -497,13 +497,13 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
     XCTAssertThrowsError(try deserializer.deserialize(data, using: file.messages["Outer"]!)) { error in
       if let jsonError = error as? JSONDeserializationError,
-        case .unsupportedNestedMessage(let fieldName, let typeName) = jsonError
+        case .nestedMessageDescriptorNotFound(let fieldName, let typeName) = jsonError
       {
         XCTAssertEqual(fieldName, "inner")
         XCTAssertEqual(typeName, "test.Inner")
       }
       else {
-        XCTFail("Expected unsupportedNestedMessage error, got: \(error)")
+        XCTFail("Expected nestedMessageDescriptorNotFound error, got: \(error)")
       }
     }
   }

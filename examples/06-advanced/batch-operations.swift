@@ -134,7 +134,7 @@ struct BatchOperationsExample {
     // Batch JSON serialization
     print("\n  🔄 Batch JSON serialization...")
 
-    let jsonSerializer = JSONSerializer()
+    let jsonSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     var jsonData: [Data] = []
 
     let jsonTime = try ExampleUtils.measureTime {

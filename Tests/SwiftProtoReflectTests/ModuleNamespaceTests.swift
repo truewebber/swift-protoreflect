@@ -73,9 +73,13 @@ final class ModuleNamespaceTests: XCTestCase {
   func testSerializerTypesAccessibleWithModulePrefix() {
     // Verify all serializer types are accessible
     let binarySerializer: SwiftProtoReflect.BinarySerializer = BinarySerializer()
-    let jsonSerializer: SwiftProtoReflect.JSONSerializer = JSONSerializer()
-    let binaryDeserializer: SwiftProtoReflect.BinaryDeserializer = BinaryDeserializer()
-    let jsonDeserializer: SwiftProtoReflect.JSONDeserializer = JSONDeserializer()
+    let jsonSerializer: SwiftProtoReflect.JSONSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
+    let binaryDeserializer: SwiftProtoReflect.BinaryDeserializer = BinaryDeserializer(
+      options: .init(typeRegistry: TypeRegistry())
+    )
+    let jsonDeserializer: SwiftProtoReflect.JSONDeserializer = JSONDeserializer(
+      options: .init(typeRegistry: TypeRegistry())
+    )
 
     XCTAssertNotNil(binarySerializer)
     XCTAssertNotNil(jsonSerializer)
@@ -86,9 +90,11 @@ final class ModuleNamespaceTests: XCTestCase {
   func testSerializationOptionsAccessibleWithModulePrefix() {
     // Verify options types are accessible
     let serOpts: SwiftProtoReflect.SerializationOptions = SerializationOptions()
-    let deserOpts: SwiftProtoReflect.DeserializationOptions = DeserializationOptions()
-    let jsonSerOpts: SwiftProtoReflect.JSONSerializationOptions = JSONSerializationOptions()
-    let jsonDeserOpts: SwiftProtoReflect.JSONDeserializationOptions = JSONDeserializationOptions()
+    let deserOpts: SwiftProtoReflect.DeserializationOptions = DeserializationOptions(typeRegistry: TypeRegistry())
+    let jsonSerOpts: SwiftProtoReflect.JSONSerializationOptions = JSONSerializationOptions(typeRegistry: TypeRegistry())
+    let jsonDeserOpts: SwiftProtoReflect.JSONDeserializationOptions = JSONDeserializationOptions(
+      typeRegistry: TypeRegistry()
+    )
 
     XCTAssertNotNil(serOpts)
     XCTAssertNotNil(deserOpts)
@@ -234,7 +240,9 @@ final class ModuleNamespaceTests: XCTestCase {
 
     XCTAssertFalse(data.isEmpty)
 
-    let deserializer: SwiftProtoReflect.BinaryDeserializer = BinaryDeserializer()
+    let deserializer: SwiftProtoReflect.BinaryDeserializer = BinaryDeserializer(
+      options: .init(typeRegistry: TypeRegistry())
+    )
     let deserializedMessage = try deserializer.deserialize(data, using: messageDesc)
 
     let name = try deserializedMessage.get(forField: "name") as? String
@@ -260,11 +268,13 @@ final class ModuleNamespaceTests: XCTestCase {
     let validationResult: SwiftProtoReflect.ValidationResult = factory.validate(message)
     XCTAssertTrue(validationResult.isValid)
 
-    let serializer: SwiftProtoReflect.JSONSerializer = JSONSerializer()
+    let serializer: SwiftProtoReflect.JSONSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let jsonData = try serializer.serialize(message)
     XCTAssertFalse(jsonData.isEmpty)
 
-    let deserializer: SwiftProtoReflect.JSONDeserializer = JSONDeserializer()
+    let deserializer: SwiftProtoReflect.JSONDeserializer = JSONDeserializer(
+      options: .init(typeRegistry: TypeRegistry())
+    )
     let restored: SwiftProtoReflect.DynamicMessage = try deserializer.deserialize(jsonData, using: user)
 
     let restoredName = try restored.get(forField: "name") as? String

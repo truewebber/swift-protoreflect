@@ -5,7 +5,7 @@ A Swift library for dynamic Protocol Buffers message manipulation without pre-co
 [![Platform](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ftruewebber%2Fswift-protoreflect%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/truewebber/swift-protoreflect)
 [![Swift Package Index](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ftruewebber%2Fswift-protoreflect%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/truewebber/swift-protoreflect)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat)](LICENSE)
-[![Coverage](https://img.shields.io/badge/line%20coverage-93.4%25-green.svg?style=flat)](#quality-metrics)
+[![Coverage](https://img.shields.io/badge/line%20coverage-93.5%25-green.svg?style=flat)](#quality-metrics)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/truewebber/swift-protoreflect)
 
 ## Overview
@@ -45,8 +45,10 @@ try message.set("age", value: 25)
 try message.set("emails", value: ["alice@example.com"])
 
 // Serialize to binary or JSON
+// TypeRegistry is required for serializers; an empty registry is fine for scalar-only messages.
+let registry = TypeRegistry()
 let binaryData = try BinarySerializer().serialize(message: message)
-let jsonString = try JSONSerializer().serialize(message: message)
+let jsonData = try JSONSerializer(options: .init(typeRegistry: registry)).serialize(message)
 ```
 
 ### Working with Well-Known Types
@@ -161,9 +163,9 @@ Code coverage is measured with LLVM (`make coverage` after `make test`) over `So
 
 | Metric | Coverage |
 |--------|----------|
-| Lines | **93.37%** |
-| Regions | **95.69%** |
-| Functions | **95.52%** |
+| Lines | **93.48%** |
+| Regions | **95.86%** |
+| Functions | **95.63%** |
 
 Figures reflect the current test suite; re-run `make test` and `make coverage` locally for up-to-date numbers.
 

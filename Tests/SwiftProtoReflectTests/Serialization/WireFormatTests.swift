@@ -154,7 +154,7 @@ final class WireFormatTests: XCTestCase {
     // Tag = (maxField << 3) | 0, which is a 5-byte varint
     XCTAssertTrue(data.count >= 5, "Max field number tag should be at least 5 bytes")
 
-    let deserialized = try BinaryDeserializer().deserialize(
+    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
       data,
       using: {
         var d = MessageDescriptor(name: "M", fullName: "test.M")
@@ -220,7 +220,7 @@ final class WireFormatTests: XCTestCase {
     let serializer = BinarySerializer()
     let data = try serializer.serialize(msg)
 
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let decoded = try deserializer.deserialize(data, using: desc)
 
     XCTAssertEqual(try decoded.get(forField: "f_int32") as? Int32, 42)

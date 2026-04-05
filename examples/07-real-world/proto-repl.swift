@@ -291,7 +291,7 @@ class ProtoREPL {
       print("📦 Binary (\(data.count) bytes): \(formatDataPreview(data))")
 
     case "json":
-      let serializer = JSONSerializer()
+      let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
       let jsonData = try serializer.serialize(message)
       if let jsonString = String(data: jsonData, encoding: .utf8) {
         print("📄 JSON (\(jsonData.count) bytes):")

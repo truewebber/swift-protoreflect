@@ -61,7 +61,7 @@ struct SchemaEvolutionExample {
     v2.addField(FieldDescriptor(name: "name", number: 2, type: .string))
     v2.addField(FieldDescriptor(name: "email", number: 3, type: .string))
 
-    let decoded = try BinaryDeserializer().deserialize(data, using: v2)
+    let decoded = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(data, using: v2)
     print("  v2 reads:  id=\(try decoded.get(forField: "id") as? Int32 ?? 0)")
     print("             name=\"\(try decoded.get(forField: "name") as? String ?? "")\"")
     print("             email=\(try decoded.get(forField: "email").map { "\"\($0)\"" } ?? "nil (absent)")")
@@ -89,14 +89,15 @@ struct SchemaEvolutionExample {
     newer.addField(FieldDescriptor(name: "timeout", number: 1, type: .int32))
     newer.addField(FieldDescriptor(name: "retries", number: 3, type: .int32))
 
-    let decoded = try BinaryDeserializer().deserialize(data, using: newer)
+    let registry = TypeRegistry()
+    let decoded = try BinaryDeserializer(options: .init(typeRegistry: registry)).deserialize(data, using: newer)
     print(
       "  Known:   timeout=\(try decoded.get(forField: "timeout") as? Int32 ?? 0), retries=\(try decoded.get(forField: "retries") as? Int32 ?? 0)"
     )
     print("  Unknown: \(decoded.unknownFields.count) bytes preserved (was debug_mode)")
 
     let reencoded = try BinarySerializer().serialize(decoded)
-    let restored = try BinaryDeserializer().deserialize(reencoded, using: old)
+    let restored = try BinaryDeserializer(options: .init(typeRegistry: registry)).deserialize(reencoded, using: old)
     print("  Restored debug_mode: \(try restored.get(forField: "debug_mode") as? Bool ?? false)")
 
     ExampleUtils.printInfo("Removed fields survive as unknown fields through intermediaries")
@@ -117,7 +118,7 @@ struct SchemaEvolutionExample {
     var reader = MessageDescriptor(name: "Item", fullName: "example.Item")
     reader.addField(FieldDescriptor(name: "display_name", number: 1, type: .string))
 
-    let decoded = try BinaryDeserializer().deserialize(data, using: reader)
+    let decoded = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(data, using: reader)
     let value = try decoded.get(forField: "display_name") as? String ?? ""
     print("  Writer field: \"user_name\" = \"Alice\"")
     print("  Reader field: \"display_name\" = \"\(value)\"")
@@ -142,7 +143,6 @@ struct SchemaEvolutionExample {
     writerDesc.addField(
       FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "example.Status")
     )
-    writerDesc.addNestedEnum(newEnum)
 
     var msg = MessageFactory().createMessage(from: writerDesc)
     try msg.set(Int32(2), forField: "status")
@@ -156,9 +156,11 @@ struct SchemaEvolutionExample {
     readerDesc.addField(
       FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "example.Status")
     )
-    readerDesc.addNestedEnum(oldEnum)
 
-    let decoded = try BinaryDeserializer().deserialize(data, using: readerDesc)
+    let decoded = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      data,
+      using: readerDesc
+    )
     let status = try decoded.get(forField: "status") as? Int32 ?? -1
     print("  Writer sends:    ARCHIVED (2)")
     print("  Old reader gets: raw value \(status) (name unknown to old schema)")

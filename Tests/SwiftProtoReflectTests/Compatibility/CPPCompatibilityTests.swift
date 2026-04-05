@@ -17,7 +17,7 @@ final class CPPCompatibilityTests: XCTestCase {
   // MARK: - Helpers
 
   private let serializer = BinarySerializer()
-  private let deserializer = BinaryDeserializer()
+  private let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
   private let factory = MessageFactory()
 
   // MARK: - Unknown fields preserved across round-trip
@@ -194,5 +194,98 @@ final class CPPCompatibilityTests: XCTestCase {
     let arr = values as? [Any]
     XCTAssertNotNil(arr)
     XCTAssertEqual(arr?.count, 3)
+  }
+
+  // MARK: - F. C++ Compatibility: sibling message wire format
+
+  func test_cppCompat_binaryFormat_siblingMessageReference_matchesExpected() throws {
+    // Verifies that our serialiser produces the canonical protobuf wire format for a
+    // message field referencing a sibling type, and that our deserialiser (with registry)
+    // can parse the same bytes a C++ implementation would produce.
+    //
+    // Schema:
+    //   message A { string value = 1; }
+    //   message B { A a = 1; }
+    //
+    // Wire bytes for B { a: A { value: "hi" } }:
+    //   Field 1 (LV): tag=0x0A, len=4, inner=[tag=0x0A, len=2, 0x68, 0x69]
+    var descA = MessageDescriptor(name: "A", fullName: "cpp.A")
+    descA.addField(FieldDescriptor(name: "value", number: 1, type: .string))
+
+    var descB = MessageDescriptor(name: "B", fullName: "cpp.B")
+    descB.addField(FieldDescriptor(name: "a", number: 1, type: .message, typeName: "cpp.A"))
+
+    // Expected bytes: "hi" = 0x68 0x69
+    // A bytes: [0x0A, 0x02, 0x68, 0x69] (field 1 string, len 2, "hi")
+    // B bytes: [0x0A, 0x04, 0x0A, 0x02, 0x68, 0x69] (field 1 LV, len 4, A bytes)
+    let expectedBytes: [UInt8] = [0x0A, 0x04, 0x0A, 0x02, 0x68, 0x69]
+
+    var msgA = factory.createMessage(from: descA)
+    try msgA.set("hi", forField: "value")
+    var msgB = factory.createMessage(from: descB)
+    try msgB.set(msgA, forField: "a")
+    let producedData = try serializer.serialize(msgB)
+
+    XCTAssertEqual([UInt8](producedData), expectedBytes, "Wire format must match C++ output")
+
+    // Deserialise the canonical bytes using registry.
+    let registry = TypeRegistry()
+    try registry.registerMessage(descA)
+    let opts = DeserializationOptions(typeRegistry: registry)
+    let cppBytes = Data(expectedBytes)
+    let decoded = try BinaryDeserializer(options: opts).deserialize(cppBytes, using: descB)
+
+    let decodedA = try XCTUnwrap(decoded.get(forField: "a") as? DynamicMessage)
+    XCTAssertEqual(try decodedA.get(forField: "value") as? String, "hi")
+  }
+
+  func test_cppCompat_binaryFormat_nestedSiblingChain_matchesExpected() throws {
+    // Verifies the canonical wire format for a two-level sibling chain:
+    //   message Inner { int32 n = 1; }
+    //   message Middle { Inner inner = 1; }
+    //   message Outer  { Middle middle = 1; }
+    //
+    // n=7: varint 0x07
+    // Inner:  [0x08, 0x07]              (field 1 varint, 7)
+    // Middle: [0x0A, 0x02, 0x08, 0x07]  (field 1 LV, len 2, Inner bytes)
+    // Outer:  [0x0A, 0x04, 0x0A, 0x02, 0x08, 0x07]  (field 1 LV, len 4, Middle bytes)
+    var innerDesc = MessageDescriptor(name: "Inner", fullName: "chain.Inner")
+    innerDesc.addField(FieldDescriptor(name: "n", number: 1, type: .int32))
+
+    var middleDesc = MessageDescriptor(name: "Middle", fullName: "chain.Middle")
+    middleDesc.addField(
+      FieldDescriptor(name: "inner", number: 1, type: .message, typeName: "chain.Inner")
+    )
+
+    var outerDesc = MessageDescriptor(name: "Outer", fullName: "chain.Outer")
+    outerDesc.addField(
+      FieldDescriptor(name: "middle", number: 1, type: .message, typeName: "chain.Middle")
+    )
+
+    let expectedBytes: [UInt8] = [0x0A, 0x04, 0x0A, 0x02, 0x08, 0x07]
+
+    var innerMsg = factory.createMessage(from: innerDesc)
+    try innerMsg.set(Int32(7), forField: "n")
+    var middleMsg = factory.createMessage(from: middleDesc)
+    try middleMsg.set(innerMsg, forField: "inner")
+    var outerMsg = factory.createMessage(from: outerDesc)
+    try outerMsg.set(middleMsg, forField: "middle")
+    let producedData = try serializer.serialize(outerMsg)
+
+    XCTAssertEqual([UInt8](producedData), expectedBytes, "Wire format must match C++ output")
+
+    // Deserialise canonical bytes with registry.
+    let registry = TypeRegistry()
+    try registry.registerMessage(innerDesc)
+    try registry.registerMessage(middleDesc)
+    let opts = DeserializationOptions(typeRegistry: registry)
+    let decoded = try BinaryDeserializer(options: opts).deserialize(
+      Data(expectedBytes),
+      using: outerDesc
+    )
+
+    let decodedMiddle = try XCTUnwrap(decoded.get(forField: "middle") as? DynamicMessage)
+    let decodedInner = try XCTUnwrap(decodedMiddle.get(forField: "inner") as? DynamicMessage)
+    XCTAssertEqual(try decodedInner.get(forField: "n") as? Int32, 7)
   }
 }

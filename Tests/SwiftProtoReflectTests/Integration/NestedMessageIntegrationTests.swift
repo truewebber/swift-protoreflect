@@ -46,7 +46,7 @@ final class NestedMessageIntegrationTests: XCTestCase {
     let registry = TypeRegistry()
     try registry.registerFile(file)
 
-    let serializer = JSONSerializer()
+    let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let deserializer = JSONDeserializer(
       options: JSONDeserializationOptions(typeRegistry: registry)
     )
@@ -147,7 +147,7 @@ final class NestedMessageIntegrationTests: XCTestCase {
     let registry = TypeRegistry()
     try registry.registerFile(file)
 
-    let serializer = JSONSerializer()
+    let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let deserializer = JSONDeserializer(
       options: JSONDeserializationOptions(typeRegistry: registry)
     )

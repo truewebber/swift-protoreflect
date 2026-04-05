@@ -56,7 +56,7 @@ struct JsonCanonicalExample {
     try msg.set(UInt64(18_446_744_073_709_551_615), forField: "unsigned_big")
     try msg.set(Int32(42), forField: "regular_int")
 
-    let json = try JSONSerializer().serializeToJSONObject(msg)
+    let json = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
     print("  signed_big type:   \(type(of: json["signed_big"]!)) = \(json["signed_big"]!)")
     print("  unsigned_big type: \(type(of: json["unsigned_big"]!)) = \(json["unsigned_big"]!)")
     print("  regular_int type:  \(type(of: json["regular_int"]!)) = \(json["regular_int"]!)")
@@ -79,7 +79,7 @@ struct JsonCanonicalExample {
     try msg.set("Hello, Proto3!".data(using: .utf8)!, forField: "data")
     try msg.set(Data([0xDE, 0xAD, 0xBE, 0xEF]), forField: "checksum")
 
-    let json = try JSONSerializer().serializeToJSONObject(msg)
+    let json = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
     let dataB64 = json["data"] as? String ?? ""
     let checksumB64 = json["checksum"] as? String ?? ""
     print("  data (base64):     \"\(dataB64)\"")
@@ -98,16 +98,17 @@ struct JsonCanonicalExample {
   private static func demonstrateEnumAsName() throws {
     ExampleUtils.printStep(3, "Enum Values as String Names")
 
-    var statusEnum = EnumDescriptor(name: "Status", fullName: "example.Status")
+    var desc = MessageDescriptor(name: "Account", fullName: "example.Account")
+    desc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
+
+    var statusEnum = EnumDescriptor(name: "Status", parent: desc)
     statusEnum.addValue(.init(name: "UNKNOWN", number: 0))
     statusEnum.addValue(.init(name: "ACTIVE", number: 1))
     statusEnum.addValue(.init(name: "SUSPENDED", number: 2))
     statusEnum.addValue(.init(name: "DELETED", number: 3))
 
-    var desc = MessageDescriptor(name: "Account", fullName: "example.Account")
-    desc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     desc.addField(
-      FieldDescriptor(name: "status", number: 2, type: .enum, typeName: "example.Status")
+      FieldDescriptor(name: "status", number: 2, type: .enum, typeName: "example.Account.Status")
     )
     desc.addNestedEnum(statusEnum)
 
@@ -115,12 +116,16 @@ struct JsonCanonicalExample {
     try msg.set("Alice", forField: "name")
     try msg.set(Int32(1), forField: "status")
 
-    let json = try JSONSerializer().serializeToJSONObject(msg)
+    let enumRegistry = TypeRegistry()
+    let json = try JSONSerializer(options: .init(typeRegistry: enumRegistry)).serializeToJSONObject(msg)
     print("  status value: \(json["status"]!)")
     print("  status type:  \(type(of: json["status"]!))")
 
-    let jsonData = try JSONSerializer().serialize(msg)
-    let deserialized = try JSONDeserializer().deserialize(jsonData, using: desc)
+    let jsonData = try JSONSerializer(options: .init(typeRegistry: enumRegistry)).serialize(msg)
+    let deserialized = try JSONDeserializer(options: .init(typeRegistry: enumRegistry)).deserialize(
+      jsonData,
+      using: desc
+    )
     let roundTripped = try deserialized.get(forField: "status") as? Int32 ?? -1
     print("  Round-trip:   enum name → Int32(\(roundTripped))")
 
@@ -134,27 +139,28 @@ struct JsonCanonicalExample {
   private static func demonstrateIncludeDefaultValues() throws {
     ExampleUtils.printStep(4, "includeDefaultValues Option")
 
-    var statusEnum = EnumDescriptor(name: "Role", fullName: "example.Role")
-    statusEnum.addValue(.init(name: "GUEST", number: 0))
-    statusEnum.addValue(.init(name: "ADMIN", number: 1))
-
     var desc = MessageDescriptor(name: "Profile", fullName: "example.Profile")
     desc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     desc.addField(FieldDescriptor(name: "age", number: 2, type: .int32))
     desc.addField(FieldDescriptor(name: "active", number: 3, type: .bool))
+
+    var roleEnum = EnumDescriptor(name: "Role", parent: desc)
+    roleEnum.addValue(.init(name: "GUEST", number: 0))
+    roleEnum.addValue(.init(name: "ADMIN", number: 1))
+
     desc.addField(
-      FieldDescriptor(name: "role", number: 4, type: .enum, typeName: "example.Role")
+      FieldDescriptor(name: "role", number: 4, type: .enum, typeName: "example.Profile.Role")
     )
-    desc.addNestedEnum(statusEnum)
+    desc.addNestedEnum(roleEnum)
 
     let msg = MessageFactory().createMessage(from: desc)
 
-    let defaultSerializer = JSONSerializer()
+    let defaultSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let jsonDefault = try defaultSerializer.serializeToJSONObject(msg)
     print("  Default mode (empty message):  \(jsonDefault)")
 
     let fullSerializer = JSONSerializer(
-      options: JSONSerializationOptions(includeDefaultValues: true)
+      options: JSONSerializationOptions(includeDefaultValues: true, typeRegistry: TypeRegistry())
     )
     let jsonFull = try fullSerializer.serializeToJSONObject(msg)
     print("  includeDefaultValues=true:     \(jsonFull)")

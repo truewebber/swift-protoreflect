@@ -25,8 +25,23 @@ public struct BinaryDeserializer {
   /// Creates new BinaryDeserializer instance.
   ///
   /// - Parameter options: Deserialization options.
-  public init(options: DeserializationOptions = DeserializationOptions()) {
+  public init(options: DeserializationOptions) {
     self.options = options
+  }
+
+  /// Creates a BinaryDeserializer with default options and an empty TypeRegistry.
+  ///
+  /// - Note: Deprecated. Use `init(options:)` with an explicit `TypeRegistry` so that
+  ///   cross-file message types can be resolved correctly.
+  @available(*, deprecated, message: "Use init(options:) with an explicit TypeRegistry")
+  public init() {
+    self.init(
+      options: DeserializationOptions(
+        preserveUnknownFields: true,
+        strictUTF8Validation: true,
+        typeRegistry: TypeRegistry()
+      )
+    )
   }
 
   // MARK: - Deserialization Methods
@@ -305,32 +320,16 @@ public struct BinaryDeserializer {
       return varint != 0
 
     case .string:
-      let length = try decoder.readVarint()
-      let data = try decoder.readBytes(Int(length))
-      guard let string = String(data: data, encoding: .utf8) else {
-        throw DeserializationError.invalidUTF8String
-      }
-      return string
+      return try decodeString(from: &decoder)
 
     case .bytes:
-      let length = try decoder.readVarint()
-      return try decoder.readBytes(Int(length))
+      return try decodeLengthDelimitedBytes(from: &decoder)
 
     case .message:
       guard let typeName = typeName else {
         throw DeserializationError.missingTypeName(fieldType: "message")
       }
-
-      let length = try decoder.readVarint()
-      let messageData = try decoder.readBytes(Int(length))
-
-      let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
-      guard let nestedDescriptor = descriptor.nestedMessage(named: simpleName) else {
-        throw DeserializationError.unsupportedNestedMessage(typeName: typeName)
-      }
-
-      var nestedDecoder = BinaryDecoder(data: messageData)
-      return try decodeMessage(from: &nestedDecoder, using: nestedDescriptor)
+      return try decodeMessageField(typeName: typeName, from: &decoder, descriptor: descriptor)
 
     case .enum:
       let varint = try decoder.readVarint()
@@ -340,14 +339,67 @@ public struct BinaryDeserializer {
       guard let typeName = typeName else {
         throw DeserializationError.missingTypeName(fieldType: "group")
       }
-
-      let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
-      guard let groupDescriptor = descriptor.nestedMessage(named: simpleName) else {
-        throw DeserializationError.unsupportedNestedMessage(typeName: typeName)
-      }
-
-      return try decodeGroupMessage(from: &decoder, using: groupDescriptor)
+      return try decodeGroupField(typeName: typeName, from: &decoder, descriptor: descriptor)
     }
+  }
+
+  /// Reads a length-delimited byte sequence and decodes it as a UTF-8 string.
+  private func decodeString(from decoder: inout BinaryDecoder) throws -> String {
+    let length = try decoder.readVarint()
+    let data = try decoder.readBytes(Int(length))
+    guard let string = String(data: data, encoding: .utf8) else {
+      throw DeserializationError.invalidUTF8String
+    }
+    return string
+  }
+
+  /// Reads a length-delimited byte sequence and returns it as raw `Data`.
+  private func decodeLengthDelimitedBytes(from decoder: inout BinaryDecoder) throws -> Data {
+    let length = try decoder.readVarint()
+    return try decoder.readBytes(Int(length))
+  }
+
+  /// Reads a length-delimited embedded message and decodes it using the resolved descriptor.
+  private func decodeMessageField(
+    typeName: String,
+    from decoder: inout BinaryDecoder,
+    descriptor: MessageDescriptor
+  ) throws -> DynamicMessage {
+    let length = try decoder.readVarint()
+    let messageData = try decoder.readBytes(Int(length))
+    let nestedDescriptor = try resolveMessageDescriptor(typeName: typeName, in: descriptor)
+    var nestedDecoder = BinaryDecoder(data: messageData)
+    return try decodeMessage(from: &nestedDecoder, using: nestedDescriptor)
+  }
+
+  /// Reads a proto2 group field and decodes it using the resolved descriptor.
+  private func decodeGroupField(
+    typeName: String,
+    from decoder: inout BinaryDecoder,
+    descriptor: MessageDescriptor
+  ) throws -> DynamicMessage {
+    let groupDescriptor = try resolveMessageDescriptor(typeName: typeName, in: descriptor)
+    return try decodeGroupMessage(from: &decoder, using: groupDescriptor)
+  }
+
+  /// Resolves a `MessageDescriptor` for `typeName`.
+  ///
+  /// 1. `options.typeRegistry` by fully-qualified name (primary — correct, strict resolution).
+  /// 2. Structural nesting on `descriptor` (deprecated fallback — legacy path).
+  private func resolveMessageDescriptor(typeName: String, in descriptor: MessageDescriptor) throws
+    -> MessageDescriptor
+  {
+    let normalizedTypeName = typeName.hasPrefix(".") ? String(typeName.dropFirst()) : typeName
+    if let desc = options.typeRegistry.findMessage(named: normalizedTypeName) {
+      return desc
+    }
+    // DEPRECATED: Legacy structural nesting fallback. Will be removed in a future major version.
+    // Users should register all types in TypeRegistry instead of relying on addNestedMessage().
+    let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
+    if let desc = descriptor.nestedMessage(named: simpleName) {
+      return desc
+    }
+    throw DeserializationError.unsupportedNestedMessage(typeName: typeName)
   }
 
   /// Decodes a group message, reading fields until endGroup tag.
@@ -562,10 +614,46 @@ public struct DeserializationOptions {
   /// Strict UTF-8 string validation.
   public let strictUTF8Validation: Bool
 
-  /// Creates deserialization options.
-  public init(preserveUnknownFields: Bool = true, strictUTF8Validation: Bool = true) {
+  /// Registry used to resolve message-type fields by fully-qualified name.
+  ///
+  /// Pass a populated `TypeRegistry` to enable cross-file and sibling-message resolution.
+  /// For hand-built descriptors without cross-file references, an empty `TypeRegistry()` is sufficient.
+  public let typeRegistry: TypeRegistry
+
+  /// Creates deserialization options with a required TypeRegistry.
+  ///
+  /// - Parameters:
+  ///   - preserveUnknownFields: Whether to preserve unknown fields. Defaults to `true`.
+  ///   - strictUTF8Validation: Whether to enforce strict UTF-8 string validation. Defaults to `true`.
+  ///   - typeRegistry: Registry for resolving message types by fully-qualified name.
+  public init(
+    preserveUnknownFields: Bool = true,
+    strictUTF8Validation: Bool = true,
+    typeRegistry: TypeRegistry
+  ) {
     self.preserveUnknownFields = preserveUnknownFields
     self.strictUTF8Validation = strictUTF8Validation
+    self.typeRegistry = typeRegistry
+  }
+
+  /// Creates deserialization options with an empty TypeRegistry.
+  ///
+  /// - Note: Deprecated. Use `init(preserveUnknownFields:strictUTF8Validation:typeRegistry:)` with an
+  ///   explicit `TypeRegistry` so that cross-file message types can be resolved correctly.
+  @available(
+    *,
+    deprecated,
+    message: "Use init(preserveUnknownFields:strictUTF8Validation:typeRegistry:) with an explicit TypeRegistry"
+  )
+  public init(
+    preserveUnknownFields: Bool = true,
+    strictUTF8Validation: Bool = true
+  ) {
+    self.init(
+      preserveUnknownFields: preserveUnknownFields,
+      strictUTF8Validation: strictUTF8Validation,
+      typeRegistry: TypeRegistry()
+    )
   }
 }
 

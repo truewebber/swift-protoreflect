@@ -310,7 +310,7 @@ struct StaticMessageBridgeExample {
     var employee1 = factory.createMessage(from: employeeDescriptor)
     try employee1.set("EMP-001", forField: "id")
     try employee1.set("Alice Johnson", forField: "name")
-    try employee1.set("ACTIVE", forField: "status")  // ACTIVE
+    try employee1.set(Int32(0), forField: "status")  // ACTIVE = 0
     try employee1.set(employee1Address, forField: "address")
     // NOTE: In real implementation, repeated fields require special API
 

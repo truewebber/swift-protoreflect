@@ -27,7 +27,8 @@ final class JSONIncludeDefaultValuesTests: XCTestCase {
     JSONSerializer(
       options: JSONSerializationOptions(
         useOriginalFieldNames: useOriginalNames,
-        includeDefaultValues: includeDefaults
+        includeDefaultValues: includeDefaults,
+        typeRegistry: TypeRegistry()
       )
     )
   }

@@ -26,7 +26,7 @@ final class BinaryDeserializationTests: XCTestCase {
     fileDescriptor = FileDescriptor(name: "test_deserialization.proto", package: "test.deserialization")
     messageFactory = MessageFactory()
     serializer = BinarySerializer()
-    deserializer = BinaryDeserializer()
+    deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
   }
 
   override func tearDown() {
@@ -408,8 +408,8 @@ final class BinaryDeserializationTests: XCTestCase {
 
   func testDeserializationOptions() {
     // Test deserialization options
-    let preservingOptions = DeserializationOptions(preserveUnknownFields: true)
-    let discardingOptions = DeserializationOptions(preserveUnknownFields: false)
+    let preservingOptions = DeserializationOptions(preserveUnknownFields: true, typeRegistry: TypeRegistry())
+    let discardingOptions = DeserializationOptions(preserveUnknownFields: false, typeRegistry: TypeRegistry())
 
     XCTAssertTrue(preservingOptions.preserveUnknownFields)
     XCTAssertFalse(discardingOptions.preserveUnknownFields)
@@ -572,7 +572,9 @@ final class BinaryDeserializationTests: XCTestCase {
     // Field 1 (known): tag=0x08, value=42=0x2A
     // Field 2 (unknown varint): tag=0x10, value=99=0x63
     let data = Data([0x08, 0x2A, 0x10, 0x63])
-    let discardDeserializer = BinaryDeserializer(options: DeserializationOptions(preserveUnknownFields: false))
+    let discardDeserializer = BinaryDeserializer(
+      options: DeserializationOptions(preserveUnknownFields: false, typeRegistry: TypeRegistry())
+    )
     let result = try discardDeserializer.deserialize(data, using: message)
 
     // Known field should be deserialized
@@ -586,7 +588,9 @@ final class BinaryDeserializationTests: XCTestCase {
     // Field 1 (known): tag=0x08, value=5=0x05
     // Field 3 (unknown fixed32): tag=(3<<3)|5=29=0x1D, then 4 bytes
     let data = Data([0x08, 0x05, 0x1D, 0xAA, 0xBB, 0xCC, 0xDD])
-    let preserveDeserializer = BinaryDeserializer(options: DeserializationOptions(preserveUnknownFields: true))
+    let preserveDeserializer = BinaryDeserializer(
+      options: DeserializationOptions(preserveUnknownFields: true, typeRegistry: TypeRegistry())
+    )
     let result = try preserveDeserializer.deserialize(data, using: message)
 
     XCTAssertEqual(try result.get(forField: "known") as? Int32, Int32(5))

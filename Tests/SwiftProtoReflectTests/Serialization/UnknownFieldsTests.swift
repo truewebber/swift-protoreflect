@@ -91,7 +91,7 @@ final class UnknownFieldsTests: XCTestCase {
   func test_deserialize_unknownVarintField_preserved() throws {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildVarintField(fieldNumber: 99, value: 42)
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let msg = try deserializer.deserialize(unknownData, using: desc)
     XCTAssertFalse(msg.unknownFields.isEmpty, "Unknown varint field should be preserved")
   }
@@ -99,7 +99,7 @@ final class UnknownFieldsTests: XCTestCase {
   func test_deserialize_unknownFixed32Field_preserved() throws {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildFixed32Field(fieldNumber: 99, value: 12345)
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let msg = try deserializer.deserialize(unknownData, using: desc)
     XCTAssertFalse(msg.unknownFields.isEmpty)
   }
@@ -107,7 +107,7 @@ final class UnknownFieldsTests: XCTestCase {
   func test_deserialize_unknownFixed64Field_preserved() throws {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildFixed64Field(fieldNumber: 99, value: 123_456_789)
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let msg = try deserializer.deserialize(unknownData, using: desc)
     XCTAssertFalse(msg.unknownFields.isEmpty)
   }
@@ -115,7 +115,7 @@ final class UnknownFieldsTests: XCTestCase {
   func test_deserialize_unknownLengthDelimitedField_preserved() throws {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildLengthDelimitedField(fieldNumber: 99, payload: Data([0xDE, 0xAD]))
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let msg = try deserializer.deserialize(unknownData, using: desc)
     XCTAssertFalse(msg.unknownFields.isEmpty)
   }
@@ -127,7 +127,7 @@ final class UnknownFieldsTests: XCTestCase {
     binary.append(buildFixed32Field(fieldNumber: 91, value: 2))
     binary.append(buildLengthDelimitedField(fieldNumber: 92, payload: Data([0xFF])))
 
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let msg = try deserializer.deserialize(binary, using: desc)
     XCTAssertFalse(msg.unknownFields.isEmpty)
     XCTAssertTrue(msg.unknownFields.count > 5, "Should contain data from all 3 unknown fields")
@@ -139,7 +139,7 @@ final class UnknownFieldsTests: XCTestCase {
     binary.append(buildVarintField(fieldNumber: 1, value: 42))
     binary.append(buildVarintField(fieldNumber: 99, value: 7))
 
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let msg = try deserializer.deserialize(binary, using: desc)
 
     let knownValue = try msg.get(forField: 1) as? Int32
@@ -150,7 +150,7 @@ final class UnknownFieldsTests: XCTestCase {
   func test_deserialize_preserveUnknownFieldsFalse_discarded() throws {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildVarintField(fieldNumber: 99, value: 42)
-    let opts = DeserializationOptions(preserveUnknownFields: false)
+    let opts = DeserializationOptions(preserveUnknownFields: false, typeRegistry: TypeRegistry())
     let deserializer = BinaryDeserializer(options: opts)
     let msg = try deserializer.deserialize(unknownData, using: desc)
     XCTAssertTrue(msg.unknownFields.isEmpty)
@@ -159,7 +159,7 @@ final class UnknownFieldsTests: XCTestCase {
   func test_deserialize_onlyUnknownFields_messageEmptyButUnknownPresent() throws {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildVarintField(fieldNumber: 50, value: 100)
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let msg = try deserializer.deserialize(unknownData, using: desc)
 
     let hasKnown = try msg.hasValue(forField: 1)
@@ -169,7 +169,7 @@ final class UnknownFieldsTests: XCTestCase {
 
   func test_deserialize_emptyData_noUnknownFields() throws {
     let desc = makeDescriptor(fields: [int32Field])
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let msg = try deserializer.deserialize(Data(), using: desc)
     XCTAssertTrue(msg.unknownFields.isEmpty)
   }
@@ -192,7 +192,7 @@ final class UnknownFieldsTests: XCTestCase {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildVarintField(fieldNumber: 99, value: 42)
 
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let msg = try deserializer.deserialize(unknownData, using: desc)
 
     let serializer = BinarySerializer()
@@ -206,7 +206,7 @@ final class UnknownFieldsTests: XCTestCase {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildFixed64Field(fieldNumber: 99, value: 0xDEAD_BEEF_CAFE_BABE)
 
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let msg = try deserializer.deserialize(unknownData, using: desc)
 
     let serializer = BinarySerializer()
@@ -220,7 +220,7 @@ final class UnknownFieldsTests: XCTestCase {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildLengthDelimitedField(fieldNumber: 99, payload: Data("hello".utf8))
 
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let msg = try deserializer.deserialize(unknownData, using: desc)
 
     let serializer = BinarySerializer()
@@ -236,7 +236,7 @@ final class UnknownFieldsTests: XCTestCase {
     binary.append(buildVarintField(fieldNumber: 1, value: 42))
     binary.append(buildVarintField(fieldNumber: 99, value: 7))
 
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let msg = try deserializer.deserialize(binary, using: desc)
 
     let serializer = BinarySerializer()

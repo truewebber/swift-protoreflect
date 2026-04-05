@@ -128,43 +128,26 @@ final class ValueHandlerTests: XCTestCase {
   // MARK: - Handler Implementation Tests
 
   func testCreateDynamicFromSpecialized() throws {
-    // Test number value
-    let numberValue = ValueHandler.ValueValue.numberValue(42.5)
-    let numberMessage = try ValueHandler.createDynamic(from: numberValue)
+    // number_value → field 2 (double)
+    let numberMessage = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.numberValue(42.5))
     XCTAssertEqual(numberMessage.descriptor.fullName, WellKnownTypeNames.value)
+    XCTAssertTrue(try numberMessage.hasValue(forField: 2))
+    XCTAssertEqual(try numberMessage.get(forField: 2) as? Double, 42.5)
 
-    // Check that value_data field exists and contains data
-    XCTAssertTrue(try numberMessage.hasValue(forField: "value_data"))
-    let valueData = try numberMessage.get(forField: "value_data") as? Data
-    XCTAssertNotNil(valueData)
-    XCTAssertFalse(valueData!.isEmpty)
+    // string_value → field 3
+    let stringMessage = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.stringValue("hello"))
+    XCTAssertTrue(try stringMessage.hasValue(forField: 3))
+    XCTAssertEqual(try stringMessage.get(forField: 3) as? String, "hello")
 
-    // Test string value
-    let stringValue = ValueHandler.ValueValue.stringValue("hello")
-    let stringMessage = try ValueHandler.createDynamic(from: stringValue)
+    // bool_value → field 4
+    let boolMessage = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.boolValue(true))
+    XCTAssertTrue(try boolMessage.hasValue(forField: 4))
+    XCTAssertEqual(try boolMessage.get(forField: 4) as? Bool, true)
 
-    XCTAssertTrue(try stringMessage.hasValue(forField: "value_data"))
-    let stringData = try stringMessage.get(forField: "value_data") as? Data
-    XCTAssertNotNil(stringData)
-    XCTAssertFalse(stringData!.isEmpty)
-
-    // Test bool value
-    let boolValue = ValueHandler.ValueValue.boolValue(true)
-    let boolMessage = try ValueHandler.createDynamic(from: boolValue)
-
-    XCTAssertTrue(try boolMessage.hasValue(forField: "value_data"))
-    let boolData = try boolMessage.get(forField: "value_data") as? Data
-    XCTAssertNotNil(boolData)
-    XCTAssertFalse(boolData!.isEmpty)
-
-    // Test null value
-    let nullValue = ValueHandler.ValueValue.nullValue
-    let nullMessage = try ValueHandler.createDynamic(from: nullValue)
-
-    XCTAssertTrue(try nullMessage.hasValue(forField: "value_data"))
-    let nullData = try nullMessage.get(forField: "value_data") as? Data
-    XCTAssertNotNil(nullData)
-    XCTAssertFalse(nullData!.isEmpty)
+    // null_value → field 1 (enum = 0)
+    let nullMessage = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.nullValue)
+    XCTAssertTrue(try nullMessage.hasValue(forField: 1))
+    XCTAssertEqual(try nullMessage.get(forField: 1) as? Int32, Int32(0))
   }
 
   func testCreateDynamicFromInvalidSpecialized() {
@@ -224,17 +207,13 @@ final class ValueHandlerTests: XCTestCase {
   }
 
   func testDynamicMessageExtensions() throws {
-    // Test valueMessage creation
     let message = try DynamicMessage.valueMessage(from: 42.5)
     XCTAssertEqual(message.descriptor.fullName, WellKnownTypeNames.value)
 
-    // Check that value_data field exists and contains data
-    XCTAssertTrue(try message.hasValue(forField: "value_data"))
-    let valueData = try message.get(forField: "value_data") as? Data
-    XCTAssertNotNil(valueData)
-    XCTAssertFalse(valueData!.isEmpty)
+    // number_value stored at field 2 in the new wire format
+    XCTAssertTrue(try message.hasValue(forField: 2))
+    XCTAssertEqual(try message.get(forField: 2) as? Double, 42.5)
 
-    // Test toAnyValue conversion
     let anyValue = try message.toAnyValue()
     XCTAssertEqual(anyValue as? Double, 42.5)
   }
@@ -321,18 +300,10 @@ final class ValueHandlerTests: XCTestCase {
   }
 
   func testCreateSpecializedWithEmptyValueData() throws {
-    // Create a Value message with empty value_data
-    let valueDescriptor = try createTestValueDescriptor()
-    let factory = MessageFactory()
-    var message = factory.createMessage(from: valueDescriptor)
-
-    // Set empty data
-    try message.set(Data(), forField: "value_data")
-
-    // This should return nullValue
+    // A Value message with no oneof field set should return .nullValue.
+    let message = DynamicMessage(descriptor: StructProtoDescriptors.valueDescriptor)
     let result = try ValueHandler.createSpecialized(from: message)
-    let valueValue = result as! ValueHandler.ValueValue
-    XCTAssertEqual(valueValue, .nullValue)
+    XCTAssertEqual(result as? ValueHandler.ValueValue, .nullValue)
   }
 
   func testCreateSpecializedWithMissingValueData() throws {
@@ -348,44 +319,31 @@ final class ValueHandlerTests: XCTestCase {
   }
 
   func testCreateSpecializedWithInvalidJSON() throws {
-    // Create a Value message with invalid JSON data
-    let valueDescriptor = try createTestValueDescriptor()
+    // In the new wire format there is no JSON — invalid descriptor is rejected by fullName check.
+    var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
+    let wrongDescriptor = MessageDescriptor(name: "Value", parent: fileDescriptor)
+    fileDescriptor.addMessage(wrongDescriptor)
+
     let factory = MessageFactory()
-    var message = factory.createMessage(from: valueDescriptor)
+    let message = factory.createMessage(from: wrongDescriptor)
 
-    // Set invalid JSON data
-    let invalidJSONData = "invalid json".data(using: .utf8)!
-    try message.set(invalidJSONData, forField: "value_data")
-
-    // This should throw conversionFailed error
     XCTAssertThrowsError(try ValueHandler.createSpecialized(from: message)) { error in
-      guard let wellKnownError = error as? WellKnownTypeError,
-        case .conversionFailed(let from, let to, let reason) = wellKnownError
-      else {
-        XCTFail("Expected WellKnownTypeError.conversionFailed")
+      guard case WellKnownTypeError.invalidData(let typeName, _) = error else {
+        XCTFail("Expected invalidData, got \(error)")
         return
       }
-      XCTAssertEqual(from, "DynamicMessage")
-      XCTAssertEqual(to, "ValueValue")
-      XCTAssertTrue(reason.contains("Failed to extract value_data"))
+      XCTAssertEqual(typeName, WellKnownTypeNames.value)
     }
   }
 
   func testCreateSpecializedWithMalformedJSONStructure() throws {
-    // Create a Value message with valid JSON but wrong structure
-    let valueDescriptor = try createTestValueDescriptor()
-    let factory = MessageFactory()
-    var message = factory.createMessage(from: valueDescriptor)
+    // In the new wire format a Value message with string_value set (field 3)
+    // always decodes correctly — there is no JSON wrapping.
+    var message = DynamicMessage(descriptor: StructProtoDescriptors.valueDescriptor)
+    try message.set("hello", forField: 3)
 
-    // Set JSON data without the expected "value" wrapper
-    let malformedJSON = ["not_value": "test"]
-    let jsonData = try JSONSerialization.data(withJSONObject: malformedJSON, options: [])
-    try message.set(jsonData, forField: "value_data")
-
-    // This should return nullValue since the wrapper structure is not found
     let result = try ValueHandler.createSpecialized(from: message)
-    let valueValue = result as! ValueHandler.ValueValue
-    XCTAssertEqual(valueValue, .nullValue)
+    XCTAssertEqual(result as? ValueHandler.ValueValue, .stringValue("hello"))
   }
 
   func testToAnyValueWithWrongMessageType() throws {
@@ -413,24 +371,86 @@ final class ValueHandlerTests: XCTestCase {
   // MARK: - Helper Methods
 
   private func createTestValueDescriptor() throws -> MessageDescriptor {
-    var fileDescriptor = FileDescriptor(
-      name: "google/protobuf/struct.proto",
-      package: "google.protobuf"
+    return StructProtoDescriptors.valueDescriptor
+  }
+
+  // MARK: - OPE-264 / OPE-266: New oneof wire-format tests
+
+  func test_createDynamic_value_activeOneofFieldIsCorrect() throws {
+    let stringMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.stringValue("hi"))
+    XCTAssertEqual(stringMsg.descriptor.fullName, "google.protobuf.Value")
+    XCTAssertNil(try? stringMsg.get(forField: "value_data"), "value_data field must not exist")
+    XCTAssertTrue(try stringMsg.hasValue(forField: 3), "string_value must be at field 3")
+    XCTAssertEqual(try stringMsg.get(forField: 3) as? String, "hi")
+
+    let boolMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.boolValue(false))
+    XCTAssertTrue(try boolMsg.hasValue(forField: 4), "bool_value must be at field 4")
+    XCTAssertEqual(try boolMsg.get(forField: 4) as? Bool, false)
+
+    let numMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.numberValue(0.5))
+    XCTAssertTrue(try numMsg.hasValue(forField: 2), "number_value must be at field 2")
+  }
+
+  func test_createDynamic_nullValue_setsEnumField1() throws {
+    let message = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.nullValue)
+
+    XCTAssertEqual(message.descriptor.fullName, "google.protobuf.Value")
+    XCTAssertTrue(try message.hasValue(forField: 1))
+    XCTAssertEqual(try message.get(forField: 1) as? Int32, Int32(0))
+    XCTAssertFalse(try message.hasValue(forField: 2))
+    XCTAssertFalse(try message.hasValue(forField: 3))
+    XCTAssertFalse(try message.hasValue(forField: 4))
+    XCTAssertFalse(try message.hasValue(forField: 5))
+    XCTAssertFalse(try message.hasValue(forField: 6))
+  }
+
+  func test_createDynamic_numberValue_setsDoubleField2() throws {
+    let message = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.numberValue(3.14))
+
+    XCTAssertTrue(try message.hasValue(forField: 2))
+    let d = try XCTUnwrap(try message.get(forField: 2) as? Double)
+    XCTAssertEqual(d, 3.14, accuracy: 1e-10)
+    XCTAssertFalse(try message.hasValue(forField: 1))
+  }
+
+  func test_createDynamic_structValue_setsMessageField5() throws {
+    let sv = StructHandler.StructValue(fields: ["k": .numberValue(1)])
+    let message = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.structValue(sv))
+
+    XCTAssertTrue(try message.hasValue(forField: 5))
+    let nested = try XCTUnwrap(try message.get(forField: 5) as? DynamicMessage)
+    XCTAssertEqual(nested.descriptor.fullName, "google.protobuf.Struct")
+    XCTAssertFalse(try message.hasValue(forField: 1))
+    XCTAssertFalse(try message.hasValue(forField: 6))
+  }
+
+  func test_createDynamic_listValue_setsMessageField6() throws {
+    let message = try ValueHandler.createDynamic(
+      from: ValueHandler.ValueValue.listValue([.numberValue(1), .stringValue("x")])
     )
 
-    var messageDescriptor = MessageDescriptor(
-      name: "Value",
-      parent: fileDescriptor
-    )
+    XCTAssertTrue(try message.hasValue(forField: 6))
+    let nested = try XCTUnwrap(try message.get(forField: 6) as? DynamicMessage)
+    XCTAssertEqual(nested.descriptor.fullName, "google.protobuf.ListValue")
+    XCTAssertFalse(try message.hasValue(forField: 1))
+    XCTAssertFalse(try message.hasValue(forField: 5))
+  }
 
-    let valueDataField = FieldDescriptor(
-      name: "value_data",
-      number: 1,
-      type: .bytes
-    )
-    messageDescriptor.addField(valueDataField)
-    fileDescriptor.addMessage(messageDescriptor)
-
-    return messageDescriptor
+  func test_createSpecialized_roundTrip_allSixKinds() throws {
+    let cases: [ValueHandler.ValueValue] = [
+      .nullValue,
+      .numberValue(42.5),
+      .stringValue("hello"),
+      .boolValue(true),
+      .structValue(StructHandler.StructValue(fields: ["x": .boolValue(false)])),
+      .listValue([.stringValue("a"), .nullValue]),
+    ]
+    for original in cases {
+      let msg = try ValueHandler.createDynamic(from: original)
+      let decoded = try XCTUnwrap(
+        try ValueHandler.createSpecialized(from: msg) as? ValueHandler.ValueValue
+      )
+      XCTAssertEqual(decoded, original, "Round-trip failed for \(original)")
+    }
   }
 }

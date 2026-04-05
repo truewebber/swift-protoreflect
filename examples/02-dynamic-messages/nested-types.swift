@@ -276,8 +276,8 @@ struct NestedTypesExample {
 
     // Add fields that use nested enums
     userDesc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
-    userDesc.addField(FieldDescriptor(name: "status", number: 2, type: .int32))  // User.Status
-    userDesc.addField(FieldDescriptor(name: "role", number: 3, type: .int32))  // User.Role
+    userDesc.addField(FieldDescriptor(name: "status", number: 2, type: .enum, typeName: "example.User.Status"))
+    userDesc.addField(FieldDescriptor(name: "role", number: 3, type: .enum, typeName: "example.User.Role"))
 
     fileDescriptor.addMessage(userDesc)
     return fileDescriptor
@@ -345,7 +345,14 @@ struct NestedTypesExample {
     sectionDesc.addNestedEnum(importanceEnum)
     sectionDesc.addField(FieldDescriptor(name: "title", number: 1, type: .string))
     sectionDesc.addField(FieldDescriptor(name: "content", number: 2, type: .string))
-    sectionDesc.addField(FieldDescriptor(name: "importance", number: 3, type: .int32))  // Section.Importance
+    sectionDesc.addField(
+      FieldDescriptor(
+        name: "importance",
+        number: 3,
+        type: .enum,
+        typeName: "example.Document.Chapter.Section.Importance"
+      )
+    )
 
     chapterDesc.addNestedMessage(sectionDesc)
     chapterDesc.addField(
@@ -362,7 +369,9 @@ struct NestedTypesExample {
 
     // Document fields
     documentDesc.addField(FieldDescriptor(name: "title", number: 1, type: .string))
-    documentDesc.addField(FieldDescriptor(name: "type", number: 2, type: .int32))  // Document.DocumentType
+    documentDesc.addField(
+      FieldDescriptor(name: "type", number: 2, type: .enum, typeName: "example.Document.DocumentType")
+    )
     documentDesc.addField(
       FieldDescriptor(
         name: "chapters",
@@ -413,14 +422,16 @@ struct NestedTypesExample {
     paymentDesc.addNestedEnum(paymentMethodEnum)
     paymentDesc.addField(FieldDescriptor(name: "amount", number: 1, type: .double))
     paymentDesc.addField(FieldDescriptor(name: "currency", number: 2, type: .string))
-    paymentDesc.addField(FieldDescriptor(name: "method", number: 3, type: .int32))  // Payment.PaymentMethod
+    paymentDesc.addField(
+      FieldDescriptor(name: "method", number: 3, type: .enum, typeName: "example.Order.Payment.PaymentMethod")
+    )
 
     orderDesc.addNestedMessage(paymentDesc)
 
     // Order fields
     orderDesc.addField(FieldDescriptor(name: "order_id", number: 1, type: .string))
-    orderDesc.addField(FieldDescriptor(name: "status", number: 2, type: .int32))  // Order.OrderStatus
-    orderDesc.addField(FieldDescriptor(name: "priority", number: 3, type: .int32))  // Order.Priority
+    orderDesc.addField(FieldDescriptor(name: "status", number: 2, type: .enum, typeName: "example.Order.OrderStatus"))
+    orderDesc.addField(FieldDescriptor(name: "priority", number: 3, type: .enum, typeName: "example.Order.Priority"))
     orderDesc.addField(
       FieldDescriptor(
         name: "payment_info",

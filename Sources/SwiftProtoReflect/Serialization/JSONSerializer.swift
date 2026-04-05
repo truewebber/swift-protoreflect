@@ -24,8 +24,24 @@ public struct JSONSerializer {
   /// Creates new JSONSerializer instance.
   ///
   /// - Parameter options: JSON serialization options.
-  public init(options: JSONSerializationOptions = JSONSerializationOptions()) {
+  public init(options: JSONSerializationOptions) {
     self.options = options
+  }
+
+  /// Creates a JSONSerializer with default options and an empty TypeRegistry.
+  ///
+  /// - Note: Deprecated. Use `init(options:)` with an explicit `TypeRegistry` so that
+  ///   cross-file message types can be resolved correctly.
+  @available(*, deprecated, message: "Use init(options:) with an explicit TypeRegistry")
+  public init() {
+    self.init(
+      options: JSONSerializationOptions(
+        useOriginalFieldNames: false,
+        prettyPrinted: false,
+        includeDefaultValues: false,
+        typeRegistry: TypeRegistry()
+      )
+    )
   }
 
   // MARK: - Serialization Methods
@@ -80,12 +96,21 @@ public struct JSONSerializer {
     return result
   }
 
-  /// Resolves an `EnumDescriptor` for a field from the message's nested enums.
+  /// Resolves an `EnumDescriptor` for a field.
+  ///
+  /// 1. `options.typeRegistry` by fully-qualified name (primary).
+  /// 2. Structural nesting on `descriptor` (deprecated fallback).
   private func resolveEnumDescriptor(
     for field: FieldDescriptor,
     in descriptor: MessageDescriptor
   ) -> EnumDescriptor? {
     guard case .enum = field.type, let typeName = field.typeName else { return nil }
+    let normalized = typeName.hasPrefix(".") ? String(typeName.dropFirst()) : typeName
+    if let desc = options.typeRegistry.findEnum(named: normalized) {
+      return desc
+    }
+    // DEPRECATED: Legacy structural nesting fallback. Will be removed in a future major version.
+    // Users should register all types in TypeRegistry instead of relying on addNestedEnum().
     let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
     return descriptor.nestedEnum(named: simpleName)
   }
@@ -202,6 +227,12 @@ public struct JSONSerializer {
       guard case .enum = mapEntryInfo.valueFieldInfo.type,
         let typeName = mapEntryInfo.valueFieldInfo.typeName
       else { return nil }
+      let normalized = typeName.hasPrefix(".") ? String(typeName.dropFirst()) : typeName
+      if let desc = options.typeRegistry.findEnum(named: normalized) {
+        return desc
+      }
+      // DEPRECATED: Legacy structural nesting fallback. Will be removed in a future major version.
+      // Users should register all types in TypeRegistry instead of relying on addNestedEnum().
       let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
       return descriptor.nestedEnum(named: simpleName)
     }()
@@ -449,15 +480,52 @@ public struct JSONSerializationOptions {
   /// Include fields with default values.
   public let includeDefaultValues: Bool
 
-  /// Creates JSON serialization options.
+  /// Registry for resolving message types by fully-qualified name.
+  ///
+  /// Pass a populated `TypeRegistry` to enable cross-file type resolution during serialization.
+  /// For hand-built descriptors without cross-file references, an empty `TypeRegistry()` is sufficient.
+  public let typeRegistry: TypeRegistry
+
+  /// Creates JSON serialization options with a required TypeRegistry.
+  ///
+  /// - Parameters:
+  ///   - useOriginalFieldNames: Whether to use original proto field names instead of camelCase. Defaults to `false`.
+  ///   - prettyPrinted: Whether to format JSON with indentation. Defaults to `false`.
+  ///   - includeDefaultValues: Whether to include fields with default values. Defaults to `false`.
+  ///   - typeRegistry: Registry for resolving message types by fully-qualified name.
+  public init(
+    useOriginalFieldNames: Bool = false,
+    prettyPrinted: Bool = false,
+    includeDefaultValues: Bool = false,
+    typeRegistry: TypeRegistry
+  ) {
+    self.useOriginalFieldNames = useOriginalFieldNames
+    self.prettyPrinted = prettyPrinted
+    self.includeDefaultValues = includeDefaultValues
+    self.typeRegistry = typeRegistry
+  }
+
+  /// Creates JSON serialization options with an empty TypeRegistry.
+  ///
+  /// - Note: Deprecated. Use `init(useOriginalFieldNames:prettyPrinted:includeDefaultValues:typeRegistry:)`
+  ///   with an explicit `TypeRegistry` so that cross-file message types can be resolved correctly.
+  @available(
+    *,
+    deprecated,
+    message:
+      "Use init(useOriginalFieldNames:prettyPrinted:includeDefaultValues:typeRegistry:) with an explicit TypeRegistry"
+  )
   public init(
     useOriginalFieldNames: Bool = false,
     prettyPrinted: Bool = false,
     includeDefaultValues: Bool = false
   ) {
-    self.useOriginalFieldNames = useOriginalFieldNames
-    self.prettyPrinted = prettyPrinted
-    self.includeDefaultValues = includeDefaultValues
+    self.init(
+      useOriginalFieldNames: useOriginalFieldNames,
+      prettyPrinted: prettyPrinted,
+      includeDefaultValues: includeDefaultValues,
+      typeRegistry: TypeRegistry()
+    )
   }
 }
 

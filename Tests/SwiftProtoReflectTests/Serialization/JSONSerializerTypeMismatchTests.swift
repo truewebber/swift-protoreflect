@@ -18,7 +18,7 @@ final class JSONSerializerTypeMismatchTests: XCTestCase {
 
   override func setUp() {
     super.setUp()
-    serializer = JSONSerializer()
+    serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
   }
 
   override func tearDown() {

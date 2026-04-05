@@ -39,7 +39,7 @@ public struct StaticMessageBridge {
     let binaryData = try staticMessage.serializedData()
 
     // Deserialize to dynamic message
-    let deserializer = BinaryDeserializer()
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     return try deserializer.deserialize(binaryData, using: descriptor)
   }
 

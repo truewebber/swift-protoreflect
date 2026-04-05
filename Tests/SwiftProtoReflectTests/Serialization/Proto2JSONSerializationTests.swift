@@ -30,7 +30,9 @@ final class Proto2JSONSerializationTests: XCTestCase {
     try group.set(Int32(42), forField: "val")
     try msg.set(group, forField: "my_group")
 
-    let serializer = JSONSerializer(options: JSONSerializationOptions(useOriginalFieldNames: true))
+    let serializer = JSONSerializer(
+      options: JSONSerializationOptions(useOriginalFieldNames: true, typeRegistry: TypeRegistry())
+    )
     let json = try serializer.serializeToJSONObject(msg)
 
     XCTAssertNotNil(json["my_group"])
@@ -51,7 +53,9 @@ final class Proto2JSONSerializationTests: XCTestCase {
     try msg.set(Int32(1), forField: 1)
     try msg.set("extended", forField: 100)
 
-    let serializer = JSONSerializer(options: JSONSerializationOptions(useOriginalFieldNames: true))
+    let serializer = JSONSerializer(
+      options: JSONSerializationOptions(useOriginalFieldNames: true, typeRegistry: TypeRegistry())
+    )
     let json = try serializer.serializeToJSONObject(msg)
 
     XCTAssertEqual(json["id"] as? Int, 1)
@@ -78,7 +82,9 @@ final class Proto2JSONSerializationTests: XCTestCase {
     try msg.set(Int32(7), forField: 1)
     try msg.set(group, forField: 2)
 
-    let serializer = JSONSerializer(options: JSONSerializationOptions(useOriginalFieldNames: true))
+    let serializer = JSONSerializer(
+      options: JSONSerializationOptions(useOriginalFieldNames: true, typeRegistry: TypeRegistry())
+    )
     let data = try serializer.serialize(msg)
 
     let deserializer = JSONDeserializer(
@@ -106,7 +112,9 @@ final class Proto2JSONSerializationTests: XCTestCase {
     try msg.set(Int32(5), forField: 1)
     try msg.set("hello", forField: 100)
 
-    let serializer = JSONSerializer(options: JSONSerializationOptions(useOriginalFieldNames: true))
+    let serializer = JSONSerializer(
+      options: JSONSerializationOptions(useOriginalFieldNames: true, typeRegistry: TypeRegistry())
+    )
     let data = try serializer.serialize(msg)
 
     let deserializer = JSONDeserializer(

@@ -129,13 +129,13 @@ final class DescriptorBridgeIntegrationTests: XCTestCase {
     try dynamic.set("a@b.c", forField: "email")
 
     let binarySerializer = BinarySerializer()
-    let binaryDeserializer = BinaryDeserializer()
+    let binaryDeserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let binData = try binarySerializer.serialize(dynamic)
     let fromBinary = try binaryDeserializer.deserialize(binData, using: msg)
     XCTAssertEqual(try fromBinary.get(forField: "email") as? String, "a@b.c")
 
-    let jsonSerializer = JSONSerializer()
-    let jsonDeserializer = JSONDeserializer()
+    let jsonSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
+    let jsonDeserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let jsonData = try jsonSerializer.serialize(dynamic)
     let fromJSON = try jsonDeserializer.deserialize(jsonData, using: msg)
     XCTAssertEqual(try fromJSON.get(forField: "email") as? String, "a@b.c")

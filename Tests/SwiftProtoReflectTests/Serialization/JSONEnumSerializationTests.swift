@@ -36,7 +36,7 @@ final class JSONEnumSerializationTests: XCTestCase {
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(Int32(1), forField: 1)
 
-    let serializer = JSONSerializer()
+    let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let json = try jsonDict(serializer.serialize(msg))
     XCTAssertEqual(json["status"] as? String, "ACTIVE")
   }
@@ -46,7 +46,7 @@ final class JSONEnumSerializationTests: XCTestCase {
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(Int32(0), forField: 1)
 
-    let serializer = JSONSerializer()
+    let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let json = try jsonDict(serializer.serialize(msg))
     XCTAssertEqual(json["status"] as? String, "UNKNOWN")
   }
@@ -56,7 +56,7 @@ final class JSONEnumSerializationTests: XCTestCase {
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(Int32(999), forField: 1)
 
-    let serializer = JSONSerializer()
+    let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let json = try jsonDict(serializer.serialize(msg))
     XCTAssertEqual(json["status"] as? Int, 999)
   }
@@ -79,7 +79,7 @@ final class JSONEnumSerializationTests: XCTestCase {
     var msg = DynamicMessage(descriptor: msgDesc)
     try msg.set([Int32(0), Int32(1), Int32(2)], forField: 1)
 
-    let serializer = JSONSerializer()
+    let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let json = try jsonDict(serializer.serialize(msg))
     let arr = json["statuses"] as? [Any]
     XCTAssertEqual(arr?[0] as? String, "UNKNOWN")
@@ -96,7 +96,7 @@ final class JSONEnumSerializationTests: XCTestCase {
     var msg = DynamicMessage(descriptor: msgDesc)
     try msg.set(Int32(42), forField: 1)
 
-    let serializer = JSONSerializer()
+    let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let json = try jsonDict(serializer.serialize(msg))
     XCTAssertEqual(json["status"] as? Int, 42)
   }
@@ -106,7 +106,7 @@ final class JSONEnumSerializationTests: XCTestCase {
   func test_deserialize_enumByName_returnsNumber() throws {
     let (desc, _) = makeDescriptorWithEnum()
     let jsonData = try JSONSerialization.data(withJSONObject: ["status": "ACTIVE"])
-    let deserializer = JSONDeserializer()
+    let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let msg = try deserializer.deserialize(jsonData, using: desc)
     let value = try msg.get(forField: 1) as? Int32
     XCTAssertEqual(value, 1)
@@ -115,7 +115,7 @@ final class JSONEnumSerializationTests: XCTestCase {
   func test_deserialize_enumByNumber_returnsNumber() throws {
     let (desc, _) = makeDescriptorWithEnum()
     let jsonData = try JSONSerialization.data(withJSONObject: ["status": 1])
-    let deserializer = JSONDeserializer()
+    let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let msg = try deserializer.deserialize(jsonData, using: desc)
     let value = try msg.get(forField: 1) as? Int32
     XCTAssertEqual(value, 1)
@@ -124,7 +124,7 @@ final class JSONEnumSerializationTests: XCTestCase {
   func test_deserialize_enumByStringNumber_returnsNumber() throws {
     let (desc, _) = makeDescriptorWithEnum()
     let jsonData = try JSONSerialization.data(withJSONObject: ["status": "1"])
-    let deserializer = JSONDeserializer()
+    let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let msg = try deserializer.deserialize(jsonData, using: desc)
     let value = try msg.get(forField: 1) as? Int32
     XCTAssertEqual(value, 1)
@@ -133,7 +133,7 @@ final class JSONEnumSerializationTests: XCTestCase {
   func test_deserialize_unknownEnumName_throwsError() throws {
     let (desc, _) = makeDescriptorWithEnum()
     let jsonData = try JSONSerialization.data(withJSONObject: ["status": "NONEXISTENT"])
-    let deserializer = JSONDeserializer()
+    let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
     XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: desc))
   }
 
@@ -144,10 +144,10 @@ final class JSONEnumSerializationTests: XCTestCase {
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(Int32(1), forField: 1)
 
-    let serializer = JSONSerializer()
+    let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let json = try serializer.serialize(msg)
 
-    let deserializer = JSONDeserializer()
+    let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let restored = try deserializer.deserialize(json, using: desc)
     let value = try restored.get(forField: 1) as? Int32
     XCTAssertEqual(value, 1)
@@ -158,10 +158,10 @@ final class JSONEnumSerializationTests: XCTestCase {
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(Int32(0), forField: 1)
 
-    let serializer = JSONSerializer()
+    let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let json = try serializer.serialize(msg)
 
-    let deserializer = JSONDeserializer()
+    let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let restored = try deserializer.deserialize(json, using: desc)
     let value = try restored.get(forField: 1) as? Int32
     XCTAssertEqual(value, 0)

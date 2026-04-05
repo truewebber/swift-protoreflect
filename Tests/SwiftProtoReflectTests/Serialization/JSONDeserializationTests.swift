@@ -25,8 +25,8 @@ final class JSONDeserializationTests: XCTestCase {
 
     fileDescriptor = FileDescriptor(name: "test_json_deserialization.proto", package: "test.json.deser")
     messageFactory = MessageFactory()
-    serializer = JSONSerializer()
-    deserializer = JSONDeserializer()
+    serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
+    deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
   }
 
   override func tearDown() {
@@ -501,7 +501,9 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
 
     // With ignoring unknown fields (default)
-    let ignoreUnknownDeserializer = JSONDeserializer(options: JSONDeserializationOptions(ignoreUnknownFields: true))
+    let ignoreUnknownDeserializer = JSONDeserializer(
+      options: JSONDeserializationOptions(ignoreUnknownFields: true, typeRegistry: TypeRegistry())
+    )
     let deserializedMessage = try ignoreUnknownDeserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
@@ -523,7 +525,9 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
 
     // Without ignoring unknown fields
-    let strictDeserializer = JSONDeserializer(options: JSONDeserializationOptions(ignoreUnknownFields: false))
+    let strictDeserializer = JSONDeserializer(
+      options: JSONDeserializationOptions(ignoreUnknownFields: false, typeRegistry: TypeRegistry())
+    )
 
     XCTAssertThrowsError(try strictDeserializer.deserialize(jsonData, using: message)) { error in
       if let jsonError = error as? JSONDeserializationError {
@@ -1630,7 +1634,7 @@ final class JSONDeserializationTests: XCTestCase {
 
     XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
       if let jsonError = error as? JSONDeserializationError {
-        if case .unsupportedNestedMessage(let fieldName, let typeName) = jsonError {
+        if case .nestedMessageDescriptorNotFound(let fieldName, let typeName) = jsonError {
           XCTAssertEqual(fieldName, "nested_message")
           XCTAssertEqual(typeName, "NestedMessage")
         }

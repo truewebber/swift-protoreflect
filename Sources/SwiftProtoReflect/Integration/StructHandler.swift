@@ -226,7 +226,6 @@ public struct StructHandler: WellKnownTypeHandler {
   // MARK: - Handler Implementation
 
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
-    // Check message type
     guard message.descriptor.fullName == handledTypeName else {
       throw WellKnownTypeError.invalidData(
         typeName: handledTypeName,
@@ -234,41 +233,7 @@ public struct StructHandler: WellKnownTypeHandler {
       )
     }
 
-    // Extract fields field as Data and deserialize JSON
-    let fieldsValue: [String: Any]
-
-    do {
-      if try message.hasValue(forField: "fields") {
-        let value = try message.get(forField: "fields")
-
-        if let data = value as? Data {
-          // Deserialize JSON data
-          let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
-          if let dict = jsonObject as? [String: Any] {
-            fieldsValue = dict
-          }
-          else {
-            fieldsValue = [:]
-          }
-        }
-        else {
-          fieldsValue = [:]
-        }
-      }
-      else {
-        fieldsValue = [:]
-      }
-    }
-    catch {
-      throw WellKnownTypeError.conversionFailed(
-        from: "DynamicMessage",
-        to: "StructValue",
-        reason: "Failed to extract fields: \(error.localizedDescription)"
-      )
-    }
-
-    // Create StructValue
-    return try StructValue(from: fieldsValue)
+    return try _dynamicMessageToStructValue(message)
   }
 
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
@@ -280,65 +245,11 @@ public struct StructHandler: WellKnownTypeHandler {
       )
     }
 
-    // Create descriptor for Struct
-    let structDescriptor = createStructDescriptor()
-
-    // Create message
-    let factory = MessageFactory()
-    var message = factory.createMessage(from: structDescriptor)
-
-    // Serialize fields to JSON and save as Data
-    let fieldsDict = structValue.toDictionary()
-
-    do {
-      let jsonData = try JSONSerialization.data(withJSONObject: fieldsDict, options: [])
-      try message.set(jsonData, forField: "fields")
-    }
-    catch {
-      throw WellKnownTypeError.conversionFailed(
-        from: "StructValue",
-        to: "DynamicMessage",
-        reason: "Failed to serialize fields: \(error.localizedDescription)"
-      )
-    }
-
-    return message
+    return try _structValueToDynamicMessage(structValue)
   }
 
   public static func validate(_ specialized: Any) -> Bool {
     return specialized is StructValue
-  }
-
-  // MARK: - Descriptor Creation
-
-  /// Creates descriptor for google.protobuf.Struct.
-  /// - Returns: MessageDescriptor for Struct.
-  private static func createStructDescriptor() -> MessageDescriptor {
-    // Create file descriptor
-    var fileDescriptor = FileDescriptor(
-      name: "google/protobuf/struct.proto",
-      package: "google.protobuf"
-    )
-
-    // Create Struct message descriptor
-    var messageDescriptor = MessageDescriptor(
-      name: "Struct",
-      parent: fileDescriptor
-    )
-
-    // Add fields field as bytes for storing JSON serialized data
-    // This is simplified version for dynamic structure support
-    let fieldsField = FieldDescriptor(
-      name: "fields",
-      number: 1,
-      type: .bytes  // Store JSON as binary data
-    )
-    messageDescriptor.addField(fieldsField)
-
-    // Register in file
-    fileDescriptor.addMessage(messageDescriptor)
-
-    return messageDescriptor
   }
 }
 

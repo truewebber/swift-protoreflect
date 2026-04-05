@@ -72,8 +72,8 @@
 - **Sources/SwiftProtoReflect/** - main library code (29 files):
   - **Descriptor/** - protobuf descriptor system (FileDescriptor, MessageDescriptor, FieldDescriptor, EnumDescriptor, etc.)
   - **Dynamic/** - dynamic representation and message manipulation (DynamicMessage, MessageFactory, FieldAccessor)
-  - **Serialization/** - binary and JSON serialization/deserialization
-  - **Registry/** - centralized type management (TypeRegistry, DescriptorPool)
+  - **Serialization/** - binary and JSON serialization/deserialization. **TypeRegistry is required** for all serializers and deserializers — pass it via `DeserializationOptions`, `JSONDeserializationOptions`, or `JSONSerializationOptions`. The no-argument constructors are deprecated.
+  - **Registry/** - centralized type management (TypeRegistry, DescriptorPool). TypeRegistry is a **required dependency** for all Serialization operations — register all message and enum types used in fields before serializing or deserializing.
   - **Bridge/** - Swift Protobuf integration (StaticMessageBridge, DescriptorBridge)
   - **Integration/** - Well-Known Types support (18 types including wrappers and ListValue)
 

@@ -62,7 +62,9 @@ if person.hasEmail {
 
 **After (Dynamic):**
 ```swift
-let person = try BinaryDeserializer().deserialize(data: data, descriptor: personSchema)
+let registry = TypeRegistry()  // register nested types if any
+let person = try BinaryDeserializer(options: .init(typeRegistry: registry))
+    .deserialize(data, using: personSchema)
 let name: String = try person.get("name")
 let age: Int32 = try person.get("age")
 print("Name: \(name)")
@@ -224,15 +226,16 @@ func processUnknownMessage(data: Data) -> Data {
 
 **After (Dynamic - Powerful!):**
 ```swift
-func processUnknownMessage(data: Data, schema: MessageDescriptor) throws -> Data {
+func processUnknownMessage(data: Data, schema: MessageDescriptor, registry: TypeRegistry) throws -> Data {
     // ✅ Handle any message type at runtime
-    let message = try BinaryDeserializer().deserialize(data: data, descriptor: schema)
-    
+    let message = try BinaryDeserializer(options: .init(typeRegistry: registry))
+        .deserialize(data, using: schema)
+
     // Add common fields to any message
     if !message.hasField("processed_at") {
         try message.set("processed_at", value: DynamicMessage.timestampMessage(from: Date()))
     }
-    
+
     return try BinarySerializer().serialize(message: message)
 }
 ```
@@ -386,7 +389,9 @@ router.post("/orders") { req in
 router.post("/:messageType") { req in
     let messageType = req.parameters.get("messageType")!
     let schema = try SchemaRegistry.getSchema(for: messageType)
-    let message = try JSONDeserializer().deserialize(data: req.body, descriptor: schema)
+    let registry = try SchemaRegistry.getTypeRegistry()  // pre-built registry
+    let message = try JSONDeserializer(options: .init(typeRegistry: registry))
+        .deserialize(req.body, using: schema)
     return try handleMessage(message, type: messageType)
 }
 ```
@@ -411,7 +416,9 @@ class ConfigManager {
     
     init(configData: Data) throws {
         let schema = try SchemaRegistry.loadSchema("database_config")
-        self.configMessage = try BinaryDeserializer().deserialize(data: configData, descriptor: schema)
+        let registry = try SchemaRegistry.getTypeRegistry()  // pre-built registry
+        self.configMessage = try BinaryDeserializer(options: .init(typeRegistry: registry))
+            .deserialize(configData, using: schema)
     }
     
     func getValue<T>(_ key: String) throws -> T {
@@ -566,6 +573,127 @@ var child = MessageDescriptor(name: "Child", parent: parentMessage)
 
 If you use `DescriptorBridge.fromProtobufFileDescriptor`, no changes are required — the
 fix is applied automatically.
+
+---
+
+## Mandatory TypeRegistry for Serialization (Breaking Change)
+
+### What changed
+
+`TypeRegistry` is now the **primary** (and required) mechanism for resolving nested message and
+enum types during serialization and deserialization. The no-argument constructors
+`BinaryDeserializer()`, `JSONDeserializer()`, and `JSONSerializer()` are **deprecated**.
+
+The type resolution priority has been flipped:
+
+1. **TypeRegistry** (fully-qualified name lookup) — primary, strict, correct.
+2. `nestedMessage(named:)` / `nestedEnum(named:)` structural lookup — **deprecated fallback**,
+   retained for backward compatibility, **will be removed in a future major version**.
+
+### What you need to change
+
+#### Serializer / Deserializer construction
+
+**Before (deprecated):**
+```swift
+let serializer   = JSONSerializer()
+let deserializer = JSONDeserializer()
+let binDeser     = BinaryDeserializer()
+```
+
+**After (required):**
+```swift
+// For hand-built descriptors — register individual types
+let registry = TypeRegistry()
+try registry.registerMessage(innerDescriptor)
+try registry.registerEnum(statusEnum)
+
+let serializer   = JSONSerializer(options: .init(typeRegistry: registry))
+let deserializer = JSONDeserializer(options: .init(typeRegistry: registry))
+let binDeser     = BinaryDeserializer(options: .init(typeRegistry: registry))
+```
+
+```swift
+// For production use with FileDescriptors — convenience init
+let registry = TypeRegistry(fileDescriptors: [fileA, fileB])
+
+let serializer   = JSONSerializer(options: .init(typeRegistry: registry))
+let deserializer = JSONDeserializer(options: .init(typeRegistry: registry))
+let binDeser     = BinaryDeserializer(options: .init(typeRegistry: registry))
+```
+
+#### Options structs
+
+`DeserializationOptions`, `JSONDeserializationOptions`, and `JSONSerializationOptions` now
+require a `typeRegistry` parameter in their primary initializer:
+
+**Before (deprecated):**
+```swift
+let opts = DeserializationOptions()
+let jsonOpts = JSONDeserializationOptions(ignoreUnknownFields: true)
+let serOpts = JSONSerializationOptions(useOriginalFieldNames: true)
+```
+
+**After:**
+```swift
+let opts     = DeserializationOptions(typeRegistry: TypeRegistry())
+let jsonOpts = JSONDeserializationOptions(ignoreUnknownFields: true, typeRegistry: TypeRegistry())
+let serOpts  = JSONSerializationOptions(useOriginalFieldNames: true, typeRegistry: TypeRegistry())
+```
+
+#### Behavioral change: full qualified name resolution
+
+Type resolution now uses the fully-qualified `typeName` stored on `FieldDescriptor` (e.g.,
+`"pkg.Status"`) to look up types in `TypeRegistry` by their `fullName`. The old lenient
+simple-name lookup via `nestedMessage(named:)` / `nestedEnum(named:)` is retained as a
+**deprecated fallback** but will be removed in a future major version.
+
+This means that hand-built descriptors must set correct fully-qualified `typeName` values on
+their fields and register types with matching `fullName` in `TypeRegistry`:
+
+```swift
+// Correct: typeName matches the EnumDescriptor.fullName registered in TypeRegistry
+var statusEnum = EnumDescriptor(name: "Status", fullName: "pkg.Status")
+statusEnum.addValue(.init(name: "UNKNOWN", number: 0))
+statusEnum.addValue(.init(name: "ACTIVE", number: 1))
+
+var msgDesc = MessageDescriptor(name: "Msg", fullName: "pkg.Msg")
+msgDesc.addField(
+    FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "pkg.Status")
+//                                                                       ↑ must match fullName
+)
+
+let registry = TypeRegistry()
+try registry.registerEnum(statusEnum)
+// Now "pkg.Status" is found via TypeRegistry — correct, strict resolution.
+```
+
+#### Deprecated fallback notice
+
+The `nestedMessage(named:)` / `nestedEnum(named:)` fallback in serializers/deserializers is
+**temporarily retained** for backward compatibility with descriptors that use `addNestedMessage()`
+or `addNestedEnum()`. It **will be removed in a future major version** (see Linear epic
+"Remove Deprecated Type Resolution Fallbacks"). Migrate all type resolution to `TypeRegistry`
+as soon as possible.
+
+### TypeRegistry convenience init
+
+For production use where you load types from `.proto`-derived `FileDescriptor`s, use the
+convenience initializer:
+
+```swift
+// Build FileDescriptors for all your proto files, then:
+let registry = TypeRegistry(fileDescriptors: [userFile, orderFile, commonFile])
+// All messages and enums from all files are registered automatically.
+```
+
+For hand-built descriptors in tests and tools, use explicit registration:
+
+```swift
+let registry = TypeRegistry()
+try registry.registerMessage(userDescriptor)
+try registry.registerEnum(statusEnum)
+```
 
 ---
 
