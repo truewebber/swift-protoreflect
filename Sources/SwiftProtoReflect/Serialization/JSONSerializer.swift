@@ -480,6 +480,13 @@ public struct JSONSerializationOptions {
   /// Include fields with default values.
   public let includeDefaultValues: Bool
 
+  /// Use protobuf-spec canonical representations for well-known types.
+  ///
+  /// When `true`, the serializer emits well-known type values using their canonical
+  /// protobuf JSON mapping (e.g. `Timestamp` as an RFC 3339 string) instead of
+  /// generic field-by-field encoding. Defaults to `true`.
+  public let useCanonicalWellKnownTypeEncoding: Bool
+
   /// Registry for resolving message types by fully-qualified name.
   ///
   /// Pass a populated `TypeRegistry` to enable cross-file type resolution during serialization.
@@ -492,28 +499,31 @@ public struct JSONSerializationOptions {
   ///   - useOriginalFieldNames: Whether to use original proto field names instead of camelCase. Defaults to `false`.
   ///   - prettyPrinted: Whether to format JSON with indentation. Defaults to `false`.
   ///   - includeDefaultValues: Whether to include fields with default values. Defaults to `false`.
+  ///   - useCanonicalWellKnownTypeEncoding: Whether to use canonical protobuf JSON for well-known types. Defaults to `true`.
   ///   - typeRegistry: Registry for resolving message types by fully-qualified name.
   public init(
     useOriginalFieldNames: Bool = false,
     prettyPrinted: Bool = false,
     includeDefaultValues: Bool = false,
+    useCanonicalWellKnownTypeEncoding: Bool = true,
     typeRegistry: TypeRegistry
   ) {
     self.useOriginalFieldNames = useOriginalFieldNames
     self.prettyPrinted = prettyPrinted
     self.includeDefaultValues = includeDefaultValues
+    self.useCanonicalWellKnownTypeEncoding = useCanonicalWellKnownTypeEncoding
     self.typeRegistry = typeRegistry
   }
 
   /// Creates JSON serialization options with an empty TypeRegistry.
   ///
-  /// - Note: Deprecated. Use `init(useOriginalFieldNames:prettyPrinted:includeDefaultValues:typeRegistry:)`
+  /// - Note: Deprecated. Use `init(useOriginalFieldNames:prettyPrinted:includeDefaultValues:useCanonicalWellKnownTypeEncoding:typeRegistry:)`
   ///   with an explicit `TypeRegistry` so that cross-file message types can be resolved correctly.
   @available(
     *,
     deprecated,
     message:
-      "Use init(useOriginalFieldNames:prettyPrinted:includeDefaultValues:typeRegistry:) with an explicit TypeRegistry"
+      "Use init(useOriginalFieldNames:prettyPrinted:includeDefaultValues:useCanonicalWellKnownTypeEncoding:typeRegistry:) with an explicit TypeRegistry"
   )
   public init(
     useOriginalFieldNames: Bool = false,
@@ -524,6 +534,7 @@ public struct JSONSerializationOptions {
       useOriginalFieldNames: useOriginalFieldNames,
       prettyPrinted: prettyPrinted,
       includeDefaultValues: includeDefaultValues,
+      useCanonicalWellKnownTypeEncoding: true,
       typeRegistry: TypeRegistry()
     )
   }
