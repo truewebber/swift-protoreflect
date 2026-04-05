@@ -95,8 +95,84 @@ public struct JSONSerializer {
     switch fullName {
     case WellKnownTypeNames.empty:
       return [String: Any]()
+    case WellKnownTypeNames.value:
+      return try encodeValueMessage(message)
+    case WellKnownTypeNames.structType:
+      return try encodeStructMessage(message)
+    case WellKnownTypeNames.listValue:
+      return try encodeListValueMessage(message)
     default:
       throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: fullName)
+    }
+  }
+
+  /// Encodes `google.protobuf.Value` to its canonical JSON form.
+  ///
+  /// Field layout (oneof kind):
+  ///   1 null_value (enum), 2 number_value (double), 3 string_value,
+  ///   4 bool_value, 5 struct_value (message), 6 list_value (message).
+  /// When no field is set the canonical output is JSON null.
+  private func encodeValueMessage(_ message: DynamicMessage) throws -> Any {
+    if (try? message.hasValue(forField: 1)) == true {
+      return NSNull()
+    }
+    if (try? message.hasValue(forField: 2)) == true {
+      guard let d = try message.get(forField: 2) as? Double else {
+        throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.value)
+      }
+      return convertDoubleToJSON(d)
+    }
+    if (try? message.hasValue(forField: 3)) == true {
+      guard let s = try message.get(forField: 3) as? String else {
+        throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.value)
+      }
+      return s
+    }
+    if (try? message.hasValue(forField: 4)) == true {
+      guard let b = try message.get(forField: 4) as? Bool else {
+        throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.value)
+      }
+      return b
+    }
+    if (try? message.hasValue(forField: 5)) == true {
+      guard let nested = try message.get(forField: 5) as? DynamicMessage else {
+        throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.value)
+      }
+      return try encodeStructMessage(nested)
+    }
+    if (try? message.hasValue(forField: 6)) == true {
+      guard let nested = try message.get(forField: 6) as? DynamicMessage else {
+        throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.value)
+      }
+      return try encodeListValueMessage(nested)
+    }
+    return NSNull()
+  }
+
+  /// Encodes `google.protobuf.Struct` to its canonical JSON form: `[String: Any]`.
+  ///
+  /// Reads the `map<string, Value>` at field 1 and canonically encodes each value.
+  private func encodeStructMessage(_ message: DynamicMessage) throws -> [String: Any] {
+    let rawMap = (try? message.get(forField: 1) as? [AnyHashable: Any]) ?? [:]
+    var result: [String: Any] = [:]
+    for (key, value) in rawMap {
+      guard let stringKey = key as? String else { continue }
+      guard let valueMsg = value as? DynamicMessage else { continue }
+      result[stringKey] = try encodeValueMessage(valueMsg)
+    }
+    return result
+  }
+
+  /// Encodes `google.protobuf.ListValue` to its canonical JSON form: `[Any]`.
+  ///
+  /// Reads the `repeated Value` at field 1 and canonically encodes each element.
+  private func encodeListValueMessage(_ message: DynamicMessage) throws -> [Any] {
+    let rawList = (try? message.get(forField: 1) as? [Any]) ?? []
+    return try rawList.map { item -> Any in
+      guard let valueMsg = item as? DynamicMessage else {
+        throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.listValue)
+      }
+      return try encodeValueMessage(valueMsg)
     }
   }
 
