@@ -95,6 +95,8 @@ public struct JSONSerializer {
     switch fullName {
     case WellKnownTypeNames.empty:
       return [String: Any]()
+    case WellKnownTypeNames.timestamp:
+      return try encodeTimestampMessage(message)
     case WellKnownTypeNames.value:
       return try encodeValueMessage(message)
     case WellKnownTypeNames.structType:
@@ -103,6 +105,36 @@ public struct JSONSerializer {
       return try encodeListValueMessage(message)
     default:
       throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: fullName)
+    }
+  }
+
+  /// Encodes `google.protobuf.Timestamp` to its canonical RFC 3339 JSON string.
+  ///
+  /// Field layout: 1 seconds (int64), 2 nanos (int32).
+  /// Fractional precision: 0 digits when nanos==0, 3 when millis-aligned,
+  /// 6 when micros-aligned, 9 otherwise.
+  private func encodeTimestampMessage(_ message: DynamicMessage) throws -> Any {
+    let seconds = (try? message.get(forField: 1) as? Int64) ?? 0
+    let nanos = (try? message.get(forField: 2) as? Int32) ?? 0
+
+    let date = Date(timeIntervalSince1970: Double(seconds))
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(identifier: "UTC")!
+    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+    let base = formatter.string(from: date)
+
+    if nanos == 0 {
+      return "\(base)Z"
+    }
+    else if nanos % 1_000_000 == 0 {
+      return String(format: "\(base).%03dZ", nanos / 1_000_000)
+    }
+    else if nanos % 1_000 == 0 {
+      return String(format: "\(base).%06dZ", nanos / 1_000)
+    }
+    else {
+      return String(format: "\(base).%09dZ", nanos)
     }
   }
 

@@ -82,11 +82,12 @@ final class JSONSerializerWKTDispatchTests: XCTestCase {
     XCTAssertNotNil(json)
   }
 
-  // MARK: - WKT dispatch — unimplemented WKT throws descriptive error
+  // MARK: - WKT dispatch — Timestamp uses canonical RFC 3339 encoding
 
   func test_serializeMessageToAny_dispatchesToWKTEncoder() throws {
     let desc = makeTimestampDescriptor()
-    let msg = DynamicMessage(descriptor: desc)
+    var msg = DynamicMessage(descriptor: desc)
+    try msg.set(Int64(0), forField: 1)
 
     let serializer = JSONSerializer(
       options: JSONSerializationOptions(
@@ -94,13 +95,9 @@ final class JSONSerializerWKTDispatchTests: XCTestCase {
         typeRegistry: TypeRegistry()
       )
     )
-    XCTAssertThrowsError(try serializer.serialize(msg)) { error in
-      guard case JSONSerializationError.unsupportedWellKnownTypeEncoding(let typeName) = error else {
-        XCTFail("Expected unsupportedWellKnownTypeEncoding, got \(error)")
-        return
-      }
-      XCTAssertEqual(typeName, "google.protobuf.Timestamp")
-    }
+    let data = try serializer.serialize(msg)
+    let str = try XCTUnwrap(String(data: data, encoding: .utf8))
+    XCTAssertEqual(str, #""1970-01-01T00:00:00Z""#)
   }
 
   // MARK: - google.protobuf.Empty canonical encoding produces {}

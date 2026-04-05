@@ -36,24 +36,21 @@ final class JSONDeserializerWKTDispatchTests: XCTestCase {
     XCTAssertEqual(try msg.get(forField: 1) as? String, "hello")
   }
 
-  // MARK: - WKT messages route to WKT decoder (throws unsupported for unimplemented WKTs)
+  // MARK: - WKT messages route to WKT decoder — Timestamp decodes RFC 3339 string
 
   func test_deserialize_wktMessage_routesToWKTDecoder() throws {
     let tsFile = makeTimestampFileDescriptor()
     let tsDesc = tsFile.messages["Timestamp"]!
 
-    // Canonical JSON form for Timestamp is a string, not an object
+    // Canonical JSON form for Timestamp is an RFC 3339 string
     let json = #""2024-01-01T00:00:00Z""#.data(using: .utf8)!
     let deserializer = JSONDeserializer(
       options: JSONDeserializationOptions(typeRegistry: TypeRegistry())
     )
-    XCTAssertThrowsError(try deserializer.deserialize(json, using: tsDesc)) { error in
-      guard case JSONDeserializationError.unsupportedWellKnownTypeDecoding(let typeName) = error else {
-        XCTFail("Expected unsupportedWellKnownTypeDecoding, got \(error)")
-        return
-      }
-      XCTAssertEqual(typeName, "google.protobuf.Timestamp")
-    }
+    let msg = try deserializer.deserialize(json, using: tsDesc)
+    let seconds = try XCTUnwrap(try msg.get(forField: 1) as? Int64)
+    // 2024-01-01T00:00:00Z = 1704067200
+    XCTAssertEqual(seconds, 1_704_067_200)
   }
 
   // MARK: - Nested WKT fields within regular messages route to WKT decoder
@@ -76,17 +73,14 @@ final class JSONDeserializerWKTDispatchTests: XCTestCase {
     outerFile.addMessage(eventDesc)
     let outerDesc = outerFile.messages["Event"]!
 
-    // Canonical Timestamp in a nested field: value is a string, not a dict
+    // Canonical Timestamp in a nested field: value is an RFC 3339 string
     let json = #"{"ts":"2024-01-01T00:00:00Z"}"#.data(using: .utf8)!
     let deserializer = JSONDeserializer(
       options: JSONDeserializationOptions(typeRegistry: registry)
     )
-    XCTAssertThrowsError(try deserializer.deserialize(json, using: outerDesc)) { error in
-      guard case JSONDeserializationError.unsupportedWellKnownTypeDecoding(let typeName) = error else {
-        XCTFail("Expected unsupportedWellKnownTypeDecoding, got \(error)")
-        return
-      }
-      XCTAssertEqual(typeName, "google.protobuf.Timestamp")
-    }
+    let msg = try deserializer.deserialize(json, using: outerDesc)
+    let tsMsg = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
+    let seconds = try XCTUnwrap(try tsMsg.get(forField: 1) as? Int64)
+    XCTAssertEqual(seconds, 1_704_067_200)
   }
 }

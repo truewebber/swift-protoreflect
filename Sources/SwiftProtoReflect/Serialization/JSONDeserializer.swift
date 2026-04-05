@@ -105,6 +105,8 @@ public struct JSONDeserializer {
         )
       }
       return try deserializeFromJSONObject(jsonObj, using: descriptor, depth: depth)
+    case WellKnownTypeNames.timestamp:
+      return try decodeTimestampFromAny(jsonValue, using: descriptor)
     case WellKnownTypeNames.value:
       return try decodeValueFromAny(jsonValue, depth: depth)
     case WellKnownTypeNames.structType:
@@ -126,6 +128,80 @@ public struct JSONDeserializer {
     default:
       throw JSONDeserializationError.unsupportedWellKnownTypeDecoding(typeName: descriptor.fullName)
     }
+  }
+
+  /// Decodes a canonical RFC 3339 JSON string to `google.protobuf.Timestamp`.
+  ///
+  /// Accepts strings with Z or ±HH:MM timezone offsets and optional fractional seconds
+  /// with up to 9 digits of precision.  Non-string JSON input throws
+  /// `invalidJSONStructure`.
+  private func decodeTimestampFromAny(_ jsonValue: Any, using descriptor: MessageDescriptor) throws -> DynamicMessage {
+    guard let str = jsonValue as? String else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "String",
+        actual: String(describing: type(of: jsonValue))
+      )
+    }
+
+    // Separate optional fractional-seconds digits from the rest of the timestamp.
+    var datePart = str
+    var nanosDigits: String? = nil
+
+    if let dotIdx = str.firstIndex(of: ".") {
+      let beforeDot = String(str[str.startIndex..<dotIdx])
+      let afterDot = String(str[str.index(after: dotIdx)...])
+
+      // The timezone indicator follows the fractional digits: Z, +, or -
+      let tzChars: Set<Character> = ["Z", "+", "-"]
+      if let tzIdx = afterDot.firstIndex(where: { tzChars.contains($0) }) {
+        nanosDigits = String(afterDot[afterDot.startIndex..<tzIdx])
+        let tz = String(afterDot[tzIdx...])
+        datePart = beforeDot + tz
+      }
+      else {
+        nanosDigits = afterDot
+        datePart = beforeDot + "Z"
+      }
+    }
+
+    // Parse the whole-second timestamp using DateFormatter.
+    // Format XXX handles both Z and ±HH:MM offsets (RFC 3339 / ISO 8601 extended).
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssXXX"
+    guard let date = formatter.date(from: datePart) else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "RFC 3339 timestamp string",
+        actual: str
+      )
+    }
+
+    let seconds = Int64(date.timeIntervalSince1970)
+
+    // Parse fractional digits, padding/truncating to exactly 9 nanosecond digits.
+    let nanos: Int32
+    if let digits = nanosDigits, !digits.isEmpty {
+      var padded = digits
+      while padded.count < 9 { padded += "0" }
+      if padded.count > 9 { padded = String(padded.prefix(9)) }
+      guard let value = Int32(padded) else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Valid fractional seconds",
+          actual: str
+        )
+      }
+      nanos = value
+    }
+    else {
+      nanos = 0
+    }
+
+    var msg = DynamicMessage(descriptor: descriptor)
+    try msg.set(seconds, forField: 1)
+    if nanos != 0 {
+      try msg.set(nanos, forField: 2)
+    }
+    return msg
   }
 
   /// Decodes any JSON value to `google.protobuf.Value`.
