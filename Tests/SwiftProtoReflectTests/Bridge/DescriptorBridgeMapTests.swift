@@ -43,7 +43,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueType: .string
     )
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
 
     let field = messageDescriptor.field(named: "string_map")
     XCTAssertNotNil(field, "Map field should be created")
@@ -61,7 +61,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueType: .int32
     )
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
 
     let field = messageDescriptor.field(named: "counters")
     XCTAssertNotNil(field)
@@ -78,7 +78,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueType: .string
     )
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
 
     let field = messageDescriptor.field(named: "names")
     XCTAssertNotNil(field)
@@ -96,7 +96,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueTypeName: ".test.Entity"
     )
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
 
     let field = messageDescriptor.field(named: "entities")
     XCTAssertNotNil(field)
@@ -116,7 +116,9 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueType: .string
     )
 
-    let field = try bridge.fromProtobufDescriptor(messageProto).field(named: "int32_map")
+    let field = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?).field(
+      named: "int32_map"
+    )
     XCTAssertTrue(field!.isMap)
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .int32)
   }
@@ -129,7 +131,9 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueType: .string
     )
 
-    let field = try bridge.fromProtobufDescriptor(messageProto).field(named: "int64_map")
+    let field = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?).field(
+      named: "int64_map"
+    )
     XCTAssertTrue(field!.isMap)
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .int64)
   }
@@ -142,7 +146,9 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueType: .string
     )
 
-    let field = try bridge.fromProtobufDescriptor(messageProto).field(named: "uint32_map")
+    let field = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?).field(
+      named: "uint32_map"
+    )
     XCTAssertTrue(field!.isMap)
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .uint32)
   }
@@ -155,7 +161,9 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueType: .string
     )
 
-    let field = try bridge.fromProtobufDescriptor(messageProto).field(named: "uint64_map")
+    let field = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?).field(
+      named: "uint64_map"
+    )
     XCTAssertTrue(field!.isMap)
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .uint64)
   }
@@ -168,7 +176,9 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueType: .string
     )
 
-    let field = try bridge.fromProtobufDescriptor(messageProto).field(named: "sint32_map")
+    let field = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?).field(
+      named: "sint32_map"
+    )
     XCTAssertTrue(field!.isMap)
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .sint32)
   }
@@ -181,7 +191,9 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueType: .string
     )
 
-    let field = try bridge.fromProtobufDescriptor(messageProto).field(named: "sint64_map")
+    let field = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?).field(
+      named: "sint64_map"
+    )
     XCTAssertTrue(field!.isMap)
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .sint64)
   }
@@ -194,7 +206,9 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueType: .string
     )
 
-    let field = try bridge.fromProtobufDescriptor(messageProto).field(named: "fixed32_map")
+    let field = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?).field(
+      named: "fixed32_map"
+    )
     XCTAssertTrue(field!.isMap)
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .fixed32)
   }
@@ -207,7 +221,9 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueType: .string
     )
 
-    let field = try bridge.fromProtobufDescriptor(messageProto).field(named: "fixed64_map")
+    let field = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?).field(
+      named: "fixed64_map"
+    )
     XCTAssertTrue(field!.isMap)
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .fixed64)
   }
@@ -220,7 +236,9 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueType: .string
     )
 
-    let field = try bridge.fromProtobufDescriptor(messageProto).field(named: "sfixed32_map")
+    let field = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?).field(
+      named: "sfixed32_map"
+    )
     XCTAssertTrue(field!.isMap)
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .sfixed32)
   }
@@ -233,7 +251,9 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueType: .string
     )
 
-    let field = try bridge.fromProtobufDescriptor(messageProto).field(named: "sfixed64_map")
+    let field = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?).field(
+      named: "sfixed64_map"
+    )
     XCTAssertTrue(field!.isMap)
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .sfixed64)
   }
@@ -246,7 +266,9 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueType: .string
     )
 
-    let field = try bridge.fromProtobufDescriptor(messageProto).field(named: "bool_map")
+    let field = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?).field(
+      named: "bool_map"
+    )
     XCTAssertTrue(field!.isMap)
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .bool)
   }
@@ -259,7 +281,9 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueType: .int32
     )
 
-    let field = try bridge.fromProtobufDescriptor(messageProto).field(named: "string_map")
+    let field = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?).field(
+      named: "string_map"
+    )
     XCTAssertTrue(field!.isMap)
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .string)
   }
@@ -281,7 +305,9 @@ final class DescriptorBridgeMapTests: XCTestCase {
         valueType: valueType
       )
 
-      let field = try bridge.fromProtobufDescriptor(messageProto).field(named: "map_\(index)")
+      let field = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?).field(
+        named: "map_\(index)"
+      )
       XCTAssertTrue(field!.isMap, "Field with value type \(valueType) should be detected as map")
       XCTAssertNotNil(field!.mapEntryInfo, "MapEntryInfo should be populated for value type \(valueType)")
     }
@@ -296,7 +322,9 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueTypeName: ".test.Status"
     )
 
-    let field = try bridge.fromProtobufDescriptor(messageProto).field(named: "enum_map")
+    let field = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?).field(
+      named: "enum_map"
+    )
     XCTAssertTrue(field!.isMap)
     XCTAssertEqual(field!.mapEntryInfo?.valueFieldInfo.type, .enum)
     XCTAssertEqual(field!.mapEntryInfo?.valueFieldInfo.typeName, ".test.Status")
@@ -311,7 +339,9 @@ final class DescriptorBridgeMapTests: XCTestCase {
       valueTypeName: ".test.Data"
     )
 
-    let field = try bridge.fromProtobufDescriptor(messageProto).field(named: "message_map")
+    let field = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?).field(
+      named: "message_map"
+    )
     XCTAssertTrue(field!.isMap)
     XCTAssertEqual(field!.mapEntryInfo?.valueFieldInfo.type, .message)
     XCTAssertEqual(field!.mapEntryInfo?.valueFieldInfo.typeName, ".test.Data")
@@ -352,7 +382,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     messageProto.nestedType = [entryMessage1, entryMessage2]
     messageProto.field = [mapField1, mapField2]
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
 
     let field1 = messageDescriptor.field(named: "map1")
     XCTAssertTrue(field1!.isMap)
@@ -393,7 +423,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     messageProto.nestedType = [entryMessage]
     messageProto.field = [mapField, repeatedField]
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
 
     let mapFieldResult = messageDescriptor.field(named: "metadata")
     XCTAssertTrue(mapFieldResult!.isMap, "Map field should be detected as map")
@@ -415,7 +445,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
 
     messageProto.field = [repeatedField]
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
 
     let field = messageDescriptor.field(named: "values")
     XCTAssertFalse(field!.isMap, "Regular repeated field should not be detected as map")
@@ -454,7 +484,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     messageProto.nestedType = [nestedMessage]
     messageProto.field = [repeatedMessageField]
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
 
     let field = messageDescriptor.field(named: "items")
     XCTAssertFalse(field!.isMap, "Repeated message without map_entry option should not be detected as map")

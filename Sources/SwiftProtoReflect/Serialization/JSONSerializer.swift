@@ -259,7 +259,9 @@ public struct JSONSerializer {
       return try serializeToJSONObject(message)
     }
 
-    let packedMessage = try BinaryDeserializer().deserialize(valueBytes, using: packedDescriptor)
+    let packedMessage = try BinaryDeserializer(
+      options: DeserializationOptions(typeRegistry: options.typeRegistry)
+    ).deserialize(valueBytes, using: packedDescriptor)
 
     if WellKnownTypeDetector.isWellKnownType(typeName) {
       let canonicalValue = try encodeWellKnownType(packedMessage, fullName: typeName)

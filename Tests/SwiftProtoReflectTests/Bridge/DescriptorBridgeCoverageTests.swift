@@ -38,7 +38,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
     msgProto.name = "Test"
     msgProto.field = [fieldProto]
 
-    let descriptor = try bridge.fromProtobufDescriptor(msgProto)
+    let descriptor = try bridge.fromProtobufDescriptor(msgProto, parent: nil as (any DescriptorParent)?)
     let field = descriptor.field(named: "data")
     XCTAssertEqual(field?.defaultValue, .bytes(Data("hello".utf8)))
   }
@@ -57,7 +57,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
     msgProto.name = "Test"
     msgProto.field = [fieldProto]
 
-    let descriptor = try bridge.fromProtobufDescriptor(msgProto)
+    let descriptor = try bridge.fromProtobufDescriptor(msgProto, parent: nil as (any DescriptorParent)?)
     let field = descriptor.field(named: "val")
     XCTAssertEqual(field?.defaultValue, .int(42))
   }
@@ -74,7 +74,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
     msgProto.name = "Test"
     msgProto.field = [fieldProto]
 
-    let descriptor = try bridge.fromProtobufDescriptor(msgProto)
+    let descriptor = try bridge.fromProtobufDescriptor(msgProto, parent: nil as (any DescriptorParent)?)
     let field = descriptor.field(named: "val")
     XCTAssertEqual(field?.defaultValue, .int(100))
   }
@@ -91,7 +91,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
     msgProto.name = "Test"
     msgProto.field = [fieldProto]
 
-    let descriptor = try bridge.fromProtobufDescriptor(msgProto)
+    let descriptor = try bridge.fromProtobufDescriptor(msgProto, parent: nil as (any DescriptorParent)?)
     let field = descriptor.field(named: "val")
     XCTAssertEqual(field?.defaultValue, .int(999))
   }
@@ -108,7 +108,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
     msgProto.name = "Test"
     msgProto.field = [fieldProto]
 
-    let descriptor = try bridge.fromProtobufDescriptor(msgProto)
+    let descriptor = try bridge.fromProtobufDescriptor(msgProto, parent: nil as (any DescriptorParent)?)
     let field = descriptor.field(named: "val")
     XCTAssertEqual(field?.defaultValue, .string("not_a_number"))
   }
@@ -128,7 +128,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
     msgProto.name = "Test"
     msgProto.field = [fieldProto]
 
-    let descriptor = try bridge.fromProtobufDescriptor(msgProto)
+    let descriptor = try bridge.fromProtobufDescriptor(msgProto, parent: nil as (any DescriptorParent)?)
     let field = descriptor.field(named: "status")
     XCTAssertEqual(field?.defaultValue, .string("ACTIVE"))
   }
@@ -159,7 +159,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
     parent.field = [mapField]
     parent.nestedType = [entry]
 
-    XCTAssertThrowsError(try bridge.fromProtobufDescriptor(parent))
+    XCTAssertThrowsError(try bridge.fromProtobufDescriptor(parent, parent: nil as (any DescriptorParent)?))
   }
 
   // MARK: - Map entry validation: wrong field names
@@ -194,7 +194,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
     parent.field = [mapField]
     parent.nestedType = [entry]
 
-    XCTAssertThrowsError(try bridge.fromProtobufDescriptor(parent))
+    XCTAssertThrowsError(try bridge.fromProtobufDescriptor(parent, parent: nil as (any DescriptorParent)?))
   }
 
   // MARK: - Map entry validation: invalid key type
@@ -229,6 +229,6 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
     parent.field = [mapField]
     parent.nestedType = [entry]
 
-    XCTAssertThrowsError(try bridge.fromProtobufDescriptor(parent))
+    XCTAssertThrowsError(try bridge.fromProtobufDescriptor(parent, parent: nil as (any DescriptorParent)?))
   }
 }

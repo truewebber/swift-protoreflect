@@ -589,7 +589,7 @@ enum CompatDescriptors {
     var outer = MessageDescriptor(name: "MixedNest1", parent: file)
 
     // Correct parent chain: MixedNest2 first, then MixedNest3 with parent=nest2
-    var nest2Base = MessageDescriptor(name: "MixedNest2", parent: outer)
+    let nest2Base = MessageDescriptor(name: "MixedNest2", parent: outer)
     var nest3 = MessageDescriptor(name: "MixedNest3", parent: nest2Base)
     nest3.addField(fd("val", 1, .int32))
     nest3.addField(fd("items", 2, .string, isRepeated: true))
@@ -1087,7 +1087,7 @@ enum CompatDescriptors {
     var outer = MessageDescriptor(name: "MegaMixed", parent: file)
 
     // Correct parent chain: Layer2 first, then Layer3 with parent=layer2Base
-    var layer2Base = MessageDescriptor(name: "Layer2", parent: outer)
+    let layer2Base = MessageDescriptor(name: "Layer2", parent: outer)
     var layer3 = MessageDescriptor(name: "Layer3", parent: layer2Base)
     layer3.addField(fd("simple", 1, .message, typeName: "testcompat.SimpleMessage"))
     layer3.addField(fd("scalar", 2, .message, typeName: "testcompat.ScalarMessage"))
