@@ -99,6 +99,8 @@ public struct JSONSerializer {
       return try encodeTimestampMessage(message)
     case WellKnownTypeNames.duration:
       return try encodeDurationMessage(message)
+    case WellKnownTypeNames.fieldMask:
+      return try encodeFieldMaskMessage(message)
     case WellKnownTypeNames.value:
       return try encodeValueMessage(message)
     case WellKnownTypeNames.structType:
@@ -161,6 +163,30 @@ public struct JSONSerializer {
     var fracStr = String(format: "%09d", absNanos)
     while fracStr.last == "0" { fracStr.removeLast() }
     return "\(sign)\(absSeconds).\(fracStr)s"
+  }
+
+  /// Encodes `google.protobuf.FieldMask` to its canonical comma-separated camelCase JSON string.
+  ///
+  /// Field layout: 1 paths (repeated string, snake_case).
+  /// Each snake_case path is converted to lowerCamelCase and joined with `,`.
+  /// An empty paths array produces an empty string `""`.
+  private func encodeFieldMaskMessage(_ message: DynamicMessage) throws -> Any {
+    let paths = (try? message.get(forField: 1) as? [String]) ?? []
+    let camelPaths = paths.map { snakeToCamelCase($0) }
+    return camelPaths.joined(separator: ",")
+  }
+
+  /// Converts a snake_case string to lowerCamelCase.
+  private func snakeToCamelCase(_ snake: String) -> String {
+    let parts = snake.split(separator: "_", omittingEmptySubsequences: false)
+    guard !parts.isEmpty else { return snake }
+    var result = parts[0].lowercased()
+    for part in parts.dropFirst() {
+      if let first = part.first {
+        result += String(first).uppercased() + String(part.dropFirst()).lowercased()
+      }
+    }
+    return result
   }
 
   /// Encodes `google.protobuf.Value` to its canonical JSON form.

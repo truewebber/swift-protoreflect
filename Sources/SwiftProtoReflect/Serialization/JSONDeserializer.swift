@@ -109,6 +109,8 @@ public struct JSONDeserializer {
       return try decodeTimestampFromAny(jsonValue, using: descriptor)
     case WellKnownTypeNames.duration:
       return try decodeDurationFromAny(jsonValue, using: descriptor)
+    case WellKnownTypeNames.fieldMask:
+      return try decodeFieldMaskFromAny(jsonValue, using: descriptor)
     case WellKnownTypeNames.value:
       return try decodeValueFromAny(jsonValue, depth: depth)
     case WellKnownTypeNames.structType:
@@ -279,6 +281,42 @@ public struct JSONDeserializer {
       try msg.set(nanos, forField: 2)
     }
     return msg
+  }
+
+  /// Decodes a canonical comma-separated camelCase JSON string to `google.protobuf.FieldMask`.
+  ///
+  /// Each camelCase segment is converted to snake_case and stored in the repeated `paths` field.
+  /// An empty string produces an empty paths array. Non-string input throws `invalidJSONStructure`.
+  private func decodeFieldMaskFromAny(_ jsonValue: Any, using descriptor: MessageDescriptor) throws -> DynamicMessage {
+    guard let str = jsonValue as? String else {
+      throw JSONDeserializationError.invalidJSONStructure(
+        expected: "String",
+        actual: String(describing: type(of: jsonValue))
+      )
+    }
+
+    var msg = DynamicMessage(descriptor: descriptor)
+    guard !str.isEmpty else {
+      return msg
+    }
+
+    let paths = str.split(separator: ",", omittingEmptySubsequences: false).map { camelToSnakeCase(String($0)) }
+    try msg.set(paths, forField: 1)
+    return msg
+  }
+
+  /// Converts a lowerCamelCase string to snake_case.
+  private func camelToSnakeCase(_ camel: String) -> String {
+    var result = ""
+    for char in camel {
+      if char.isUppercase {
+        result += "_" + char.lowercased()
+      }
+      else {
+        result.append(char)
+      }
+    }
+    return result
   }
 
   /// Decodes any JSON value to `google.protobuf.Value`.
