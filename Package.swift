@@ -45,7 +45,16 @@ let package = Package(
         "TestResources/README.md",
       ],
       resources: [
-        .copy("Fixtures/StructProto")
+        .copy("Fixtures/StructProto"),
+        .copy("Fixtures/Proto/common_types.proto"),
+        .copy("Fixtures/Proto/scalar_types.proto"),
+        .copy("Fixtures/Proto/container_types.proto"),
+        .copy("Fixtures/Proto/oneof_types.proto"),
+        .copy("Fixtures/Proto/nesting_types.proto"),
+        .copy("Fixtures/Proto/wkt_types.proto"),
+        .copy("Fixtures/Proto/proto2_types.proto"),
+        .copy("Fixtures/Proto/realworld_types.proto"),
+        .copy("Fixtures/Proto/cross_file_types.proto"),
       ]
     ),
   ]

@@ -1,0 +1,81 @@
+syntax = "proto3";
+package testcompat;
+
+import "common_types.proto";
+import "scalar_types.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+
+// All WKT types as singular fields
+message WKTHolder {
+  google.protobuf.Timestamp ts = 1;
+  google.protobuf.Duration dur = 2;
+  google.protobuf.FieldMask mask = 3;
+  google.protobuf.Any any_val = 4;
+  google.protobuf.Struct struct_val = 5;
+  google.protobuf.Value value_val = 6;
+  google.protobuf.ListValue list_val = 7;
+  google.protobuf.DoubleValue dbl_w = 8;
+  google.protobuf.FloatValue flt_w = 9;
+  google.protobuf.Int64Value i64_w = 10;
+  google.protobuf.UInt64Value u64_w = 11;
+  google.protobuf.Int32Value i32_w = 12;
+  google.protobuf.UInt32Value u32_w = 13;
+  google.protobuf.BoolValue bool_w = 14;
+  google.protobuf.StringValue str_w = 15;
+  google.protobuf.BytesValue bytes_w = 16;
+  google.protobuf.Empty empty_val = 17;
+}
+
+// Repeated WKTs
+message RepeatedWKTs {
+  repeated google.protobuf.Timestamp timestamps = 1;
+  repeated google.protobuf.Duration durations = 2;
+  repeated google.protobuf.Int64Value int64_vals = 3;
+  repeated google.protobuf.StringValue string_vals = 4;
+  repeated google.protobuf.BoolValue bool_vals = 5;
+  repeated google.protobuf.Struct structs = 6;
+  repeated google.protobuf.Value values = 7;
+  repeated google.protobuf.Any anys = 8;
+}
+
+// Map with WKT values
+message MapWKTValues {
+  map<string, google.protobuf.Timestamp> ts_map = 1;
+  map<string, google.protobuf.Int64Value> i64w_map = 2;
+  map<string, google.protobuf.StringValue> strw_map = 3;
+  map<string, google.protobuf.Struct> struct_map = 4;
+  map<string, google.protobuf.Any> any_map = 5;
+}
+
+// WKT inside nested message
+message WKTNested {
+  message Inner {
+    google.protobuf.Timestamp created = 1;
+    google.protobuf.Duration ttl = 2;
+    google.protobuf.Int32Value count = 3;
+  }
+  Inner primary = 1;
+  repeated Inner history = 2;
+  map<string, Inner> named = 3;
+}
+
+// WKT mixed with all other features
+message WKTMixed {
+  google.protobuf.Timestamp ts = 1;
+  repeated google.protobuf.StringValue labels = 2;
+  map<string, google.protobuf.Int64Value> counters = 3;
+  oneof wkt_or_scalar {
+    google.protobuf.Duration dur_val = 4;
+    int32 int_val = 5;
+    google.protobuf.Struct struct_val = 6;
+  }
+  SimpleMessage simple = 10;
+  ScalarMessage detail = 11;
+  Status status = 12;
+}

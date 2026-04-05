@@ -1,0 +1,122 @@
+syntax = "proto2";
+package testcompat2;
+
+// Basic proto2 with required and optional
+message Proto2Basic {
+  required string required_string = 1;
+  required int32 required_int32 = 2;
+  optional string opt_string = 3;
+  optional int32 opt_int32 = 4;
+  optional bool opt_bool = 5;
+  optional bytes opt_bytes = 6;
+  optional double opt_double = 7;
+}
+
+// Proto2 with non-zero default values
+message Proto2Defaults {
+  optional int32 count = 1 [default = 42];
+  optional string label = 2 [default = "hello"];
+  optional bool active = 3 [default = true];
+  optional double rate = 4 [default = 3.14];
+  optional float ratio = 5 [default = 0.5];
+  optional bytes magic = 6 [default = "\x00\x01\x02"];
+  optional Proto2Enum kind = 7 [default = P2_BETA];
+}
+
+// Proto2 enum
+enum Proto2Enum {
+  P2_UNSPECIFIED = 0;
+  P2_ALPHA = 1;
+  P2_BETA = 2;
+  P2_GAMMA = 3;
+}
+
+// Proto2 enum without zero value
+enum Proto2NoZero {
+  P2NZ_ONE = 1;
+  P2NZ_TWO = 2;
+  P2NZ_THREE = 3;
+}
+
+// Proto2 with group
+message Proto2WithGroup {
+  required int32 id = 1;
+  optional group MyGroup = 2 {
+    optional string name = 1;
+    optional int32 value = 2;
+  }
+  optional group AnotherGroup = 3 {
+    optional bool flag = 1;
+    optional string detail = 2;
+  }
+}
+
+// Proto2 with extensions
+message Proto2Extendable {
+  required string base_field = 1;
+  optional int32 code = 2;
+  extensions 100 to 199;
+  extensions 200 to 299;
+}
+
+extend Proto2Extendable {
+  optional string ext_name = 100;
+  optional int32 ext_count = 101;
+  optional bool ext_flag = 102;
+  optional bytes ext_data = 103;
+  optional Proto2Basic ext_msg = 104;
+  repeated string ext_tags = 105;
+  repeated int32 ext_ids = 106;
+}
+
+// Proto2 nested groups and complex structure
+message Proto2Complex {
+  required string title = 1;
+  optional int32 version = 2;
+
+  optional group Header = 3 {
+    optional string key = 1;
+    optional string value = 2;
+  }
+
+  repeated group Item = 4 {
+    optional int32 id = 1;
+    optional string label = 2;
+    optional Proto2Enum kind = 3;
+  }
+
+  optional Proto2Basic basic = 5;
+  repeated Proto2Basic items = 6;
+  map<string, string> meta = 7;
+}
+
+// Proto2 with oneof (proto2 supports oneof too)
+message Proto2Oneof {
+  oneof choice {
+    string str_val = 1;
+    int32 int_val = 2;
+    bool bool_val = 3;
+    Proto2Basic msg_val = 4;
+  }
+  optional string label = 10;
+}
+
+// Proto2 with all features combined
+message Proto2KitchenSink {
+  required string name = 1;
+  optional int32 id = 2;
+  optional Proto2Enum status = 3;
+  repeated string tags = 4;
+  map<string, int32> scores = 5;
+  optional group Detail = 6 {
+    optional string info = 1;
+    optional int32 code = 2;
+  }
+  oneof variant {
+    string str_variant = 7;
+    int32 int_variant = 8;
+  }
+  optional Proto2Basic nested = 9;
+  repeated Proto2Basic items = 10;
+  optional Proto2Defaults with_defaults = 11;
+}

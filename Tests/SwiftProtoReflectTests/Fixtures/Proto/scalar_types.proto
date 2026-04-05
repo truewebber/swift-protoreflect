@@ -1,0 +1,109 @@
+syntax = "proto3";
+package testcompat;
+
+// All 15 scalar types
+message ScalarMessage {
+  double double_field = 1;
+  float float_field = 2;
+  int32 int32_field = 3;
+  int64 int64_field = 4;
+  uint32 uint32_field = 5;
+  uint64 uint64_field = 6;
+  sint32 sint32_field = 7;
+  sint64 sint64_field = 8;
+  fixed32 fixed32_field = 9;
+  fixed64 fixed64_field = 10;
+  sfixed32 sfixed32_field = 11;
+  sfixed64 sfixed64_field = 12;
+  bool bool_field = 13;
+  string string_field = 14;
+  bytes bytes_field = 15;
+}
+
+// Proto3 optional (explicit presence)
+message OptionalScalarMessage {
+  optional double opt_double = 1;
+  optional float opt_float = 2;
+  optional int32 opt_int32 = 3;
+  optional int64 opt_int64 = 4;
+  optional uint32 opt_uint32 = 5;
+  optional uint64 opt_uint64 = 6;
+  optional sint32 opt_sint32 = 7;
+  optional sint64 opt_sint64 = 8;
+  optional fixed32 opt_fixed32 = 9;
+  optional fixed64 opt_fixed64 = 10;
+  optional sfixed32 opt_sfixed32 = 11;
+  optional sfixed64 opt_sfixed64 = 12;
+  optional bool opt_bool = 13;
+  optional string opt_string = 14;
+  optional bytes opt_bytes = 15;
+  int32 plain_int32 = 16;  // implicit presence for comparison
+}
+
+// Field name edge cases
+message FieldNameEdgeCases {
+  string my_field_name = 1;  // -> myFieldName
+  int32 a_long_field_name_here = 2;  // -> aLongFieldNameHere
+  bool http_request = 3;  // -> httpRequest
+  string my_rpc = 4;  // -> myRpc
+  string __double_leading = 5;  // -> DoubleLeading
+  string trailing_ = 6;  // -> trailing
+  string custom_json = 7 [json_name = "customOverride"];
+  string ALLCAPS = 8;  // -> ALLCAPS (no change)
+  string CamelCase = 9;  // -> CamelCase (no change)
+  int32 field_10 = 10;  // -> field10
+}
+
+// Message with 50+ fields for stress testing
+message WideMessage {
+  string f1 = 1;
+  string f2 = 2;
+  string f3 = 3;
+  string f4 = 4;
+  string f5 = 5;
+  string f6 = 6;
+  string f7 = 7;
+  string f8 = 8;
+  string f9 = 9;
+  string f10 = 10;
+  string f11 = 11;
+  string f12 = 12;
+  string f13 = 13;
+  string f14 = 14;
+  string f15 = 15;
+  string f16 = 16;
+  string f17 = 17;
+  string f18 = 18;
+  string f19 = 19;
+  string f20 = 20;
+  int32 i1 = 21;
+  int32 i2 = 22;
+  int32 i3 = 23;
+  int32 i4 = 24;
+  int32 i5 = 25;
+  int32 i6 = 26;
+  int32 i7 = 27;
+  int32 i8 = 28;
+  int32 i9 = 29;
+  int32 i10 = 30;
+  double d1 = 31;
+  double d2 = 32;
+  double d3 = 33;
+  double d4 = 34;
+  double d5 = 35;
+  bool b1 = 36;
+  bool b2 = 37;
+  bool b3 = 38;
+  bool b4 = 39;
+  bool b5 = 40;
+  bytes by1 = 41;
+  bytes by2 = 42;
+  bytes by3 = 43;
+  int64 l1 = 44;
+  int64 l2 = 45;
+  int64 l3 = 46;
+  uint64 u1 = 47;
+  uint64 u2 = 48;
+  float fl1 = 49;
+  float fl2 = 50;
+}
