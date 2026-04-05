@@ -283,14 +283,18 @@ final class StructHandlerTests: XCTestCase {
 
     XCTAssertEqual(dynamicMessage.descriptor.fullName, "google.protobuf.Struct")
 
-    // Data is now stored as JSON in bytes field
-    let fieldsData = try dynamicMessage.get(forField: "fields") as! Data
-    let fieldsObject = try JSONSerialization.jsonObject(with: fieldsData, options: [])
-    let fields = fieldsObject as! [String: Any]
+    // fields is now a map<string, Value> at field 1
+    let rawMap = try XCTUnwrap(try dynamicMessage.get(forField: 1) as? [AnyHashable: Any])
+    XCTAssertEqual(rawMap.count, 3)
 
-    XCTAssertEqual(fields["name"] as? String, "John")
-    XCTAssertEqual(fields["age"] as? Double, 30.0)
-    XCTAssertEqual(fields["active"] as? Bool, true)
+    let nameMsg = try XCTUnwrap(rawMap["name"] as? DynamicMessage)
+    XCTAssertEqual(try dynamicMessageToValueValue(nameMsg), .stringValue("John"))
+
+    let ageMsg = try XCTUnwrap(rawMap["age"] as? DynamicMessage)
+    XCTAssertEqual(try dynamicMessageToValueValue(ageMsg), .numberValue(30.0))
+
+    let activeMsg = try XCTUnwrap(rawMap["active"] as? DynamicMessage)
+    XCTAssertEqual(try dynamicMessageToValueValue(activeMsg), .boolValue(true))
   }
 
   func testCreateDynamicFromInvalidSpecialized() throws {
@@ -568,50 +572,31 @@ final class StructHandlerTests: XCTestCase {
   }
 
   func testCreateSpecializedWithInvalidFieldsData() throws {
-    // Create a Struct message with invalid fields data
-    let structDescriptor = try createTestStructDescriptor()
+    // With the new map-based wire format the handler rejects messages whose
+    // descriptor fullName doesn't match "google.protobuf.Struct".
+    var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
+    let wrongDescriptor = MessageDescriptor(name: "Struct", parent: fileDescriptor)
+    fileDescriptor.addMessage(wrongDescriptor)
+
     let factory = MessageFactory()
-    var message = factory.createMessage(from: structDescriptor)
+    let message = factory.createMessage(from: wrongDescriptor)
 
-    // Set invalid JSON data
-    let invalidJSONData = "invalid json".data(using: .utf8)!
-    try message.set(invalidJSONData, forField: "fields")
-
-    // This should throw conversionFailed error
     XCTAssertThrowsError(try StructHandler.createSpecialized(from: message)) { error in
-      guard let wellKnownError = error as? WellKnownTypeError,
-        case .conversionFailed(let from, let to, let reason) = wellKnownError
-      else {
-        XCTFail("Expected WellKnownTypeError.conversionFailed")
+      guard case WellKnownTypeError.invalidData(let typeName, _) = error else {
+        XCTFail("Expected invalidData error, got \(error)")
         return
       }
-      XCTAssertEqual(from, "DynamicMessage")
-      XCTAssertEqual(to, "StructValue")
-      XCTAssertTrue(reason.contains("Failed to extract fields"))
+      XCTAssertEqual(typeName, "google.protobuf.Struct")
     }
   }
 
   func testCreateSpecializedWithEmptyFieldsData() throws {
-    // Create a Struct message with empty fields data
-    let structDescriptor = try createTestStructDescriptor()
-    let factory = MessageFactory()
-    var message = factory.createMessage(from: structDescriptor)
+    // A Struct message with no map entries produces an empty StructValue.
+    let message = DynamicMessage(descriptor: StructProtoDescriptors.structDescriptor)
 
-    // Set empty data - this should cause a JSON parsing error
-    try message.set(Data(), forField: "fields")
-
-    // This should throw conversionFailed error due to invalid JSON
-    XCTAssertThrowsError(try StructHandler.createSpecialized(from: message)) { error in
-      guard let wellKnownError = error as? WellKnownTypeError,
-        case .conversionFailed(let from, let to, let reason) = wellKnownError
-      else {
-        XCTFail("Expected WellKnownTypeError.conversionFailed")
-        return
-      }
-      XCTAssertEqual(from, "DynamicMessage")
-      XCTAssertEqual(to, "StructValue")
-      XCTAssertTrue(reason.contains("Failed to extract fields"))
-    }
+    let result = try StructHandler.createSpecialized(from: message)
+    let structValue = try XCTUnwrap(result as? StructHandler.StructValue)
+    XCTAssertTrue(structValue.fields.isEmpty)
   }
 
   func testCreateSpecializedWithMissingFieldsData() throws {
@@ -642,57 +627,82 @@ final class StructHandlerTests: XCTestCase {
   // MARK: - Helper Methods
 
   private func createStructMessage(fields: [String: Any]) throws -> DynamicMessage {
-    var fileDescriptor = FileDescriptor(
-      name: "google/protobuf/struct.proto",
-      package: "google.protobuf"
-    )
-
-    var messageDescriptor = MessageDescriptor(
-      name: "Struct",
-      parent: fileDescriptor
-    )
-
-    // Matches StructHandler implementation - bytes field for JSON data
-    let fieldsField = FieldDescriptor(
-      name: "fields",
-      number: 1,
-      type: .bytes  // JSON serialized data
-    )
-    messageDescriptor.addField(fieldsField)
-
-    fileDescriptor.addMessage(messageDescriptor)
-
-    let factory = MessageFactory()
-    var message = factory.createMessage(from: messageDescriptor)
-
-    if !fields.isEmpty {
-      // Serialize fields to JSON as Data
-      let jsonData = try JSONSerialization.data(withJSONObject: fields, options: [])
-      try message.set(jsonData, forField: "fields")
-    }
-
-    return message
+    let structValue = try StructHandler.StructValue(from: fields)
+    return try _structValueToDynamicMessage(structValue)
   }
 
   private func createTestStructDescriptor() throws -> MessageDescriptor {
-    var fileDescriptor = FileDescriptor(
-      name: "google/protobuf/struct.proto",
-      package: "google.protobuf"
-    )
+    return StructProtoDescriptors.structDescriptor
+  }
 
-    var messageDescriptor = MessageDescriptor(
-      name: "Struct",
-      parent: fileDescriptor
-    )
+  // MARK: - OPE-263 / OPE-266: New wire-format tests
 
-    let fieldsField = FieldDescriptor(
-      name: "fields",
-      number: 1,
-      type: .bytes
-    )
-    messageDescriptor.addField(fieldsField)
-    fileDescriptor.addMessage(messageDescriptor)
+  func test_createDynamic_struct_fieldIsMapNotBytes() throws {
+    let structValue = StructHandler.StructValue(fields: [
+      "alpha": .numberValue(1.5),
+      "beta": .boolValue(true),
+    ])
+    let message = try StructHandler.createDynamic(from: structValue)
 
-    return messageDescriptor
+    XCTAssertEqual(message.descriptor.fullName, "google.protobuf.Struct")
+    let rawField = try message.get(forField: 1)
+    XCTAssertNil(rawField as? Data, "field 1 must not be bytes (old JSON approach)")
+    let map = rawField as? [AnyHashable: Any]
+    XCTAssertNotNil(map, "field 1 must be a map")
+    XCTAssertEqual(map?.count, 2)
+    XCTAssertNotNil(map?["alpha"] as? DynamicMessage)
+    XCTAssertNotNil(map?["beta"] as? DynamicMessage)
+  }
+
+  func test_createDynamic_storesFieldsAsMapNotBytes() throws {
+    let structValue = StructHandler.StructValue(fields: [
+      "key": .stringValue("val"),
+      "num": .numberValue(42),
+    ])
+    let message = try StructHandler.createDynamic(from: structValue)
+
+    XCTAssertEqual(message.descriptor.fullName, "google.protobuf.Struct")
+
+    let rawField = try message.get(forField: 1)
+    let map = rawField as? [AnyHashable: Any]
+    XCTAssertNotNil(map, "field 1 must be a map, not bytes or nil")
+    XCTAssertNil(rawField as? Data, "field 1 must not be a bytes blob (old JSON approach)")
+    XCTAssertEqual(map?.count, 2)
+  }
+
+  func test_createSpecialized_readsMapField() throws {
+    let original = StructHandler.StructValue(fields: [
+      "x": .numberValue(1),
+      "y": .stringValue("hello"),
+      "flag": .boolValue(false),
+    ])
+    let message = try _structValueToDynamicMessage(original)
+
+    let specialized = try StructHandler.createSpecialized(from: message)
+    let structValue = try XCTUnwrap(specialized as? StructHandler.StructValue)
+
+    XCTAssertEqual(structValue.fields.count, 3)
+    XCTAssertEqual(structValue.getValue("x"), .numberValue(1))
+    XCTAssertEqual(structValue.getValue("y"), .stringValue("hello"))
+    XCTAssertEqual(structValue.getValue("flag"), .boolValue(false))
+  }
+
+  func test_roundTrip_withNestedStructAndList_preservesAllFields() throws {
+    let original = StructHandler.StructValue(fields: [
+      "name": .stringValue("Alice"),
+      "scores": .listValue([.numberValue(10), .numberValue(20)]),
+      "meta": .structValue(
+        StructHandler.StructValue(fields: [
+          "active": .boolValue(true),
+          "tag": .stringValue("vip"),
+        ])
+      ),
+    ])
+
+    let message = try StructHandler.createDynamic(from: original)
+    let recovered = try StructHandler.createSpecialized(from: message)
+    let result = try XCTUnwrap(recovered as? StructHandler.StructValue)
+
+    XCTAssertEqual(result, original)
   }
 }
