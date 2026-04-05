@@ -105,9 +105,101 @@ public struct JSONDeserializer {
         )
       }
       return try deserializeFromJSONObject(jsonObj, using: descriptor, depth: depth)
+    case WellKnownTypeNames.value:
+      return try decodeValueFromAny(jsonValue, depth: depth)
+    case WellKnownTypeNames.structType:
+      guard let jsonObj = jsonValue as? [String: Any] else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Object",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      return try decodeStructFromObject(jsonObj, depth: depth)
+    case WellKnownTypeNames.listValue:
+      guard let jsonArr = jsonValue as? [Any] else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Array",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      return try decodeListValueFromArray(jsonArr, depth: depth)
     default:
       throw JSONDeserializationError.unsupportedWellKnownTypeDecoding(typeName: descriptor.fullName)
     }
+  }
+
+  /// Decodes any JSON value to `google.protobuf.Value`.
+  ///
+  /// Field layout: 1 null_value, 2 number_value, 3 string_value, 4 bool_value,
+  /// 5 struct_value, 6 list_value. JSON booleans are distinguished from numbers
+  /// via `CFBooleanGetTypeID()` on Darwin; objcType "c"/"B" on Linux.
+  private func decodeValueFromAny(_ jsonValue: Any, depth: Int) throws -> DynamicMessage {
+    guard depth <= options.maxNestingDepth else {
+      throw JSONDeserializationError.nestingDepthExceeded(maxDepth: options.maxNestingDepth)
+    }
+    var msg = DynamicMessage(descriptor: StructProtoDescriptors.valueDescriptor)
+    if jsonValue is NSNull {
+      try msg.set(Int32(0), forField: 1)
+    }
+    else if let number = jsonValue as? NSNumber {
+      if isJSONBool(number) {
+        try msg.set(number.boolValue, forField: 4)
+      }
+      else {
+        try msg.set(number.doubleValue, forField: 2)
+      }
+    }
+    else if let string = jsonValue as? String {
+      try msg.set(string, forField: 3)
+    }
+    else if let dict = jsonValue as? [String: Any] {
+      let nested = try decodeStructFromObject(dict, depth: depth + 1)
+      try msg.set(nested, forField: 5)
+    }
+    else if let arr = jsonValue as? [Any] {
+      let nested = try decodeListValueFromArray(arr, depth: depth + 1)
+      try msg.set(nested, forField: 6)
+    }
+    else {
+      try msg.set(Int32(0), forField: 1)
+    }
+    return msg
+  }
+
+  /// Decodes a `[String: Any]` JSON object to `google.protobuf.Struct`.
+  private func decodeStructFromObject(_ jsonObj: [String: Any], depth: Int) throws -> DynamicMessage {
+    guard depth <= options.maxNestingDepth else {
+      throw JSONDeserializationError.nestingDepthExceeded(maxDepth: options.maxNestingDepth)
+    }
+    var msg = DynamicMessage(descriptor: StructProtoDescriptors.structDescriptor)
+    for (key, value) in jsonObj {
+      let valueMsg = try decodeValueFromAny(value, depth: depth + 1)
+      try msg.setMapEntry(valueMsg, forKey: key, inField: 1)
+    }
+    return msg
+  }
+
+  /// Decodes a `[Any]` JSON array to `google.protobuf.ListValue`.
+  private func decodeListValueFromArray(_ jsonArr: [Any], depth: Int) throws -> DynamicMessage {
+    guard depth <= options.maxNestingDepth else {
+      throw JSONDeserializationError.nestingDepthExceeded(maxDepth: options.maxNestingDepth)
+    }
+    var msg = DynamicMessage(descriptor: StructProtoDescriptors.listValueDescriptor)
+    for item in jsonArr {
+      let valueMsg = try decodeValueFromAny(item, depth: depth + 1)
+      try msg.addRepeatedValue(valueMsg, forField: 1)
+    }
+    return msg
+  }
+
+  /// Returns `true` when `number` was produced from a JSON boolean literal.
+  private func isJSONBool(_ number: NSNumber) -> Bool {
+    #if canImport(CoreFoundation) && !os(Linux)
+      return CFGetTypeID(number) == CFBooleanGetTypeID()
+    #else
+      let objCType = String(cString: number.objCType)
+      return objCType == "c" || objCType == "B"
+    #endif
   }
 
   /// Deserializes JSON object to dynamic message.
