@@ -54,24 +54,60 @@ public struct JSONDeserializer {
   /// - Returns: Deserialized dynamic message.
   /// - Throws: JSONDeserializationError if deserialization failed.
   public func deserialize(_ data: Data, using descriptor: MessageDescriptor) throws -> DynamicMessage {
-    // Parse JSON to object
-    let jsonObject: Any
+    // Use .fragmentsAllowed so that WKTs with non-object canonical JSON (bare string,
+    // number, boolean, or null) can be parsed at the top level.
+    let jsonValue: Any
     do {
-      jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
+      jsonValue = try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
     }
     catch {
       throw JSONDeserializationError.invalidJSON(underlyingError: error)
     }
 
-    // JSON object should be dictionary for message
-    guard let jsonDictionary = jsonObject as? [String: Any] else {
+    // Route well-known types through the WKT dispatch layer.
+    if WellKnownTypeDetector.isWellKnownType(descriptor.fullName) {
+      return try deserializeWKTFromAny(jsonValue, using: descriptor, depth: 0)
+    }
+
+    guard let jsonDictionary = jsonValue as? [String: Any] else {
       throw JSONDeserializationError.invalidJSONStructure(
         expected: "Object",
-        actual: String(describing: type(of: jsonObject))
+        actual: String(describing: type(of: jsonValue))
       )
     }
 
     return try deserializeFromJSONObject(jsonDictionary, using: descriptor)
+  }
+
+  /// Deserializes a `Any` JSON value to a well-known type message.
+  ///
+  /// Dispatches to a WKT-specific canonical JSON decoder. Unimplemented WKT decoders
+  /// throw `JSONDeserializationError.unsupportedWellKnownTypeDecoding` rather than
+  /// silently falling through to field-by-field decoding (which would produce incorrect output).
+  ///
+  /// - Parameters:
+  ///   - jsonValue: JSON value parsed from the wire (can be any JSON type).
+  ///   - descriptor: Message descriptor whose `fullName` identifies the WKT.
+  ///   - depth: Current nesting depth for cycle/depth checks.
+  /// - Returns: Deserialized dynamic message.
+  /// - Throws: `JSONDeserializationError.unsupportedWellKnownTypeDecoding` for unimplemented WKTs.
+  internal func deserializeWKTFromAny(
+    _ jsonValue: Any,
+    using descriptor: MessageDescriptor,
+    depth: Int
+  ) throws -> DynamicMessage {
+    switch descriptor.fullName {
+    case WellKnownTypeNames.empty:
+      guard let jsonObj = jsonValue as? [String: Any] else {
+        throw JSONDeserializationError.invalidJSONStructure(
+          expected: "Object",
+          actual: String(describing: type(of: jsonValue))
+        )
+      }
+      return try deserializeFromJSONObject(jsonObj, using: descriptor, depth: depth)
+    default:
+      throw JSONDeserializationError.unsupportedWellKnownTypeDecoding(typeName: descriptor.fullName)
+    }
   }
 
   /// Deserializes JSON object to dynamic message.
@@ -568,14 +604,6 @@ public struct JSONDeserializer {
     fieldName: String,
     depth: Int
   ) throws -> DynamicMessage {
-    guard let jsonObject = jsonValue as? [String: Any] else {
-      throw JSONDeserializationError.valueTypeMismatch(
-        fieldName: fieldName,
-        expected: "Object",
-        actual: String(describing: type(of: jsonValue))
-      )
-    }
-
     guard let rawTypeName = typeName else {
       throw JSONDeserializationError.missingTypeName(fieldName: fieldName)
     }
@@ -583,6 +611,22 @@ public struct JSONDeserializer {
     let lookupName = normaliseTypeName(rawTypeName)
     guard !lookupName.isEmpty else {
       throw JSONDeserializationError.missingTypeName(fieldName: fieldName)
+    }
+
+    // Route well-known type nested fields through the WKT dispatch layer.
+    if WellKnownTypeDetector.isWellKnownType(lookupName) {
+      if let nestedDescriptor = options.typeRegistry.findMessage(named: lookupName) {
+        return try deserializeWKTFromAny(jsonValue, using: nestedDescriptor, depth: depth + 1)
+      }
+      throw JSONDeserializationError.unsupportedWellKnownTypeDecoding(typeName: lookupName)
+    }
+
+    guard let jsonObject = jsonValue as? [String: Any] else {
+      throw JSONDeserializationError.valueTypeMismatch(
+        fieldName: fieldName,
+        expected: "Object",
+        actual: String(describing: type(of: jsonValue))
+      )
     }
 
     guard let nestedDescriptor = options.typeRegistry.findMessage(named: lookupName) else {
@@ -778,6 +822,8 @@ public enum JSONDeserializationError: Error, Equatable {
   case nestedMessageDescriptorNotFound(fieldName: String, typeName: String)
   case nestingDepthExceeded(maxDepth: Int)
   case unsupportedFieldType(type: String)
+  /// Canonical JSON decoding for a well-known type is not yet implemented.
+  case unsupportedWellKnownTypeDecoding(typeName: String)
 
   public var description: String {
     switch self {
@@ -819,6 +865,8 @@ public enum JSONDeserializationError: Error, Equatable {
       return "Nesting depth exceeded maximum of \(maxDepth)"
     case .unsupportedFieldType(let type):
       return "Unsupported field type: \(type)"
+    case .unsupportedWellKnownTypeDecoding(let typeName):
+      return "Canonical JSON decoding for well-known type '\(typeName)' is not yet implemented"
     }
   }
 
@@ -903,6 +951,11 @@ public enum JSONDeserializationError: Error, Equatable {
     case (.nestingDepthExceeded(let lMax), .nestingDepthExceeded(let rMax)):
       return lMax == rMax
     case (.unsupportedFieldType(let lType), .unsupportedFieldType(let rType)):
+      return lType == rType
+    case (
+      .unsupportedWellKnownTypeDecoding(let lType),
+      .unsupportedWellKnownTypeDecoding(let rType)
+    ):
       return lType == rType
     default:
       return false

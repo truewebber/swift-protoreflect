@@ -52,15 +52,51 @@ public struct JSONSerializer {
   /// - Returns: JSON string in Data format.
   /// - Throws: JSONSerializationError if serialization failed.
   public func serialize(_ message: DynamicMessage) throws -> Data {
-    let jsonObject = try serializeToJSONObject(message)
+    let jsonValue = try serializeMessageToAny(message)
 
-    let options: JSONSerialization.WritingOptions = self.options.prettyPrinted ? .prettyPrinted : []
+    var writingOptions: JSONSerialization.WritingOptions = .fragmentsAllowed
+    if self.options.prettyPrinted {
+      writingOptions.insert(.prettyPrinted)
+    }
 
     do {
-      return try JSONSerialization.data(withJSONObject: jsonObject, options: options)
+      return try JSONSerialization.data(withJSONObject: jsonValue, options: writingOptions)
     }
     catch {
       throw JSONSerializationError.jsonWriteError(underlyingError: error)
+    }
+  }
+
+  /// Serializes a dynamic message to an `Any` value.
+  ///
+  /// When `useCanonicalWellKnownTypeEncoding` is enabled and the message is a well-known type,
+  /// this method routes to a WKT-specific encoder. For all other messages it falls through to
+  /// standard field-by-field encoding via `serializeToJSONObject`.
+  ///
+  /// The return type is `Any` rather than `[String: Any]` because canonical WKT output can be
+  /// a non-object JSON value (e.g. a bare `String`, `Bool`, `NSNull`, or `[Any]`).
+  ///
+  /// - Parameter message: Dynamic message to serialize.
+  /// - Returns: JSON-compatible value (`Any`).
+  /// - Throws: `JSONSerializationError.unsupportedWellKnownTypeEncoding` when canonical mode is
+  ///   enabled for a WKT whose encoder has not yet been implemented.
+  internal func serializeMessageToAny(_ message: DynamicMessage) throws -> Any {
+    let fullName = message.descriptor.fullName
+    guard options.useCanonicalWellKnownTypeEncoding,
+      WellKnownTypeDetector.isWellKnownType(fullName)
+    else {
+      return try serializeToJSONObject(message)
+    }
+    return try encodeWellKnownType(message, fullName: fullName)
+  }
+
+  /// Dispatches to a WKT-specific canonical JSON encoder.
+  private func encodeWellKnownType(_ message: DynamicMessage, fullName: String) throws -> Any {
+    switch fullName {
+    case WellKnownTypeNames.empty:
+      return [String: Any]()
+    default:
+      throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: fullName)
     }
   }
 
@@ -350,8 +386,7 @@ public struct JSONSerializer {
           actual: String(describing: Swift.type(of: value))
         )
       }
-      // Recursively serialize nested message
-      return try serializeToJSONObject(messageValue)
+      return try serializeMessageToAny(messageValue)
 
     case .enum:
       guard let enumValue = value as? Int32 else {
@@ -374,7 +409,7 @@ public struct JSONSerializer {
           actual: String(describing: Swift.type(of: value))
         )
       }
-      return try serializeToJSONObject(groupMessage)
+      return try serializeMessageToAny(groupMessage)
     }
   }
 
@@ -551,6 +586,8 @@ public enum JSONSerializationError: Error, Equatable {
   case unsupportedFieldType(type: String)
   case invalidMapKeyType(keyType: String)
   case jsonWriteError(underlyingError: Error)
+  /// Canonical JSON encoding for a well-known type is not yet implemented.
+  case unsupportedWellKnownTypeEncoding(typeName: String)
 
   public var description: String {
     switch self {
@@ -568,6 +605,8 @@ public enum JSONSerializationError: Error, Equatable {
       return "Invalid map key type: \(keyType)"
     case .jsonWriteError(let underlyingError):
       return "JSON write error: \(underlyingError.localizedDescription)"
+    case .unsupportedWellKnownTypeEncoding(let typeName):
+      return "Canonical JSON encoding for well-known type '\(typeName)' is not yet implemented"
     }
   }
 
@@ -594,6 +633,11 @@ public enum JSONSerializationError: Error, Equatable {
     case (.jsonWriteError(_), .jsonWriteError(_)):
       // Hard to compare underlying errors, so consider equal if both are jsonWriteError
       return true
+    case (
+      .unsupportedWellKnownTypeEncoding(let lType),
+      .unsupportedWellKnownTypeEncoding(let rType)
+    ):
+      return lType == rType
     default:
       return false
     }
