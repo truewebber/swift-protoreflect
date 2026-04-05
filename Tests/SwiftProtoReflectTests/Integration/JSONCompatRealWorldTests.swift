@@ -33,25 +33,12 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
     let desc = CompatDescriptors.nullableUint32()
 
-    // TODO: Library limitation — JSONDeserializer cannot handle JSON `null` value
-    // for google.protobuf.NullValue enum fields. SwiftProtobuf serializes NullValue as
-    // JSON literal `null`, but our deserializer expects a JSON string or number for enum
-    // fields and throws `valueTypeMismatch`. Tracked for library fix.
-    //
-    // Direction A fails with: valueTypeMismatch(fieldName: "null_val",
-    //                          expected: "Number or String", actual: "NSNull")
+    // Direction A: protoc → us (NullValue deserialized from JSON null literal)
     let jsonStr = try proto.jsonString()
     guard let jsonData = jsonStr.data(using: .utf8) else { throw CompatError.jsonEncodingFailed }
-    let deserializeResult = Result {
-      try CompatHelpers.makeDeserializer(registry: registry).deserialize(jsonData, using: desc)
-    }
-    if case .failure(let err) = deserializeResult {
-      // Document the known failure
-      XCTAssertTrue(
-        "\(err)".contains("NSNull") || "\(err)".contains("valueTypeMismatch"),
-        "Expected NullValue deserialization failure, got: \(err)"
-      )
-    }
+    let deserialized = try CompatHelpers.makeDeserializer(registry: registry).deserialize(jsonData, using: desc)
+    XCTAssertEqual(try deserialized.get(forField: 1) as? Int32, 0, "null_val should be 0 (NULL_VALUE)")
+    XCTAssertNil(try deserialized.get(forField: 2) as? UInt32, "value field should not be set")
 
     // Direction B: our serializer → protoc (works - we can round-trip via protoc)
     var dynamic = DynamicMessage(descriptor: desc)
@@ -95,18 +82,12 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
     let desc = CompatDescriptors.nullableDouble()
 
-    // TODO: Same library limitation as test_realworld_nullableUint32_null_bidirectional.
+    // Direction A: protoc → us (NullValue deserialized from JSON null literal)
     let jsonStr2 = try proto.jsonString()
     guard let jsonData2 = jsonStr2.data(using: .utf8) else { throw CompatError.jsonEncodingFailed }
-    let deserializeResult2 = Result {
-      try CompatHelpers.makeDeserializer(registry: registry).deserialize(jsonData2, using: desc)
-    }
-    if case .failure(let err) = deserializeResult2 {
-      XCTAssertTrue(
-        "\(err)".contains("NSNull") || "\(err)".contains("valueTypeMismatch"),
-        "Expected NullValue deserialization failure, got: \(err)"
-      )
-    }
+    let deserialized2 = try CompatHelpers.makeDeserializer(registry: registry).deserialize(jsonData2, using: desc)
+    XCTAssertEqual(try deserialized2.get(forField: 1) as? Int32, 0, "null_val should be 0 (NULL_VALUE)")
+    XCTAssertNil(try deserialized2.get(forField: 2) as? Double, "value field should not be set")
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(0), forField: 1)
@@ -153,20 +134,17 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
     let desc = CompatDescriptors.withNullables()
 
-    // TODO: Library limitation — WithNullables contains NullableBool which sets nullVal.
-    // When SwiftProtobuf serializes it, `active.null_val` becomes JSON null, and our
-    // deserializer fails with valueTypeMismatch. Same root cause as nullableUint32/null tests.
+    // Direction A: protoc → us (WithNullables containing NullableBool.nullVal = JSON null)
     let jsonStrW = try proto.jsonString()
     guard let jsonDataW = jsonStrW.data(using: .utf8) else { throw CompatError.jsonEncodingFailed }
-    let deserializeResultW = Result {
-      try CompatHelpers.makeDeserializer(registry: registry).deserialize(jsonDataW, using: desc)
-    }
-    if case .failure(let err) = deserializeResultW {
-      XCTAssertTrue(
-        "\(err)".contains("NSNull") || "\(err)".contains("valueTypeMismatch"),
-        "Expected NullValue deserialization failure, got: \(err)"
-      )
-    }
+    let deserializedW = try CompatHelpers.makeDeserializer(registry: registry).deserialize(jsonDataW, using: desc)
+    let countMsg = try XCTUnwrap(try deserializedW.get(forField: 1) as? DynamicMessage, "count must be set")
+    XCTAssertEqual(try countMsg.get(forField: 2) as? UInt32, 10, "count.value should be 10")
+    let activeMsg = try XCTUnwrap(try deserializedW.get(forField: 3) as? DynamicMessage, "active must be set")
+    XCTAssertEqual(try activeMsg.get(forField: 1) as? Int32, 0, "active.null_val should be 0 (NULL_VALUE)")
+    let labelMsg = try XCTUnwrap(try deserializedW.get(forField: 4) as? DynamicMessage, "label must be set")
+    XCTAssertEqual(try labelMsg.get(forField: 2) as? String, "label_val", "label.value should be 'label_val'")
+    XCTAssertEqual(try deserializedW.get(forField: 10) as? String, "outer", "name should be 'outer'")
 
     let nullableUint32Desc = CompatDescriptors.nullableUint32()
     var countDyn = DynamicMessage(descriptor: nullableUint32Desc)

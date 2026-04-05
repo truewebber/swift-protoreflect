@@ -360,6 +360,15 @@ public struct JSONSerializer {
       let fieldName = options.useOriginalFieldNames ? field.name : field.jsonName
 
       if hasValue {
+        // Per proto3 JSON spec, scalar fields at their default value must be omitted
+        // unless the field has explicit presence (proto3 optional, proto2 required/optional)
+        // or the caller requested includeDefaultValues.
+        if !options.includeDefaultValues
+          && isProto3ImplicitPresenceScalar(field)
+          && isProto3ScalarDefault(fieldAccess.getValue(field.number, as: Any.self), type: field.type)
+        {
+          continue
+        }
         result[fieldName] = try serializeFieldValue(field, from: fieldAccess, descriptor: descriptor)
       }
       else if options.includeDefaultValues {
@@ -371,6 +380,47 @@ public struct JSONSerializer {
     }
 
     return result
+  }
+
+  /// Returns `true` when the field is a proto3 implicit-presence scalar.
+  ///
+  /// Such fields have no explicit presence: setting them to their default value is
+  /// semantically equivalent to not setting them, so the value must be omitted from
+  /// JSON output per the proto3 JSON mapping specification.
+  ///
+  /// Exclusions:
+  /// - `proto3Optional`, `isRequired`, `isOptional` — explicit presence.
+  /// - `isRepeated`, `isMap` — collections; empty is handled separately.
+  /// - `oneofIndex != nil` — oneof fields have explicit presence by virtue of being the active branch.
+  /// - `.message`, `.group` — non-scalar; omission handled via `hasValue` on `nestedMessages`.
+  /// - `.enum` — enum zero-value omission is intentionally deferred; existing tests assert emission.
+  private func isProto3ImplicitPresenceScalar(_ field: FieldDescriptor) -> Bool {
+    guard !field.proto3Optional, !field.isRequired, !field.isOptional,
+      !field.isRepeated, !field.isMap,
+      field.oneofIndex == nil
+    else { return false }
+    switch field.type {
+    case .message, .group, .enum: return false
+    default: return true
+    }
+  }
+
+  /// Returns `true` when `value` equals the proto3 default for the given scalar type.
+  private func isProto3ScalarDefault(_ value: Any?, type: FieldType) -> Bool {
+    guard let value else { return true }
+    switch type {
+    case .double: return (value as? Double) == 0.0
+    case .float: return (value as? Float) == 0.0
+    case .int32, .sint32, .sfixed32: return (value as? Int32) == 0
+    case .int64, .sint64, .sfixed64: return (value as? Int64) == 0
+    case .uint32, .fixed32: return (value as? UInt32) == 0
+    case .uint64, .fixed64: return (value as? UInt64) == 0
+    case .bool: return (value as? Bool) == false
+    case .string: return (value as? String) == ""
+    case .bytes: return (value as? Data)?.isEmpty == true
+    case .enum: return (value as? Int32) == 0
+    case .message, .group: return false
+    }
   }
 
   /// Resolves an `EnumDescriptor` for a field.

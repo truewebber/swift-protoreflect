@@ -1098,6 +1098,18 @@ public struct JSONDeserializer {
     fieldName: String,
     enumDescriptor: EnumDescriptor? = nil
   ) throws -> Int32 {
+    // JSON `null` is the canonical representation of google.protobuf.NullValue (NULL_VALUE = 0).
+    // SwiftProtobuf serializes NullValue enum fields as JSON literal null per the proto3 JSON spec.
+    if jsonValue is NSNull {
+      if let enumDesc = enumDescriptor, enumDesc.fullName == WellKnownTypeNames.nullValue {
+        return Int32(0)
+      }
+      throw JSONDeserializationError.valueTypeMismatch(
+        fieldName: fieldName,
+        expected: "Number or String",
+        actual: "NSNull"
+      )
+    }
     if let numberValue = jsonValue as? NSNumber {
       return numberValue.int32Value
     }

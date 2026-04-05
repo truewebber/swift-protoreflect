@@ -51,12 +51,6 @@ final class JSONCompatDefaultsTests: XCTestCase {
     let jsonStr = try proto.jsonString()
     XCTAssertEqual(jsonStr, "{}", "Explicit proto3 defaults should be omitted from JSON")
 
-    // TODO: Library limitation — DynamicMessage.set() stores explicit zero values.
-    // JSONSerializer then outputs them because the field map is non-empty.
-    // Per proto3 spec, fields at their default value should be omitted regardless of
-    // whether explicitly set. SwiftProtoReflect currently does not implement
-    // proto3 field-presence semantics for scalar fields — it outputs any explicitly
-    // stored value, even if it equals the default. Tracked for library fix.
     let desc = CompatDescriptors.scalarMessage()
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(0), forField: 3)
@@ -65,12 +59,7 @@ final class JSONCompatDefaultsTests: XCTestCase {
     try dynamic.set(Data(), forField: 15)
     let jsonData = try CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
     let ourJson = try XCTUnwrap(String(data: jsonData, encoding: .utf8))
-    // Library currently includes explicitly-set defaults; assert actual behavior
-    // and document the gap vs proto3 spec.
-    XCTAssertTrue(
-      ourJson == "{}" || ourJson.contains("int32Field"),
-      "Either omits defaults (spec-compliant) or includes them (current behavior): \(ourJson)"
-    )
+    XCTAssertEqual(ourJson, "{}", "Explicit proto3 defaults must be omitted from JSON per spec")
   }
 
   // MARK: - Proto3 optional scalar: nil → omitted, set zero → present
