@@ -43,6 +43,9 @@ let package = Package(
         "Mocks/README.md",
         "TestUtils/README.md",
         "TestResources/README.md",
+      ],
+      resources: [
+        .copy("Fixtures/StructProto")
       ]
     ),
   ]
