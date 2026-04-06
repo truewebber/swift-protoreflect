@@ -64,13 +64,13 @@ final class UnknownFieldsTests: XCTestCase {
 
   // MARK: - Storage Tests
 
-  func test_newMessage_unknownFieldsEmpty() {
+  func test_newMessage_unknownFieldsEmpty() async throws {
     let desc = makeDescriptor()
     let msg = DynamicMessage(descriptor: desc)
     XCTAssertTrue(msg.unknownFields.isEmpty)
   }
 
-  func test_setUnknownFields_storedCorrectly() {
+  func test_setUnknownFields_storedCorrectly() async throws {
     let desc = makeDescriptor()
     var msg = DynamicMessage(descriptor: desc)
     let payload = Data([0x08, 0x96, 0x01])
@@ -78,7 +78,7 @@ final class UnknownFieldsTests: XCTestCase {
     XCTAssertEqual(msg.unknownFields, payload)
   }
 
-  func test_clearUnknownFields_becomesEmpty() {
+  func test_clearUnknownFields_becomesEmpty() async throws {
     let desc = makeDescriptor()
     var msg = DynamicMessage(descriptor: desc)
     msg.setUnknownFields(Data([0x01, 0x02]))
@@ -88,39 +88,39 @@ final class UnknownFieldsTests: XCTestCase {
 
   // MARK: - Binary Deserialization
 
-  func test_deserialize_unknownVarintField_preserved() throws {
+  func test_deserialize_unknownVarintField_preserved() async throws {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildVarintField(fieldNumber: 99, value: 42)
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let msg = try deserializer.deserialize(unknownData, using: desc)
+    let msg = try await deserializer.deserialize(unknownData, using: desc)
     XCTAssertFalse(msg.unknownFields.isEmpty, "Unknown varint field should be preserved")
   }
 
-  func test_deserialize_unknownFixed32Field_preserved() throws {
+  func test_deserialize_unknownFixed32Field_preserved() async throws {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildFixed32Field(fieldNumber: 99, value: 12345)
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let msg = try deserializer.deserialize(unknownData, using: desc)
+    let msg = try await deserializer.deserialize(unknownData, using: desc)
     XCTAssertFalse(msg.unknownFields.isEmpty)
   }
 
-  func test_deserialize_unknownFixed64Field_preserved() throws {
+  func test_deserialize_unknownFixed64Field_preserved() async throws {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildFixed64Field(fieldNumber: 99, value: 123_456_789)
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let msg = try deserializer.deserialize(unknownData, using: desc)
+    let msg = try await deserializer.deserialize(unknownData, using: desc)
     XCTAssertFalse(msg.unknownFields.isEmpty)
   }
 
-  func test_deserialize_unknownLengthDelimitedField_preserved() throws {
+  func test_deserialize_unknownLengthDelimitedField_preserved() async throws {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildLengthDelimitedField(fieldNumber: 99, payload: Data([0xDE, 0xAD]))
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let msg = try deserializer.deserialize(unknownData, using: desc)
+    let msg = try await deserializer.deserialize(unknownData, using: desc)
     XCTAssertFalse(msg.unknownFields.isEmpty)
   }
 
-  func test_deserialize_multipleUnknownFields_allPreserved() throws {
+  func test_deserialize_multipleUnknownFields_allPreserved() async throws {
     let desc = makeDescriptor(fields: [int32Field])
     var binary = Data()
     binary.append(buildVarintField(fieldNumber: 90, value: 1))
@@ -128,121 +128,121 @@ final class UnknownFieldsTests: XCTestCase {
     binary.append(buildLengthDelimitedField(fieldNumber: 92, payload: Data([0xFF])))
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let msg = try deserializer.deserialize(binary, using: desc)
+    let msg = try await deserializer.deserialize(binary, using: desc)
     XCTAssertFalse(msg.unknownFields.isEmpty)
     XCTAssertTrue(msg.unknownFields.count > 5, "Should contain data from all 3 unknown fields")
   }
 
-  func test_deserialize_mixedKnownAndUnknown_bothHandled() throws {
+  func test_deserialize_mixedKnownAndUnknown_bothHandled() async throws {
     let desc = makeDescriptor(fields: [int32Field])
     var binary = Data()
     binary.append(buildVarintField(fieldNumber: 1, value: 42))
     binary.append(buildVarintField(fieldNumber: 99, value: 7))
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let msg = try deserializer.deserialize(binary, using: desc)
+    let msg = try await deserializer.deserialize(binary, using: desc)
 
     let knownValue = try msg.get(forField: 1) as? Int32
     XCTAssertEqual(knownValue, 42)
     XCTAssertFalse(msg.unknownFields.isEmpty, "Unknown field 99 should be preserved")
   }
 
-  func test_deserialize_preserveUnknownFieldsFalse_discarded() throws {
+  func test_deserialize_preserveUnknownFieldsFalse_discarded() async throws {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildVarintField(fieldNumber: 99, value: 42)
     let opts = DeserializationOptions(preserveUnknownFields: false, typeRegistry: TypeRegistry())
     let deserializer = BinaryDeserializer(options: opts)
-    let msg = try deserializer.deserialize(unknownData, using: desc)
+    let msg = try await deserializer.deserialize(unknownData, using: desc)
     XCTAssertTrue(msg.unknownFields.isEmpty)
   }
 
-  func test_deserialize_onlyUnknownFields_messageEmptyButUnknownPresent() throws {
+  func test_deserialize_onlyUnknownFields_messageEmptyButUnknownPresent() async throws {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildVarintField(fieldNumber: 50, value: 100)
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let msg = try deserializer.deserialize(unknownData, using: desc)
+    let msg = try await deserializer.deserialize(unknownData, using: desc)
 
     let hasKnown = try msg.hasValue(forField: 1)
     XCTAssertFalse(hasKnown)
     XCTAssertFalse(msg.unknownFields.isEmpty)
   }
 
-  func test_deserialize_emptyData_noUnknownFields() throws {
+  func test_deserialize_emptyData_noUnknownFields() async throws {
     let desc = makeDescriptor(fields: [int32Field])
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let msg = try deserializer.deserialize(Data(), using: desc)
+    let msg = try await deserializer.deserialize(Data(), using: desc)
     XCTAssertTrue(msg.unknownFields.isEmpty)
   }
 
   // MARK: - Serialization Round-trip
 
-  func test_serialize_messageWithUnknownFields_appendedToOutput() throws {
+  func test_serialize_messageWithUnknownFields_appendedToOutput() async throws {
     let desc = makeDescriptor(fields: [int32Field])
     var msg = DynamicMessage(descriptor: desc)
     let rawUnknown = buildVarintField(fieldNumber: 99, value: 77)
     msg.setUnknownFields(rawUnknown)
 
     let serializer = BinarySerializer()
-    let output = try serializer.serialize(msg)
+    let output = try await serializer.serialize(msg)
     XCTAssertTrue(output.count >= rawUnknown.count, "Output should contain the unknown field bytes")
     XCTAssertTrue(output.hasSuffix(rawUnknown), "Unknown fields should be appended at the end")
   }
 
-  func test_roundTrip_unknownVarint_preserved() throws {
+  func test_roundTrip_unknownVarint_preserved() async throws {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildVarintField(fieldNumber: 99, value: 42)
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let msg = try deserializer.deserialize(unknownData, using: desc)
+    let msg = try await deserializer.deserialize(unknownData, using: desc)
 
     let serializer = BinarySerializer()
-    let reencoded = try serializer.serialize(msg)
+    let reencoded = try await serializer.serialize(msg)
 
-    let msg2 = try deserializer.deserialize(reencoded, using: desc)
+    let msg2 = try await deserializer.deserialize(reencoded, using: desc)
     XCTAssertEqual(msg.unknownFields, msg2.unknownFields)
   }
 
-  func test_roundTrip_unknownFixed64_preserved() throws {
+  func test_roundTrip_unknownFixed64_preserved() async throws {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildFixed64Field(fieldNumber: 99, value: 0xDEAD_BEEF_CAFE_BABE)
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let msg = try deserializer.deserialize(unknownData, using: desc)
+    let msg = try await deserializer.deserialize(unknownData, using: desc)
 
     let serializer = BinarySerializer()
-    let reencoded = try serializer.serialize(msg)
+    let reencoded = try await serializer.serialize(msg)
 
-    let msg2 = try deserializer.deserialize(reencoded, using: desc)
+    let msg2 = try await deserializer.deserialize(reencoded, using: desc)
     XCTAssertEqual(msg.unknownFields, msg2.unknownFields)
   }
 
-  func test_roundTrip_unknownLengthDelimited_preserved() throws {
+  func test_roundTrip_unknownLengthDelimited_preserved() async throws {
     let desc = makeDescriptor(fields: [int32Field])
     let unknownData = buildLengthDelimitedField(fieldNumber: 99, payload: Data("hello".utf8))
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let msg = try deserializer.deserialize(unknownData, using: desc)
+    let msg = try await deserializer.deserialize(unknownData, using: desc)
 
     let serializer = BinarySerializer()
-    let reencoded = try serializer.serialize(msg)
+    let reencoded = try await serializer.serialize(msg)
 
-    let msg2 = try deserializer.deserialize(reencoded, using: desc)
+    let msg2 = try await deserializer.deserialize(reencoded, using: desc)
     XCTAssertEqual(msg.unknownFields, msg2.unknownFields)
   }
 
-  func test_roundTrip_knownAndUnknown_bothPreserved() throws {
+  func test_roundTrip_knownAndUnknown_bothPreserved() async throws {
     let desc = makeDescriptor(fields: [int32Field])
     var binary = Data()
     binary.append(buildVarintField(fieldNumber: 1, value: 42))
     binary.append(buildVarintField(fieldNumber: 99, value: 7))
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let msg = try deserializer.deserialize(binary, using: desc)
+    let msg = try await deserializer.deserialize(binary, using: desc)
 
     let serializer = BinarySerializer()
-    let reencoded = try serializer.serialize(msg)
+    let reencoded = try await serializer.serialize(msg)
 
-    let msg2 = try deserializer.deserialize(reencoded, using: desc)
+    let msg2 = try await deserializer.deserialize(reencoded, using: desc)
     let value = try msg2.get(forField: 1) as? Int32
     XCTAssertEqual(value, 42)
     XCTAssertEqual(msg.unknownFields, msg2.unknownFields)
@@ -250,7 +250,7 @@ final class UnknownFieldsTests: XCTestCase {
 
   // MARK: - Clone & Equality
 
-  func test_clone_unknownFieldsCopied() throws {
+  func test_clone_unknownFieldsCopied() async throws {
     let desc = makeDescriptor(fields: [int32Field])
     var msg = DynamicMessage(descriptor: desc)
     msg.setUnknownFields(Data([0xDE, 0xAD]))
@@ -260,7 +260,7 @@ final class UnknownFieldsTests: XCTestCase {
     XCTAssertEqual(cloned.unknownFields, msg.unknownFields)
   }
 
-  func test_equality_sameUnknownFields_equal() {
+  func test_equality_sameUnknownFields_equal() async throws {
     let desc = makeDescriptor()
     var msg1 = DynamicMessage(descriptor: desc)
     var msg2 = DynamicMessage(descriptor: desc)
@@ -269,7 +269,7 @@ final class UnknownFieldsTests: XCTestCase {
     XCTAssertEqual(msg1, msg2)
   }
 
-  func test_equality_differentUnknownFields_notEqual() {
+  func test_equality_differentUnknownFields_notEqual() async throws {
     let desc = makeDescriptor()
     var msg1 = DynamicMessage(descriptor: desc)
     var msg2 = DynamicMessage(descriptor: desc)
@@ -278,7 +278,7 @@ final class UnknownFieldsTests: XCTestCase {
     XCTAssertNotEqual(msg1, msg2)
   }
 
-  func test_equality_oneHasUnknownOtherNot_notEqual() {
+  func test_equality_oneHasUnknownOtherNot_notEqual() async throws {
     let desc = makeDescriptor()
     var msg1 = DynamicMessage(descriptor: desc)
     let msg2 = DynamicMessage(descriptor: desc)

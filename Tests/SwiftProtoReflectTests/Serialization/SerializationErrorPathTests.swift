@@ -7,7 +7,7 @@ final class SerializationErrorPathTests: XCTestCase {
 
   // MARK: - JSONDeserializer: type mismatches and invalid data
 
-  func test_jsonDeserialize_repeatedFieldNotArray_throws() throws {
+  func test_jsonDeserialize_repeatedFieldNotArray_throws() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(
       FieldDescriptor(
@@ -20,10 +20,16 @@ final class SerializationErrorPathTests: XCTestCase {
     let json = #"{"items": "not_an_array"}"#.data(using: .utf8)!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
-    XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
+    do {
+      try await deserializer.deserialize(json, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
-  func test_jsonDeserialize_mapFieldNotObject_throws() throws {
+  func test_jsonDeserialize_mapFieldNotObject_throws() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(
       FieldDescriptor(
@@ -41,55 +47,91 @@ final class SerializationErrorPathTests: XCTestCase {
     let json = #"{"labels": [1,2,3]}"#.data(using: .utf8)!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
-    XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
+    do {
+      try await deserializer.deserialize(json, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
-  func test_jsonDeserialize_int32OutOfRange_throws() throws {
+  func test_jsonDeserialize_int32OutOfRange_throws() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(FieldDescriptor(name: "val", number: 1, type: .int32))
     let json = #"{"val": 9999999999999}"#.data(using: .utf8)!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
-    XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
+    do {
+      try await deserializer.deserialize(json, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
-  func test_jsonDeserialize_invalidBase64ForBytes_throws() throws {
+  func test_jsonDeserialize_invalidBase64ForBytes_throws() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(FieldDescriptor(name: "data", number: 1, type: .bytes))
     let json = #"{"data": "!!!not-base64!!!"}"#.data(using: .utf8)!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
-    XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
+    do {
+      try await deserializer.deserialize(json, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
-  func test_jsonDeserialize_wrongTypeForBoolField_throws() throws {
+  func test_jsonDeserialize_wrongTypeForBoolField_throws() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(FieldDescriptor(name: "flag", number: 1, type: .bool))
     let json = #"{"flag": "yes"}"#.data(using: .utf8)!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
-    XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
+    do {
+      try await deserializer.deserialize(json, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
-  func test_jsonDeserialize_wrongTypeForDoubleField_throws() throws {
+  func test_jsonDeserialize_wrongTypeForDoubleField_throws() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(FieldDescriptor(name: "val", number: 1, type: .double))
     let json = #"{"val": [1,2,3]}"#.data(using: .utf8)!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
-    XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
+    do {
+      try await deserializer.deserialize(json, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
-  func test_jsonDeserialize_wrongTypeForStringField_throws() throws {
+  func test_jsonDeserialize_wrongTypeForStringField_throws() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     let json = #"{"name": 42}"#.data(using: .utf8)!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
-    XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
+    do {
+      try await deserializer.deserialize(json, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
-  func test_jsonDeserialize_invalidMapKeyForUInt64_throws() throws {
+  func test_jsonDeserialize_invalidMapKeyForUInt64_throws() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(
       FieldDescriptor(
@@ -107,10 +149,16 @@ final class SerializationErrorPathTests: XCTestCase {
     let json = #"{"counts": {"not_a_number": "v"}}"#.data(using: .utf8)!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
-    XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
+    do {
+      try await deserializer.deserialize(json, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
-  func test_jsonDeserialize_unsupportedMapKeyType_throws() throws {
+  func test_jsonDeserialize_unsupportedMapKeyType_throws() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(
       FieldDescriptor(
@@ -128,21 +176,33 @@ final class SerializationErrorPathTests: XCTestCase {
     let json = #"{"data": {"not_int": "v"}}"#.data(using: .utf8)!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
-    XCTAssertThrowsError(try deserializer.deserialize(json, using: desc))
+    do {
+      try await deserializer.deserialize(json, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
   // MARK: - BinaryDeserializer: truncated/malformed data
 
-  func test_binaryDeserialize_truncatedData_throws() throws {
+  func test_binaryDeserialize_truncatedData_throws() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
     let truncatedData = Data([0x0A, 0x10])
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
-    XCTAssertThrowsError(try deserializer.deserialize(truncatedData, using: desc))
+    do {
+      try await deserializer.deserialize(truncatedData, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
-  func test_binaryDeserialize_messageFieldWithUnknownType_throws() throws {
+  func test_binaryDeserialize_messageFieldWithUnknownType_throws() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(
       FieldDescriptor(
@@ -155,6 +215,12 @@ final class SerializationErrorPathTests: XCTestCase {
     let data = Data([0x0A, 0x02, 0x08, 0x01])
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
-    XCTAssertThrowsError(try deserializer.deserialize(data, using: desc))
+    do {
+      try await deserializer.deserialize(data, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 }

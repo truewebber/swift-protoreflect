@@ -32,24 +32,24 @@ final class BinaryCompatRepeatedTests: XCTestCase {
   private var registry: TypeRegistry!
   private let serializer = BinaryCompatHelpers.makeSerializer()
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - 1. Repeated int32 packed encoding
 
-  func test_repeated_int32_packedEncoding_bidirectional() throws {
+  func test_repeated_int32_packedEncoding_bidirectional() async throws {
     var proto = Testcompat_RepeatedAllTypes()
     proto.repInt32 = [1, -1, 0, Int32.max, Int32.min]
 
     let desc = CompatDescriptors.repeatedAllTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -70,12 +70,12 @@ final class BinaryCompatRepeatedTests: XCTestCase {
 
   // MARK: - 2. Repeated int64 packed encoding
 
-  func test_repeated_int64_bidirectional() throws {
+  func test_repeated_int64_bidirectional() async throws {
     var proto = Testcompat_RepeatedAllTypes()
     proto.repInt64 = [Int64.max, Int64.min, 0, 9_000_000_000]
 
     let desc = CompatDescriptors.repeatedAllTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -96,12 +96,12 @@ final class BinaryCompatRepeatedTests: XCTestCase {
 
   // MARK: - 3. Repeated uint64 packed encoding
 
-  func test_repeated_uint64_bidirectional() throws {
+  func test_repeated_uint64_bidirectional() async throws {
     var proto = Testcompat_RepeatedAllTypes()
     proto.repUint64 = [UInt64.max, 0, 18_000_000_000]
 
     let desc = CompatDescriptors.repeatedAllTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -122,7 +122,7 @@ final class BinaryCompatRepeatedTests: XCTestCase {
 
   // MARK: - 4. Repeated signed types: sint32, sint64, sfixed32, sfixed64
 
-  func test_repeated_allSignedTypes_bidirectional() throws {
+  func test_repeated_allSignedTypes_bidirectional() async throws {
     var proto = Testcompat_RepeatedAllTypes()
     proto.repSint32 = [-100, 0, 100, Int32.min, Int32.max]
     proto.repSint64 = [-9_000_000_000, 0, 9_000_000_000]
@@ -130,7 +130,7 @@ final class BinaryCompatRepeatedTests: XCTestCase {
     proto.repSfixed64 = [Int64.min, 0, Int64.max]
 
     let desc = CompatDescriptors.repeatedAllTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -159,14 +159,14 @@ final class BinaryCompatRepeatedTests: XCTestCase {
 
   // MARK: - 5. Repeated fixed types: fixed32, fixed64, uint32
 
-  func test_repeated_allFixedTypes_bidirectional() throws {
+  func test_repeated_allFixedTypes_bidirectional() async throws {
     var proto = Testcompat_RepeatedAllTypes()
     proto.repFixed32 = [0, 1, UInt32.max]
     proto.repFixed64 = [0, 1, UInt64.max]
     proto.repUint32 = [0, 1, UInt32.max]
 
     let desc = CompatDescriptors.repeatedAllTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -192,12 +192,12 @@ final class BinaryCompatRepeatedTests: XCTestCase {
 
   // MARK: - 6. Repeated string (unpacked, one LEN segment per element)
 
-  func test_repeated_string_withEmptyAndUnicode_bidirectional() throws {
+  func test_repeated_string_withEmptyAndUnicode_bidirectional() async throws {
     var proto = Testcompat_RepeatedAllTypes()
     proto.repString = ["", "hello", "Привет", "🎉", "中文", ""]
 
     let desc = CompatDescriptors.repeatedAllTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -217,7 +217,7 @@ final class BinaryCompatRepeatedTests: XCTestCase {
 
   // MARK: - 7. Repeated bytes (unpacked, one LEN segment per element)
 
-  func test_repeated_bytes_bidirectional() throws {
+  func test_repeated_bytes_bidirectional() async throws {
     let b1 = Data([0x01, 0x02])
     let b2 = Data()
     let b3 = Data([0xFF, 0x00, 0x7F])
@@ -226,7 +226,7 @@ final class BinaryCompatRepeatedTests: XCTestCase {
     proto.repBytes = [b1, b2, b3]
 
     let desc = CompatDescriptors.repeatedAllTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -247,12 +247,12 @@ final class BinaryCompatRepeatedTests: XCTestCase {
 
   // MARK: - 8. Repeated double special values (packed, 8-byte IEEE 754 each)
 
-  func test_repeated_double_specialValues_bidirectional() throws {
+  func test_repeated_double_specialValues_bidirectional() async throws {
     var proto = Testcompat_RepeatedAllTypes()
     proto.repDouble = [Double.nan, Double.infinity, -Double.infinity]
 
     let desc = CompatDescriptors.repeatedAllTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -279,12 +279,12 @@ final class BinaryCompatRepeatedTests: XCTestCase {
 
   // MARK: - 9. Repeated float special values (packed, 4-byte IEEE 754 each)
 
-  func test_repeated_float_specialValues_bidirectional() throws {
+  func test_repeated_float_specialValues_bidirectional() async throws {
     var proto = Testcompat_RepeatedAllTypes()
     proto.repFloat = [Float.nan, Float.infinity, -Float.infinity]
 
     let desc = CompatDescriptors.repeatedAllTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -311,12 +311,12 @@ final class BinaryCompatRepeatedTests: XCTestCase {
 
   // MARK: - 10. Repeated bool packed (varint 0 or 1 per element)
 
-  func test_repeated_bool_bidirectional() throws {
+  func test_repeated_bool_bidirectional() async throws {
     var proto = Testcompat_RepeatedAllTypes()
     proto.repBool = [true, false, true, true, false]
 
     let desc = CompatDescriptors.repeatedAllTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -336,7 +336,7 @@ final class BinaryCompatRepeatedTests: XCTestCase {
 
   // MARK: - 11. Repeated nested message (unpacked, one LEN segment per element)
 
-  func test_repeated_nestedMessage_bidirectional() throws {
+  func test_repeated_nestedMessage_bidirectional() async throws {
     var m1 = Testcompat_SimpleMessage()
     m1.id = 1
     m1.name = "first"
@@ -350,7 +350,7 @@ final class BinaryCompatRepeatedTests: XCTestCase {
     let desc = CompatDescriptors.repeatedAllTypes()
     let simpleDesc = CompatDescriptors.simpleMessage()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -385,12 +385,12 @@ final class BinaryCompatRepeatedTests: XCTestCase {
 
   // MARK: - 12. Repeated enum packed (varint per element)
 
-  func test_repeated_enum_bidirectional() throws {
+  func test_repeated_enum_bidirectional() async throws {
     var proto = Testcompat_RepeatedAllTypes()
     proto.repEnum = [.active, .inactive, .deleted, .unspecified]
 
     let desc = CompatDescriptors.repeatedAllTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -411,7 +411,7 @@ final class BinaryCompatRepeatedTests: XCTestCase {
 
   // MARK: - 13. Empty repeated field produces no wire output
 
-  func test_repeated_empty_producesNoWireOutput() throws {
+  func test_repeated_empty_producesNoWireOutput() async throws {
     // Direction A: swift-protobuf with empty repeated fields → serializedData() = Data()
     let proto = Testcompat_RepeatedAllTypes()
     let referenceData = try proto.serializedData()
@@ -420,18 +420,18 @@ final class BinaryCompatRepeatedTests: XCTestCase {
     // Direction B: our serializer with no repeated fields set → Data()
     let desc = CompatDescriptors.repeatedAllTypes()
     let dynamic = DynamicMessage(descriptor: desc)
-    let ourData = try serializer.serialize(dynamic)
+    let ourData = try await serializer.serialize(dynamic)
     XCTAssertEqual(ourData, Data(), "BinarySerializer must produce empty bytes when no repeated fields are set")
   }
 
   // MARK: - 14. Large array (100 elements) packed encoding
 
-  func test_repeated_largeArray_100elements_bidirectional() throws {
+  func test_repeated_largeArray_100elements_bidirectional() async throws {
     var proto = Testcompat_RepeatedAllTypes()
     proto.repInt32 = (1...100).map { Int32($0) }
 
     let desc = CompatDescriptors.repeatedAllTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -456,7 +456,7 @@ final class BinaryCompatRepeatedTests: XCTestCase {
 
   // MARK: - 15. Exact packed wire bytes for int32 [1, 2, 3] in field 3
 
-  func test_repeated_int32_exactPackedWireBytes() throws {
+  func test_repeated_int32_exactPackedWireBytes() async throws {
     // Field 3 (int32, repeated) uses packed encoding in proto3.
     // Tag = (3 << 3) | 2 = 0x1A (field 3, wire type 2 = LEN)
     // Length varint = 3 (three 1-byte varints follow)
@@ -477,8 +477,9 @@ final class BinaryCompatRepeatedTests: XCTestCase {
     let desc = CompatDescriptors.repeatedAllTypes()
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set([Int32(1), Int32(2), Int32(3)] as [Int32], forField: 3)
+    let _asyncResult19 = try await serializer.serialize(dynamic)
     XCTAssertEqual(
-      try serializer.serialize(dynamic),
+      _asyncResult19,
       expected,
       "BinarySerializer: [1,2,3] in int32 packed field 3 must produce 0x1A 0x03 0x01 0x02 0x03"
     )
@@ -486,12 +487,12 @@ final class BinaryCompatRepeatedTests: XCTestCase {
 
   // MARK: - 16. Single-element repeated int32 (packed still applies)
 
-  func test_repeated_singleElement_bidirectional() throws {
+  func test_repeated_singleElement_bidirectional() async throws {
     var proto = Testcompat_RepeatedAllTypes()
     proto.repInt32 = [42]
 
     let desc = CompatDescriptors.repeatedAllTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,

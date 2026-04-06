@@ -30,19 +30,19 @@ final class WireFormatTests: XCTestCase {
 
   // MARK: - Varint encoding
 
-  func test_varint_encoding_smallNumber() throws {
+  func test_varint_encoding_smallNumber() async throws {
     let data = try serializeField(name: "x", number: 1, type: .int32, value: Int32(1))
     // tag = (1 << 3) | 0 = 0x08, value = 0x01
     XCTAssertEqual(data, Data([0x08, 0x01]))
   }
 
-  func test_varint_encoding_150() throws {
+  func test_varint_encoding_150() async throws {
     let data = try serializeField(name: "x", number: 1, type: .int32, value: Int32(150))
     // tag = 0x08, varint 150 = [0x96, 0x01]
     XCTAssertEqual(data, Data([0x08, 0x96, 0x01]))
   }
 
-  func test_varint_encoding_zero() throws {
+  func test_varint_encoding_zero() async throws {
     // Use proto2 to verify the wire encoding of zero (proto3 omits default values).
     var desc = MessageDescriptor(name: "M", fullName: "test.M", syntax: "proto2")
     desc.addField(FieldDescriptor(name: "x", number: 1, type: .int32))
@@ -54,7 +54,7 @@ final class WireFormatTests: XCTestCase {
     XCTAssertEqual(data, Data([0x08, 0x00]))
   }
 
-  func test_varint_encoding_maxUInt64() throws {
+  func test_varint_encoding_maxUInt64() async throws {
     let data = try serializeField(
       name: "x",
       number: 1,
@@ -72,24 +72,24 @@ final class WireFormatTests: XCTestCase {
 
   // MARK: - ZigZag encoding
 
-  func test_zigzag_encoding_positive() {
+  func test_zigzag_encoding_positive() async throws {
     XCTAssertEqual(_BinarySerializer.zigzagEncode32(1), 2)
   }
 
-  func test_zigzag_encoding_negative() {
+  func test_zigzag_encoding_negative() async throws {
     XCTAssertEqual(_BinarySerializer.zigzagEncode32(-1), 1)
   }
 
-  func test_zigzag_encoding_zero() {
+  func test_zigzag_encoding_zero() async throws {
     XCTAssertEqual(_BinarySerializer.zigzagEncode32(0), 0)
   }
 
-  func test_zigzag_encoding_minInt32() {
+  func test_zigzag_encoding_minInt32() async throws {
     let encoded = _BinarySerializer.zigzagEncode32(Int32.min)
     XCTAssertEqual(encoded, UInt32.max)
   }
 
-  func test_zigzag_roundtrip() {
+  func test_zigzag_roundtrip() async throws {
     for val: Int32 in [0, 1, -1, 42, -42, .min, .max] {
       let encoded = _BinarySerializer.zigzagEncode32(val)
       let decoded = _BinaryDeserializer.zigzagDecode32(encoded)
@@ -97,7 +97,7 @@ final class WireFormatTests: XCTestCase {
     }
   }
 
-  func test_zigzag64_roundtrip() {
+  func test_zigzag64_roundtrip() async throws {
     for val: Int64 in [0, 1, -1, 42, -42, .min, .max] {
       let encoded = _BinarySerializer.zigzagEncode64(val)
       let decoded = _BinaryDeserializer.zigzagDecode64(encoded)
@@ -107,7 +107,7 @@ final class WireFormatTests: XCTestCase {
 
   // MARK: - Fixed encoding (little-endian)
 
-  func test_fixed32_encoding_littleEndian() throws {
+  func test_fixed32_encoding_littleEndian() async throws {
     let data = try serializeField(
       name: "x",
       number: 1,
@@ -118,7 +118,7 @@ final class WireFormatTests: XCTestCase {
     XCTAssertEqual(data, Data([0x0D, 0x78, 0x56, 0x34, 0x12]))
   }
 
-  func test_fixed64_encoding_littleEndian() throws {
+  func test_fixed64_encoding_littleEndian() async throws {
     let data = try serializeField(
       name: "x",
       number: 1,
@@ -131,7 +131,7 @@ final class WireFormatTests: XCTestCase {
 
   // MARK: - Tag encoding
 
-  func test_tag_encoding_fieldNumber1Varint() throws {
+  func test_tag_encoding_fieldNumber1Varint() async throws {
     // Use proto2 so that zero is serialized (proto3 omits default values).
     var desc = MessageDescriptor(name: "M", fullName: "test.M", syntax: "proto2")
     desc.addField(FieldDescriptor(name: "x", number: 1, type: .int32))
@@ -142,13 +142,13 @@ final class WireFormatTests: XCTestCase {
     XCTAssertEqual(data[0], 0x08, "Field 1, varint → tag 0x08")
   }
 
-  func test_tag_encoding_fieldNumber15LengthDelimited() throws {
+  func test_tag_encoding_fieldNumber15LengthDelimited() async throws {
     let data = try serializeField(name: "x", number: 15, type: .string, value: "a")
     // (15 << 3) | 2 = 122 = 0x7A — single byte tag
     XCTAssertEqual(data[0], 0x7A)
   }
 
-  func test_tag_encoding_fieldNumber16Varint() throws {
+  func test_tag_encoding_fieldNumber16Varint() async throws {
     // Use proto2 so that zero is serialized (proto3 omits default values).
     var desc = MessageDescriptor(name: "M", fullName: "test.M", syntax: "proto2")
     desc.addField(FieldDescriptor(name: "x", number: 16, type: .int32))
@@ -161,14 +161,14 @@ final class WireFormatTests: XCTestCase {
     XCTAssertEqual(data[1], 0x01)
   }
 
-  func test_tag_encoding_maxFieldNumber() throws {
+  func test_tag_encoding_maxFieldNumber() async throws {
     let maxField = (1 << 29) - 1
     // Use a non-zero value (proto3 default-omission would suppress 0).
     let data = try serializeField(name: "x", number: maxField, type: .int32, value: Int32(1))
     // Tag = (maxField << 3) | 0, which is a 5-byte varint
     XCTAssertTrue(data.count >= 5, "Max field number tag should be at least 5 bytes")
 
-    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+    let deserialized = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
       data,
       using: {
         var d = MessageDescriptor(name: "M", fullName: "test.M")
@@ -181,7 +181,7 @@ final class WireFormatTests: XCTestCase {
 
   // MARK: - Length-delimited edge cases
 
-  func test_lengthDelimited_emptyString() throws {
+  func test_lengthDelimited_emptyString() async throws {
     // Use proto2 to verify the wire encoding of an empty string (proto3 omits default values).
     var desc = MessageDescriptor(name: "M", fullName: "test.M", syntax: "proto2")
     desc.addField(FieldDescriptor(name: "x", number: 1, type: .string))
@@ -193,7 +193,7 @@ final class WireFormatTests: XCTestCase {
     XCTAssertEqual(data, Data([0x0A, 0x00]))
   }
 
-  func test_lengthDelimited_emptyBytes() throws {
+  func test_lengthDelimited_emptyBytes() async throws {
     // Use proto2 to verify the wire encoding of empty bytes (proto3 omits default values).
     var desc = MessageDescriptor(name: "M", fullName: "test.M", syntax: "proto2")
     desc.addField(FieldDescriptor(name: "x", number: 1, type: .bytes))
@@ -207,7 +207,7 @@ final class WireFormatTests: XCTestCase {
 
   // MARK: - Round-trip through serialization
 
-  func test_allScalarTypes_roundtrip() throws {
+  func test_allScalarTypes_roundtrip() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "f_int32", number: 1, type: .int32))
     desc.addField(FieldDescriptor(name: "f_int64", number: 2, type: .int64))
@@ -244,10 +244,10 @@ final class WireFormatTests: XCTestCase {
     try msg.set(Int64(-9999), forField: "f_sfixed64")
 
     let serializer = BinarySerializer()
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let decoded = try deserializer.deserialize(data, using: desc)
+    let decoded = try await deserializer.deserialize(data, using: desc)
 
     XCTAssertEqual(try decoded.get(forField: "f_int32") as? Int32, 42)
     XCTAssertEqual(try decoded.get(forField: "f_int64") as? Int64, 123_456_789)

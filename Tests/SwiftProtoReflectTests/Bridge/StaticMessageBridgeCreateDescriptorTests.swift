@@ -13,7 +13,7 @@ final class StaticMessageBridgeCreateDescriptorTests: XCTestCase {
 
   // MARK: - Test: simple message with populated fields
 
-  func test_createDescriptor_simpleMessage_allFieldsExtracted() throws {
+  func test_createDescriptor_simpleMessage_allFieldsExtracted() async throws {
     var msg = Google_Protobuf_DescriptorProto()
     msg.name = "TestMessage"
 
@@ -25,7 +25,7 @@ final class StaticMessageBridgeCreateDescriptorTests: XCTestCase {
     XCTAssertEqual(nameValue as? String, "TestMessage")
   }
 
-  func test_createDescriptor_emptyMessage_validDescriptor() throws {
+  func test_createDescriptor_emptyMessage_validDescriptor() async throws {
     let msg = Google_Protobuf_Empty()
 
     let bridge = StaticMessageBridge()
@@ -34,7 +34,7 @@ final class StaticMessageBridgeCreateDescriptorTests: XCTestCase {
     XCTAssertEqual(dynamic.descriptor.name, "google.protobuf.Empty")
   }
 
-  func test_createDescriptor_messageFieldNames_correct() throws {
+  func test_createDescriptor_messageFieldNames_correct() async throws {
     var msg = Google_Protobuf_FieldDescriptorProto()
     msg.name = "test_field"
     msg.number = 42
@@ -50,7 +50,7 @@ final class StaticMessageBridgeCreateDescriptorTests: XCTestCase {
     XCTAssertEqual(numberValue as? Int32, 42)
   }
 
-  func test_createDescriptor_fieldNumbers_correct() throws {
+  func test_createDescriptor_fieldNumbers_correct() async throws {
     var msg = Google_Protobuf_FieldDescriptorProto()
     msg.name = "test_field"
     msg.number = 7
@@ -68,7 +68,7 @@ final class StaticMessageBridgeCreateDescriptorTests: XCTestCase {
     XCTAssertEqual(numberField?.number, 3)
   }
 
-  func test_createDescriptor_fieldTypes_correct() throws {
+  func test_createDescriptor_fieldTypes_correct() async throws {
     var msg = Google_Protobuf_FieldDescriptorProto()
     msg.name = "test_field"
     msg.number = 7
@@ -84,7 +84,7 @@ final class StaticMessageBridgeCreateDescriptorTests: XCTestCase {
     XCTAssertEqual(numberField?.type, .int32)
   }
 
-  func test_createDescriptor_messageWithBoolField_typeCorrect() throws {
+  func test_createDescriptor_messageWithBoolField_typeCorrect() async throws {
     var msg = Google_Protobuf_FileDescriptorProto()
     msg.name = "test.proto"
     msg.syntax = "proto3"
@@ -98,7 +98,7 @@ final class StaticMessageBridgeCreateDescriptorTests: XCTestCase {
     XCTAssertEqual(syntaxValue as? String, "proto3")
   }
 
-  func test_createDescriptor_roundTrip_preservesData() throws {
+  func test_createDescriptor_roundTrip_preservesData() async throws {
     var original = Google_Protobuf_FieldDescriptorProto()
     original.name = "my_field"
     original.number = 5

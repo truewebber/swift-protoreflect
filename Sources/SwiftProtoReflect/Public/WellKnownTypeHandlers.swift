@@ -1490,7 +1490,7 @@ public struct AnyHandler: WellKnownTypeHandler {
     /// - Parameter targetDescriptor: Target type descriptor
     /// - Returns: Unpacked dynamic message
     /// - Throws: WellKnownTypeError if unpacking fails
-    public func unpack(to targetDescriptor: MessageDescriptor) throws -> DynamicMessage {
+    public func unpack(to targetDescriptor: MessageDescriptor) async throws -> DynamicMessage {
       let expectedTypeName = targetDescriptor.fullName
       let actualTypeName = getTypeName()
 
@@ -1508,7 +1508,7 @@ public struct AnyHandler: WellKnownTypeHandler {
       }
       else {
         let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-        return try deserializer.deserialize(value, using: targetDescriptor)
+        return try await deserializer.deserialize(value, using: targetDescriptor)
       }
     }
 
@@ -1644,7 +1644,7 @@ extension DynamicMessage {
   /// - Parameter targetDescriptor: Target type descriptor
   /// - Returns: Unpacked message.
   /// - Throws: WellKnownTypeError if message is not Any or types don't match.
-  public func unpackFromAny(to targetDescriptor: MessageDescriptor) throws -> DynamicMessage {
+  public func unpackFromAny(to targetDescriptor: MessageDescriptor) async throws -> DynamicMessage {
     guard descriptor.fullName == WellKnownTypeNames.any else {
       throw WellKnownTypeError.invalidData(
         typeName: descriptor.fullName,
@@ -1653,7 +1653,7 @@ extension DynamicMessage {
     }
 
     let anyValue = try AnyHandler.createSpecialized(from: self) as! AnyHandler.AnyValue
-    return try anyValue.unpack(to: targetDescriptor)
+    return try await anyValue.unpack(to: targetDescriptor)
   }
 
   /// Checks if Any contains message of specified type.
@@ -1694,10 +1694,10 @@ extension AnyHandler.AnyValue {
   /// - Parameter registry: Type registry for descriptor resolution
   /// - Returns: Unpacked dynamic message
   /// - Throws: WellKnownTypeError if type not found or deserialization fails
-  public func unpack(using registry: TypeRegistry) throws -> DynamicMessage {
+  public func unpack(using registry: TypeRegistry) async throws -> DynamicMessage {
     let typeName = getTypeName()
 
-    guard let messageDescriptor = registry.findMessage(named: typeName) else {
+    guard let messageDescriptor = await registry.findMessage(named: typeName) else {
       throw WellKnownTypeError.conversionFailed(
         from: "AnyValue",
         to: typeName,
@@ -1705,7 +1705,7 @@ extension AnyHandler.AnyValue {
       )
     }
 
-    return try unpack(to: messageDescriptor)
+    return try await unpack(to: messageDescriptor)
   }
 }
 

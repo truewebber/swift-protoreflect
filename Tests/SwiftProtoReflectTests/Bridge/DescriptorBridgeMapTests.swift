@@ -23,19 +23,19 @@ final class DescriptorBridgeMapTests: XCTestCase {
 
   // MARK: - Setup and Teardown
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     bridge = DescriptorBridge()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     bridge = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Basic Map Detection Tests
 
-  func testDetectStringToStringMap() throws {
+  func testDetectStringToStringMap() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "string_map",
       fieldNumber: 1,
@@ -53,7 +53,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertEqual(field!.mapEntryInfo?.valueFieldInfo.type, .string)
   }
 
-  func testDetectStringToInt32Map() throws {
+  func testDetectStringToInt32Map() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "counters",
       fieldNumber: 1,
@@ -70,7 +70,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertEqual(field!.mapEntryInfo?.valueFieldInfo.type, .int32)
   }
 
-  func testDetectInt32ToStringMap() throws {
+  func testDetectInt32ToStringMap() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "names",
       fieldNumber: 1,
@@ -87,7 +87,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertEqual(field!.mapEntryInfo?.valueFieldInfo.type, .string)
   }
 
-  func testDetectInt64ToMessageMap() throws {
+  func testDetectInt64ToMessageMap() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "entities",
       fieldNumber: 1,
@@ -108,7 +108,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
 
   // MARK: - All Key Types Tests
 
-  func testMapWithInt32Key() throws {
+  func testMapWithInt32Key() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "int32_map",
       fieldNumber: 1,
@@ -123,7 +123,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .int32)
   }
 
-  func testMapWithInt64Key() throws {
+  func testMapWithInt64Key() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "int64_map",
       fieldNumber: 1,
@@ -138,7 +138,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .int64)
   }
 
-  func testMapWithUInt32Key() throws {
+  func testMapWithUInt32Key() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "uint32_map",
       fieldNumber: 1,
@@ -153,7 +153,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .uint32)
   }
 
-  func testMapWithUInt64Key() throws {
+  func testMapWithUInt64Key() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "uint64_map",
       fieldNumber: 1,
@@ -168,7 +168,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .uint64)
   }
 
-  func testMapWithSInt32Key() throws {
+  func testMapWithSInt32Key() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "sint32_map",
       fieldNumber: 1,
@@ -183,7 +183,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .sint32)
   }
 
-  func testMapWithSInt64Key() throws {
+  func testMapWithSInt64Key() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "sint64_map",
       fieldNumber: 1,
@@ -198,7 +198,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .sint64)
   }
 
-  func testMapWithFixed32Key() throws {
+  func testMapWithFixed32Key() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "fixed32_map",
       fieldNumber: 1,
@@ -213,7 +213,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .fixed32)
   }
 
-  func testMapWithFixed64Key() throws {
+  func testMapWithFixed64Key() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "fixed64_map",
       fieldNumber: 1,
@@ -228,7 +228,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .fixed64)
   }
 
-  func testMapWithSFixed32Key() throws {
+  func testMapWithSFixed32Key() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "sfixed32_map",
       fieldNumber: 1,
@@ -243,7 +243,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .sfixed32)
   }
 
-  func testMapWithSFixed64Key() throws {
+  func testMapWithSFixed64Key() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "sfixed64_map",
       fieldNumber: 1,
@@ -258,7 +258,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .sfixed64)
   }
 
-  func testMapWithBoolKey() throws {
+  func testMapWithBoolKey() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "bool_map",
       fieldNumber: 1,
@@ -273,7 +273,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertEqual(field!.mapEntryInfo?.keyFieldInfo.type, .bool)
   }
 
-  func testMapWithStringKey() throws {
+  func testMapWithStringKey() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "string_map",
       fieldNumber: 1,
@@ -290,7 +290,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
 
   // MARK: - All Value Types Tests
 
-  func testMapWithScalarValues() throws {
+  func testMapWithScalarValues() async throws {
     let scalarTypes: [Google_Protobuf_FieldDescriptorProto.TypeEnum] = [
       .double, .float, .int32, .int64, .uint32, .uint64,
       .sint32, .sint64, .fixed32, .fixed64, .sfixed32, .sfixed64,
@@ -313,7 +313,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     }
   }
 
-  func testMapWithEnumValue() throws {
+  func testMapWithEnumValue() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "enum_map",
       fieldNumber: 1,
@@ -330,7 +330,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertEqual(field!.mapEntryInfo?.valueFieldInfo.typeName, ".test.Status")
   }
 
-  func testMapWithMessageValue() throws {
+  func testMapWithMessageValue() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "message_map",
       fieldNumber: 1,
@@ -349,7 +349,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
 
   // MARK: - Edge Cases Tests
 
-  func testMultipleMapFieldsInMessage() throws {
+  func testMultipleMapFieldsInMessage() async throws {
     var messageProto = Google_Protobuf_DescriptorProto()
     messageProto.name = "MultiMapMessage"
 
@@ -395,7 +395,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertEqual(field2!.mapEntryInfo?.valueFieldInfo.type, .string)
   }
 
-  func testMapFieldMixedWithRepeatedFields() throws {
+  func testMapFieldMixedWithRepeatedFields() async throws {
     var messageProto = Google_Protobuf_DescriptorProto()
     messageProto.name = "MixedMessage"
 
@@ -433,7 +433,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertTrue(repeatedFieldResult!.isRepeated)
   }
 
-  func testRegularRepeatedFieldNotDetectedAsMap() throws {
+  func testRegularRepeatedFieldNotDetectedAsMap() async throws {
     var messageProto = Google_Protobuf_DescriptorProto()
     messageProto.name = "TestMessage"
 
@@ -453,7 +453,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
     XCTAssertNil(field!.mapEntryInfo)
   }
 
-  func testRepeatedMessageWithoutMapEntryOption() throws {
+  func testRepeatedMessageWithoutMapEntryOption() async throws {
     var messageProto = Google_Protobuf_DescriptorProto()
     messageProto.name = "TestMessage"
 
@@ -494,7 +494,7 @@ final class DescriptorBridgeMapTests: XCTestCase {
 
   // MARK: - Round-trip Conversion Tests
 
-  func testMapFieldRoundTripConversion() throws {
+  func testMapFieldRoundTripConversion() async throws {
     // Create original field descriptor with map
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)

@@ -78,147 +78,139 @@ final class RegistryBenchmarks: XCTestCase {
   // MARK: - Registration Performance Tests
 
   /// Performance test for registering large volumes of types.
-  func testBulkTypeRegistrationPerformance() {
-    measure {
-      let registry = TypeRegistry()
+  func testBulkTypeRegistrationPerformance() async throws {
+    let registry = TypeRegistry()
 
-      do {
-        for message in testMessages {
-          try registry.registerMessage(message)
-        }
-
-        for enumDesc in testEnums {
-          try registry.registerEnum(enumDesc)
-        }
-
-        for service in testServices {
-          try registry.registerService(service)
-        }
+    do {
+      for message in testMessages {
+        try await registry.registerMessage(message)
       }
-      catch {
-        XCTFail("Bulk registration failed: \(error)")
+
+      for enumDesc in testEnums {
+        try await registry.registerEnum(enumDesc)
       }
+
+      for service in testServices {
+        try await registry.registerService(service)
+      }
+    }
+    catch {
+      XCTFail("Bulk registration failed: \(error)")
     }
   }
 
   /// Performance test for file registration.
-  func testFileRegistrationPerformance() {
-    measure {
-      let registry = TypeRegistry()
+  func testFileRegistrationPerformance() async throws {
+    let registry = TypeRegistry()
 
-      do {
-        // Register first 100 files
-        for i in 0..<100 {
-          let fileDescriptor = FileDescriptor(name: "test_\(i).proto", package: "performance.test")
-          try registry.registerFile(fileDescriptor)
-        }
+    do {
+      // Register first 100 files
+      for i in 0..<100 {
+        let fileDescriptor = FileDescriptor(name: "test_\(i).proto", package: "performance.test")
+        try await registry.registerFile(fileDescriptor)
       }
-      catch {
-        XCTFail("File registration failed: \(error)")
-      }
+    }
+    catch {
+      XCTFail("File registration failed: \(error)")
     }
   }
 
   // MARK: - Type Lookup Performance Tests
 
   /// Performance test for type lookup by name.
-  func testTypeLookupPerformance() throws {
+  func testTypeLookupPerformance() async throws {
     // First register all types
     for message in testMessages {
-      try typeRegistry.registerMessage(message)
+      try await typeRegistry.registerMessage(message)
     }
 
-    measure {
-      // Search for random types
-      for i in stride(from: 0, to: 1000, by: 10) {
-        let typeName = "performance.test.TestMessage\(i)"
-        let _ = typeRegistry.findMessage(named: typeName)
-      }
+    // Search for random types
+    for i in stride(from: 0, to: 1000, by: 10) {
+      let typeName = "performance.test.TestMessage\(i)"
+      let _ = await typeRegistry.findMessage(named: typeName)
     }
   }
 
   /// Performance test for enum type lookup.
-  func testEnumLookupPerformance() throws {
+  func testEnumLookupPerformance() async throws {
     // Register all enums
     for enumDesc in testEnums {
-      try typeRegistry.registerEnum(enumDesc)
+      try await typeRegistry.registerEnum(enumDesc)
     }
 
-    measure {
-      // Search for random enums
-      for i in stride(from: 0, to: 1000, by: 10) {
-        let enumName = "performance.test.TestEnum\(i)"
-        let _ = typeRegistry.findEnum(named: enumName)
-      }
+    // Search for random enums
+    for i in stride(from: 0, to: 1000, by: 10) {
+      let enumName = "performance.test.TestEnum\(i)"
+      let _ = await typeRegistry.findEnum(named: enumName)
     }
   }
 
   /// Performance test for service type lookup.
-  func testServiceLookupPerformance() throws {
+  func testServiceLookupPerformance() async throws {
     // Register all services
     for service in testServices {
-      try typeRegistry.registerService(service)
+      try await typeRegistry.registerService(service)
     }
 
-    measure {
-      // Search for random services
-      for i in stride(from: 0, to: 1000, by: 10) {
-        let serviceName = "performance.test.TestService\(i)"
-        let _ = typeRegistry.findService(named: serviceName)
-      }
+    // Search for random services
+    for i in stride(from: 0, to: 1000, by: 10) {
+      let serviceName = "performance.test.TestService\(i)"
+      let _ = await typeRegistry.findService(named: serviceName)
     }
   }
 
   // MARK: - Concurrent Access Performance Tests
 
   /// Performance test for concurrent registry access.
-  func testConcurrentRegistryAccess() throws {
+  func testConcurrentRegistryAccess() async throws {
     // Pre-register types
     for message in testMessages {
-      try typeRegistry.registerMessage(message)
+      try await typeRegistry.registerMessage(message)
     }
 
     let queue = DispatchQueue.global(qos: .userInitiated)
 
-    measure {
-      let expectation = self.expectation(description: "Concurrent access")
-      expectation.expectedFulfillmentCount = 200
+    let expectation = self.expectation(description: "Concurrent access")
+    expectation.expectedFulfillmentCount = 200
 
-      let registry = self.typeRegistry!
-      // 100 reader threads + 100 search operations
-      for i in 0..<100 {
-        queue.async {
+    let registry = self.typeRegistry!
+    // 100 reader threads + 100 search operations
+    for i in 0..<100 {
+      queue.async {
+        Task {
           let typeName = "performance.test.TestMessage\(i % 100)"
-          let _ = registry.findMessage(named: typeName)
-          expectation.fulfill()
-        }
-
-        queue.async {
-          let enumName = "performance.test.TestEnum\(i % 100)"
-          let _ = registry.findEnum(named: enumName)
+          let _ = await registry.findMessage(named: typeName)
           expectation.fulfill()
         }
       }
 
-      wait(for: [expectation], timeout: 10.0)
+      queue.async {
+        Task {
+          let enumName = "performance.test.TestEnum\(i % 100)"
+          let _ = await registry.findEnum(named: enumName)
+          expectation.fulfill()
+        }
+      }
     }
+
+    wait(for: [expectation], timeout: 10.0)
   }
 
   /// Performance test for concurrent registration.
-  func testConcurrentRegistrationPerformance() {
+  func testConcurrentRegistrationPerformance() async throws {
     let queue = DispatchQueue.global(qos: .userInitiated)
 
-    measure {
-      let registry = TypeRegistry()
-      let expectation = self.expectation(description: "Concurrent registration")
-      expectation.expectedFulfillmentCount = 100
+    let registry = TypeRegistry()
+    let expectation = self.expectation(description: "Concurrent registration")
+    expectation.expectedFulfillmentCount = 100
 
-      let messages = self.testMessages
-      for i in 0..<100 {
-        queue.async {
+    let messages = self.testMessages
+    for i in 0..<100 {
+      queue.async {
+        Task {
           do {
             if i < messages.count {
-              try registry.registerMessage(messages[i])
+              try await registry.registerMessage(messages[i])
             }
           }
           catch {
@@ -227,15 +219,15 @@ final class RegistryBenchmarks: XCTestCase {
           expectation.fulfill()
         }
       }
-
-      wait(for: [expectation], timeout: 10.0)
     }
+
+    wait(for: [expectation], timeout: 10.0)
   }
 
   // MARK: - DescriptorPool Performance Tests
 
   /// Performance test for message creation through DescriptorPool.
-  func testDescriptorPoolMessageCreationPerformance() throws {
+  func testDescriptorPoolMessageCreationPerformance() async throws {
     // Register types in pool with unique file names
     for i in testMessages.prefix(100).indices {
       try descriptorPool.addFileDescriptor(FileDescriptor(name: "test\(i).proto", package: "performance.test"))
@@ -262,7 +254,7 @@ final class RegistryBenchmarks: XCTestCase {
   }
 
   /// Performance test for message validation.
-  func testDescriptorPoolValidationPerformance() throws {
+  func testDescriptorPoolValidationPerformance() async throws {
     // Prepare messages for validation
     var testMessage = MessageFactory().createMessage(from: testMessages[0])
     try testMessage.set(Int32(42), forField: "id")
@@ -279,58 +271,54 @@ final class RegistryBenchmarks: XCTestCase {
   // MARK: - Memory Usage Tests
 
   /// Memory usage test for large registries.
-  func testLargeRegistryMemoryUsage() throws {
-    measure {
-      let registry = TypeRegistry()
+  func testLargeRegistryMemoryUsage() async throws {
+    let registry = TypeRegistry()
 
-      do {
-        // Register all types and measure memory impact
-        for message in testMessages {
-          try registry.registerMessage(message)
-        }
-
-        for enumDesc in testEnums {
-          try registry.registerEnum(enumDesc)
-        }
-
-        for service in testServices {
-          try registry.registerService(service)
-        }
-
-        // Perform search operations to check memory stability
-        for i in 0..<100 {
-          let typeName = "performance.test.TestMessage\(i)"
-          let _ = registry.findMessage(named: typeName)
-        }
+    do {
+      // Register all types and measure memory impact
+      for message in testMessages {
+        try await registry.registerMessage(message)
       }
-      catch {
-        XCTFail("Large registry test failed: \(error)")
+
+      for enumDesc in testEnums {
+        try await registry.registerEnum(enumDesc)
       }
+
+      for service in testServices {
+        try await registry.registerService(service)
+      }
+
+      // Perform search operations to check memory stability
+      for i in 0..<100 {
+        let typeName = "performance.test.TestMessage\(i)"
+        let _ = await registry.findMessage(named: typeName)
+      }
+    }
+    catch {
+      XCTFail("Large registry test failed: \(error)")
     }
   }
 
   // MARK: - Cache Performance Tests
 
   /// Performance test for type cache efficiency.
-  func testTypeCacheEfficiency() throws {
+  func testTypeCacheEfficiency() async throws {
     // Register types
     for message in testMessages.prefix(100) {
-      try typeRegistry.registerMessage(message)
+      try await typeRegistry.registerMessage(message)
     }
 
     // First run - populate cache
     for i in 0..<100 {
       let typeName = "performance.test.TestMessage\(i)"
-      let _ = typeRegistry.findMessage(named: typeName)
+      let _ = await typeRegistry.findMessage(named: typeName)
     }
 
     // Second run - test cached lookups
-    measure {
-      for _ in 0..<10 {  // Repeat search to check cache hit
-        for i in 0..<100 {
-          let typeName = "performance.test.TestMessage\(i)"
-          let _ = typeRegistry.findMessage(named: typeName)
-        }
+    for _ in 0..<10 {  // Repeat search to check cache hit
+      for i in 0..<100 {
+        let typeName = "performance.test.TestMessage\(i)"
+        let _ = await typeRegistry.findMessage(named: typeName)
       }
     }
   }
@@ -338,39 +326,39 @@ final class RegistryBenchmarks: XCTestCase {
   // MARK: - Stress Tests
 
   /// Stress test for large number of concurrent operations.
-  func testHighVolumeOperationsStress() throws {
+  func testHighVolumeOperationsStress() async throws {
     // Pre-registration
     for message in testMessages.prefix(500) {
-      try typeRegistry.registerMessage(message)
+      try await typeRegistry.registerMessage(message)
     }
 
     let queue = DispatchQueue.global(qos: .userInitiated)
 
-    measure {
-      let expectation = self.expectation(description: "High volume operations")
-      expectation.expectedFulfillmentCount = 1000
+    let expectation = self.expectation(description: "High volume operations")
+    expectation.expectedFulfillmentCount = 1000
 
-      let registry = self.typeRegistry!
-      // 1000 parallel search operations
-      for i in 0..<1000 {
-        queue.async {
+    let registry = self.typeRegistry!
+    // 1000 parallel search operations
+    for i in 0..<1000 {
+      queue.async {
+        Task {
           let typeName = "performance.test.TestMessage\(i % 500)"
-          let _ = registry.findMessage(named: typeName)
+          let _ = await registry.findMessage(named: typeName)
           expectation.fulfill()
         }
       }
-
-      wait(for: [expectation], timeout: 15.0)
     }
+
+    wait(for: [expectation], timeout: 15.0)
   }
 
   // MARK: - Comparative Tests
 
   /// Comparison between different lookup strategies.
-  func testLookupStrategyComparison() throws {
+  func testLookupStrategyComparison() async throws {
     // Register types
     for message in testMessages.prefix(100) {
-      try typeRegistry.registerMessage(message)
+      try await typeRegistry.registerMessage(message)
     }
 
     var directLookupTimes: [TimeInterval] = []
@@ -381,7 +369,7 @@ final class RegistryBenchmarks: XCTestCase {
       let startTime = Date()
       for i in 0..<100 {
         let typeName = "performance.test.TestMessage\(i)"
-        let _ = typeRegistry.findMessage(named: typeName)
+        let _ = await typeRegistry.findMessage(named: typeName)
       }
       directLookupTimes.append(Date().timeIntervalSince(startTime))
     }

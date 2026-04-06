@@ -7,37 +7,37 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
   var pool: DescriptorPool!
   let bridge = DescriptorBridge()
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     pool = DescriptorPool()
   }
 
   // MARK: - Group 5.1 — Registration under qualified names
 
-  func test_addFileDescriptor_messageWithNested_nestedStoredUnderQualifiedName() throws {
+  func test_addFileDescriptor_messageWithNested_nestedStoredUnderQualifiedName() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     XCTAssertNotNil(pool.findMessageDescriptor(named: "pkg.Parent.Child"))
   }
 
-  func test_addFileDescriptor_messageWithNested_bareNameNotInPool() throws {
+  func test_addFileDescriptor_messageWithNested_bareNameNotInPool() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     XCTAssertNil(pool.findMessageDescriptor(named: "Child"))
   }
 
-  func test_addFileDescriptor_messageWithNested_parentStoredUnderQualifiedName() throws {
+  func test_addFileDescriptor_messageWithNested_parentStoredUnderQualifiedName() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     XCTAssertNotNil(pool.findMessageDescriptor(named: "pkg.Parent"))
   }
 
-  func test_addFileDescriptor_messageWithNested_doesNotThrowDuplicateSymbol() throws {
+  func test_addFileDescriptor_messageWithNested_doesNotThrowDuplicateSymbol() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(adsResponseFileProto)
     XCTAssertNoThrow(try pool.addFileDescriptor(fd))
   }
 
-  func test_addFileDescriptor_2LevelNesting_allThreeQualifiedInPool() throws {
+  func test_addFileDescriptor_2LevelNesting_allThreeQualifiedInPool() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(deepNestingFileProto)
     try pool.addFileDescriptor(fd)
     XCTAssertNotNil(pool.findMessageDescriptor(named: "pkg.A"))
@@ -45,7 +45,7 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
     XCTAssertNotNil(pool.findMessageDescriptor(named: "pkg.A.B.C"))
   }
 
-  func test_addFileDescriptor_3LevelNesting_allFourQualifiedInPool() throws {
+  func test_addFileDescriptor_3LevelNesting_allFourQualifiedInPool() async throws {
     let d = makeMessageProto(name: "D")
     let c = makeMessageProto(name: "C", nestedMessages: [d])
     let b = makeMessageProto(name: "B", nestedMessages: [c])
@@ -59,7 +59,7 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
     XCTAssertNotNil(pool.findMessageDescriptor(named: "pkg.A.B.C.D"))
   }
 
-  func test_addFileDescriptor_multipleNestedAtSameLevel_allQualified() throws {
+  func test_addFileDescriptor_multipleNestedAtSameLevel_allQualified() async throws {
     let child1 = makeMessageProto(name: "Child1")
     let child2 = makeMessageProto(name: "Child2")
     let parent = makeMessageProto(name: "Parent", nestedMessages: [child1, child2])
@@ -70,13 +70,13 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
     XCTAssertNotNil(pool.findMessageDescriptor(named: "pkg.Parent.Child2"))
   }
 
-  func test_addFileDescriptor_nestedEnum_storedUnderQualifiedName() throws {
+  func test_addFileDescriptor_nestedEnum_storedUnderQualifiedName() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     XCTAssertNotNil(pool.findEnumDescriptor(named: "pkg.Parent.Status"))
   }
 
-  func test_addFileDescriptor_nestedEnum_bareNameNotInPool() throws {
+  func test_addFileDescriptor_nestedEnum_bareNameNotInPool() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     XCTAssertNil(pool.findEnumDescriptor(named: "Status"))
@@ -84,19 +84,19 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
 
   // MARK: - Group 5.2 — allMessageTypeNames with qualified names
 
-  func test_allMessageTypeNames_withNested_containsQualifiedChildName() throws {
+  func test_allMessageTypeNames_withNested_containsQualifiedChildName() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     XCTAssertTrue(pool.allMessageTypeNames().contains("pkg.Parent.Child"))
   }
 
-  func test_allMessageTypeNames_withNested_doesNotContainBareChildName() throws {
+  func test_allMessageTypeNames_withNested_doesNotContainBareChildName() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     XCTAssertFalse(pool.allMessageTypeNames().contains("Child"))
   }
 
-  func test_allMessageTypeNames_withNested_containsBothParentAndChild() throws {
+  func test_allMessageTypeNames_withNested_containsBothParentAndChild() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     let names = pool.allMessageTypeNames()
@@ -104,7 +104,7 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
     XCTAssertTrue(names.contains("pkg.Parent.Child"))
   }
 
-  func test_allMessageTypeNames_2LevelNesting_allThreeQualified() throws {
+  func test_allMessageTypeNames_2LevelNesting_allThreeQualified() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(deepNestingFileProto)
     try pool.addFileDescriptor(fd)
     let names = pool.allMessageTypeNames()
@@ -113,7 +113,7 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
     XCTAssertTrue(names.contains("pkg.A.B.C"))
   }
 
-  func test_allMessageTypeNames_noNested_onlyTopLevel() throws {
+  func test_allMessageTypeNames_noNested_onlyTopLevel() async throws {
     let msgProto = makeMessageProto(name: "Message")
     let fileProto = makeFileProto(name: "t.proto", package: "pkg", messages: [msgProto])
     let fd = try bridge.fromProtobufFileDescriptor(fileProto)
@@ -125,7 +125,7 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
 
   // MARK: - Group 5.3 — Lookup correctness
 
-  func test_findMessageDescriptor_nestedByQualifiedName_returnsCorrectDescriptor() throws {
+  func test_findMessageDescriptor_nestedByQualifiedName_returnsCorrectDescriptor() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     let child = pool.findMessageDescriptor(named: "pkg.Parent.Child")!
@@ -133,13 +133,13 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
     XCTAssertEqual(child.fullName, "pkg.Parent.Child")
   }
 
-  func test_findMessageDescriptor_nestedByBareName_returnsNil() throws {
+  func test_findMessageDescriptor_nestedByBareName_returnsNil() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     XCTAssertNil(pool.findMessageDescriptor(named: "Child"))
   }
 
-  func test_findMessageDescriptor_nestedDescriptor_hasCorrectFields() throws {
+  func test_findMessageDescriptor_nestedDescriptor_hasCorrectFields() async throws {
     let child = makeMessageProto(
       name: "Child",
       fields: [makeFieldProto(name: "token", number: 1, type: .string)]
@@ -152,13 +152,13 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
     XCTAssertNotNil(childDesc.field(named: "token"))
   }
 
-  func test_findMessageDescriptor_deeplyNested_fullyQualifiedName() throws {
+  func test_findMessageDescriptor_deeplyNested_fullyQualifiedName() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(deepNestingFileProto)
     try pool.addFileDescriptor(fd)
     XCTAssertNotNil(pool.findMessageDescriptor(named: "pkg.A.B.C"))
   }
 
-  func test_findEnumDescriptor_nestedByQualifiedName_returns() throws {
+  func test_findEnumDescriptor_nestedByQualifiedName_returns() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     XCTAssertNotNil(pool.findEnumDescriptor(named: "pkg.Parent.Status"))
@@ -166,7 +166,7 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
 
   // MARK: - Group 5.4 — Collision and duplicate handling
 
-  func test_addFileDescriptor_sameNestedNameInDifferentParents_noDuplicateError() throws {
+  func test_addFileDescriptor_sameNestedNameInDifferentParents_noDuplicateError() async throws {
     let cursorA = makeMessageProto(name: "Cursor")
     let cursorB = makeMessageProto(name: "Cursor")
     let a = makeMessageProto(name: "A", nestedMessages: [cursorA])
@@ -181,7 +181,7 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
     XCTAssertNotNil(pool.findMessageDescriptor(named: "pkg.B.Cursor"))
   }
 
-  func test_addFileDescriptor_sameQualifiedNameInTwoFiles_throwsDuplicateSymbol() throws {
+  func test_addFileDescriptor_sameQualifiedNameInTwoFiles_throwsDuplicateSymbol() async throws {
     let child1 = makeMessageProto(name: "Child")
     let parent1 = makeMessageProto(name: "Parent", nestedMessages: [child1])
     let file1 = makeFileProto(name: "f1.proto", package: "pkg", messages: [parent1])
@@ -199,7 +199,7 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
     }
   }
 
-  func test_addFileDescriptor_sameFileAddedTwice_throwsDuplicateFile() throws {
+  func test_addFileDescriptor_sameFileAddedTwice_throwsDuplicateFile() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     XCTAssertThrowsError(try pool.addFileDescriptor(fd)) { error in
@@ -210,7 +210,7 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
     }
   }
 
-  func test_addFileDescriptor_twoPackagesWithSameNestedStructure_noCollision() throws {
+  func test_addFileDescriptor_twoPackagesWithSameNestedStructure_noCollision() async throws {
     let y1 = makeMessageProto(name: "Y")
     let x1 = makeMessageProto(name: "X", nestedMessages: [y1])
     let file1 = makeFileProto(name: "pkg1.proto", package: "pkg1", messages: [x1])
@@ -227,14 +227,14 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
 
   // MARK: - Group 5.5 — findFileContainingSymbol
 
-  func test_findFileContainingSymbol_nestedByQualifiedName_findsCorrectFile() throws {
+  func test_findFileContainingSymbol_nestedByQualifiedName_findsCorrectFile() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     let file = pool.findFileContainingSymbol("pkg.Parent.Child")
     XCTAssertEqual(file?.name, "parent.proto")
   }
 
-  func test_findFileContainingSymbol_nestedByBareName_returnsNil() throws {
+  func test_findFileContainingSymbol_nestedByBareName_returnsNil() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     XCTAssertNil(pool.findFileContainingSymbol("Child"))
@@ -242,13 +242,13 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
 
   // MARK: - Group 5.6 — createMessage
 
-  func test_createMessage_nestedTypeByQualifiedName_succeeds() throws {
+  func test_createMessage_nestedTypeByQualifiedName_succeeds() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     XCTAssertNotNil(pool.createMessage(forType: "pkg.Parent.Child"))
   }
 
-  func test_createMessage_nestedTypeByBareName_returnsNil() throws {
+  func test_createMessage_nestedTypeByBareName_returnsNil() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     XCTAssertNil(pool.createMessage(forType: "Child"))
@@ -256,7 +256,7 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
 
   // MARK: - Group 5.7 — findDependencies
 
-  func test_findDependencies_messageReferencingNestedType_dependencyIsQualified() throws {
+  func test_findDependencies_messageReferencingNestedType_dependencyIsQualified() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     try pool.addFileDescriptor(fd)
     let deps = try pool.findDependencies(for: "pkg.GetGroupedAdsRequest")
@@ -266,7 +266,7 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
     )
   }
 
-  func test_findDependencies_unknownType_throwsSymbolNotFound() throws {
+  func test_findDependencies_unknownType_throwsSymbolNotFound() async throws {
     XCTAssertThrowsError(try pool.findDependencies(for: "Unknown.Type")) { error in
       guard case DescriptorPoolError.symbolNotFound = error else {
         XCTFail("Expected symbolNotFound, got \(error)")
@@ -277,7 +277,7 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
 
   // MARK: - Group 5.8 — allEnumTypeNames
 
-  func test_allEnumTypeNames_nestedEnums_qualifiedNames() throws {
+  func test_allEnumTypeNames_nestedEnums_qualifiedNames() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     let names = pool.allEnumTypeNames()
@@ -287,7 +287,7 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
 
   // MARK: - Group 5.9 — Regressions
 
-  func test_addFileDescriptor_flatMessages_unchanged() throws {
+  func test_addFileDescriptor_flatMessages_unchanged() async throws {
     let msgProto = makeMessageProto(name: "Flat")
     let fileProto = makeFileProto(name: "t.proto", package: "pkg", messages: [msgProto])
     let fd = try bridge.fromProtobufFileDescriptor(fileProto)
@@ -295,7 +295,7 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
     XCTAssertNotNil(pool.findMessageDescriptor(named: "pkg.Flat"))
   }
 
-  func test_addFileDescriptor_builtinDescriptors_notAffected() throws {
+  func test_addFileDescriptor_builtinDescriptors_notAffected() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     // Builtin types should still be present (if pool initialises them)
@@ -303,7 +303,7 @@ final class DescriptorPoolNestedTypesTests: XCTestCase {
     XCTAssertNotNil(pool.findFileDescriptor(named: "parent.proto"))
   }
 
-  func test_clear_removesAllNestedTypes() throws {
+  func test_clear_removesAllNestedTypes() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try pool.addFileDescriptor(fd)
     XCTAssertNotNil(pool.findMessageDescriptor(named: "pkg.Parent.Child"))

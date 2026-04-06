@@ -151,7 +151,7 @@ public struct BinarySerializer: Sendable {
 // MARK: - DeserializationOptions
 
 /// Options for binary deserialization.
-public struct DeserializationOptions {
+public struct DeserializationOptions: Sendable {
   /// Whether to preserve unknown fields for backward compatibility.
   public let preserveUnknownFields: Bool
 
@@ -178,16 +178,6 @@ public struct DeserializationOptions {
     self.preserveUnknownFields = preserveUnknownFields
     self.strictUTF8Validation = strictUTF8Validation
     self.typeRegistry = typeRegistry
-  }
-}
-
-extension _DeserializationOptions {
-  init(from pub: DeserializationOptions) {
-    self.init(
-      preserveUnknownFields: pub.preserveUnknownFields,
-      strictUTF8Validation: pub.strictUTF8Validation,
-      typeRegistry: pub.typeRegistry.typeRegistryImpl
-    )
   }
 }
 
@@ -261,14 +251,12 @@ extension DeserializationError {
 /// Provides functionality for deserializing dynamic Protocol Buffers messages
 /// from binary wire format, using integration with Swift Protobuf library
 /// to ensure compatibility with Protocol Buffers standard.
-public struct BinaryDeserializer {
+public struct BinaryDeserializer: Sendable {
 
   // MARK: - Properties
 
   /// Deserialization options.
   public let options: DeserializationOptions
-
-  private let impl: _BinaryDeserializer
 
   // MARK: - Initialization
 
@@ -277,7 +265,6 @@ public struct BinaryDeserializer {
   /// - Parameter options: Deserialization options.
   public init(options: DeserializationOptions) {
     self.options = options
-    self.impl = _BinaryDeserializer(options: _DeserializationOptions(from: options))
   }
 
   // MARK: - Deserialization Methods
@@ -289,7 +276,14 @@ public struct BinaryDeserializer {
   ///   - descriptor: Message descriptor to determine structure.
   /// - Returns: Deserialized dynamic message.
   /// - Throws: `DeserializationError` if deserialization failed.
-  public func deserialize(_ data: Data, using descriptor: MessageDescriptor) throws -> DynamicMessage {
+  public func deserialize(_ data: Data, using descriptor: MessageDescriptor) async throws -> DynamicMessage {
+    let registrySnapshot = await options.typeRegistry.typeRegistryImpl
+    let internalOpts = _DeserializationOptions(
+      preserveUnknownFields: options.preserveUnknownFields,
+      strictUTF8Validation: options.strictUTF8Validation,
+      typeRegistry: registrySnapshot
+    )
+    let impl = _BinaryDeserializer(options: internalOpts)
     do {
       let result = try impl.deserialize(data, using: _MessageDescriptor(from: descriptor))
       return DynamicMessage(from: result)
@@ -303,7 +297,7 @@ public struct BinaryDeserializer {
 // MARK: - JSONSerializationOptions
 
 /// Options for JSON serialization.
-public struct JSONSerializationOptions {
+public struct JSONSerializationOptions: Sendable {
   /// Use original field names instead of camelCase.
   public let useOriginalFieldNames: Bool
 
@@ -348,18 +342,6 @@ public struct JSONSerializationOptions {
     self.typeRegistry = typeRegistry
   }
 
-}
-
-extension _JSONSerializationOptions {
-  init(from pub: JSONSerializationOptions) {
-    self.init(
-      useOriginalFieldNames: pub.useOriginalFieldNames,
-      prettyPrinted: pub.prettyPrinted,
-      includeDefaultValues: pub.includeDefaultValues,
-      useCanonicalWellKnownTypeEncoding: pub.useCanonicalWellKnownTypeEncoding,
-      typeRegistry: pub.typeRegistry.typeRegistryImpl
-    )
-  }
 }
 
 // MARK: - JSONSerializationError
@@ -453,14 +435,12 @@ extension JSONSerializationError {
 /// Provides functionality for serializing dynamic Protocol Buffers messages
 /// to JSON format according to official Protocol Buffers JSON mapping specification.
 /// Ensures full compatibility with protoc --json_out.
-public struct JSONSerializer {
+public struct JSONSerializer: Sendable {
 
   // MARK: - Properties
 
   /// JSON serialization options.
   public let options: JSONSerializationOptions
-
-  private let impl: _JSONSerializer
 
   // MARK: - Initialization
 
@@ -469,7 +449,6 @@ public struct JSONSerializer {
   /// - Parameter options: JSON serialization options.
   public init(options: JSONSerializationOptions) {
     self.options = options
-    self.impl = _JSONSerializer(options: _JSONSerializationOptions(from: options))
   }
 
   // MARK: - Serialization Methods
@@ -479,7 +458,10 @@ public struct JSONSerializer {
   /// - Parameter message: Dynamic message to serialize.
   /// - Returns: JSON string in Data format.
   /// - Throws: `JSONSerializationError` if serialization failed.
-  public func serialize(_ message: DynamicMessage) throws -> Data {
+  public func serialize(_ message: DynamicMessage) async throws -> Data {
+    let impl = _JSONSerializer(
+      options: makeInternalOptions(registrySnapshot: await options.typeRegistry.typeRegistryImpl)
+    )
     do {
       return try impl.serialize(_DynamicMessage(from: message))
     }
@@ -493,7 +475,10 @@ public struct JSONSerializer {
   /// - Parameter message: Dynamic message to serialize.
   /// - Returns: JSON compatible object (Dictionary).
   /// - Throws: `JSONSerializationError` if serialization failed.
-  public func serializeToJSONObject(_ message: DynamicMessage) throws -> [String: Any] {
+  public func serializeToJSONObject(_ message: DynamicMessage) async throws -> [String: Any] {
+    let impl = _JSONSerializer(
+      options: makeInternalOptions(registrySnapshot: await options.typeRegistry.typeRegistryImpl)
+    )
     do {
       return try impl.serializeToJSONObject(_DynamicMessage(from: message))
     }
@@ -501,12 +486,22 @@ public struct JSONSerializer {
       throw JSONSerializationError(from: e)
     }
   }
+
+  private func makeInternalOptions(registrySnapshot: _TypeRegistry) -> _JSONSerializationOptions {
+    _JSONSerializationOptions(
+      useOriginalFieldNames: options.useOriginalFieldNames,
+      prettyPrinted: options.prettyPrinted,
+      includeDefaultValues: options.includeDefaultValues,
+      useCanonicalWellKnownTypeEncoding: options.useCanonicalWellKnownTypeEncoding,
+      typeRegistry: registrySnapshot
+    )
+  }
 }
 
 // MARK: - JSONDeserializationOptions
 
 /// Options for JSON deserialization.
-public struct JSONDeserializationOptions {
+public struct JSONDeserializationOptions: Sendable {
   /// Ignore unknown fields in JSON.
   public let ignoreUnknownFields: Bool
 
@@ -539,17 +534,6 @@ public struct JSONDeserializationOptions {
     self.strictTypeValidation = strictTypeValidation
     self.typeRegistry = typeRegistry
     self.maxNestingDepth = maxNestingDepth
-  }
-}
-
-extension _JSONDeserializationOptions {
-  init(from pub: JSONDeserializationOptions) {
-    self.init(
-      ignoreUnknownFields: pub.ignoreUnknownFields,
-      strictTypeValidation: pub.strictTypeValidation,
-      typeRegistry: pub.typeRegistry.typeRegistryImpl,
-      maxNestingDepth: pub.maxNestingDepth
-    )
   }
 }
 
@@ -759,14 +743,12 @@ extension JSONDeserializationError {
 /// Provides functionality for deserializing JSON data to dynamic Protocol Buffers messages
 /// according to official Protocol Buffers JSON mapping specification.
 /// Ensures full compatibility with JSONSerializer for round-trip operations.
-public struct JSONDeserializer {
+public struct JSONDeserializer: Sendable {
 
   // MARK: - Properties
 
   /// JSON deserialization options.
   public let options: JSONDeserializationOptions
-
-  private let impl: _JSONDeserializer
 
   // MARK: - Initialization
 
@@ -775,7 +757,6 @@ public struct JSONDeserializer {
   /// - Parameter options: JSON deserialization options.
   public init(options: JSONDeserializationOptions) {
     self.options = options
-    self.impl = _JSONDeserializer(options: _JSONDeserializationOptions(from: options))
   }
 
   // MARK: - Deserialization Methods
@@ -787,7 +768,10 @@ public struct JSONDeserializer {
   ///   - descriptor: Message descriptor to determine structure.
   /// - Returns: Deserialized dynamic message.
   /// - Throws: `JSONDeserializationError` if deserialization failed.
-  public func deserialize(_ data: Data, using descriptor: MessageDescriptor) throws -> DynamicMessage {
+  public func deserialize(_ data: Data, using descriptor: MessageDescriptor) async throws -> DynamicMessage {
+    let impl = _JSONDeserializer(
+      options: makeInternalOptions(registrySnapshot: await options.typeRegistry.typeRegistryImpl)
+    )
     do {
       let result = try impl.deserialize(data, using: _MessageDescriptor(from: descriptor))
       return DynamicMessage(from: result)
@@ -807,7 +791,10 @@ public struct JSONDeserializer {
   public func deserializeFromJSONObject(
     _ jsonObject: [String: Any],
     using descriptor: MessageDescriptor
-  ) throws -> DynamicMessage {
+  ) async throws -> DynamicMessage {
+    let impl = _JSONDeserializer(
+      options: makeInternalOptions(registrySnapshot: await options.typeRegistry.typeRegistryImpl)
+    )
     do {
       let result = try impl.deserializeFromJSONObject(jsonObject, using: _MessageDescriptor(from: descriptor))
       return DynamicMessage(from: result)
@@ -815,5 +802,14 @@ public struct JSONDeserializer {
     catch let e as _JSONDeserializationError {
       throw JSONDeserializationError(from: e)
     }
+  }
+
+  private func makeInternalOptions(registrySnapshot: _TypeRegistry) -> _JSONDeserializationOptions {
+    _JSONDeserializationOptions(
+      ignoreUnknownFields: options.ignoreUnknownFields,
+      strictTypeValidation: options.strictTypeValidation,
+      typeRegistry: registrySnapshot,
+      maxNestingDepth: options.maxNestingDepth
+    )
   }
 }

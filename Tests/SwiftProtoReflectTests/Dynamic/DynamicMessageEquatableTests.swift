@@ -20,8 +20,8 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
   // MARK: - Setup
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     // Create test file descriptor
     fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
@@ -81,17 +81,17 @@ final class DynamicMessageEquatableTests: XCTestCase {
     fileDescriptor.addMessage(personMessage)
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     fileDescriptor = nil
     personMessage = nil
     addressMessage = nil
     enumDescriptor = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Equatable with Different Descriptors Tests
 
-  func testEquatableWithDifferentDescriptors() {
+  func testEquatableWithDifferentDescriptors() async throws {
     // Create two different descriptors with same names but different fullName
     var fileDescriptor1 = FileDescriptor(name: "test1.proto", package: "package1")
     var messageDescriptor1 = MessageDescriptor(name: "TestMessage", parent: fileDescriptor1)
@@ -120,7 +120,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
   // MARK: - Equatable with Map Fields Tests
 
-  func testEquatableWithMapFields() {
+  func testEquatableWithMapFields() async throws {
     // Create message with map field
     var messageDesc = MessageDescriptor(name: "MapTestMessage", parent: fileDescriptor)
 
@@ -212,7 +212,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
   // MARK: - Equatable with Repeated Fields Tests
 
-  func testEquatableWithRepeatedFields() {
+  func testEquatableWithRepeatedFields() async throws {
     // Create message with repeated fields
     var messageDesc = MessageDescriptor(name: "RepeatedTestMessage", parent: fileDescriptor)
     messageDesc.addField(
@@ -310,7 +310,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
   // MARK: - Equatable Error Handling Tests
 
-  func testEquatableWithErrorHandling() {
+  func testEquatableWithErrorHandling() async throws {
     // Create message with field that can cause error during comparison
     var messageDesc = MessageDescriptor(name: "ErrorTestMessage", parent: fileDescriptor)
 
@@ -337,7 +337,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
   // MARK: - areValuesEqual Unknown Type Tests
 
-  func testAreValuesEqualWithUnknownType() {
+  func testAreValuesEqualWithUnknownType() async throws {
     // Create message with type that is not handled in areValuesEqual
     var messageDesc = MessageDescriptor(name: "UnknownTypeTest", parent: fileDescriptor)
 
@@ -394,7 +394,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
   // MARK: - Map with Missing Key Tests
 
-  func testMapComparisonWithMissingKey() {
+  func testMapComparisonWithMissingKey() async throws {
     // Create message with map field for testing missing keys
     var messageDesc = MessageDescriptor(name: "MapMissingKeyTest", parent: fileDescriptor)
 
@@ -442,7 +442,7 @@ final class DynamicMessageEquatableTests: XCTestCase {
 
   // MARK: - Array vs Non-Array Tests
 
-  func testRepeatedFieldComparisonFailures() {
+  func testRepeatedFieldComparisonFailures() async throws {
     // Create message with repeated field
     var messageDesc = MessageDescriptor(name: "RepeatedFailureTest", parent: fileDescriptor)
     messageDesc.addField(

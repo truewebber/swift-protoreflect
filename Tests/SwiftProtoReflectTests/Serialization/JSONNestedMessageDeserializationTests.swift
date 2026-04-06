@@ -14,9 +14,9 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - Helpers
 
-  private func makeRegistry(with fileDescriptor: FileDescriptor) throws -> TypeRegistry {
+  private func makeRegistry(with fileDescriptor: FileDescriptor) async throws -> TypeRegistry {
     let registry = TypeRegistry()
-    try registry.registerFile(fileDescriptor)
+    try await registry.registerFile(fileDescriptor)
     return registry
   }
 
@@ -35,7 +35,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - Single Nested Message
 
-  func test_deserialize_singleNestedMessage_succeeds() throws {
+  func test_deserialize_singleNestedMessage_succeeds() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var inner = MessageDescriptor(name: "Inner", parent: file)
@@ -47,7 +47,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     outer.addField(FieldDescriptor(name: "inner", number: 2, type: .message, typeName: "test.Inner"))
     file.addMessage(outer)
 
-    let registry = try makeRegistry(with: file)
+    let registry = try await makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
 
     let data = json(
@@ -56,7 +56,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
       """
     )
 
-    let message = try deserializer.deserialize(data, using: file.messages["Outer"]!)
+    let message = try await deserializer.deserialize(data, using: file.messages["Outer"]!)
     let accessor = FieldAccessor(message)
 
     XCTAssertEqual(accessor.getValue("id", as: Int32.self), 42)
@@ -70,7 +70,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - Repeated Message Field
 
-  func test_deserialize_repeatedMessageField_succeeds() throws {
+  func test_deserialize_repeatedMessageField_succeeds() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var item = MessageDescriptor(name: "Item", parent: file)
@@ -84,7 +84,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     )
     file.addMessage(order)
 
-    let registry = try makeRegistry(with: file)
+    let registry = try await makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
 
     let data = json(
@@ -93,7 +93,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
       """
     )
 
-    let message = try deserializer.deserialize(data, using: file.messages["Order"]!)
+    let message = try await deserializer.deserialize(data, using: file.messages["Order"]!)
     let items = try message.get(forField: "items") as? [Any]
     XCTAssertNotNil(items)
     XCTAssertEqual(items?.count, 2)
@@ -111,7 +111,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - Map with Message Values
 
-  func test_deserialize_mapWithMessageValues_succeeds() throws {
+  func test_deserialize_mapWithMessageValues_succeeds() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var config = MessageDescriptor(name: "Config", parent: file)
@@ -136,7 +136,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     )
     file.addMessage(settings)
 
-    let registry = try makeRegistry(with: file)
+    let registry = try await makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
 
     let data = json(
@@ -145,7 +145,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
       """
     )
 
-    let message = try deserializer.deserialize(data, using: file.messages["Settings"]!)
+    let message = try await deserializer.deserialize(data, using: file.messages["Settings"]!)
     let configs = try message.get(forField: "configs") as? [AnyHashable: Any]
     XCTAssertNotNil(configs)
     XCTAssertEqual(configs?.count, 2)
@@ -163,7 +163,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - Deep Nesting (3 levels)
 
-  func test_deserialize_threeLayerNesting_succeeds() throws {
+  func test_deserialize_threeLayerNesting_succeeds() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var c = MessageDescriptor(name: "C", parent: file)
@@ -178,7 +178,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     a.addField(FieldDescriptor(name: "b", number: 1, type: .message, typeName: "test.B"))
     file.addMessage(a)
 
-    let registry = try makeRegistry(with: file)
+    let registry = try await makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
 
     let data = json(
@@ -187,7 +187,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
       """
     )
 
-    let message = try deserializer.deserialize(data, using: file.messages["A"]!)
+    let message = try await deserializer.deserialize(data, using: file.messages["A"]!)
 
     let bMsg = try message.get(forField: "b") as? DynamicMessage
     XCTAssertNotNil(bMsg)
@@ -200,7 +200,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - Max Depth Guard
 
-  func test_deserialize_nestingDepthExceeded_throwsError() throws {
+  func test_deserialize_nestingDepthExceeded_throwsError() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var node = MessageDescriptor(name: "Node", parent: file)
@@ -208,7 +208,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     node.addField(FieldDescriptor(name: "child", number: 2, type: .message, typeName: "test.Node"))
     file.addMessage(node)
 
-    let registry = try makeRegistry(with: file)
+    let registry = try await makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry, maxNestingDepth: 2)
 
     let data = json(
@@ -217,7 +217,11 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
       """
     )
 
-    XCTAssertThrowsError(try deserializer.deserialize(data, using: file.messages["Node"]!)) { error in
+    do {
+      try await deserializer.deserialize(data, using: file.messages["Node"]!)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .nestingDepthExceeded(let maxDepth) = jsonError
       {
@@ -231,7 +235,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - Self-Referencing Message (within depth)
 
-  func test_deserialize_selfReferencingMessage_succeeds() throws {
+  func test_deserialize_selfReferencingMessage_succeeds() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var node = MessageDescriptor(name: "Node", parent: file)
@@ -239,7 +243,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     node.addField(FieldDescriptor(name: "child", number: 2, type: .message, typeName: "test.Node"))
     file.addMessage(node)
 
-    let registry = try makeRegistry(with: file)
+    let registry = try await makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
 
     let data = json(
@@ -248,7 +252,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
       """
     )
 
-    let message = try deserializer.deserialize(data, using: file.messages["Node"]!)
+    let message = try await deserializer.deserialize(data, using: file.messages["Node"]!)
     XCTAssertEqual(FieldAccessor(message).getValue("name", as: String.self), "root")
 
     let child = try message.get(forField: "child") as? DynamicMessage
@@ -258,7 +262,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - Empty Nested Message
 
-  func test_deserialize_emptyNestedMessage_succeeds() throws {
+  func test_deserialize_emptyNestedMessage_succeeds() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     let inner = MessageDescriptor(name: "Empty", parent: file)
@@ -268,7 +272,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     outer.addField(FieldDescriptor(name: "empty", number: 1, type: .message, typeName: "test.Empty"))
     file.addMessage(outer)
 
-    let registry = try makeRegistry(with: file)
+    let registry = try await makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
 
     let data = json(
@@ -277,7 +281,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
       """
     )
 
-    let message = try deserializer.deserialize(data, using: file.messages["Wrapper"]!)
+    let message = try await deserializer.deserialize(data, using: file.messages["Wrapper"]!)
     let emptyMsg = try message.get(forField: "empty") as? DynamicMessage
     XCTAssertNotNil(emptyMsg)
     XCTAssertEqual(emptyMsg?.descriptor.fullName, "test.Empty")
@@ -285,7 +289,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - Nested Message with All Scalar Field Types
 
-  func test_deserialize_nestedMessageWithScalarFields_succeeds() throws {
+  func test_deserialize_nestedMessageWithScalarFields_succeeds() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var payload = MessageDescriptor(name: "Payload", parent: file)
@@ -304,7 +308,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     envelope.addField(FieldDescriptor(name: "payload", number: 1, type: .message, typeName: "test.Payload"))
     file.addMessage(envelope)
 
-    let registry = try makeRegistry(with: file)
+    let registry = try await makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
 
     let data = json(
@@ -313,7 +317,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
       """
     )
 
-    let message = try deserializer.deserialize(data, using: file.messages["Envelope"]!)
+    let message = try await deserializer.deserialize(data, using: file.messages["Envelope"]!)
     let payloadMsg = try message.get(forField: "payload") as? DynamicMessage
     XCTAssertNotNil(payloadMsg)
     let pa = FieldAccessor(payloadMsg!)
@@ -331,7 +335,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - Multiple Nested Message Fields
 
-  func test_deserialize_multipleNestedMessageFields_succeeds() throws {
+  func test_deserialize_multipleNestedMessageFields_succeeds() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var address = MessageDescriptor(name: "Address", parent: file)
@@ -348,7 +352,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     person.addField(FieldDescriptor(name: "company", number: 3, type: .message, typeName: "test.Company"))
     file.addMessage(person)
 
-    let registry = try makeRegistry(with: file)
+    let registry = try await makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
 
     let data = json(
@@ -357,7 +361,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
       """
     )
 
-    let message = try deserializer.deserialize(data, using: file.messages["Person"]!)
+    let message = try await deserializer.deserialize(data, using: file.messages["Person"]!)
 
     XCTAssertEqual(FieldAccessor(message).getValue("name", as: String.self), "Alice")
 
@@ -370,7 +374,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - CamelCase JSON Field Names in Nested Messages
 
-  func test_deserialize_nestedMessageWithCamelCaseNames_succeeds() throws {
+  func test_deserialize_nestedMessageWithCamelCaseNames_succeeds() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var detail = MessageDescriptor(name: "Detail", parent: file)
@@ -394,7 +398,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     )
     file.addMessage(wrapper)
 
-    let registry = try makeRegistry(with: file)
+    let registry = try await makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
 
     let data = json(
@@ -403,7 +407,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
       """
     )
 
-    let message = try deserializer.deserialize(data, using: file.messages["Wrapper"]!)
+    let message = try await deserializer.deserialize(data, using: file.messages["Wrapper"]!)
     let detail2 = try message.get(forField: "user_detail") as? DynamicMessage
     XCTAssertNotNil(detail2)
     XCTAssertEqual(FieldAccessor(detail2!).getValue("first_name", as: String.self), "John")
@@ -412,7 +416,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - Round-trip: Nested Message
 
-  func test_deserialize_roundTripNestedMessage_matches() throws {
+  func test_deserialize_roundTripNestedMessage_matches() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var inner = MessageDescriptor(name: "Inner", parent: file)
@@ -424,7 +428,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     outer.addField(FieldDescriptor(name: "inner", number: 1, type: .message, typeName: "test.Inner"))
     file.addMessage(outer)
 
-    let registry = try makeRegistry(with: file)
+    let registry = try await makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
     let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
 
@@ -435,15 +439,15 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     try innerMut.set(Int32(99), forField: "score")
     try outerMsg.set(innerMut, forField: "inner")
 
-    let jsonData = try serializer.serialize(outerMsg)
-    let deserialized = try deserializer.deserialize(jsonData, using: file.messages["Outer"]!)
+    let jsonData = try await serializer.serialize(outerMsg)
+    let deserialized = try await deserializer.deserialize(jsonData, using: file.messages["Outer"]!)
 
     XCTAssertEqual(outerMsg, deserialized)
   }
 
   // MARK: - Round-trip: Repeated Nested Messages
 
-  func test_deserialize_roundTripRepeatedNestedMessages_matches() throws {
+  func test_deserialize_roundTripRepeatedNestedMessages_matches() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var entry = MessageDescriptor(name: "Entry", parent: file)
@@ -456,7 +460,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     )
     file.addMessage(collection)
 
-    let registry = try makeRegistry(with: file)
+    let registry = try await makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
     let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
 
@@ -468,15 +472,15 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     var col = DynamicMessage(descriptor: file.messages["Collection"]!)
     try col.set([e1, e2] as [Any], forField: "entries")
 
-    let jsonData = try serializer.serialize(col)
-    let deserialized = try deserializer.deserialize(jsonData, using: file.messages["Collection"]!)
+    let jsonData = try await serializer.serialize(col)
+    let deserialized = try await deserializer.deserialize(jsonData, using: file.messages["Collection"]!)
 
     XCTAssertEqual(col, deserialized)
   }
 
   // MARK: - Error: No Registry (empty registry)
 
-  func test_deserialize_noRegistryWithNestedMessage_throwsDescriptorNotFound() throws {
+  func test_deserialize_noRegistryWithNestedMessage_throwsDescriptorNotFound() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var inner = MessageDescriptor(name: "Inner", parent: file)
@@ -495,7 +499,11 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
       """
     )
 
-    XCTAssertThrowsError(try deserializer.deserialize(data, using: file.messages["Outer"]!)) { error in
+    do {
+      try await deserializer.deserialize(data, using: file.messages["Outer"]!)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .nestedMessageDescriptorNotFound(let fieldName, let typeName) = jsonError
       {
@@ -510,7 +518,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - Error: Type Not in Registry
 
-  func test_deserialize_typeNotInRegistry_throwsDescriptorNotFound() throws {
+  func test_deserialize_typeNotInRegistry_throwsDescriptorNotFound() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var outer = MessageDescriptor(name: "Outer", parent: file)
@@ -518,7 +526,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     file.addMessage(outer)
 
     let registry = TypeRegistry()
-    try registry.registerMessage(file.messages["Outer"]!)
+    try await registry.registerMessage(file.messages["Outer"]!)
 
     let deserializer = makeDeserializer(registry: registry)
 
@@ -528,7 +536,11 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
       """
     )
 
-    XCTAssertThrowsError(try deserializer.deserialize(data, using: file.messages["Outer"]!)) { error in
+    do {
+      try await deserializer.deserialize(data, using: file.messages["Outer"]!)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .nestedMessageDescriptorNotFound(let fieldName, let typeName) = jsonError
       {
@@ -543,7 +555,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - Error: Wrong JSON Type for Nested Message
 
-  func test_deserialize_nestedMessageWithNonObjectJSON_throwsTypeMismatch() throws {
+  func test_deserialize_nestedMessageWithNonObjectJSON_throwsTypeMismatch() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var inner = MessageDescriptor(name: "Inner", parent: file)
@@ -554,7 +566,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     outer.addField(FieldDescriptor(name: "inner", number: 1, type: .message, typeName: "test.Inner"))
     file.addMessage(outer)
 
-    let registry = try makeRegistry(with: file)
+    let registry = try await makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
 
     let data = json(
@@ -563,7 +575,11 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
       """
     )
 
-    XCTAssertThrowsError(try deserializer.deserialize(data, using: file.messages["Outer"]!)) { error in
+    do {
+      try await deserializer.deserialize(data, using: file.messages["Outer"]!)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .valueTypeMismatch(let fieldName, let expected, _) = jsonError
       {
@@ -578,7 +594,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - Ticket Reproduction Case (OPE-240)
 
-  func test_deserialize_ticketReproCase_succeeds() throws {
+  func test_deserialize_ticketReproCase_succeeds() async throws {
     var file = FileDescriptor(name: "example.proto", package: "example")
 
     var name = MessageDescriptor(name: "Name", parent: file)
@@ -593,7 +609,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     )
     file.addMessage(twoRequest)
 
-    let registry = try makeRegistry(with: file)
+    let registry = try await makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
 
     let data = json(
@@ -602,7 +618,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
       """
     )
 
-    let message = try deserializer.deserialize(data, using: file.messages["TwoRequest"]!)
+    let message = try await deserializer.deserialize(data, using: file.messages["TwoRequest"]!)
 
     let names = try message.get(forField: "names") as? [Any]
     XCTAssertNotNil(names)
@@ -618,7 +634,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - Empty Repeated Messages
 
-  func test_deserialize_emptyRepeatedMessages_succeeds() throws {
+  func test_deserialize_emptyRepeatedMessages_succeeds() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var item = MessageDescriptor(name: "Item", parent: file)
@@ -631,7 +647,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     )
     file.addMessage(container)
 
-    let registry = try makeRegistry(with: file)
+    let registry = try await makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
 
     let data = json(
@@ -640,7 +656,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
       """
     )
 
-    let message = try deserializer.deserialize(data, using: file.messages["Container"]!)
+    let message = try await deserializer.deserialize(data, using: file.messages["Container"]!)
     let items = try message.get(forField: "items") as? [Any]
     XCTAssertNotNil(items)
     XCTAssertEqual(items?.count, 0)
@@ -648,7 +664,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - Nested Message Inside Repeated Inside Nested
 
-  func test_deserialize_nestedInsideRepeatedInsideNested_succeeds() throws {
+  func test_deserialize_nestedInsideRepeatedInsideNested_succeeds() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test")
 
     var tag = MessageDescriptor(name: "Tag", parent: file)
@@ -666,7 +682,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     document.addField(FieldDescriptor(name: "section", number: 1, type: .message, typeName: "test.Section"))
     file.addMessage(document)
 
-    let registry = try makeRegistry(with: file)
+    let registry = try await makeRegistry(with: file)
     let deserializer = makeDeserializer(registry: registry)
 
     let data = json(
@@ -675,7 +691,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
       """
     )
 
-    let message = try deserializer.deserialize(data, using: file.messages["Document"]!)
+    let message = try await deserializer.deserialize(data, using: file.messages["Document"]!)
     let section2 = try message.get(forField: "section") as? DynamicMessage
     XCTAssertNotNil(section2)
     XCTAssertEqual(FieldAccessor(section2!).getValue("title", as: String.self), "Intro")
@@ -690,7 +706,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
 
   // MARK: - New Error Description and Equality
 
-  func test_errorDescription_nestedMessageDescriptorNotFound() {
+  func test_errorDescription_nestedMessageDescriptorNotFound() async throws {
     let error = JSONDeserializationError.nestedMessageDescriptorNotFound(
       fieldName: "inner",
       typeName: "test.Inner"
@@ -701,7 +717,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     )
   }
 
-  func test_errorDescription_nestingDepthExceeded() {
+  func test_errorDescription_nestingDepthExceeded() async throws {
     let error = JSONDeserializationError.nestingDepthExceeded(maxDepth: 64)
     XCTAssertEqual(
       error.description,
@@ -709,7 +725,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     )
   }
 
-  func test_errorEquality_nestedMessageDescriptorNotFound() {
+  func test_errorEquality_nestedMessageDescriptorNotFound() async throws {
     let a = JSONDeserializationError.nestedMessageDescriptorNotFound(fieldName: "f1", typeName: "T1")
     let b = JSONDeserializationError.nestedMessageDescriptorNotFound(fieldName: "f1", typeName: "T1")
     let c = JSONDeserializationError.nestedMessageDescriptorNotFound(fieldName: "f2", typeName: "T1")
@@ -717,7 +733,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     XCTAssertNotEqual(a, c)
   }
 
-  func test_errorEquality_nestingDepthExceeded() {
+  func test_errorEquality_nestingDepthExceeded() async throws {
     let a = JSONDeserializationError.nestingDepthExceeded(maxDepth: 10)
     let b = JSONDeserializationError.nestingDepthExceeded(maxDepth: 10)
     let c = JSONDeserializationError.nestingDepthExceeded(maxDepth: 20)

@@ -20,8 +20,8 @@ final class DescriptorPoolTests: XCTestCase {
 
   // MARK: - Setup
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     // Create file descriptor for tests
     fileDescriptor = FileDescriptor(
@@ -67,18 +67,18 @@ final class DescriptorPoolTests: XCTestCase {
     fileDescriptor.addService(serviceDescriptor)
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     descriptorPool = nil
     fileDescriptor = nil
     messageDescriptor = nil
     enumDescriptor = nil
     serviceDescriptor = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Initialization Tests
 
-  func testInitializationWithBuiltinDescriptors() {
+  func testInitializationWithBuiltinDescriptors() async throws {
     // Act
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: true)
 
@@ -96,7 +96,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertNotNil(timestampMessage)
   }
 
-  func testInitializationWithoutBuiltinDescriptors() {
+  func testInitializationWithoutBuiltinDescriptors() async throws {
     // Act
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
 
@@ -113,7 +113,7 @@ final class DescriptorPoolTests: XCTestCase {
 
   // MARK: - FileDescriptor Management Tests
 
-  func testAddFileDescriptor() throws {
+  func testAddFileDescriptor() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
 
@@ -127,7 +127,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertEqual(foundFile?.package, "test")
   }
 
-  func testAddDuplicateFileDescriptor() throws {
+  func testAddDuplicateFileDescriptor() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
     try descriptorPool.addFileDescriptor(fileDescriptor)
@@ -142,7 +142,7 @@ final class DescriptorPoolTests: XCTestCase {
     }
   }
 
-  func testExtractDescriptorsFromFile() throws {
+  func testExtractDescriptorsFromFile() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
 
@@ -157,7 +157,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertNotNil(descriptorPool.findFieldDescriptor(named: "test.TestMessage.name"))
   }
 
-  func testExtractDescriptorsWithNestedTypes() throws {
+  func testExtractDescriptorsWithNestedTypes() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
 
@@ -184,7 +184,7 @@ final class DescriptorPoolTests: XCTestCase {
 
   // MARK: - Lookup Methods Tests
 
-  func testFindFileDescriptor() throws {
+  func testFindFileDescriptor() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
     try descriptorPool.addFileDescriptor(fileDescriptor)
@@ -198,7 +198,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertNil(notFound)
   }
 
-  func testFindMessageDescriptor() throws {
+  func testFindMessageDescriptor() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
     try descriptorPool.addFileDescriptor(fileDescriptor)
@@ -213,7 +213,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertNil(notFound)
   }
 
-  func testFindEnumDescriptor() throws {
+  func testFindEnumDescriptor() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
     try descriptorPool.addFileDescriptor(fileDescriptor)
@@ -228,7 +228,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertNil(notFound)
   }
 
-  func testFindServiceDescriptor() throws {
+  func testFindServiceDescriptor() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
     try descriptorPool.addFileDescriptor(fileDescriptor)
@@ -243,7 +243,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertNil(notFound)
   }
 
-  func testFindFieldDescriptor() throws {
+  func testFindFieldDescriptor() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
     try descriptorPool.addFileDescriptor(fileDescriptor)
@@ -265,7 +265,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertNil(notFound)
   }
 
-  func testFindFileContainingSymbol() throws {
+  func testFindFileContainingSymbol() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
     try descriptorPool.addFileDescriptor(fileDescriptor)
@@ -289,7 +289,7 @@ final class DescriptorPoolTests: XCTestCase {
 
   // MARK: - Factory Integration Tests
 
-  func testCreateMessage() throws {
+  func testCreateMessage() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
     try descriptorPool.addFileDescriptor(fileDescriptor)
@@ -305,7 +305,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertNil(nonexistentMessage)
   }
 
-  func testCreateMessageWithFieldValues() throws {
+  func testCreateMessageWithFieldValues() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
     try descriptorPool.addFileDescriptor(fileDescriptor)
@@ -335,7 +335,7 @@ final class DescriptorPoolTests: XCTestCase {
 
   // MARK: - Discovery Methods Tests
 
-  func testAllMessageTypeNames() throws {
+  func testAllMessageTypeNames() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
     try descriptorPool.addFileDescriptor(fileDescriptor)
@@ -348,7 +348,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertEqual(messageTypeNames.filter { $0.hasPrefix("test.") }.count, 1)
   }
 
-  func testAllEnumTypeNames() throws {
+  func testAllEnumTypeNames() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
     try descriptorPool.addFileDescriptor(fileDescriptor)
@@ -361,7 +361,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertEqual(enumTypeNames.filter { $0.hasPrefix("test.") }.count, 1)
   }
 
-  func testAllServiceNames() throws {
+  func testAllServiceNames() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
     try descriptorPool.addFileDescriptor(fileDescriptor)
@@ -374,7 +374,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertEqual(serviceNames.filter { $0.hasPrefix("test.") }.count, 1)
   }
 
-  func testAllFileNames() throws {
+  func testAllFileNames() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
     try descriptorPool.addFileDescriptor(fileDescriptor)
@@ -387,7 +387,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertEqual(fileNames.count, 1)
   }
 
-  func testDiscoveryWithBuiltinDescriptors() {
+  func testDiscoveryWithBuiltinDescriptors() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: true)
 
@@ -404,7 +404,7 @@ final class DescriptorPoolTests: XCTestCase {
 
   // MARK: - Dependency Resolution Tests
 
-  func testFindDependencies() throws {
+  func testFindDependencies() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
 
@@ -438,7 +438,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertTrue(dependencies.contains("test.Status"))
   }
 
-  func testFindDependenciesForNonexistentType() throws {
+  func testFindDependenciesForNonexistentType() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
     try descriptorPool.addFileDescriptor(fileDescriptor)
@@ -453,7 +453,7 @@ final class DescriptorPoolTests: XCTestCase {
     }
   }
 
-  func testFindDependenciesWithNestedTypes() throws {
+  func testFindDependenciesWithNestedTypes() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
 
@@ -479,7 +479,7 @@ final class DescriptorPoolTests: XCTestCase {
 
   // MARK: - Clear Methods Tests
 
-  func testClear() throws {
+  func testClear() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: true)
     try descriptorPool.addFileDescriptor(fileDescriptor)
@@ -505,7 +505,7 @@ final class DescriptorPoolTests: XCTestCase {
 
   // MARK: - Error Tests
 
-  func testDescriptorPoolErrorDescriptions() {
+  func testDescriptorPoolErrorDescriptions() async throws {
     // Act & Assert
     let duplicateFileError = DescriptorPoolError.duplicateFile("test.proto")
     XCTAssertEqual(duplicateFileError.localizedDescription, "File 'test.proto' already exists in descriptor pool")
@@ -526,7 +526,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertEqual(invalidDescriptorError.localizedDescription, "Invalid descriptor: missing required field")
   }
 
-  func testDescriptorPoolErrorEquality() {
+  func testDescriptorPoolErrorEquality() async throws {
     // Act & Assert
     XCTAssertEqual(
       DescriptorPoolError.duplicateFile("test.proto"),
@@ -546,7 +546,7 @@ final class DescriptorPoolTests: XCTestCase {
 
   // MARK: - Concurrency Tests
 
-  func testConcurrentAccess() throws {
+  func testConcurrentAccess() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
     try descriptorPool.addFileDescriptor(fileDescriptor)
@@ -570,7 +570,7 @@ final class DescriptorPoolTests: XCTestCase {
 
   // MARK: - Performance Tests
 
-  func testLookupPerformance() throws {
+  func testLookupPerformance() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
     try descriptorPool.addFileDescriptor(fileDescriptor)

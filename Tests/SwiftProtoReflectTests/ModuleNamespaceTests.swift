@@ -15,7 +15,7 @@ final class ModuleNamespaceTests: XCTestCase {
 
   // MARK: - Core Type Accessibility
 
-  func testAllCoreTypesAccessibleWithModulePrefix() {
+  func testAllCoreTypesAccessibleWithModulePrefix() async throws {
     // Verify all core types can be accessed with fully qualified names
     let factory: SwiftProtoReflect.MessageFactory = MessageFactory()
     let registry: SwiftProtoReflect.TypeRegistry = TypeRegistry()
@@ -26,7 +26,7 @@ final class ModuleNamespaceTests: XCTestCase {
     XCTAssertNotNil(pool)
   }
 
-  func testValidationTypesAccessibleWithModulePrefix() {
+  func testValidationTypesAccessibleWithModulePrefix() async throws {
     // Verify validation-related types are accessible
     let result: SwiftProtoReflect.ValidationResult = ValidationResult(isValid: true, errors: [])
     let error: SwiftProtoReflect.ValidationError = .missingRequiredField(fieldName: "test")
@@ -40,7 +40,7 @@ final class ModuleNamespaceTests: XCTestCase {
     }
   }
 
-  func testDescriptorTypesAccessibleWithModulePrefix() {
+  func testDescriptorTypesAccessibleWithModulePrefix() async throws {
     // Verify all descriptor types are accessible
     let fileDesc: SwiftProtoReflect.FileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let msgDesc: SwiftProtoReflect.MessageDescriptor = MessageDescriptor(name: "Test", parent: fileDesc)
@@ -55,7 +55,7 @@ final class ModuleNamespaceTests: XCTestCase {
     XCTAssertEqual(serviceDesc.name, "Service")
   }
 
-  func testDynamicMessageAccessibleWithModulePrefix() {
+  func testDynamicMessageAccessibleWithModulePrefix() async throws {
     // Verify DynamicMessage type can be referenced
     let descriptor = MessageDescriptor(
       name: "Test",
@@ -70,7 +70,7 @@ final class ModuleNamespaceTests: XCTestCase {
 
   // MARK: - Serialization Types
 
-  func testSerializerTypesAccessibleWithModulePrefix() {
+  func testSerializerTypesAccessibleWithModulePrefix() async throws {
     // Verify all serializer types are accessible
     let binarySerializer: SwiftProtoReflect.BinarySerializer = BinarySerializer()
     let jsonSerializer: SwiftProtoReflect.JSONSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
@@ -87,7 +87,7 @@ final class ModuleNamespaceTests: XCTestCase {
     XCTAssertNotNil(jsonDeserializer)
   }
 
-  func testSerializationOptionsAccessibleWithModulePrefix() {
+  func testSerializationOptionsAccessibleWithModulePrefix() async throws {
     // Verify options types are accessible
     let serOpts: SwiftProtoReflect.SerializationOptions = SerializationOptions()
     let deserOpts: SwiftProtoReflect.DeserializationOptions = DeserializationOptions(typeRegistry: TypeRegistry())
@@ -104,7 +104,7 @@ final class ModuleNamespaceTests: XCTestCase {
 
   // MARK: - Error Types
 
-  func testAllErrorTypesAccessibleWithModulePrefix() {
+  func testAllErrorTypesAccessibleWithModulePrefix() async throws {
     // Verify all error types can be accessed
     let _: SwiftProtoReflect.ValidationError.Type = ValidationError.self
     let _: SwiftProtoReflect.JSONDeserializationError.Type = JSONDeserializationError.self
@@ -121,7 +121,7 @@ final class ModuleNamespaceTests: XCTestCase {
     XCTAssertTrue(true, "All error types are accessible")
   }
 
-  func testErrorTypesCanBeInstantiatedWithModulePrefix() {
+  func testErrorTypesCanBeInstantiatedWithModulePrefix() async throws {
     // Verify error types can be created and used
     let validationError: SwiftProtoReflect.ValidationError = .missingRequiredField(fieldName: "field")
     let jsonError: SwiftProtoReflect.JSONDeserializationError = .invalidJSONStructure(
@@ -139,7 +139,7 @@ final class ModuleNamespaceTests: XCTestCase {
 
   // MARK: - Well-Known Type Handlers
 
-  func testWellKnownTypeHandlersAccessibleWithModulePrefix() {
+  func testWellKnownTypeHandlersAccessibleWithModulePrefix() async throws {
     // Verify well-known type handlers are accessible
     let timestampHandler: SwiftProtoReflect.TimestampHandler.Type = TimestampHandler.self
     let durationHandler: SwiftProtoReflect.DurationHandler.Type = DurationHandler.self
@@ -160,7 +160,7 @@ final class ModuleNamespaceTests: XCTestCase {
 
   // MARK: - Bridge Types
 
-  func testBridgeTypesAccessibleWithModulePrefix() {
+  func testBridgeTypesAccessibleWithModulePrefix() async throws {
     // Verify bridge types are accessible
     let staticBridge: SwiftProtoReflect.StaticMessageBridge.Type = StaticMessageBridge.self
     let descriptorBridge: SwiftProtoReflect.DescriptorBridge.Type = DescriptorBridge.self
@@ -171,7 +171,7 @@ final class ModuleNamespaceTests: XCTestCase {
 
   // MARK: - Enum Types
 
-  func testEnumTypesAccessibleWithModulePrefix() {
+  func testEnumTypesAccessibleWithModulePrefix() async throws {
     // Verify public enums are accessible
     let fieldType: SwiftProtoReflect.FieldType = .string
     let wireType: SwiftProtoReflect.WireType = .varint
@@ -182,7 +182,7 @@ final class ModuleNamespaceTests: XCTestCase {
 
   // MARK: - Struct/Helper Types
 
-  func testHelperTypesAccessibleWithModulePrefix() {
+  func testHelperTypesAccessibleWithModulePrefix() async throws {
     // Verify helper struct types are accessible
     let _: SwiftProtoReflect.FieldAccessor.Type = FieldAccessor.self
     let _: SwiftProtoReflect.WellKnownTypeNames.Type = WellKnownTypeNames.self
@@ -193,7 +193,7 @@ final class ModuleNamespaceTests: XCTestCase {
 
   // MARK: - Typealias Support
 
-  func testTypealiasWorksWithModulePrefix() {
+  func testTypealiasWorksWithModulePrefix() async throws {
     // Verify typealiases can be created using module prefix
     typealias CustomValidationResult = SwiftProtoReflect.ValidationResult
     typealias CustomValidationError = SwiftProtoReflect.ValidationError
@@ -210,7 +210,7 @@ final class ModuleNamespaceTests: XCTestCase {
 
   // MARK: - Real-World Usage Patterns
 
-  func testFullWorkflowWithQualifiedNames() throws {
+  func testFullWorkflowWithQualifiedNames() async throws {
     // Verify complete workflow works with fully qualified names
     let fileDesc: SwiftProtoReflect.FileDescriptor = FileDescriptor(
       name: "user.proto",
@@ -236,20 +236,20 @@ final class ModuleNamespaceTests: XCTestCase {
     try message.set("Alice", forField: "name")
 
     let serializer: SwiftProtoReflect.BinarySerializer = BinarySerializer()
-    let data = try serializer.serialize(message)
+    let data = try await serializer.serialize(message)
 
     XCTAssertFalse(data.isEmpty)
 
     let deserializer: SwiftProtoReflect.BinaryDeserializer = BinaryDeserializer(
       options: .init(typeRegistry: TypeRegistry())
     )
-    let deserializedMessage = try deserializer.deserialize(data, using: messageDesc)
+    let deserializedMessage = try await deserializer.deserialize(data, using: messageDesc)
 
     let name = try deserializedMessage.get(forField: "name") as? String
     XCTAssertEqual(name, "Alice")
   }
 
-  func testComplexWorkflowWithValidation() throws {
+  func testComplexWorkflowWithValidation() async throws {
     // Verify validation workflow with fully qualified names
     let file: SwiftProtoReflect.FileDescriptor = FileDescriptor(name: "user.proto", package: "app")
     var user: SwiftProtoReflect.MessageDescriptor = MessageDescriptor(name: "User", parent: file)
@@ -269,13 +269,13 @@ final class ModuleNamespaceTests: XCTestCase {
     XCTAssertTrue(validationResult.isValid)
 
     let serializer: SwiftProtoReflect.JSONSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-    let jsonData = try serializer.serialize(message)
+    let jsonData = try await serializer.serialize(message)
     XCTAssertFalse(jsonData.isEmpty)
 
     let deserializer: SwiftProtoReflect.JSONDeserializer = JSONDeserializer(
       options: .init(typeRegistry: TypeRegistry())
     )
-    let restored: SwiftProtoReflect.DynamicMessage = try deserializer.deserialize(jsonData, using: user)
+    let restored: SwiftProtoReflect.DynamicMessage = try await deserializer.deserialize(jsonData, using: user)
 
     let restoredName = try restored.get(forField: "name") as? String
     let restoredAge = try restored.get(forField: "age") as? Int32
@@ -286,7 +286,7 @@ final class ModuleNamespaceTests: XCTestCase {
 
   // MARK: - Registry Integration
 
-  func testRegistryTypesWithModulePrefix() {
+  func testRegistryTypesWithModulePrefix() async throws {
     // Verify registry types work with module prefix
     let registry: SwiftProtoReflect.TypeRegistry = TypeRegistry()
     let pool: SwiftProtoReflect.DescriptorPool = DescriptorPool()
@@ -297,7 +297,7 @@ final class ModuleNamespaceTests: XCTestCase {
 
   // MARK: - Namespace Pollution Prevention
 
-  func testNoModuleLevelTypeWithModuleName() {
+  func testNoModuleLevelTypeWithModuleName() async throws {
     // This test documents that no type in the module should have the same name
     // as the module itself to prevent namespace shadowing.
     //
@@ -312,7 +312,7 @@ final class ModuleNamespaceTests: XCTestCase {
     XCTAssertTrue(true, "Namespace is clean and collision-free")
   }
 
-  func testExternalConsumerPatterns() throws {
+  func testExternalConsumerPatterns() async throws {
     // Test common patterns external consumers might use
 
     // Pattern 1: Type aliases for convenience

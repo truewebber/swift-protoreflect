@@ -13,7 +13,7 @@ final class StructProtoHelpersTests: XCTestCase {
 
   // MARK: - Encode: nullValue
 
-  func test_encode_nullValue_setsField1() throws {
+  func test_encode_nullValue_setsField1() async throws {
     let message = try valueValueToDynamicMessage(.nullValue)
 
     XCTAssertEqual(message.descriptor.fullName, "google.protobuf.Value")
@@ -30,7 +30,7 @@ final class StructProtoHelpersTests: XCTestCase {
 
   // MARK: - Encode: numberValue
 
-  func test_encode_numberValue_setsField2() throws {
+  func test_encode_numberValue_setsField2() async throws {
     let message = try valueValueToDynamicMessage(.numberValue(3.14))
 
     XCTAssertTrue(try message.hasValue(forField: 2))
@@ -42,7 +42,7 @@ final class StructProtoHelpersTests: XCTestCase {
 
   // MARK: - Encode: stringValue
 
-  func test_encode_stringValue_setsField3() throws {
+  func test_encode_stringValue_setsField3() async throws {
     let message = try valueValueToDynamicMessage(.stringValue("hello"))
 
     XCTAssertTrue(try message.hasValue(forField: 3))
@@ -54,7 +54,7 @@ final class StructProtoHelpersTests: XCTestCase {
 
   // MARK: - Encode: boolValue
 
-  func test_encode_boolValue_setsField4() throws {
+  func test_encode_boolValue_setsField4() async throws {
     let message = try valueValueToDynamicMessage(.boolValue(true))
 
     XCTAssertTrue(try message.hasValue(forField: 4))
@@ -66,7 +66,7 @@ final class StructProtoHelpersTests: XCTestCase {
 
   // MARK: - Encode: structValue
 
-  func test_encode_structValue_setsField5_withNestedStructMessage() throws {
+  func test_encode_structValue_setsField5_withNestedStructMessage() async throws {
     let structVal = StructHandler.StructValue(fields: [
       "key1": .stringValue("val1"),
       "key2": .numberValue(42),
@@ -84,7 +84,7 @@ final class StructProtoHelpersTests: XCTestCase {
 
   // MARK: - Encode: listValue
 
-  func test_encode_listValue_setsField6_withNestedListValueMessage() throws {
+  func test_encode_listValue_setsField6_withNestedListValueMessage() async throws {
     let items: [StructHandler.ValueValue] = [.numberValue(1), .stringValue("two")]
     let message = try valueValueToDynamicMessage(.listValue(items))
 
@@ -99,7 +99,7 @@ final class StructProtoHelpersTests: XCTestCase {
 
   // MARK: - Round-trip all six kinds
 
-  func test_roundTrip_allSixKinds() throws {
+  func test_roundTrip_allSixKinds() async throws {
     let cases: [StructHandler.ValueValue] = [
       .nullValue,
       .numberValue(2.718),
@@ -118,7 +118,7 @@ final class StructProtoHelpersTests: XCTestCase {
 
   // MARK: - Round-trip: deeply nested struct in list
 
-  func test_roundTrip_deeplyNestedStructInList() throws {
+  func test_roundTrip_deeplyNestedStructInList() async throws {
     let inner = StructHandler.StructValue(fields: [
       "deep": .numberValue(99)
     ])

@@ -20,8 +20,8 @@ final class BinaryDeserializationTests: XCTestCase {
   var serializer: BinarySerializer!
   var deserializer: BinaryDeserializer!
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     fileDescriptor = FileDescriptor(name: "test_deserialization.proto", package: "test.deserialization")
     messageFactory = MessageFactory()
@@ -29,17 +29,17 @@ final class BinaryDeserializationTests: XCTestCase {
     deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     fileDescriptor = nil
     messageFactory = nil
     serializer = nil
     deserializer = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Round-trip Tests for Scalar Types (Test-BIN-006)
 
-  func testRoundTripAllScalarTypes() throws {
+  func testRoundTripAllScalarTypes() async throws {
     // Create message with all scalar types
     var scalarMessage = MessageDescriptor(name: "ScalarMessage", parent: fileDescriptor)
 
@@ -82,8 +82,8 @@ final class BinaryDeserializationTests: XCTestCase {
 
     // Round-trip test
     let originalMessage = try messageFactory.createMessage(from: scalarMessage, with: originalValues)
-    let serializedData = try serializer.serialize(originalMessage)
-    let deserializedMessage = try deserializer.deserialize(serializedData, using: scalarMessage)
+    let serializedData = try await serializer.serialize(originalMessage)
+    let deserializedMessage = try await deserializer.deserialize(serializedData, using: scalarMessage)
 
     // Verify all fields
     XCTAssertEqual(try deserializedMessage.get(forField: "double_field") as? Double, 3.14159)
@@ -103,39 +103,39 @@ final class BinaryDeserializationTests: XCTestCase {
     XCTAssertEqual(try deserializedMessage.get(forField: "bytes_field") as? Data, Data([0x01, 0x02, 0x03, 0xFF, 0xAB]))
   }
 
-  func testRoundTripDoubleValue() throws {
+  func testRoundTripDoubleValue() async throws {
     var message = MessageDescriptor(name: "DoubleMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "value", number: 1, type: .double))
     fileDescriptor.addMessage(message)
 
     let original = try messageFactory.createMessage(from: message, with: ["value": 3.14159])
-    let data = try serializer.serialize(original)
-    let deserialized = try deserializer.deserialize(data, using: message)
+    let data = try await serializer.serialize(original)
+    let deserialized = try await deserializer.deserialize(data, using: message)
 
     XCTAssertEqual(try deserialized.get(forField: "value") as? Double, 3.14159)
   }
 
-  func testRoundTripBoolValues() throws {
+  func testRoundTripBoolValues() async throws {
     var message = MessageDescriptor(name: "BoolMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "value", number: 1, type: .bool))
     fileDescriptor.addMessage(message)
 
     // Test true
     let trueMessage = try messageFactory.createMessage(from: message, with: ["value": true])
-    let trueData = try serializer.serialize(trueMessage)
-    let deserializedTrue = try deserializer.deserialize(trueData, using: message)
+    let trueData = try await serializer.serialize(trueMessage)
+    let deserializedTrue = try await deserializer.deserialize(trueData, using: message)
     XCTAssertEqual(try deserializedTrue.get(forField: "value") as? Bool, true)
 
     // Test false: proto3 implicit-presence — false is the default and is omitted from wire,
     // so after round-trip the field is absent (hasValue returns false).
     let falseMessage = try messageFactory.createMessage(from: message, with: ["value": false])
-    let falseData = try serializer.serialize(falseMessage)
+    let falseData = try await serializer.serialize(falseMessage)
     XCTAssertEqual(falseData.count, 0)
-    let deserializedFalse = try deserializer.deserialize(falseData, using: message)
+    let deserializedFalse = try await deserializer.deserialize(falseData, using: message)
     XCTAssertFalse(try deserializedFalse.hasValue(forField: "value"))
   }
 
-  func testRoundTripStringValues() throws {
+  func testRoundTripStringValues() async throws {
     var message = MessageDescriptor(name: "StringMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "value", number: 1, type: .string))
     fileDescriptor.addMessage(message)
@@ -152,13 +152,13 @@ final class BinaryDeserializationTests: XCTestCase {
 
     for testString in testStrings {
       let original = try messageFactory.createMessage(from: message, with: ["value": testString])
-      let data = try serializer.serialize(original)
-      let deserialized = try deserializer.deserialize(data, using: message)
+      let data = try await serializer.serialize(original)
+      let deserialized = try await deserializer.deserialize(data, using: message)
       XCTAssertEqual(try deserialized.get(forField: "value") as? String, testString)
     }
   }
 
-  func testRoundTripBytesValues() throws {
+  func testRoundTripBytesValues() async throws {
     var message = MessageDescriptor(name: "BytesMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "value", number: 1, type: .bytes))
     fileDescriptor.addMessage(message)
@@ -172,15 +172,15 @@ final class BinaryDeserializationTests: XCTestCase {
 
     for bytes in testBytes {
       let original = try messageFactory.createMessage(from: message, with: ["value": bytes])
-      let data = try serializer.serialize(original)
-      let deserialized = try deserializer.deserialize(data, using: message)
+      let data = try await serializer.serialize(original)
+      let deserialized = try await deserializer.deserialize(data, using: message)
       XCTAssertEqual(try deserialized.get(forField: "value") as? Data, bytes)
     }
   }
 
   // MARK: - ZigZag Decoding Tests
 
-  func testZigZagDecoding() {
+  func testZigZagDecoding() async throws {
     // Test ZigZag decoding for sint32
     XCTAssertEqual(_BinaryDeserializer.zigzagDecode32(0), 0)
     XCTAssertEqual(_BinaryDeserializer.zigzagDecode32(1), -1)
@@ -198,7 +198,7 @@ final class BinaryDeserializationTests: XCTestCase {
     XCTAssertEqual(_BinaryDeserializer.zigzagDecode64(201), -101)
   }
 
-  func testRoundTripSintValues() throws {
+  func testRoundTripSintValues() async throws {
     var message = MessageDescriptor(name: "SintMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "sint32_field", number: 1, type: .sint32))
     message.addField(FieldDescriptor(name: "sint64_field", number: 2, type: .sint64))
@@ -210,8 +210,8 @@ final class BinaryDeserializationTests: XCTestCase {
     ]
 
     let original = try messageFactory.createMessage(from: message, with: values)
-    let data = try serializer.serialize(original)
-    let deserialized = try deserializer.deserialize(data, using: message)
+    let data = try await serializer.serialize(original)
+    let deserialized = try await deserializer.deserialize(data, using: message)
 
     XCTAssertEqual(try deserialized.get(forField: "sint32_field") as? Int32, Int32(-1))
     XCTAssertEqual(try deserialized.get(forField: "sint64_field") as? Int64, Int64(-1000))
@@ -219,7 +219,7 @@ final class BinaryDeserializationTests: XCTestCase {
 
   // MARK: - Repeated Fields Tests
 
-  func testRoundTripRepeatedFields() throws {
+  func testRoundTripRepeatedFields() async throws {
     var message = MessageDescriptor(name: "RepeatedMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "strings", number: 1, type: .string, isRepeated: true))
     message.addField(FieldDescriptor(name: "numbers", number: 2, type: .int32, isRepeated: true))
@@ -231,8 +231,8 @@ final class BinaryDeserializationTests: XCTestCase {
     ]
 
     let original = try messageFactory.createMessage(from: message, with: values)
-    let data = try serializer.serialize(original)
-    let deserialized = try deserializer.deserialize(data, using: message)
+    let data = try await serializer.serialize(original)
+    let deserialized = try await deserializer.deserialize(data, using: message)
 
     XCTAssertEqual(try deserialized.get(forField: "strings") as? [String], ["hello", "world", "test"])
     XCTAssertEqual(
@@ -241,7 +241,7 @@ final class BinaryDeserializationTests: XCTestCase {
     )
   }
 
-  func testRoundTripPackedRepeatedFields() throws {
+  func testRoundTripPackedRepeatedFields() async throws {
     var message = MessageDescriptor(name: "PackedMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "values", number: 1, type: .int32, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -254,8 +254,8 @@ final class BinaryDeserializationTests: XCTestCase {
     let packedSerializer = BinarySerializer(options: SerializationOptions(usePackedRepeated: true))
 
     let original = try messageFactory.createMessage(from: message, with: values)
-    let data = try packedSerializer.serialize(original)
-    let deserialized = try deserializer.deserialize(data, using: message)
+    let data = try await packedSerializer.serialize(original)
+    let deserialized = try await deserializer.deserialize(data, using: message)
 
     XCTAssertEqual(
       try deserialized.get(forField: "values") as? [Int32],
@@ -265,7 +265,7 @@ final class BinaryDeserializationTests: XCTestCase {
 
   // MARK: - Map Fields Tests
 
-  func testRoundTripMapFields() throws {
+  func testRoundTripMapFields() async throws {
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -290,8 +290,8 @@ final class BinaryDeserializationTests: XCTestCase {
     ]
 
     let original = try messageFactory.createMessage(from: message, with: ["string_to_int": mapData])
-    let data = try serializer.serialize(original)
-    let deserialized = try deserializer.deserialize(data, using: message)
+    let data = try await serializer.serialize(original)
+    let deserialized = try await deserializer.deserialize(data, using: message)
 
     let deserializedMap = try deserialized.get(forField: "string_to_int") as? [String: Int32]
     XCTAssertEqual(deserializedMap?.count, 3)
@@ -302,7 +302,7 @@ final class BinaryDeserializationTests: XCTestCase {
 
   // MARK: - Enum Tests
 
-  func testRoundTripEnumField() throws {
+  func testRoundTripEnumField() async throws {
     // Create enum
     var enumDescriptor = EnumDescriptor(name: "Status", parent: fileDescriptor)
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0))
@@ -322,15 +322,15 @@ final class BinaryDeserializationTests: XCTestCase {
     fileDescriptor.addMessage(message)
 
     let original = try messageFactory.createMessage(from: message, with: ["status": Int32(1)])
-    let data = try serializer.serialize(original)
-    let deserialized = try deserializer.deserialize(data, using: message)
+    let data = try await serializer.serialize(original)
+    let deserialized = try await deserializer.deserialize(data, using: message)
 
     XCTAssertEqual(try deserialized.get(forField: "status") as? Int32, Int32(1))
   }
 
   // MARK: - Unknown Fields Tests (Test-BIN-007)
 
-  func testDeserializationWithUnknownFields() throws {
+  func testDeserializationWithUnknownFields() async throws {
     // Create message with field numbers 1 and 10
     var originalMessage = MessageDescriptor(name: "OriginalMessage", parent: fileDescriptor)
     originalMessage.addField(FieldDescriptor(name: "known_field", number: 1, type: .string))
@@ -350,10 +350,10 @@ final class BinaryDeserializationTests: XCTestCase {
         "unknown_field": Int32(42),
       ]
     )
-    let data = try serializer.serialize(fullMessage)
+    let data = try await serializer.serialize(fullMessage)
 
     // Deserialize with truncated descriptor (unknown field should be skipped)
-    let partialMessage = try deserializer.deserialize(data, using: newMessage)
+    let partialMessage = try await deserializer.deserialize(data, using: newMessage)
 
     XCTAssertEqual(try partialMessage.get(forField: "known_field") as? String, "test")
     XCTAssertThrowsError(try partialMessage.get(forField: "unknown_field"))
@@ -361,18 +361,22 @@ final class BinaryDeserializationTests: XCTestCase {
 
   // MARK: - Error Handling Tests (Test-BIN-008)
 
-  func testDeserializationErrorHandling() {
+  func testDeserializationErrorHandling() async throws {
     // Test with empty data
     var emptyMessage = MessageDescriptor(name: "EmptyMessage", parent: fileDescriptor)
     // Changed to int32 to match tag 0x08
     emptyMessage.addField(FieldDescriptor(name: "field", number: 1, type: .int32))
 
     let emptyData = Data()
-    XCTAssertNoThrow(try deserializer.deserialize(emptyData, using: emptyMessage))
+    try await deserializer.deserialize(emptyData, using: emptyMessage)
 
     // Test with truncated data (tag for field 1, wire type varint, but no value)
     let truncatedData = Data([0x08])  // Tag for field 1, wire type 0 (varint), but no varint data
-    XCTAssertThrowsError(try deserializer.deserialize(truncatedData, using: emptyMessage)) { error in
+    do {
+      try await deserializer.deserialize(truncatedData, using: emptyMessage)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       XCTAssertTrue(error is DeserializationError)
       if case .truncatedVarint = error as? DeserializationError {
         // Expected error
@@ -383,7 +387,7 @@ final class BinaryDeserializationTests: XCTestCase {
     }
   }
 
-  func testInvalidUTF8String() throws {
+  func testInvalidUTF8String() async throws {
     var message = MessageDescriptor(name: "StringMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "value", number: 1, type: .string))
     fileDescriptor.addMessage(message)
@@ -395,7 +399,11 @@ final class BinaryDeserializationTests: XCTestCase {
     invalidData.append(0xFF)  // Invalid UTF-8 byte
     invalidData.append(0xFE)  // Invalid UTF-8 byte
 
-    XCTAssertThrowsError(try deserializer.deserialize(invalidData, using: message)) { error in
+    do {
+      try await deserializer.deserialize(invalidData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       XCTAssertTrue(error is DeserializationError)
       if case .invalidUTF8String = error as? DeserializationError {
         // Expected error
@@ -408,7 +416,7 @@ final class BinaryDeserializationTests: XCTestCase {
 
   // MARK: - Deserialization Options Tests
 
-  func testDeserializationOptions() {
+  func testDeserializationOptions() async throws {
     // Test deserialization options
     let preservingOptions = DeserializationOptions(preserveUnknownFields: true, typeRegistry: TypeRegistry())
     let discardingOptions = DeserializationOptions(preserveUnknownFields: false, typeRegistry: TypeRegistry())
@@ -425,7 +433,7 @@ final class BinaryDeserializationTests: XCTestCase {
 
   // MARK: - Error Description Tests
 
-  func testDeserializationErrorDescriptions() {
+  func testDeserializationErrorDescriptions() async throws {
     let error1 = DeserializationError.truncatedVarint
     XCTAssertEqual(error1.description, "Truncated varint")
 
@@ -448,7 +456,7 @@ final class BinaryDeserializationTests: XCTestCase {
     XCTAssertEqual(error7.description, "Unsupported nested message type: NestedType")
   }
 
-  func testDeserializationErrorEquality() {
+  func testDeserializationErrorEquality() async throws {
     let error1 = DeserializationError.truncatedVarint
     let error2 = DeserializationError.truncatedVarint
     let error3 = DeserializationError.truncatedMessage
@@ -466,7 +474,7 @@ final class BinaryDeserializationTests: XCTestCase {
 
   // MARK: - Performance Tests
 
-  func testDeserializationPerformance() throws {
+  func testDeserializationPerformance() async throws {
     // Create message with many fields
     var message = MessageDescriptor(name: "LargeMessage", parent: fileDescriptor)
 
@@ -482,26 +490,28 @@ final class BinaryDeserializationTests: XCTestCase {
     }
 
     let originalMessage = try messageFactory.createMessage(from: message, with: fieldValues)
-    let data = try serializer.serialize(originalMessage)
+    let data = try await serializer.serialize(originalMessage)
 
     // Test deserialization performance
-    measure {
-      for _ in 0..<1000 {
-        _ = try? deserializer.deserialize(data, using: message)
-      }
+    for _ in 0..<1000 {
+      _ = await try? deserializer.deserialize(data, using: message)
     }
   }
 
   // MARK: - Error Path Coverage Tests
 
-  func testDeserialize_invalidWireType_throwsError() {
+  func testDeserialize_invalidWireType_throwsError() async throws {
     var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "field", number: 1, type: .int32))
 
     // Wire type 6 is not a valid protobuf wire type (valid: 0-5)
     // Tag = (fieldNumber=1 << 3) | wireType=6 = 8 | 6 = 14 = 0x0E
     let invalidData = Data([0x0E])
-    XCTAssertThrowsError(try deserializer.deserialize(invalidData, using: message)) { error in
+    do {
+      try await deserializer.deserialize(invalidData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if case .invalidWireType = error as? DeserializationError {
         // Expected
       }
@@ -511,14 +521,18 @@ final class BinaryDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserialize_wireTypeMismatch_throwsError() {
+  func testDeserialize_wireTypeMismatch_throwsError() async throws {
     var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "value", number: 1, type: .int32))
 
     // int32 field expects varint wire type (0), but we send fixed32 wire type (5)
     // Tag = (1 << 3) | 5 = 13 = 0x0D, then 4 bytes of fixed32 data
     let mismatchData = Data([0x0D, 0x01, 0x00, 0x00, 0x00])
-    XCTAssertThrowsError(try deserializer.deserialize(mismatchData, using: message)) { error in
+    do {
+      try await deserializer.deserialize(mismatchData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if case .wireTypeMismatch(let fieldName, _, _) = error as? DeserializationError {
         XCTAssertEqual(fieldName, "value")
       }
@@ -528,14 +542,18 @@ final class BinaryDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserialize_messageTypeField_throwsUnsupportedNestedMessage() {
+  func testDeserialize_messageTypeField_throwsUnsupportedNestedMessage() async throws {
     var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "nested", number: 1, type: .message, typeName: "test.Nested"))
 
     // Tag for field 1 (length-delimited) = (1 << 3) | 2 = 10 = 0x0A
     // Length = 2, content = 2 bytes of data
     let data = Data([0x0A, 0x02, 0x08, 0x01])
-    XCTAssertThrowsError(try deserializer.deserialize(data, using: message)) { error in
+    do {
+      try await deserializer.deserialize(data, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if case .unsupportedNestedMessage(let typeName) = error as? DeserializationError {
         XCTAssertEqual(typeName, "test.Nested")
       }
@@ -545,7 +563,7 @@ final class BinaryDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserialize_groupWireTypeInUnknownField_skipsGroup() throws {
+  func testDeserialize_groupWireTypeInUnknownField_skipsGroup() async throws {
     var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "known", number: 1, type: .int32))
 
@@ -554,20 +572,26 @@ final class BinaryDeserializationTests: XCTestCase {
     // Inside group: field 1 varint tag=0x08, value=10=0x0A
     // endGroup for field 2: tag=0x14 (field 2, endGroup)
     let data = Data([0x08, 0x2A, 0x13, 0x08, 0x0A, 0x14])
-    let result = try deserializer.deserialize(data, using: message)
+    let result = try await deserializer.deserialize(data, using: message)
     XCTAssertEqual(try result.get(forField: "known") as? Int32, Int32(42))
   }
 
-  func testDeserialize_groupWireTypeInUnknownField_truncated_throwsError() {
+  func testDeserialize_groupWireTypeInUnknownField_truncated_throwsError() async throws {
     var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "known", number: 1, type: .int32))
 
     // startGroup without endGroup → truncated
     let groupData = Data([0x13])
-    XCTAssertThrowsError(try deserializer.deserialize(groupData, using: message))
+    do {
+      try await deserializer.deserialize(groupData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
-  func testDeserialize_preserveUnknownFieldsFalse_discardsUnknownData() throws {
+  func testDeserialize_preserveUnknownFieldsFalse_discardsUnknownData() async throws {
     var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "known", number: 1, type: .int32))
 
@@ -577,13 +601,13 @@ final class BinaryDeserializationTests: XCTestCase {
     let discardDeserializer = BinaryDeserializer(
       options: DeserializationOptions(preserveUnknownFields: false, typeRegistry: TypeRegistry())
     )
-    let result = try discardDeserializer.deserialize(data, using: message)
+    let result = try await discardDeserializer.deserialize(data, using: message)
 
     // Known field should be deserialized
     XCTAssertEqual(try result.get(forField: "known") as? Int32, Int32(42))
   }
 
-  func testDeserialize_preserveUnknownFieldsTrue_skipsUnknownData() throws {
+  func testDeserialize_preserveUnknownFieldsTrue_skipsUnknownData() async throws {
     var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "known", number: 1, type: .int32))
 
@@ -593,12 +617,12 @@ final class BinaryDeserializationTests: XCTestCase {
     let preserveDeserializer = BinaryDeserializer(
       options: DeserializationOptions(preserveUnknownFields: true, typeRegistry: TypeRegistry())
     )
-    let result = try preserveDeserializer.deserialize(data, using: message)
+    let result = try await preserveDeserializer.deserialize(data, using: message)
 
     XCTAssertEqual(try result.get(forField: "known") as? Int32, Int32(5))
   }
 
-  func testDeserialize_unknownLengthDelimitedField_preserved() throws {
+  func testDeserialize_unknownLengthDelimitedField_preserved() async throws {
     var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "known", number: 1, type: .string))
 
@@ -608,11 +632,11 @@ final class BinaryDeserializationTests: XCTestCase {
     let abcBytes: [UInt8] = [0x61, 0x62, 0x63]
     let data = Data([0x0A, 0x05] + helloBytes + [0x2A, 0x03] + abcBytes)
 
-    let result = try deserializer.deserialize(data, using: message)
+    let result = try await deserializer.deserialize(data, using: message)
     XCTAssertEqual(try result.get(forField: "known") as? String, "hello")
   }
 
-  func testDeserialize_malformedMapEntry_throwsError() throws {
+  func testDeserialize_malformedMapEntry_throwsError() async throws {
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -640,40 +664,44 @@ final class BinaryDeserializationTests: XCTestCase {
     let keyData: [UInt8] = [0x74, 0x65, 0x73, 0x74]  // "test"
     let data = Data([mapTag, entryLength, keyTag, keyLen] + keyData)
 
-    XCTAssertThrowsError(try deserializer.deserialize(data, using: message)) { error in
+    do {
+      try await deserializer.deserialize(data, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       // Either malformedMapEntry or truncatedMessage depending on how overread is detected
       XCTAssertTrue(error is DeserializationError, "Expected a DeserializationError, got: \(error)")
     }
   }
 
-  func testDeserializationError_wireTypeMismatch_description() {
+  func testDeserializationError_wireTypeMismatch_description() async throws {
     let error = DeserializationError.wireTypeMismatch(fieldName: "field1", expected: .varint, actual: .fixed64)
     XCTAssertTrue(error.description.contains("field1"))
     XCTAssertTrue(error.description.contains("varint"))
     XCTAssertTrue(error.description.contains("fixed64"))
   }
 
-  func testDeserializationError_malformedMapEntry_description() {
+  func testDeserializationError_malformedMapEntry_description() async throws {
     let error = DeserializationError.malformedMapEntry(fieldName: "myMap")
     XCTAssertEqual(error.description, "Malformed map entry: myMap")
   }
 
-  func testDeserializationError_missingMapEntryInfo_description() {
+  func testDeserializationError_missingMapEntryInfo_description() async throws {
     let error = DeserializationError.missingMapEntryInfo(fieldName: "someMap")
     XCTAssertEqual(error.description, "Missing map entry info for field 'someMap'")
   }
 
-  func testDeserializationError_missingTypeName_description() {
+  func testDeserializationError_missingTypeName_description() async throws {
     let error = DeserializationError.missingTypeName(fieldType: "message")
     XCTAssertEqual(error.description, "Missing type name for field type: message")
   }
 
-  func testDeserializationError_unsupportedFieldType_description() {
+  func testDeserializationError_unsupportedFieldType_description() async throws {
     let error = DeserializationError.unsupportedFieldType(type: "group")
     XCTAssertEqual(error.description, "Unsupported field type: group")
   }
 
-  func testDeserializationError_equality_allCases() {
+  func testDeserializationError_equality_allCases() async throws {
     XCTAssertEqual(DeserializationError.truncatedVarint, DeserializationError.truncatedVarint)
     XCTAssertEqual(DeserializationError.truncatedMessage, DeserializationError.truncatedMessage)
     XCTAssertEqual(DeserializationError.invalidUTF8String, DeserializationError.invalidUTF8String)
@@ -711,14 +739,18 @@ final class BinaryDeserializationTests: XCTestCase {
     )
   }
 
-  func testDeserialize_truncatedFixed32_throwsError() {
+  func testDeserialize_truncatedFixed32_throwsError() async throws {
     var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "value", number: 1, type: .fixed32))
 
     // Tag for field 1 (fixed32 wire type): (1 << 3) | 5 = 13 = 0x0D
     // But only provide 2 bytes instead of 4
     let truncatedData = Data([0x0D, 0x01, 0x02])
-    XCTAssertThrowsError(try deserializer.deserialize(truncatedData, using: message)) { error in
+    do {
+      try await deserializer.deserialize(truncatedData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if case .truncatedMessage = error as? DeserializationError {
         // Expected
       }
@@ -728,14 +760,18 @@ final class BinaryDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserialize_truncatedFixed64_throwsError() {
+  func testDeserialize_truncatedFixed64_throwsError() async throws {
     var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "value", number: 1, type: .fixed64))
 
     // Tag for field 1 (fixed64 wire type): (1 << 3) | 1 = 9 = 0x09
     // But only provide 4 bytes instead of 8
     let truncatedData = Data([0x09, 0x01, 0x02, 0x03, 0x04])
-    XCTAssertThrowsError(try deserializer.deserialize(truncatedData, using: message)) { error in
+    do {
+      try await deserializer.deserialize(truncatedData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if case .truncatedMessage = error as? DeserializationError {
         // Expected
       }
@@ -747,19 +783,19 @@ final class BinaryDeserializationTests: XCTestCase {
 
   // MARK: - Edge Cases Tests
 
-  func testDeserializeEmptyMessage() throws {
+  func testDeserializeEmptyMessage() async throws {
     var message = MessageDescriptor(name: "EmptyMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "optional_field", number: 1, type: .string))
     fileDescriptor.addMessage(message)
 
     let emptyMessage = messageFactory.createMessage(from: message)
-    let data = try serializer.serialize(emptyMessage)
-    let deserialized = try deserializer.deserialize(data, using: message)
+    let data = try await serializer.serialize(emptyMessage)
+    let deserialized = try await deserializer.deserialize(data, using: message)
 
     XCTAssertFalse(try deserialized.hasValue(forField: "optional_field"))
   }
 
-  func testDeserialize_repeatedExtensionField_accumulatesAllValues() throws {
+  func testDeserialize_repeatedExtensionField_accumulatesAllValues() async throws {
     var message = MessageDescriptor(name: "ExtMsg", parent: fileDescriptor)
     message.addExtensionRange(ExtensionRange(start: 100, end: 200))
     message.addExtension(FieldDescriptor(name: "ext_strings", number: 100, type: .string, isRepeated: true))
@@ -774,20 +810,20 @@ final class BinaryDeserializationTests: XCTestCase {
       0xA2, 0x06, 0x01, 0x7A,
     ])
 
-    let deserialized = try deserializer.deserialize(data, using: message)
+    let deserialized = try await deserializer.deserialize(data, using: message)
     let strings = try deserialized.get(forField: 100) as? [String]
     XCTAssertEqual(strings, ["x", "y", "z"])
   }
 
-  func testDeserializeMessageWithLargeFieldNumbers() throws {
+  func testDeserializeMessageWithLargeFieldNumbers() async throws {
     var message = MessageDescriptor(name: "LargeFieldMessage", parent: fileDescriptor)
     // Large field number, but safe
     message.addField(FieldDescriptor(name: "field_large", number: 1000, type: .int32))
     fileDescriptor.addMessage(message)
 
     let original = try messageFactory.createMessage(from: message, with: ["field_large": Int32(42)])
-    let data = try serializer.serialize(original)
-    let deserialized = try deserializer.deserialize(data, using: message)
+    let data = try await serializer.serialize(original)
+    let deserialized = try await deserializer.deserialize(data, using: message)
 
     XCTAssertEqual(try deserialized.get(forField: "field_large") as? Int32, Int32(42))
   }

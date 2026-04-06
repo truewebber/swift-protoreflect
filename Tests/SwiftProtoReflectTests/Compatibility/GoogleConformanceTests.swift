@@ -16,7 +16,7 @@ final class GoogleConformanceTests: XCTestCase {
 
   // MARK: - Canonical varint encoding
 
-  func test_canonicalVarint_int32FieldOne() throws {
+  func test_canonicalVarint_int32FieldOne() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "conformance.M")
     desc.addField(FieldDescriptor(name: "a", number: 1, type: .int32))
 
@@ -29,7 +29,7 @@ final class GoogleConformanceTests: XCTestCase {
 
   // MARK: - Default values not on wire (proto3)
 
-  func test_defaultValuesNotOnWire() throws {
+  func test_defaultValuesNotOnWire() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "conformance.M")
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
     desc.addField(FieldDescriptor(name: "name", number: 2, type: .string))
@@ -41,7 +41,7 @@ final class GoogleConformanceTests: XCTestCase {
 
   // MARK: - String field encoding
 
-  func test_stringField_helloWorld() throws {
+  func test_stringField_helloWorld() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "conformance.M")
     desc.addField(FieldDescriptor(name: "val", number: 2, type: .string))
 
@@ -58,7 +58,7 @@ final class GoogleConformanceTests: XCTestCase {
 
   // MARK: - Bool field encoding
 
-  func test_boolField_true() throws {
+  func test_boolField_true() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "conformance.M")
     desc.addField(FieldDescriptor(name: "flag", number: 1, type: .bool))
 
@@ -69,7 +69,7 @@ final class GoogleConformanceTests: XCTestCase {
     XCTAssertEqual(data, Data([0x08, 0x01]))
   }
 
-  func test_boolField_false_notSerialized() throws {
+  func test_boolField_false_notSerialized() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "conformance.M")
     desc.addField(FieldDescriptor(name: "flag", number: 1, type: .bool))
 
@@ -80,7 +80,7 @@ final class GoogleConformanceTests: XCTestCase {
 
   // MARK: - Negative int32 uses 10-byte varint
 
-  func test_negativeInt32_tenByteVarint() throws {
+  func test_negativeInt32_tenByteVarint() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "conformance.M")
     desc.addField(FieldDescriptor(name: "val", number: 1, type: .int32))
 
@@ -94,36 +94,36 @@ final class GoogleConformanceTests: XCTestCase {
 
   // MARK: - JSON conformance
 
-  func test_jsonInt64AsString() throws {
+  func test_jsonInt64AsString() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "conformance.M")
     desc.addField(FieldDescriptor(name: "big", number: 1, type: .int64))
 
     var msg = MessageFactory().createMessage(from: desc)
     try msg.set(Int64.max, forField: "big")
 
-    let json = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
+    let json = try await JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
     XCTAssertTrue(json["big"] is String, "int64 must be a JSON string per proto3 spec")
   }
 
-  func test_jsonUint64AsString() throws {
+  func test_jsonUint64AsString() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "conformance.M")
     desc.addField(FieldDescriptor(name: "big", number: 1, type: .uint64))
 
     var msg = MessageFactory().createMessage(from: desc)
     try msg.set(UInt64.max, forField: "big")
 
-    let json = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
+    let json = try await JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
     XCTAssertTrue(json["big"] is String, "uint64 must be a JSON string per proto3 spec")
   }
 
-  func test_jsonBytesAsBase64() throws {
+  func test_jsonBytesAsBase64() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "conformance.M")
     desc.addField(FieldDescriptor(name: "payload", number: 1, type: .bytes))
 
     var msg = MessageFactory().createMessage(from: desc)
     try msg.set(Data([0x00, 0x01, 0x02, 0xFF]), forField: "payload")
 
-    let json = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
+    let json = try await JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
     let b64 = json["payload"] as? String
     XCTAssertNotNil(b64)
     XCTAssertEqual(Data(base64Encoded: b64!)!, Data([0x00, 0x01, 0x02, 0xFF]))

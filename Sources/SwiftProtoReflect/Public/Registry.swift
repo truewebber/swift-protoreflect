@@ -90,17 +90,6 @@ extension DescriptorPoolError {
 
 // MARK: - TypeRegistry
 
-// TODO(Strangler migration / OPE-298): Remove _TypeRegistryStorage, accessQueue, and the three
-// private store/remove helpers once TypeRegistry is migrated to an actor. At that point all mutable
-// state lives in the actor body and reads delegate directly to `impl` (_TypeRegistry).
-// @unchecked Sendable: all mutations serialised on TypeRegistry.accessQueue
-private final class _TypeRegistryStorage: @unchecked Sendable {
-  var fileDescriptors: [String: FileDescriptor] = [:]
-  var messageDescriptors: [String: MessageDescriptor] = [:]
-  var enumDescriptors: [String: EnumDescriptor] = [:]
-  var serviceDescriptors: [String: ServiceDescriptor] = [:]
-}
-
 /// Centralized registry for managing all known Protocol Buffers types.
 ///
 /// Provides registration, lookup and dependency resolution between types.
@@ -109,24 +98,14 @@ private final class _TypeRegistryStorage: @unchecked Sendable {
 /// - Registration of FileDescriptor, MessageDescriptor, EnumDescriptor, ServiceDescriptor.
 /// - Fast type lookup by full name.
 /// - Automatic type extraction from FileDescriptor.
-/// - Thread-safe operations.
+/// - Thread-safe operations via actor isolation.
 /// - Dependency resolution between types.
-public final class TypeRegistry: Sendable {
+public actor TypeRegistry {
 
-  private let storage = _TypeRegistryStorage()
-  private let accessQueue = DispatchQueue(
-    label: "com.swiftprotoreflect.typeregistry",
-    attributes: .concurrent
-  )
+  private var impl: _TypeRegistry
 
-  // TODO(Strangler migration / OPE-298): When Serialization/Bridge/Integration switch to
-  // _TypeRegistry directly, remove the sync writes to `impl` and drop `_TypeRegistryStorage`
-  // in favour of delegating reads to `impl` (the inverse of the current arrangement).
-  // Internal registry kept in sync on every write; currently no internal module reads from it.
-  private let impl: _TypeRegistry
-
-  // Internal accessor so Serialization/Bridge modules can pass the impl directly to
-  // _BinaryDeserializer, _JSONSerializer, etc. without going through the public layer.
+  // Internal accessor so Serialization/Bridge modules can pass a snapshot of the impl directly
+  // to _BinaryDeserializer, _JSONSerializer, etc. without going through the public layer.
   var typeRegistryImpl: _TypeRegistry { impl }
 
   // MARK: - Initialization
@@ -144,10 +123,10 @@ public final class TypeRegistry: Sendable {
   /// - Parameter fileDescriptors: File descriptors to register.
   /// - Throws: `RegistryError.duplicateFile` if the same file name appears more than once.
   ///           `RegistryError.duplicateType` if the same type full name appears across files.
-  public convenience init(fileDescriptors: [FileDescriptor]) throws {
-    self.init()
+  public init(fileDescriptors: [FileDescriptor]) async throws {
+    self.impl = _TypeRegistry()
     for file in fileDescriptors {
-      try registerFile(file)
+      try registerFileImpl(file)
     }
   }
 
@@ -158,33 +137,15 @@ public final class TypeRegistry: Sendable {
   /// - Parameter fileDescriptor: File descriptor to register.
   /// - Throws: `RegistryError.duplicateFile` if file is already registered
   public func registerFile(_ fileDescriptor: FileDescriptor) throws {
-    try accessQueue.sync(flags: .barrier) {
-      do {
-        try impl.registerFile(_FileDescriptor(from: fileDescriptor))
-      }
-      catch let e as _RegistryError {
-        throw RegistryError(from: e)
-      }
-      storage.fileDescriptors[fileDescriptor.name] = fileDescriptor
-      for (_, msg) in fileDescriptor.messages {
-        storeMessage(msg)
-      }
-      for (_, enm) in fileDescriptor.enums {
-        storage.enumDescriptors[enm.fullName] = enm
-      }
-      for (_, svc) in fileDescriptor.services {
-        storage.serviceDescriptors[svc.fullName] = svc
-      }
-    }
+    try registerFileImpl(fileDescriptor)
   }
 
-  private func storeMessage(_ message: MessageDescriptor) {
-    storage.messageDescriptors[message.fullName] = message
-    for (_, nested) in message.nestedMessages {
-      storeMessage(nested)
+  private func registerFileImpl(_ fileDescriptor: FileDescriptor) throws {
+    do {
+      try impl.registerFile(_FileDescriptor(from: fileDescriptor))
     }
-    for (_, nestedEnum) in message.nestedEnums {
-      storage.enumDescriptors[nestedEnum.fullName] = nestedEnum
+    catch let e as _RegistryError {
+      throw RegistryError(from: e)
     }
   }
 
@@ -195,14 +156,11 @@ public final class TypeRegistry: Sendable {
   /// - Parameter messageDescriptor: Message descriptor.
   /// - Throws: `RegistryError.duplicateType` if type is already registered
   public func registerMessage(_ messageDescriptor: MessageDescriptor) throws {
-    try accessQueue.sync(flags: .barrier) {
-      do {
-        try impl.registerMessage(_MessageDescriptor(from: messageDescriptor))
-      }
-      catch let e as _RegistryError {
-        throw RegistryError(from: e)
-      }
-      storeMessage(messageDescriptor)
+    do {
+      try impl.registerMessage(_MessageDescriptor(from: messageDescriptor))
+    }
+    catch let e as _RegistryError {
+      throw RegistryError(from: e)
     }
   }
 
@@ -211,14 +169,11 @@ public final class TypeRegistry: Sendable {
   /// - Parameter enumDescriptor: Enum descriptor.
   /// - Throws: `RegistryError.duplicateType` if type is already registered
   public func registerEnum(_ enumDescriptor: EnumDescriptor) throws {
-    try accessQueue.sync(flags: .barrier) {
-      do {
-        try impl.registerEnum(_EnumDescriptor(from: enumDescriptor))
-      }
-      catch let e as _RegistryError {
-        throw RegistryError(from: e)
-      }
-      storage.enumDescriptors[enumDescriptor.fullName] = enumDescriptor
+    do {
+      try impl.registerEnum(_EnumDescriptor(from: enumDescriptor))
+    }
+    catch let e as _RegistryError {
+      throw RegistryError(from: e)
     }
   }
 
@@ -227,14 +182,11 @@ public final class TypeRegistry: Sendable {
   /// - Parameter serviceDescriptor: Service descriptor.
   /// - Throws: `RegistryError.duplicateType` if type is already registered
   public func registerService(_ serviceDescriptor: ServiceDescriptor) throws {
-    try accessQueue.sync(flags: .barrier) {
-      do {
-        try impl.registerService(_ServiceDescriptor(from: serviceDescriptor))
-      }
-      catch let e as _RegistryError {
-        throw RegistryError(from: e)
-      }
-      storage.serviceDescriptors[serviceDescriptor.fullName] = serviceDescriptor
+    do {
+      try impl.registerService(_ServiceDescriptor(from: serviceDescriptor))
+    }
+    catch let e as _RegistryError {
+      throw RegistryError(from: e)
     }
   }
 
@@ -245,7 +197,7 @@ public final class TypeRegistry: Sendable {
   /// - Parameter fileName: File name.
   /// - Returns: FileDescriptor or nil if not found.
   public func findFile(named fileName: String) -> FileDescriptor? {
-    accessQueue.sync { storage.fileDescriptors[fileName] }
+    impl.findFile(named: fileName).map { FileDescriptor(from: $0) }
   }
 
   /// Finds MessageDescriptor by full name.
@@ -253,7 +205,7 @@ public final class TypeRegistry: Sendable {
   /// - Parameter fullName: Full message name.
   /// - Returns: MessageDescriptor or nil if not found.
   public func findMessage(named fullName: String) -> MessageDescriptor? {
-    accessQueue.sync { storage.messageDescriptors[fullName] }
+    impl.findMessage(named: fullName).map { MessageDescriptor(from: $0) }
   }
 
   /// Finds EnumDescriptor by full name.
@@ -261,7 +213,7 @@ public final class TypeRegistry: Sendable {
   /// - Parameter fullName: Full enum name.
   /// - Returns: EnumDescriptor or nil if not found.
   public func findEnum(named fullName: String) -> EnumDescriptor? {
-    accessQueue.sync { storage.enumDescriptors[fullName] }
+    impl.findEnum(named: fullName).map { EnumDescriptor(from: $0) }
   }
 
   /// Finds ServiceDescriptor by full name.
@@ -269,7 +221,7 @@ public final class TypeRegistry: Sendable {
   /// - Parameter fullName: Full service name.
   /// - Returns: ServiceDescriptor or nil if not found.
   public func findService(named fullName: String) -> ServiceDescriptor? {
-    accessQueue.sync { storage.serviceDescriptors[fullName] }
+    impl.findService(named: fullName).map { ServiceDescriptor(from: $0) }
   }
 
   // MARK: - Proto2-aware Lookup
@@ -279,7 +231,7 @@ public final class TypeRegistry: Sendable {
   /// - Parameter fullName: Full message name.
   /// - Returns: Syntax string (`"proto2"` or `"proto3"`) or nil if not found.
   public func syntaxForType(_ fullName: String) -> String? {
-    findMessage(named: fullName)?.syntax
+    impl.syntaxForType(fullName)
   }
 
   /// Finds an extension field descriptor for a registered message.
@@ -289,7 +241,7 @@ public final class TypeRegistry: Sendable {
   ///   - fieldNumber: Extension field number.
   /// - Returns: `FieldDescriptor` for the extension or nil if not found.
   public func findExtension(forMessage messageFullName: String, fieldNumber: Int) -> FieldDescriptor? {
-    findMessage(named: messageFullName)?.extensions[fieldNumber]
+    impl.findExtension(forMessage: messageFullName, fieldNumber: fieldNumber).map { FieldDescriptor(from: $0) }
   }
 
   // MARK: - Query
@@ -299,7 +251,7 @@ public final class TypeRegistry: Sendable {
   /// - Parameter fileName: File name.
   /// - Returns: true if file is registered.
   public func hasFile(named fileName: String) -> Bool {
-    findFile(named: fileName) != nil
+    impl.hasFile(named: fileName)
   }
 
   /// Checks if message is registered.
@@ -307,7 +259,7 @@ public final class TypeRegistry: Sendable {
   /// - Parameter fullName: Full message name.
   /// - Returns: true if message is registered.
   public func hasMessage(named fullName: String) -> Bool {
-    findMessage(named: fullName) != nil
+    impl.hasMessage(named: fullName)
   }
 
   /// Checks if enum is registered.
@@ -315,7 +267,7 @@ public final class TypeRegistry: Sendable {
   /// - Parameter fullName: Full enum name.
   /// - Returns: true if enum is registered.
   public func hasEnum(named fullName: String) -> Bool {
-    findEnum(named: fullName) != nil
+    impl.hasEnum(named: fullName)
   }
 
   /// Checks if service is registered.
@@ -323,7 +275,7 @@ public final class TypeRegistry: Sendable {
   /// - Parameter fullName: Full service name.
   /// - Returns: true if service is registered.
   public func hasService(named fullName: String) -> Bool {
-    findService(named: fullName) != nil
+    impl.hasService(named: fullName)
   }
 
   // MARK: - Enumeration
@@ -332,28 +284,28 @@ public final class TypeRegistry: Sendable {
   ///
   /// - Returns: Array of all FileDescriptor.
   public func allFiles() -> [FileDescriptor] {
-    accessQueue.sync { Array(storage.fileDescriptors.values) }
+    impl.allFiles().map { FileDescriptor(from: $0) }
   }
 
   /// Returns all registered messages.
   ///
   /// - Returns: Array of all MessageDescriptor.
   public func allMessages() -> [MessageDescriptor] {
-    accessQueue.sync { Array(storage.messageDescriptors.values) }
+    impl.allMessages().map { MessageDescriptor(from: $0) }
   }
 
   /// Returns all registered enums.
   ///
   /// - Returns: Array of all EnumDescriptor.
   public func allEnums() -> [EnumDescriptor] {
-    accessQueue.sync { Array(storage.enumDescriptors.values) }
+    impl.allEnums().map { EnumDescriptor(from: $0) }
   }
 
   /// Returns all registered services.
   ///
   /// - Returns: Array of all ServiceDescriptor.
   public func allServices() -> [ServiceDescriptor] {
-    accessQueue.sync { Array(storage.serviceDescriptors.values) }
+    impl.allServices().map { ServiceDescriptor(from: $0) }
   }
 
   // MARK: - Dependency Resolution
@@ -376,13 +328,7 @@ public final class TypeRegistry: Sendable {
 
   /// Clears all registered types.
   public func clear() {
-    accessQueue.sync(flags: .barrier) {
-      impl.clear()
-      storage.fileDescriptors.removeAll()
-      storage.messageDescriptors.removeAll()
-      storage.enumDescriptors.removeAll()
-      storage.serviceDescriptors.removeAll()
-    }
+    impl.clear()
   }
 
   /// Removes specific file and all related types.
@@ -390,36 +336,7 @@ public final class TypeRegistry: Sendable {
   /// - Parameter fileName: File name to remove.
   /// - Returns: true if file was found and removed.
   public func removeFile(named fileName: String) -> Bool {
-    return accessQueue.sync(flags: .barrier) {
-      guard let file = storage.fileDescriptors.removeValue(forKey: fileName) else {
-        return false
-      }
-      let _ = impl.removeFile(named: fileName)
-      removeTypesFromStorage(file)
-      return true
-    }
-  }
-
-  private func removeTypesFromStorage(_ fileDescriptor: FileDescriptor) {
-    for (_, msg) in fileDescriptor.messages {
-      removeMessageFromStorage(msg)
-    }
-    for (_, enm) in fileDescriptor.enums {
-      storage.enumDescriptors.removeValue(forKey: enm.fullName)
-    }
-    for (_, svc) in fileDescriptor.services {
-      storage.serviceDescriptors.removeValue(forKey: svc.fullName)
-    }
-  }
-
-  private func removeMessageFromStorage(_ message: MessageDescriptor) {
-    storage.messageDescriptors.removeValue(forKey: message.fullName)
-    for (_, nested) in message.nestedMessages {
-      removeMessageFromStorage(nested)
-    }
-    for (_, nestedEnum) in message.nestedEnums {
-      storage.enumDescriptors.removeValue(forKey: nestedEnum.fullName)
-    }
+    impl.removeFile(named: fileName)
   }
 }
 

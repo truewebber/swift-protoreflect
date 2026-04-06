@@ -29,30 +29,30 @@ final class DescriptorBridgeTests: XCTestCase {
 
   // MARK: - Setup and Teardown
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     bridge = DescriptorBridge()
 
     // Create test file descriptor
     fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     bridge = nil
     fileDescriptor = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Initialization Tests
 
-  func testInitialization() {
+  func testInitialization() async throws {
     let bridge = DescriptorBridge()
     XCTAssertNotNil(bridge)
   }
 
   // MARK: - Message Descriptor Conversion Tests
 
-  func testMessageDescriptorToProtobuf() throws {
+  func testMessageDescriptorToProtobuf() async throws {
     // Create test MessageDescriptor
     var messageDescriptor = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     messageDescriptor.addField(FieldDescriptor(name: "name", number: 1, type: .string))
@@ -70,7 +70,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(protobufDescriptor.field[1].type, .int32)
   }
 
-  func testMessageDescriptorFromProtobuf() throws {
+  func testMessageDescriptorFromProtobuf() async throws {
     // Create test protobuf descriptor
     var protobufDescriptor = Google_Protobuf_DescriptorProto()
     protobufDescriptor.name = "TestMessage"
@@ -108,7 +108,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(ageField?.type, .int32)
   }
 
-  func testMessageDescriptorWithNestedTypes() throws {
+  func testMessageDescriptorWithNestedTypes() async throws {
     // Create complex MessageDescriptor with nested types
     var messageDescriptor = MessageDescriptor(name: "ComplexMessage", parent: fileDescriptor)
 
@@ -137,7 +137,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
   // MARK: - Field Descriptor Conversion Tests
 
-  func testFieldDescriptorToProtobuf() throws {
+  func testFieldDescriptorToProtobuf() async throws {
     // Test scalar field types
     let scalarTestCases: [(FieldType, Google_Protobuf_FieldDescriptorProto.TypeEnum)] = [
       (.string, .string),
@@ -182,7 +182,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(messageProtobufField.typeName, "TestMessage")
   }
 
-  func testFieldDescriptorFromProtobuf() throws {
+  func testFieldDescriptorFromProtobuf() async throws {
     // Create test protobuf field descriptor
     var protobufField = Google_Protobuf_FieldDescriptorProto()
     protobufField.name = "test_field"
@@ -201,7 +201,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertFalse(fieldDescriptor.isRequired)
   }
 
-  func testFieldDescriptorLabels() throws {
+  func testFieldDescriptorLabels() async throws {
     // Test different labels (using proto2 syntax for required label support)
     let testCases: [(Google_Protobuf_FieldDescriptorProto.Label, String, Bool, Bool, Bool)] = [
       (.optional, "proto3", false, false, true),
@@ -226,7 +226,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
   // MARK: - Enum Descriptor Conversion Tests
 
-  func testEnumDescriptorToProtobuf() throws {
+  func testEnumDescriptorToProtobuf() async throws {
     // Create test EnumDescriptor
     var enumDescriptor = EnumDescriptor(name: "TestEnum")
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0))
@@ -247,7 +247,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(protobufEnum.value[2].number, 2)
   }
 
-  func testEnumDescriptorFromProtobuf() throws {
+  func testEnumDescriptorFromProtobuf() async throws {
     // Create test protobuf enum descriptor
     var protobufEnum = Google_Protobuf_EnumDescriptorProto()
     protobufEnum.name = "TestEnum"
@@ -280,7 +280,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
   // MARK: - File Descriptor Conversion Tests
 
-  func testFileDescriptorToProtobuf() throws {
+  func testFileDescriptorToProtobuf() async throws {
     // Create test FileDescriptor with content
     var fileDesc = FileDescriptor(name: "test.proto", package: "com.example")
 
@@ -319,7 +319,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(protobufFile.service[0].name, "TestService")
   }
 
-  func testFileDescriptorFromProtobuf() throws {
+  func testFileDescriptorFromProtobuf() async throws {
     // Create test protobuf file descriptor
     var protobufFile = Google_Protobuf_FileDescriptorProto()
     protobufFile.name = "test.proto"
@@ -344,7 +344,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
   // MARK: - Service Descriptor Conversion Tests
 
-  func testServiceDescriptorToProtobuf() throws {
+  func testServiceDescriptorToProtobuf() async throws {
     // Create test ServiceDescriptor
     var serviceDescriptor = ServiceDescriptor(name: "TestService", parent: fileDescriptor)
     serviceDescriptor.addMethod(
@@ -387,7 +387,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertTrue(streamingMethod?.serverStreaming ?? false)
   }
 
-  func testServiceDescriptorFromProtobuf() throws {
+  func testServiceDescriptorFromProtobuf() async throws {
     // Create test protobuf service descriptor
     var protobufService = Google_Protobuf_ServiceDescriptorProto()
     protobufService.name = "TestService"
@@ -418,7 +418,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
   // MARK: - Round-trip Conversion Tests
 
-  func testMessageDescriptorRoundTrip() throws {
+  func testMessageDescriptorRoundTrip() async throws {
     // Create original MessageDescriptor
     var original = MessageDescriptor(name: "RoundTripMessage", parent: fileDescriptor)
     original.addField(FieldDescriptor(name: "name", number: 1, type: .string))
@@ -442,7 +442,7 @@ final class DescriptorBridgeTests: XCTestCase {
     }
   }
 
-  func testFileDescriptorRoundTrip() throws {
+  func testFileDescriptorRoundTrip() async throws {
     // Create original FileDescriptor
     var original = FileDescriptor(name: "roundtrip.proto", package: "test.roundtrip")
 
@@ -469,7 +469,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
   // MARK: - Error Handling Tests
 
-  func testUnsupportedFieldTypeError() {
+  func testUnsupportedFieldTypeError() async throws {
     // Test conversion error handling
     // Since all types are supported in DescriptorBridge, test other errors
 
@@ -483,7 +483,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertNoThrow(try bridge.fromProtobufFieldDescriptor(protobufField))
   }
 
-  func testErrorDescriptions() {
+  func testErrorDescriptions() async throws {
     let errors: [DescriptorBridgeError] = [
       .unsupportedFieldType(123),
       .conversionFailed("Test conversion failed"),
@@ -497,7 +497,7 @@ final class DescriptorBridgeTests: XCTestCase {
     }
   }
 
-  func testInvalidFieldDescriptorError() {
+  func testInvalidFieldDescriptorError() async throws {
     // Test handling of invalid field descriptor
     var protobufField = Google_Protobuf_FieldDescriptorProto()
     protobufField.name = ""  // Empty name should cause error
@@ -511,7 +511,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
   // MARK: - Performance Tests
 
-  func testConversionPerformance() throws {
+  func testConversionPerformance() async throws {
     // Create complex descriptor for performance testing
     var fileDesc = FileDescriptor(name: "performance.proto", package: "test.performance")
 
@@ -537,7 +537,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
   // MARK: - Additional Coverage Tests
 
-  func testMessageDescriptorWithOptions() throws {
+  func testMessageDescriptorWithOptions() async throws {
     // Create MessageDescriptor with options via constructor
     var messageDescriptor = MessageDescriptor(
       name: "MessageWithOptions",
@@ -554,7 +554,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(protobufDescriptor.field.count, 1)
   }
 
-  func testMessageDescriptorFromProtobufWithOptions() throws {
+  func testMessageDescriptorFromProtobufWithOptions() async throws {
     // Create protobuf descriptor with options
     var protobufDescriptor = Google_Protobuf_DescriptorProto()
     protobufDescriptor.name = "MessageWithOptions"
@@ -570,7 +570,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(messageDescriptor.name, "MessageWithOptions")
   }
 
-  func testFieldDescriptorWithCustomJsonName() throws {
+  func testFieldDescriptorWithCustomJsonName() async throws {
     // Create FieldDescriptor with custom JSON name
     let fieldDescriptor = FieldDescriptor(
       name: "field_name",
@@ -587,7 +587,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(protobufField.jsonName, "customJsonName")
   }
 
-  func testFieldDescriptorWithOptions() throws {
+  func testFieldDescriptorWithOptions() async throws {
     // Create FieldDescriptor with options via constructor
     let fieldDescriptor = FieldDescriptor(
       name: "field_with_options",
@@ -604,7 +604,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(protobufField.type, .string)
   }
 
-  func testFieldDescriptorFromProtobufWithOptions() throws {
+  func testFieldDescriptorFromProtobufWithOptions() async throws {
     // Create protobuf field descriptor with options
     var protobufField = Google_Protobuf_FieldDescriptorProto()
     protobufField.name = "field_with_options"
@@ -621,7 +621,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(fieldDescriptor.type, .string)
   }
 
-  func testEnumDescriptorWithValueOptions() throws {
+  func testEnumDescriptorWithValueOptions() async throws {
     // Create EnumDescriptor with value options
     var enumDescriptor = EnumDescriptor(name: "EnumWithOptions")
 
@@ -641,7 +641,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(protobufEnum.value[0].name, "VALUE_WITH_OPTIONS")
   }
 
-  func testEnumDescriptorWithEnumOptions() throws {
+  func testEnumDescriptorWithEnumOptions() async throws {
     // Create EnumDescriptor with enum options via constructor
     var enumDescriptor = EnumDescriptor(
       name: "EnumWithOptions",
@@ -657,7 +657,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(protobufEnum.value.count, 1)
   }
 
-  func testFileDescriptorWithServices() throws {
+  func testFileDescriptorWithServices() async throws {
     // Create protobuf file descriptor with services
     var protobufFile = Google_Protobuf_FileDescriptorProto()
     protobufFile.name = "service_test.proto"
@@ -685,7 +685,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(Array(fileDescriptor.services.values)[0].name, "TestService")
   }
 
-  func testUnknownFieldTypeHandling() throws {
+  func testUnknownFieldTypeHandling() async throws {
     // Create mock to test @unknown default case
     // Since we can't easily create unknown case, test all known types
 
@@ -726,7 +726,7 @@ final class DescriptorBridgeTests: XCTestCase {
     }
   }
 
-  func testAllFieldTypeConversions() throws {
+  func testAllFieldTypeConversions() async throws {
     // Test scalar field types for full switch statement coverage
     let scalarFieldTypes: [(FieldType, Google_Protobuf_FieldDescriptorProto.TypeEnum)] = [
       (.double, .double), (.float, .float), (.int64, .int64), (.uint64, .uint64),
@@ -780,7 +780,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
   // MARK: - OneofIndex Tests
 
-  func testFieldWithOneofIndexPreservedFromProtobuf() throws {
+  func testFieldWithOneofIndexPreservedFromProtobuf() async throws {
     var protobufField = Google_Protobuf_FieldDescriptorProto()
     protobufField.name = "oneof_field"
     protobufField.number = 1
@@ -793,7 +793,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(fieldDescriptor.oneofIndex, 0)
   }
 
-  func testFieldWithoutOneofIndexRemainsNil() throws {
+  func testFieldWithoutOneofIndexRemainsNil() async throws {
     var protobufField = Google_Protobuf_FieldDescriptorProto()
     protobufField.name = "regular_field"
     protobufField.number = 1
@@ -805,7 +805,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertNil(fieldDescriptor.oneofIndex)
   }
 
-  func testFieldOneofIndexRoundTrip() throws {
+  func testFieldOneofIndexRoundTrip() async throws {
     let original = FieldDescriptor(
       name: "oneof_field",
       number: 1,
@@ -823,7 +823,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
   // MARK: - Oneof Decls from Protobuf Tests
 
-  func testOneofDeclsPopulatedFromProtobuf() throws {
+  func testOneofDeclsPopulatedFromProtobuf() async throws {
     var proto = Google_Protobuf_DescriptorProto()
     proto.name = "User"
 
@@ -849,7 +849,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(msg.oneof(at: 0)?.name, "contact")
   }
 
-  func testMultipleOneofDeclsFromProtobuf() throws {
+  func testMultipleOneofDeclsFromProtobuf() async throws {
     var proto = Google_Protobuf_DescriptorProto()
     proto.name = "User"
 
@@ -872,7 +872,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(msg.oneof(at: 1)?.name, "identifier")
   }
 
-  func testFieldOneofIndexMatchesOneofDecl() throws {
+  func testFieldOneofIndexMatchesOneofDecl() async throws {
     var proto = Google_Protobuf_DescriptorProto()
     proto.name = "User"
 
@@ -911,7 +911,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(phoneDescriptor?.oneofIndex, resolved?.index)
   }
 
-  func testMessageWithoutOneofsHasEmptyOneofDecls() throws {
+  func testMessageWithoutOneofsHasEmptyOneofDecls() async throws {
     var proto = Google_Protobuf_DescriptorProto()
     proto.name = "Simple"
 
@@ -928,7 +928,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertTrue(msg.oneofDecls.isEmpty)
   }
 
-  func testPrivateOptionsMethods() throws {
+  func testPrivateOptionsMethods() async throws {
     // Test private methods for working with options via public methods
 
     // Create MessageDescriptor with options to test toProtobufMessageOptions
@@ -957,7 +957,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
   // MARK: - Oneof Decls Serialization Tests
 
-  func testOneofDeclsSerializedToProtobuf() throws {
+  func testOneofDeclsSerializedToProtobuf() async throws {
     var msg = MessageDescriptor(name: "User", fullName: "User")
     msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
     msg.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
@@ -968,7 +968,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(proto.oneofDecl[0].name, "contact")
   }
 
-  func testMultipleOneofDeclsSerializedToProtobuf() throws {
+  func testMultipleOneofDeclsSerializedToProtobuf() async throws {
     var msg = MessageDescriptor(name: "User", fullName: "User")
     msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
     msg.addField(FieldDescriptor(name: "passport", number: 4, type: .string, oneofIndex: 1))
@@ -982,7 +982,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(proto.oneofDecl[1].name, "identifier")
   }
 
-  func testOneofRoundTrip() throws {
+  func testOneofRoundTrip() async throws {
     var msg = MessageDescriptor(name: "User", fullName: "User")
     msg.addField(FieldDescriptor(name: "id", number: 1, type: .string))
     msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
@@ -1002,7 +1002,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertNil(roundTripped.field(named: "id")?.oneofIndex)
   }
 
-  func testOneofRoundTripViaFileDescriptor() throws {
+  func testOneofRoundTripViaFileDescriptor() async throws {
     var fileDesc = FileDescriptor(name: "user.proto", package: "example")
     var msg = MessageDescriptor(name: "User", parent: fileDesc)
     msg.addField(FieldDescriptor(name: "id", number: 1, type: .string))
@@ -1027,7 +1027,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
   // MARK: - OPE-221: FieldDescriptor bridge edge cases (T-FD-05, T-FD-09, T-FD-11)
 
-  func test_toProtobufFieldDescriptor_whenFieldHasOneofIndexZero_setsProtoOneofIndex_TFD05() throws {
+  func test_toProtobufFieldDescriptor_whenFieldHasOneofIndexZero_setsProtoOneofIndex_TFD05() async throws {
     let field = FieldDescriptor(
       name: "email",
       number: 2,
@@ -1039,13 +1039,13 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(proto.oneofIndex, 0)
   }
 
-  func test_toProtobufFieldDescriptor_whenFieldHasNoOneof_clearsProtoOneofIndex_TFD09() throws {
+  func test_toProtobufFieldDescriptor_whenFieldHasNoOneof_clearsProtoOneofIndex_TFD09() async throws {
     let field = FieldDescriptor(name: "name", number: 1, type: .string)
     let proto = try bridge.toProtobufFieldDescriptor(from: field)
     XCTAssertFalse(proto.hasOneofIndex)
   }
 
-  func test_fromProtobufDescriptor_whenMapField_detectedMapHasNilOneofIndex_TFD11() throws {
+  func test_fromProtobufDescriptor_whenMapField_detectedMapHasNilOneofIndex_TFD11() async throws {
     var messageProto = Google_Protobuf_DescriptorProto()
     messageProto.name = "WithMap"
 
@@ -1072,7 +1072,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
   // MARK: - OPE-221: fromProtobuf oneof (T-BR-FROM-05…13)
 
-  func test_fromProtobufDescriptor_mixedScalarAndOneofFields_TBRFROM05() throws {
+  func test_fromProtobufDescriptor_mixedScalarAndOneofFields_TBRFROM05() async throws {
     var proto = Google_Protobuf_DescriptorProto()
     proto.name = "User"
 
@@ -1100,7 +1100,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(msg.field(named: "email")?.oneofIndex, 0)
   }
 
-  func test_fromProtobufFileDescriptor_preservesOneofDecls_TBRFROM06() throws {
+  func test_fromProtobufFileDescriptor_preservesOneofDecls_TBRFROM06() async throws {
     var fileDesc = FileDescriptor(name: "m.proto", package: "example")
     var msg = MessageDescriptor(name: "User", parent: fileDesc)
     msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
@@ -1114,7 +1114,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(roundMsg.oneof(at: 0)?.name, "contact")
   }
 
-  func test_fromProtobufDescriptor_nestedMessageOneofIndependent_TBRFROM07() throws {
+  func test_fromProtobufDescriptor_nestedMessageOneofIndependent_TBRFROM07() async throws {
     var inner = Google_Protobuf_DescriptorProto()
     inner.name = "Inner"
     var innerOneof = Google_Protobuf_OneofDescriptorProto()
@@ -1150,7 +1150,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(innerMsg.oneof(at: 0)?.name, "format")
   }
 
-  func test_fromProtobufDescriptor_onlyOneofFields_TBRFROM09() throws {
+  func test_fromProtobufDescriptor_onlyOneofFields_TBRFROM09() async throws {
     var proto = Google_Protobuf_DescriptorProto()
     proto.name = "OnlyOneof"
 
@@ -1180,7 +1180,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(msg.field(named: "a")?.oneofIndex, 0)
   }
 
-  func test_fromProtobufDescriptor_proto3SyntheticOptionalOneof_TBRFROM10() throws {
+  func test_fromProtobufDescriptor_proto3SyntheticOptionalOneof_TBRFROM10() async throws {
     var proto = Google_Protobuf_DescriptorProto()
     proto.name = "WithOptional"
 
@@ -1204,7 +1204,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(msg.field(named: "nickname")?.oneofIndex, 0)
   }
 
-  func test_fromProtobufDescriptor_emptyOneofName_TBRFROM11() throws {
+  func test_fromProtobufDescriptor_emptyOneofName_TBRFROM11() async throws {
     var proto = Google_Protobuf_DescriptorProto()
     proto.name = "M"
     var oneof = Google_Protobuf_OneofDescriptorProto()
@@ -1223,7 +1223,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(msg.oneofDecls[0].index, 0)
   }
 
-  func test_fromProtobufDescriptor_oneofDeclOrderDefinesIndex_TBRFROM12() throws {
+  func test_fromProtobufDescriptor_oneofDeclOrderDefinesIndex_TBRFROM12() async throws {
     var proto = Google_Protobuf_DescriptorProto()
     proto.name = "Ordered"
 
@@ -1256,7 +1256,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(msg.field(named: "email")?.oneofIndex, 1)
   }
 
-  func test_fromProtobufDescriptor_mapAndOneofCoexist_TBRFROM13() throws {
+  func test_fromProtobufDescriptor_mapAndOneofCoexist_TBRFROM13() async throws {
     var messageProto = Google_Protobuf_DescriptorProto()
     messageProto.name = "Hybrid"
 
@@ -1290,7 +1290,7 @@ final class DescriptorBridgeTests: XCTestCase {
 
   // MARK: - OPE-221: toProtobuf oneof (T-BR-TO-02…12)
 
-  func test_toProtobufDescriptor_fieldWithOneofIndexWritesProtoOneofIndex_TBRTO03() throws {
+  func test_toProtobufDescriptor_fieldWithOneofIndexWritesProtoOneofIndex_TBRTO03() async throws {
     var msg = MessageDescriptor(name: "User", fullName: "User")
     msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
     msg.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
@@ -1301,7 +1301,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(emailProto.oneofIndex, 0)
   }
 
-  func test_toProtobufDescriptor_oneofDeclsSortedByIndex_TBRTO02() throws {
+  func test_toProtobufDescriptor_oneofDeclsSortedByIndex_TBRTO02() async throws {
     var msg = MessageDescriptor(name: "User", fullName: "User")
     msg.addOneofDecl(OneofDescriptor(name: "payment", index: 1))
     msg.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
@@ -1312,7 +1312,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(proto.oneofDecl[1].name, "payment")
   }
 
-  func test_toProtobufDescriptor_regularFieldOmitsOneofIndex_TBRTO04() throws {
+  func test_toProtobufDescriptor_regularFieldOmitsOneofIndex_TBRTO04() async throws {
     var msg = MessageDescriptor(name: "User", fullName: "User")
     msg.addField(FieldDescriptor(name: "id", number: 1, type: .string))
     msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
@@ -1323,7 +1323,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertFalse(idProto.hasOneofIndex)
   }
 
-  func test_toProtobufDescriptor_fullMessageRoundTripPreservesOneofs_TBRTO05() throws {
+  func test_toProtobufDescriptor_fullMessageRoundTripPreservesOneofs_TBRTO05() async throws {
     var msg = MessageDescriptor(name: "User", fullName: "User")
     msg.addField(FieldDescriptor(name: "id", number: 1, type: .string))
     msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
@@ -1338,7 +1338,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(round.field(named: "email")?.oneofIndex, 0)
   }
 
-  func test_toProtobufDescriptor_nestedOneofRoundTripIndependent_TBRTO07() throws {
+  func test_toProtobufDescriptor_nestedOneofRoundTripIndependent_TBRTO07() async throws {
     var inner = MessageDescriptor(name: "Inner", fullName: "Outer.Inner")
     inner.addField(FieldDescriptor(name: "x", number: 1, type: .string, oneofIndex: 0))
     inner.addOneofDecl(OneofDescriptor(name: "format", index: 0))
@@ -1356,7 +1356,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(innerRound.oneof(at: 0)?.name, "format")
   }
 
-  func test_toProtobufDescriptor_withoutOneofDecls_emitsEmptyOneofDecl_TBRTO08() throws {
+  func test_toProtobufDescriptor_withoutOneofDecls_emitsEmptyOneofDecl_TBRTO08() async throws {
     var msg = MessageDescriptor(name: "Plain", fullName: "Plain")
     msg.addField(FieldDescriptor(name: "v", number: 1, type: .string))
 
@@ -1364,7 +1364,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertTrue(proto.oneofDecl.isEmpty)
   }
 
-  func test_toProtobufDescriptor_oneofDeclsWithoutFieldOneofIndices_TBRTO09() throws {
+  func test_toProtobufDescriptor_oneofDeclsWithoutFieldOneofIndices_TBRTO09() async throws {
     var msg = MessageDescriptor(name: "M", fullName: "M")
     msg.addField(FieldDescriptor(name: "id", number: 1, type: .string))
     msg.addOneofDecl(OneofDescriptor(name: "unused", index: 0))
@@ -1374,7 +1374,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertFalse(try XCTUnwrap(proto.field.first { $0.name == "id" }).hasOneofIndex)
   }
 
-  func test_toProtobufDescriptor_duplicateOneofIndices_notDeduplicated_TBRTO10() throws {
+  func test_toProtobufDescriptor_duplicateOneofIndices_notDeduplicated_TBRTO10() async throws {
     var msg = MessageDescriptor(name: "M", fullName: "M")
     msg.addOneofDecl(OneofDescriptor(name: "a", index: 0))
     msg.addOneofDecl(OneofDescriptor(name: "b", index: 0))
@@ -1383,7 +1383,7 @@ final class DescriptorBridgeTests: XCTestCase {
     XCTAssertEqual(proto.oneofDecl.count, 2)
   }
 
-  func test_toProtobufDescriptor_manyOneofGroups_sortedByIndex_TBRTO11() throws {
+  func test_toProtobufDescriptor_manyOneofGroups_sortedByIndex_TBRTO11() async throws {
     var msg = MessageDescriptor(name: "Big", fullName: "Big")
     for i in 0..<11 {
       msg.addOneofDecl(OneofDescriptor(name: "g\(i)", index: i))
@@ -1395,7 +1395,7 @@ final class DescriptorBridgeTests: XCTestCase {
     }
   }
 
-  func test_toProtobufDescriptor_mapAndOneofFieldsIndependent_TBRTO12() throws {
+  func test_toProtobufDescriptor_mapAndOneofFieldsIndependent_TBRTO12() async throws {
     var msg = MessageDescriptor(name: "Hybrid", fullName: "test.Hybrid")
     let keyInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valInfo = ValueFieldInfo(name: "value", number: 2, type: .string)

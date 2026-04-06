@@ -21,7 +21,7 @@ final class NestedTypesIntegrationTests: XCTestCase {
 
   // MARK: - Group 8.1: ISSUE.md exact reproductions
 
-  func test_integration_issueMd_failure1_exactRepro_noThrow() throws {
+  func test_integration_issueMd_failure1_exactRepro_noThrow() async throws {
     // Verbatim reproduction of Failure 1: GetGroupedAdsResponse with nested Cursor and Item.
     // Prior to fix, iterating allMessageTypeNames and re-registering caused duplicateType.
     let fileDesc = try bridge.fromProtobufFileDescriptor(adsResponseFileProto)
@@ -30,21 +30,24 @@ final class NestedTypesIntegrationTests: XCTestCase {
     try pool.addFileDescriptor(fileDesc)
 
     let registry = TypeRegistry()
-    XCTAssertNoThrow(try registry.registerFile(fileDesc))
+    try await registry.registerFile(fileDesc)
 
-    XCTAssertNotNil(registry.findMessage(named: "pkg.GetGroupedAdsResponse"))
-    XCTAssertNotNil(registry.findMessage(named: "pkg.GetGroupedAdsResponse.Cursor"))
-    XCTAssertNotNil(registry.findMessage(named: "pkg.GetGroupedAdsResponse.Item"))
+    let _asyncResult1 = await registry.findMessage(named: "pkg.GetGroupedAdsResponse")
+    XCTAssertNotNil(_asyncResult1)
+    let _asyncResult2 = await registry.findMessage(named: "pkg.GetGroupedAdsResponse.Cursor")
+    XCTAssertNotNil(_asyncResult2)
+    let _asyncResult3 = await registry.findMessage(named: "pkg.GetGroupedAdsResponse.Item")
+    XCTAssertNotNil(_asyncResult3)
   }
 
-  func test_integration_issueMd_failure2_exactRepro_deserializesCorrectly() throws {
+  func test_integration_issueMd_failure2_exactRepro_deserializesCorrectly() async throws {
     // Verbatim reproduction of Failure 2: GetGroupedAdsRequest with nested SearchFilters.
     // Prior to fix, JSONDeserializationError.nestedMessageDescriptorNotFound was thrown.
     let fileDesc = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let registry = TypeRegistry()
-    try registry.registerFile(fileDesc)
+    try await registry.registerFile(fileDesc)
 
-    guard let requestDesc = registry.findMessage(named: "pkg.GetGroupedAdsRequest") else {
+    guard let requestDesc = await registry.findMessage(named: "pkg.GetGroupedAdsRequest") else {
       XCTFail("GetGroupedAdsRequest not found")
       return
     }
@@ -53,7 +56,7 @@ final class NestedTypesIntegrationTests: XCTestCase {
       "search_filters": ["title": "test"],
       "limit": 10,
     ]
-    let msg = try deserializer.deserializeFromJSONObject(json, using: requestDesc)
+    let msg = try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
     let filtersValue = try msg.get(forField: "search_filters")
     let filtersMsg = try XCTUnwrap(filtersValue as? DynamicMessage)
     let title = try filtersMsg.get(forField: "title")
@@ -63,7 +66,7 @@ final class NestedTypesIntegrationTests: XCTestCase {
 
   // MARK: - Group 8.2: Pool → Registry patterns
 
-  func test_integration_poolToRegistryViaRegisterFile_noError() throws {
+  func test_integration_poolToRegistryViaRegisterFile_noError() async throws {
     let fileDesc = try bridge.fromProtobufFileDescriptor(adsResponseFileProto)
     let pool = DescriptorPool()
     try pool.addFileDescriptor(fileDesc)
@@ -71,21 +74,27 @@ final class NestedTypesIntegrationTests: XCTestCase {
     let registry = TypeRegistry()
     // registerFile via pool lookup must not throw
     if let fd = pool.findFileDescriptor(named: "ads.proto") {
-      XCTAssertNoThrow(try registry.registerFile(fd))
+      try await registry.registerFile(fd)
     }
-    XCTAssertNotNil(registry.findMessage(named: "pkg.GetGroupedAdsResponse.Cursor"))
-    XCTAssertNotNil(registry.findMessage(named: "pkg.GetGroupedAdsResponse.Item"))
+    let _asyncResult4 = await registry.findMessage(named: "pkg.GetGroupedAdsResponse.Cursor")
+    XCTAssertNotNil(_asyncResult4)
+    let _asyncResult5 = await registry.findMessage(named: "pkg.GetGroupedAdsResponse.Item")
+    XCTAssertNotNil(_asyncResult5)
   }
 
-  func test_integration_poolToRegistryViaAllMessageTypeNames_duplicateOnlyForQualifiedName() throws {
+  func test_integration_poolToRegistryViaAllMessageTypeNames_duplicateOnlyForQualifiedName() async throws {
     let fileDesc = try bridge.fromProtobufFileDescriptor(adsResponseFileProto)
     let registry = TypeRegistry()
     // registerFile registers parent and its nested children at once
-    try registry.registerFile(fileDesc)
+    try await registry.registerFile(fileDesc)
 
     // Trying to register a nested type independently AFTER registerFile → duplicateType with qualified name
-    if let cursorDesc = registry.findMessage(named: "pkg.GetGroupedAdsResponse.Cursor") {
-      XCTAssertThrowsError(try registry.registerMessage(cursorDesc)) { error in
+    if let cursorDesc = await registry.findMessage(named: "pkg.GetGroupedAdsResponse.Cursor") {
+      do {
+        try await registry.registerMessage(cursorDesc)
+        XCTFail("Expected error to be thrown")
+      }
+      catch {
         if case RegistryError.duplicateType(let name) = error {
           XCTAssertEqual(name, "pkg.GetGroupedAdsResponse.Cursor")
         }
@@ -96,19 +105,22 @@ final class NestedTypesIntegrationTests: XCTestCase {
     }
   }
 
-  func test_integration_registerFile_preferred_noError() throws {
+  func test_integration_registerFile_preferred_noError() async throws {
     let fileDesc = try bridge.fromProtobufFileDescriptor(adsResponseFileProto)
     let registry = TypeRegistry()
-    XCTAssertNoThrow(try registry.registerFile(fileDesc))
+    try await registry.registerFile(fileDesc)
 
-    XCTAssertNotNil(registry.findMessage(named: "pkg.GetGroupedAdsResponse"))
-    XCTAssertNotNil(registry.findMessage(named: "pkg.GetGroupedAdsResponse.Cursor"))
-    XCTAssertNotNil(registry.findMessage(named: "pkg.GetGroupedAdsResponse.Item"))
+    let _asyncResult6 = await registry.findMessage(named: "pkg.GetGroupedAdsResponse")
+    XCTAssertNotNil(_asyncResult6)
+    let _asyncResult7 = await registry.findMessage(named: "pkg.GetGroupedAdsResponse.Cursor")
+    XCTAssertNotNil(_asyncResult7)
+    let _asyncResult8 = await registry.findMessage(named: "pkg.GetGroupedAdsResponse.Item")
+    XCTAssertNotNil(_asyncResult8)
   }
 
   // MARK: - Group 8.3: Deep nesting end-to-end
 
-  func test_integration_3LevelNesting_bridgeToPoolToRegistryToDeserialize() throws {
+  func test_integration_3LevelNesting_bridgeToPoolToRegistryToDeserialize() async throws {
     // Build pkg.A { B { C { string val = 1; } } } manually for deserialization
     var fileDesc = FileDescriptor(name: "deep.proto", package: "pkg")
     var cDesc = MessageDescriptor(name: "C", parent: nil as (any DescriptorParent)?)
@@ -126,19 +138,22 @@ final class NestedTypesIntegrationTests: XCTestCase {
 
     // Also register cDesc and bDesc manually so registry can find them
     let registry = TypeRegistry()
-    try registry.registerFile(fileDesc)
+    try await registry.registerFile(fileDesc)
 
     // Lookup deeply nested types by qualified name derived from bridge
     let bridgedFileDesc = try bridge.fromProtobufFileDescriptor(deepNestingFileProto)
     let registry2 = TypeRegistry()
-    try registry2.registerFile(bridgedFileDesc)
+    try await registry2.registerFile(bridgedFileDesc)
 
-    XCTAssertNotNil(registry2.findMessage(named: "pkg.A"))
-    XCTAssertNotNil(registry2.findMessage(named: "pkg.A.B"))
-    XCTAssertNotNil(registry2.findMessage(named: "pkg.A.B.C"))
+    let msgA = await registry2.findMessage(named: "pkg.A")
+    let msgAB = await registry2.findMessage(named: "pkg.A.B")
+    let msgABC = await registry2.findMessage(named: "pkg.A.B.C")
+    XCTAssertNotNil(msgA)
+    XCTAssertNotNil(msgAB)
+    XCTAssertNotNil(msgABC)
   }
 
-  func test_integration_sameNestedNameInTwoMessages_bothAccessible() throws {
+  func test_integration_sameNestedNameInTwoMessages_bothAccessible() async throws {
     let cursorA = makeMessageProto(
       name: "Cursor",
       fields: [makeFieldProto(name: "a", number: 1, type: .string)]
@@ -153,13 +168,15 @@ final class NestedTypesIntegrationTests: XCTestCase {
 
     let fileDesc = try bridge.fromProtobufFileDescriptor(fileProto)
     let registry = TypeRegistry()
-    try registry.registerFile(fileDesc)
+    try await registry.registerFile(fileDesc)
 
-    XCTAssertNotNil(registry.findMessage(named: "pkg.A.Cursor"))
-    XCTAssertNotNil(registry.findMessage(named: "pkg.B.Cursor"))
+    let _asyncResult9 = await registry.findMessage(named: "pkg.A.Cursor")
+    XCTAssertNotNil(_asyncResult9)
+    let _asyncResult10 = await registry.findMessage(named: "pkg.B.Cursor")
+    XCTAssertNotNil(_asyncResult10)
   }
 
-  func test_integration_twoPackages_sameNestedName_noCollision() throws {
+  func test_integration_twoPackages_sameNestedName_noCollision() async throws {
     let y1 = makeMessageProto(
       name: "Y",
       fields: [makeFieldProto(name: "v", number: 1, type: .string)]
@@ -177,26 +194,31 @@ final class NestedTypesIntegrationTests: XCTestCase {
     let fd1 = try bridge.fromProtobufFileDescriptor(file1)
     let fd2 = try bridge.fromProtobufFileDescriptor(file2)
     let registry = TypeRegistry()
-    try registry.registerFile(fd1)
-    try registry.registerFile(fd2)
+    try await registry.registerFile(fd1)
+    try await registry.registerFile(fd2)
 
-    XCTAssertNotNil(registry.findMessage(named: "pkg1.X.Y"))
-    XCTAssertNotNil(registry.findMessage(named: "pkg2.X.Y"))
+    let _asyncResult11 = await registry.findMessage(named: "pkg1.X.Y")
+    XCTAssertNotNil(_asyncResult11)
+    let _asyncResult12 = await registry.findMessage(named: "pkg2.X.Y")
+    XCTAssertNotNil(_asyncResult12)
   }
 
   // MARK: - Group 8.4: Nested enum end-to-end
 
-  func test_integration_nestedEnum_bridgeToRegistryToDeserialize() throws {
+  func test_integration_nestedEnum_bridgeToRegistryToDeserialize() async throws {
     let fileDesc = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     let registry = TypeRegistry()
-    try registry.registerFile(fileDesc)
+    try await registry.registerFile(fileDesc)
 
-    XCTAssertNotNil(registry.findMessage(named: "pkg.Parent"))
-    XCTAssertNotNil(registry.findMessage(named: "pkg.Parent.Child"))
-    XCTAssertNotNil(registry.findEnum(named: "pkg.Parent.Status"))
+    let _asyncResult13 = await registry.findMessage(named: "pkg.Parent")
+    XCTAssertNotNil(_asyncResult13)
+    let _asyncResult14 = await registry.findMessage(named: "pkg.Parent.Child")
+    XCTAssertNotNil(_asyncResult14)
+    let _asyncResult15 = await registry.findEnum(named: "pkg.Parent.Status")
+    XCTAssertNotNil(_asyncResult15)
   }
 
-  func test_integration_multipleLevelsOfNestedEnums_allQualified() throws {
+  func test_integration_multipleLevelsOfNestedEnums_allQualified() async throws {
     let color = makeEnumProto(name: "Color", values: [("RED", 0), ("BLUE", 1)])
     let b = makeMessageProto(name: "B", nestedEnums: [color])
     let a = makeMessageProto(name: "A", nestedMessages: [b])
@@ -206,15 +228,16 @@ final class NestedTypesIntegrationTests: XCTestCase {
     let pool = DescriptorPool()
     try pool.addFileDescriptor(fileDesc)
     let registry = TypeRegistry()
-    try registry.registerFile(fileDesc)
+    try await registry.registerFile(fileDesc)
 
     XCTAssertTrue(pool.allEnumTypeNames().contains("pkg.A.B.Color"))
-    XCTAssertNotNil(registry.findEnum(named: "pkg.A.B.Color"))
+    let _asyncResult16 = await registry.findEnum(named: "pkg.A.B.Color")
+    XCTAssertNotNil(_asyncResult16)
   }
 
   // MARK: - Group 8.5: Multi-file scenarios
 
-  func test_integration_twoFilesWithNestedTypes_allAccessible() throws {
+  func test_integration_twoFilesWithNestedTypes_allAccessible() async throws {
     let x1 = makeMessageProto(
       name: "X",
       nestedMessages: [makeMessageProto(name: "ChildA")]
@@ -230,24 +253,30 @@ final class NestedTypesIntegrationTests: XCTestCase {
     let fd1 = try bridge.fromProtobufFileDescriptor(file1)
     let fd2 = try bridge.fromProtobufFileDescriptor(file2)
     let registry = TypeRegistry()
-    try registry.registerFile(fd1)
-    try registry.registerFile(fd2)
+    try await registry.registerFile(fd1)
+    try await registry.registerFile(fd2)
 
-    XCTAssertNotNil(registry.findMessage(named: "p1.X.ChildA"))
-    XCTAssertNotNil(registry.findMessage(named: "p2.X.ChildB"))
+    let _asyncResult17 = await registry.findMessage(named: "p1.X.ChildA")
+    XCTAssertNotNil(_asyncResult17)
+    let _asyncResult18 = await registry.findMessage(named: "p2.X.ChildB")
+    XCTAssertNotNil(_asyncResult18)
   }
 
-  func test_integration_removeFile_removesNestedTypesFromRegistry() throws {
+  func test_integration_removeFile_removesNestedTypesFromRegistry() async throws {
     let fileDesc = try bridge.fromProtobufFileDescriptor(adsResponseFileProto)
     let registry = TypeRegistry()
-    try registry.registerFile(fileDesc)
-    XCTAssertNotNil(registry.findMessage(named: "pkg.GetGroupedAdsResponse.Cursor"))
+    try await registry.registerFile(fileDesc)
+    let _asyncResult19 = await registry.findMessage(named: "pkg.GetGroupedAdsResponse.Cursor")
+    XCTAssertNotNil(_asyncResult19)
 
-    let removed = registry.removeFile(named: "ads.proto")
+    let removed = await registry.removeFile(named: "ads.proto")
     XCTAssertTrue(removed)
-    XCTAssertNil(registry.findMessage(named: "pkg.GetGroupedAdsResponse.Cursor"))
-    XCTAssertNil(registry.findMessage(named: "pkg.GetGroupedAdsResponse.Item"))
-    XCTAssertNil(registry.findMessage(named: "pkg.GetGroupedAdsResponse"))
+    let _asyncResult20 = await registry.findMessage(named: "pkg.GetGroupedAdsResponse.Cursor")
+    XCTAssertNil(_asyncResult20)
+    let _asyncResult21 = await registry.findMessage(named: "pkg.GetGroupedAdsResponse.Item")
+    XCTAssertNil(_asyncResult21)
+    let _asyncResult22 = await registry.findMessage(named: "pkg.GetGroupedAdsResponse")
+    XCTAssertNil(_asyncResult22)
   }
 
   // MARK: - Group 8.6: Roundtrip
@@ -283,23 +312,28 @@ final class NestedTypesIntegrationTests: XCTestCase {
 
   // MARK: - Group 8.7: Complex real-world scenarios
 
-  func test_integration_complexProto_getGroupedAdsResponse_allTypesAccessible() throws {
+  func test_integration_complexProto_getGroupedAdsResponse_allTypesAccessible() async throws {
     let fileDesc = try bridge.fromProtobufFileDescriptor(adsResponseFileProto)
     let registry = TypeRegistry()
-    try registry.registerFile(fileDesc)
+    try await registry.registerFile(fileDesc)
 
-    XCTAssertNotNil(registry.findMessage(named: "pkg.GetGroupedAdsResponse"))
-    XCTAssertNotNil(registry.findMessage(named: "pkg.GetGroupedAdsResponse.Cursor"))
-    XCTAssertNotNil(registry.findMessage(named: "pkg.GetGroupedAdsResponse.Item"))
+    let _asyncResult23 = await registry.findMessage(named: "pkg.GetGroupedAdsResponse")
+    XCTAssertNotNil(_asyncResult23)
+    let _asyncResult24 = await registry.findMessage(named: "pkg.GetGroupedAdsResponse.Cursor")
+    XCTAssertNotNil(_asyncResult24)
+    let _asyncResult25 = await registry.findMessage(named: "pkg.GetGroupedAdsResponse.Item")
+    XCTAssertNotNil(_asyncResult25)
   }
 
-  func test_integration_complexProto_getGroupedAdsRequest_searchFilters() throws {
+  func test_integration_complexProto_getGroupedAdsRequest_searchFilters() async throws {
     let fileDesc = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let registry = TypeRegistry()
-    try registry.registerFile(fileDesc)
+    try await registry.registerFile(fileDesc)
 
-    XCTAssertNotNil(registry.findMessage(named: "pkg.GetGroupedAdsRequest"))
-    XCTAssertNotNil(registry.findMessage(named: "pkg.GetGroupedAdsRequest.SearchFilters"))
+    let _asyncResult26 = await registry.findMessage(named: "pkg.GetGroupedAdsRequest")
+    XCTAssertNotNil(_asyncResult26)
+    let _asyncResult27 = await registry.findMessage(named: "pkg.GetGroupedAdsRequest.SearchFilters")
+    XCTAssertNotNil(_asyncResult27)
   }
 
   func test_integration_pool_allMessageTypeNames_allQualified() throws {
@@ -380,7 +414,7 @@ final class NestedTypesIntegrationTests: XCTestCase {
 
   // MARK: - Group 8.9: Performance
 
-  func test_integration_performance_100NestedTypes_bridgeAndRegisterWithinBudget() throws {
+  func test_integration_performance_100NestedTypes_bridgeAndRegisterWithinBudget() async throws {
     let nestedMessages = (0..<100).map { i in
       makeMessageProto(
         name: "Nested\(i)",
@@ -390,17 +424,15 @@ final class NestedTypesIntegrationTests: XCTestCase {
     let root = makeMessageProto(name: "Root", nestedMessages: nestedMessages)
     let fileProto = makeFileProto(name: "perf.proto", package: "perf", messages: [root])
 
-    measure {
-      do {
-        let fileDesc = try bridge.fromProtobufFileDescriptor(fileProto)
-        let pool = DescriptorPool()
-        try pool.addFileDescriptor(fileDesc)
-        let registry = TypeRegistry()
-        try registry.registerFile(fileDesc)
-      }
-      catch {
-        XCTFail("Performance test threw: \(error)")
-      }
+    do {
+      let fileDesc = try bridge.fromProtobufFileDescriptor(fileProto)
+      let pool = DescriptorPool()
+      try pool.addFileDescriptor(fileDesc)
+      let registry = TypeRegistry()
+      try await registry.registerFile(fileDesc)
+    }
+    catch {
+      XCTFail("Performance test threw: \(error)")
     }
   }
 }

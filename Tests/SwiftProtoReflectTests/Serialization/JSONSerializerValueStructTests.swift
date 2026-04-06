@@ -27,47 +27,47 @@ final class JSONSerializerValueStructTests: XCTestCase {
 
   // MARK: - google.protobuf.Value
 
-  func test_serialize_valueNull_producesJSONNull() throws {
+  func test_serialize_valueNull_producesJSONNull() async throws {
     let msg = try DynamicMessage.valueMessage(from: NSNull())
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let result = try decode(data)
     XCTAssertTrue(result is NSNull, "Expected NSNull, got \(type(of: result))")
   }
 
-  func test_serialize_valueNumber_producesJSONNumber() throws {
+  func test_serialize_valueNumber_producesJSONNumber() async throws {
     let msg = try DynamicMessage.valueMessage(from: 3.14)
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let result = try decode(data)
     let number = try XCTUnwrap(result as? Double)
     XCTAssertEqual(number, 3.14, accuracy: 1e-10)
   }
 
-  func test_serialize_valueString_producesJSONString() throws {
+  func test_serialize_valueString_producesJSONString() async throws {
     let msg = try DynamicMessage.valueMessage(from: "hello")
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let result = try decode(data)
     XCTAssertEqual(result as? String, "hello")
   }
 
-  func test_serialize_valueBool_producesJSONBool() throws {
+  func test_serialize_valueBool_producesJSONBool() async throws {
     let msg = try DynamicMessage.valueMessage(from: true)
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let result = try decode(data)
     let number = try XCTUnwrap(result as? NSNumber)
     XCTAssertEqual(number.boolValue, true)
   }
 
-  func test_serialize_valueStruct_producesJSONObject() throws {
+  func test_serialize_valueStruct_producesJSONObject() async throws {
     let msg = try DynamicMessage.valueMessage(from: ["key": "value"])
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let result = try decode(data) as? [String: Any]
     XCTAssertNotNil(result)
     XCTAssertEqual(result?["key"] as? String, "value")
   }
 
-  func test_serialize_valueList_producesJSONArray() throws {
+  func test_serialize_valueList_producesJSONArray() async throws {
     let msg = try DynamicMessage.valueMessage(from: [1.0, 2.0, 3.0] as [Any])
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let result = try decode(data) as? [Any]
     XCTAssertNotNil(result)
     XCTAssertEqual(result?.count, 3)
@@ -75,18 +75,18 @@ final class JSONSerializerValueStructTests: XCTestCase {
 
   // MARK: - google.protobuf.Struct
 
-  func test_serialize_struct_producesPlainObject() throws {
+  func test_serialize_struct_producesPlainObject() async throws {
     let msg = try DynamicMessage.structMessage(from: ["name": "Alice", "age": 30.0])
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let result = try decode(data) as? [String: Any]
     XCTAssertNotNil(result)
     XCTAssertEqual(result?["name"] as? String, "Alice")
     XCTAssertEqual((result?["age"] as? NSNumber)?.doubleValue ?? 0.0, 30.0, accuracy: 1e-10)
   }
 
-  func test_serialize_emptyStruct_producesEmptyObject() throws {
+  func test_serialize_emptyStruct_producesEmptyObject() async throws {
     let msg = try DynamicMessage.structMessage(from: [:])
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let result = try decode(data) as? [String: Any]
     XCTAssertNotNil(result)
     XCTAssertEqual(result?.count, 0)
@@ -94,24 +94,24 @@ final class JSONSerializerValueStructTests: XCTestCase {
 
   // MARK: - google.protobuf.ListValue
 
-  func test_serialize_listValue_producesPlainArray() throws {
+  func test_serialize_listValue_producesPlainArray() async throws {
     let values: [StructHandler.ValueValue] = [
       .stringValue("a"),
       .stringValue("b"),
       .stringValue("c"),
     ]
     let msg = try ListValueHandler.createDynamic(from: values)
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let result = try decode(data) as? [Any]
     XCTAssertNotNil(result)
     XCTAssertEqual(result?.count, 3)
     XCTAssertEqual(result?[0] as? String, "a")
   }
 
-  func test_serialize_emptyListValue_producesEmptyArray() throws {
+  func test_serialize_emptyListValue_producesEmptyArray() async throws {
     let values: [StructHandler.ValueValue] = []
     let msg = try ListValueHandler.createDynamic(from: values)
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let result = try decode(data) as? [Any]
     XCTAssertNotNil(result)
     XCTAssertEqual(result?.count, 0)
@@ -119,7 +119,7 @@ final class JSONSerializerValueStructTests: XCTestCase {
 
   // MARK: - Deep nesting
 
-  func test_serialize_structDeepNesting_works() throws {
+  func test_serialize_structDeepNesting_works() async throws {
     // Struct { "inner": [ Struct { "x": 1.0 } ] }
     let innerStruct = StructHandler.StructValue(fields: ["x": .numberValue(1.0)])
     let listValues: [StructHandler.ValueValue] = [.structValue(innerStruct)]
@@ -128,7 +128,7 @@ final class JSONSerializerValueStructTests: XCTestCase {
     ])
     let msg = try StructHandler.createDynamic(from: outerStruct)
 
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let result = try decode(data) as? [String: Any]
     XCTAssertNotNil(result)
     let innerArr = result?["inner"] as? [Any]

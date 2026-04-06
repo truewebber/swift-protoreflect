@@ -33,24 +33,24 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   private var registry: TypeRegistry!
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - 1. doubleVal variant: 3.14 as 8-byte fixed-width IEEE 754
 
-  func test_oneof_scalars_double_bidirectional() throws {
+  func test_oneof_scalars_double_bidirectional() async throws {
     var proto = Testcompat_OneofScalars()
     proto.doubleVal = 3.14
 
     let desc = CompatDescriptors.oneofScalars()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -76,12 +76,12 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 2. int32Val variant: -42 as varint
 
-  func test_oneof_scalars_int32_bidirectional() throws {
+  func test_oneof_scalars_int32_bidirectional() async throws {
     var proto = Testcompat_OneofScalars()
     proto.int32Val = -42
 
     let desc = CompatDescriptors.oneofScalars()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -107,12 +107,12 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 3. stringVal variant: "hello world" as length-delimited
 
-  func test_oneof_scalars_string_bidirectional() throws {
+  func test_oneof_scalars_string_bidirectional() async throws {
     var proto = Testcompat_OneofScalars()
     proto.stringVal = "hello world"
 
     let desc = CompatDescriptors.oneofScalars()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -137,13 +137,13 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 4. bytesVal variant: Data([0xDE,0xAD,0xBE,0xEF]) as length-delimited
 
-  func test_oneof_scalars_bytes_bidirectional() throws {
+  func test_oneof_scalars_bytes_bidirectional() async throws {
     let testBytes = Data([0xDE, 0xAD, 0xBE, 0xEF])
     var proto = Testcompat_OneofScalars()
     proto.bytesVal = testBytes
 
     let desc = CompatDescriptors.oneofScalars()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -168,12 +168,12 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 5. boolVal variant: true as varint 1
 
-  func test_oneof_scalars_bool_bidirectional() throws {
+  func test_oneof_scalars_bool_bidirectional() async throws {
     var proto = Testcompat_OneofScalars()
     proto.boolVal = true
 
     let desc = CompatDescriptors.oneofScalars()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -198,7 +198,7 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 6. Unset oneof: no variants set → empty Data
 
-  func test_oneof_unset_producesNoWireBytes() throws {
+  func test_oneof_unset_producesNoWireBytes() async throws {
     let desc = CompatDescriptors.oneofScalars()
 
     // Direction A: oracle serializes empty message → empty bytes → our deserializer
@@ -206,7 +206,7 @@ final class BinaryCompatOneofTests: XCTestCase {
     let referenceData = try emptyProto.serializedData()
     XCTAssertEqual(referenceData, Data(), "oracle empty oneof message should produce no wire bytes")
 
-    let deserialized = try BinaryCompatHelpers.makeDeserializer(registry: registry)
+    let deserialized = try await BinaryCompatHelpers.makeDeserializer(registry: registry)
       .deserialize(referenceData, using: desc)
     XCTAssertNil(try deserialized.get(forField: 1) as? Double)
     XCTAssertNil(try deserialized.get(forField: 3) as? Int32)
@@ -214,13 +214,13 @@ final class BinaryCompatOneofTests: XCTestCase {
 
     // Direction B: empty DynamicMessage → our serializer → should produce empty bytes
     let emptyDynamic = DynamicMessage(descriptor: desc)
-    let ourData = try BinaryCompatHelpers.makeSerializer().serialize(emptyDynamic)
+    let ourData = try await BinaryCompatHelpers.makeSerializer().serialize(emptyDynamic)
     XCTAssertEqual(ourData, Data(), "unset oneof DynamicMessage should produce no wire bytes")
   }
 
   // MARK: - 7. msgVal variant: nested ScalarMessage (int32Field=99, stringField="inner")
 
-  func test_oneof_complex_message_bidirectional() throws {
+  func test_oneof_complex_message_bidirectional() async throws {
     var inner = Testcompat_ScalarMessage()
     inner.int32Field = 99
     inner.stringField = "inner"
@@ -230,7 +230,7 @@ final class BinaryCompatOneofTests: XCTestCase {
     let desc = CompatDescriptors.oneofComplex()
     let innerDesc = CompatDescriptors.scalarMessage()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -261,12 +261,12 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 8. enumVal variant: ACTIVE=1 as varint
 
-  func test_oneof_complex_enum_bidirectional() throws {
+  func test_oneof_complex_enum_bidirectional() async throws {
     var proto = Testcompat_OneofComplex()
     proto.enumVal = .active
 
     let desc = CompatDescriptors.oneofComplex()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -291,13 +291,13 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 9. intVal in oneof + name regular field both present
 
-  func test_oneof_complex_regularFieldWithOneof_bidirectional() throws {
+  func test_oneof_complex_regularFieldWithOneof_bidirectional() async throws {
     var proto = Testcompat_OneofComplex()
     proto.intVal = 7
     proto.name = "outside"
 
     let desc = CompatDescriptors.oneofComplex()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -325,13 +325,13 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 10. MultiOneof: firstInt set + label regular field
 
-  func test_multiOneof_firstChoice_bidirectional() throws {
+  func test_multiOneof_firstChoice_bidirectional() async throws {
     var proto = Testcompat_MultiOneof()
     proto.firstInt = 42
     proto.label = "lbl"
 
     let desc = CompatDescriptors.multiOneof()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -360,12 +360,12 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 11. MultiOneof: secondDbl = 2.71 (8-byte fixed)
 
-  func test_multiOneof_secondChoice_bidirectional() throws {
+  func test_multiOneof_secondChoice_bidirectional() async throws {
     var proto = Testcompat_MultiOneof()
     proto.secondDbl = 2.71
 
     let desc = CompatDescriptors.multiOneof()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -391,12 +391,12 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 12. int64Val variant: Int64.max as varint
 
-  func test_oneof_scalars_int64_bidirectional() throws {
+  func test_oneof_scalars_int64_bidirectional() async throws {
     var proto = Testcompat_OneofScalars()
     proto.int64Val = Int64.max
 
     let desc = CompatDescriptors.oneofScalars()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -421,12 +421,12 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 13. floatVal variant: 1.5 as 4-byte fixed-width IEEE 754
 
-  func test_oneof_scalars_float_bidirectional() throws {
+  func test_oneof_scalars_float_bidirectional() async throws {
     var proto = Testcompat_OneofScalars()
     proto.floatVal = 1.5
 
     let desc = CompatDescriptors.oneofScalars()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -451,12 +451,12 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 14. uint32Val variant: UInt32.max as varint
 
-  func test_oneof_scalars_uint32_bidirectional() throws {
+  func test_oneof_scalars_uint32_bidirectional() async throws {
     var proto = Testcompat_OneofScalars()
     proto.uint32Val = UInt32.max
 
     let desc = CompatDescriptors.oneofScalars()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -481,12 +481,12 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 15. uint64Val variant: UInt64.max as varint
 
-  func test_oneof_scalars_uint64_bidirectional() throws {
+  func test_oneof_scalars_uint64_bidirectional() async throws {
     var proto = Testcompat_OneofScalars()
     proto.uint64Val = UInt64.max
 
     let desc = CompatDescriptors.oneofScalars()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -511,7 +511,7 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 16. OneofWKT: tsVal variant with Timestamp (seconds=1_700_000_000) + tag int field
 
-  func test_oneof_wkt_timestamp_bidirectional() throws {
+  func test_oneof_wkt_timestamp_bidirectional() async throws {
     var proto = Testcompat_OneofWKT()
     proto.tsVal.seconds = 1_700_000_000
     proto.tsVal.nanos = 0
@@ -520,7 +520,7 @@ final class BinaryCompatOneofTests: XCTestCase {
     let desc = CompatDescriptors.oneofWKT()
     let tsDesc = CompatDescriptors.wktTimestamp()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -551,14 +551,14 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 17. OneofWKT: structVal variant (empty Struct message in oneof)
 
-  func test_oneof_wkt_struct_bidirectional() throws {
+  func test_oneof_wkt_struct_bidirectional() async throws {
     var proto = Testcompat_OneofWKT()
     proto.structVal = Google_Protobuf_Struct()
 
     let desc = CompatDescriptors.oneofWKT()
     let structDesc = CompatDescriptors.wktStruct()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -585,7 +585,7 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 18. MultiOneof with all 3 oneofs active + label: firstStr, secondEnum, thirdMsg
 
-  func test_multiOneof_allActive_bidirectional() throws {
+  func test_multiOneof_allActive_bidirectional() async throws {
     var proto = Testcompat_MultiOneof()
     proto.firstStr = "first"
     proto.secondEnum = .active
@@ -597,7 +597,7 @@ final class BinaryCompatOneofTests: XCTestCase {
     let desc = CompatDescriptors.multiOneof()
     let simpleDesc = CompatDescriptors.simpleMessage()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -644,7 +644,7 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 19. Last-field-wins: crafted binary with field 1 then field 3 in same oneof
 
-  func test_oneof_lastFieldWins_directionA() throws {
+  func test_oneof_lastFieldWins_directionA() async throws {
     // Craft binary bytes containing both field 1 (doubleVal, wire type 1) and field 3 (int32Val, wire type 0)
     // of the same oneof. Proto binary last-field-wins: field 3 must overwrite field 1.
     //
@@ -661,7 +661,7 @@ final class BinaryCompatOneofTests: XCTestCase {
     ])
 
     let desc = CompatDescriptors.oneofScalars()
-    let deserialized = try BinaryCompatHelpers.makeDeserializer(registry: registry)
+    let deserialized = try await BinaryCompatHelpers.makeDeserializer(registry: registry)
       .deserialize(crafted, using: desc)
 
     // Last-field-wins: only field 3 (int32Val=42) should be present
@@ -674,7 +674,7 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 20. int32 uses standard varint (not zigzag) in oneof
 
-  func test_oneof_scalars_sint32_bidirectional() throws {
+  func test_oneof_scalars_sint32_bidirectional() async throws {
     // OneofScalars has no sint32 field. int32_val (field 3) uses standard 2's-complement varint,
     // not zigzag. Verify that negative int32 (-1) round-trips correctly and that the
     // serialized byte count matches standard varint encoding (10 value bytes, not 1 zigzag byte).
@@ -682,7 +682,7 @@ final class BinaryCompatOneofTests: XCTestCase {
     proto.int32Val = -1
 
     let desc = CompatDescriptors.oneofScalars()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -709,7 +709,7 @@ final class BinaryCompatOneofTests: XCTestCase {
     //   Zigzag(-1) would be 1 (1 byte), yielding only 2 total bytes.
     var d = DynamicMessage(descriptor: desc)
     try d.set(Int32(-1), forField: 3)
-    let bytes = try BinaryCompatHelpers.makeSerializer().serialize(d)
+    let bytes = try await BinaryCompatHelpers.makeSerializer().serialize(d)
     XCTAssertEqual(
       bytes.count,
       11,
@@ -719,7 +719,7 @@ final class BinaryCompatOneofTests: XCTestCase {
 
   // MARK: - 21. 8-byte fixed-width encoding verified via double variant in oneof
 
-  func test_oneof_scalars_fixed64_bidirectional() throws {
+  func test_oneof_scalars_fixed64_bidirectional() async throws {
     // OneofScalars has no fixed64 field. double_val (field 1) uses wire type 1 (64-bit fixed-width),
     // identical to fixed64 in the wire format. This test verifies 8-byte little-endian encoding
     // in oneof context and checks the total serialized byte count.
@@ -729,7 +729,7 @@ final class BinaryCompatOneofTests: XCTestCase {
     proto.doubleVal = val
 
     let desc = CompatDescriptors.oneofScalars()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -759,7 +759,7 @@ final class BinaryCompatOneofTests: XCTestCase {
     // Verify wire encoding: field 1 tag (0x09, 1 byte) + 8-byte double = 9 total bytes.
     var d = DynamicMessage(descriptor: desc)
     try d.set(val, forField: 1)
-    let bytes = try BinaryCompatHelpers.makeSerializer().serialize(d)
+    let bytes = try await BinaryCompatHelpers.makeSerializer().serialize(d)
     XCTAssertEqual(
       bytes.count,
       9,

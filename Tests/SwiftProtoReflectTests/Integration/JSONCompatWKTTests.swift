@@ -14,19 +14,19 @@ final class JSONCompatWKTTests: XCTestCase {
 
   private var registry: TypeRegistry!
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Timestamp (RFC 3339 string)
 
-  func test_wkt_timestamp_bidirectional() throws {
+  func test_wkt_timestamp_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.ts.seconds = 1_700_000_000
     proto.ts.nanos = 500_000_000
@@ -34,7 +34,7 @@ final class JSONCompatWKTTests: XCTestCase {
     let desc = CompatDescriptors.wktHolder()
     let tsDesc = CompatDescriptors.wktTimestamp()
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let tsDyn = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       XCTAssertEqual(try tsDyn.get(forField: 1) as? Int64, 1_700_000_000)
       XCTAssertEqual(try tsDyn.get(forField: 2) as? Int32, 500_000_000)
@@ -46,7 +46,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(tsDyn, forField: 1)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertEqual(decoded.ts.seconds, 1_700_000_000)
       XCTAssertEqual(decoded.ts.nanos, 500_000_000)
@@ -55,7 +56,7 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - Duration
 
-  func test_wkt_duration_bidirectional() throws {
+  func test_wkt_duration_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.dur.seconds = 3600
     proto.dur.nanos = 0
@@ -63,7 +64,7 @@ final class JSONCompatWKTTests: XCTestCase {
     let desc = CompatDescriptors.wktHolder()
     let durDesc = CompatDescriptors.wktDuration()
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let durDyn = try XCTUnwrap(try msg.get(forField: 2) as? DynamicMessage)
       XCTAssertEqual(try durDyn.get(forField: 1) as? Int64, 3600)
       // nanos=0 is the default; field may not be stored (returns nil) — treat nil as 0
@@ -76,7 +77,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(durDyn, forField: 2)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertEqual(decoded.dur.seconds, 3600)
       XCTAssertEqual(decoded.dur.nanos, 0)
@@ -85,14 +87,14 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - FieldMask (comma-separated paths)
 
-  func test_wkt_fieldMask_bidirectional() throws {
+  func test_wkt_fieldMask_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.mask.paths = ["field_one", "nested.field_two", "another"]
 
     let desc = CompatDescriptors.wktHolder()
     let fmDesc = CompatDescriptors.wktFieldMask()
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let fmDyn = try XCTUnwrap(try msg.get(forField: 3) as? DynamicMessage)
       XCTAssertEqual(try fmDyn.get(forField: 1) as? [String], ["field_one", "nested.field_two", "another"])
     }
@@ -102,7 +104,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(fmDyn, forField: 3)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertEqual(decoded.mask.paths, ["field_one", "nested.field_two", "another"])
     }
@@ -110,14 +113,14 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - Int64Value wrapper
 
-  func test_wkt_int64Value_bidirectional() throws {
+  func test_wkt_int64Value_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.i64W.value = Int64.max
 
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "Int64Value", fieldType: .int64)
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let wDyn = try XCTUnwrap(try msg.get(forField: 10) as? DynamicMessage)
       XCTAssertEqual(try wDyn.get(forField: 1) as? Int64, Int64.max)
     }
@@ -127,7 +130,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(wDyn, forField: 10)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertEqual(decoded.i64W.value, Int64.max)
     }
@@ -135,14 +139,14 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - StringValue wrapper
 
-  func test_wkt_stringValue_bidirectional() throws {
+  func test_wkt_stringValue_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.strW.value = "wrapped string"
 
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "StringValue", fieldType: .string)
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let wDyn = try XCTUnwrap(try msg.get(forField: 15) as? DynamicMessage)
       XCTAssertEqual(try wDyn.get(forField: 1) as? String, "wrapped string")
     }
@@ -152,7 +156,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(wDyn, forField: 15)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertEqual(decoded.strW.value, "wrapped string")
     }
@@ -160,14 +165,14 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - BoolValue wrapper
 
-  func test_wkt_boolValue_bidirectional() throws {
+  func test_wkt_boolValue_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.boolW.value = true
 
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "BoolValue", fieldType: .bool)
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let wDyn = try XCTUnwrap(try msg.get(forField: 14) as? DynamicMessage)
       XCTAssertEqual(try wDyn.get(forField: 1) as? Bool, true)
     }
@@ -177,7 +182,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(wDyn, forField: 14)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertTrue(decoded.boolW.value)
     }
@@ -185,7 +191,7 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - BytesValue wrapper
 
-  func test_wkt_bytesValue_bidirectional() throws {
+  func test_wkt_bytesValue_bidirectional() async throws {
     let testBytes = Data([0x01, 0x02, 0x03])
     var proto = Testcompat_WKTHolder()
     proto.bytesW.value = testBytes
@@ -193,7 +199,7 @@ final class JSONCompatWKTTests: XCTestCase {
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "BytesValue", fieldType: .bytes)
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let wDyn = try XCTUnwrap(try msg.get(forField: 16) as? DynamicMessage)
       XCTAssertEqual(try wDyn.get(forField: 1) as? Data, testBytes)
     }
@@ -203,7 +209,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(wDyn, forField: 16)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertEqual(decoded.bytesW.value, testBytes)
     }
@@ -211,14 +218,14 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - DoubleValue wrapper
 
-  func test_wkt_doubleValue_bidirectional() throws {
+  func test_wkt_doubleValue_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.dblW.value = 3.14
 
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "DoubleValue", fieldType: .double)
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let wDyn = try XCTUnwrap(try msg.get(forField: 8) as? DynamicMessage)
       XCTAssertEqual(try wDyn.get(forField: 1) as? Double, 3.14)
     }
@@ -228,7 +235,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(wDyn, forField: 8)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertEqual(decoded.dblW.value, 3.14)
     }
@@ -236,14 +244,14 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - FloatValue wrapper
 
-  func test_wkt_floatValue_bidirectional() throws {
+  func test_wkt_floatValue_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.fltW.value = 2.5
 
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "FloatValue", fieldType: .float)
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let wDyn = try XCTUnwrap(try msg.get(forField: 9) as? DynamicMessage)
       XCTAssertEqual(try wDyn.get(forField: 1) as? Float, 2.5)
     }
@@ -253,7 +261,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(wDyn, forField: 9)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertEqual(decoded.fltW.value, 2.5)
     }
@@ -261,14 +270,14 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - Int32Value wrapper
 
-  func test_wkt_int32Value_bidirectional() throws {
+  func test_wkt_int32Value_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.i32W.value = Int32.max
 
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "Int32Value", fieldType: .int32)
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let wDyn = try XCTUnwrap(try msg.get(forField: 12) as? DynamicMessage)
       XCTAssertEqual(try wDyn.get(forField: 1) as? Int32, Int32.max)
     }
@@ -278,7 +287,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(wDyn, forField: 12)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertEqual(decoded.i32W.value, Int32.max)
     }
@@ -286,14 +296,14 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - UInt32Value / UInt64Value wrappers
 
-  func test_wkt_uint32Value_bidirectional() throws {
+  func test_wkt_uint32Value_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.u32W.value = UInt32.max
 
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "UInt32Value", fieldType: .uint32)
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let wDyn = try XCTUnwrap(try msg.get(forField: 13) as? DynamicMessage)
       XCTAssertEqual(try wDyn.get(forField: 1) as? UInt32, UInt32.max)
     }
@@ -303,20 +313,21 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(wDyn, forField: 13)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertEqual(decoded.u32W.value, UInt32.max)
     }
   }
 
-  func test_wkt_uint64Value_bidirectional() throws {
+  func test_wkt_uint64Value_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.u64W.value = UInt64.max
 
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "UInt64Value", fieldType: .uint64)
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let wDyn = try XCTUnwrap(try msg.get(forField: 11) as? DynamicMessage)
       XCTAssertEqual(try wDyn.get(forField: 1) as? UInt64, UInt64.max)
     }
@@ -326,7 +337,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(wDyn, forField: 11)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertEqual(decoded.u64W.value, UInt64.max)
     }
@@ -334,14 +346,14 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - Empty
 
-  func test_wkt_empty_bidirectional() throws {
+  func test_wkt_empty_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.emptyVal = Google_Protobuf_Empty()
 
     let desc = CompatDescriptors.wktHolder()
     let emptyDesc = CompatDescriptors.wktEmpty()
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let eDyn = try XCTUnwrap(try msg.get(forField: 17) as? DynamicMessage)
       XCTAssertEqual(eDyn.descriptor.name, "Empty")
     }
@@ -349,7 +361,8 @@ final class JSONCompatWKTTests: XCTestCase {
     let eDyn = DynamicMessage(descriptor: emptyDesc)
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(eDyn, forField: 17)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertEqual(decoded.emptyVal, Google_Protobuf_Empty())
     }
@@ -357,7 +370,7 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - Repeated WKTs
 
-  func test_wkt_repeatedTimestamps_bidirectional() throws {
+  func test_wkt_repeatedTimestamps_bidirectional() async throws {
     var proto = Testcompat_RepeatedWKTs()
     var ts1 = Google_Protobuf_Timestamp()
     ts1.seconds = 100
@@ -366,7 +379,7 @@ final class JSONCompatWKTTests: XCTestCase {
     proto.timestamps = [ts1, ts2]
 
     let desc = CompatDescriptors.repeatedWKTs()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let tsList = try XCTUnwrap(try msg.get(forField: 1) as? [DynamicMessage])
       XCTAssertEqual(tsList.count, 2)
       XCTAssertEqual(try tsList[0].get(forField: 1) as? Int64, 100)
@@ -381,7 +394,11 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set([tsDyn1, tsDyn2] as [DynamicMessage], forField: 1)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_RepeatedWKTs.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_RepeatedWKTs.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.timestamps.count, 2)
       XCTAssertEqual(decoded.timestamps[0].seconds, 100)
@@ -391,7 +408,7 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - Repeated StringValues
 
-  func test_wkt_repeatedStringValues_bidirectional() throws {
+  func test_wkt_repeatedStringValues_bidirectional() async throws {
     var proto = Testcompat_RepeatedWKTs()
     var sv1 = Google_Protobuf_StringValue()
     sv1.value = "a"
@@ -401,7 +418,7 @@ final class JSONCompatWKTTests: XCTestCase {
     proto.stringVals = [sv1, sv2, sv3]
 
     let desc = CompatDescriptors.repeatedWKTs()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let vals = try XCTUnwrap(try msg.get(forField: 4) as? [DynamicMessage])
       XCTAssertEqual(vals.count, 3)
       XCTAssertEqual(try vals[0].get(forField: 1) as? String, "a")
@@ -418,7 +435,11 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set([sw1, sw2, sw3] as [DynamicMessage], forField: 4)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_RepeatedWKTs.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_RepeatedWKTs.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.stringVals.count, 3)
       XCTAssertEqual(decoded.stringVals[0].value, "a")
@@ -428,14 +449,14 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - Map<string, Timestamp>
 
-  func test_wkt_mapTimestampValues_bidirectional() throws {
+  func test_wkt_mapTimestampValues_bidirectional() async throws {
     var proto = Testcompat_MapWKTValues()
     var ts = Google_Protobuf_Timestamp()
     ts.seconds = 999
     proto.tsMap = ["now": ts]
 
     let desc = CompatDescriptors.mapWKTValues()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let mapVal = try XCTUnwrap(try msg.get(forField: 1) as? [AnyHashable: Any])
       let tsDyn = try XCTUnwrap(mapVal["now"] as? DynamicMessage)
       XCTAssertEqual(try tsDyn.get(forField: 1) as? Int64, 999)
@@ -447,7 +468,11 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.setMapEntry(tsDyn, forKey: "now", inField: 1)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_MapWKTValues.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_MapWKTValues.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.tsMap["now"]?.seconds, 999)
     }
@@ -455,7 +480,7 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - Any (wrapped regular message)
 
-  func test_wkt_any_regularMessage_bidirectional() throws {
+  func test_wkt_any_regularMessage_bidirectional() async throws {
     var inner = Testcompat_SimpleMessage()
     inner.id = 42
     inner.name = "any_inner"
@@ -467,7 +492,7 @@ final class JSONCompatWKTTests: XCTestCase {
     let desc = CompatDescriptors.wktHolder()
     let anyDesc = CompatDescriptors.wktAny()
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let anyDyn = try XCTUnwrap(try msg.get(forField: 4) as? DynamicMessage)
       XCTAssertEqual(anyDyn.descriptor.name, "Any")
       let typeUrl = try XCTUnwrap(try anyDyn.get(forField: 1) as? String)
@@ -481,7 +506,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(anyDyn, forField: 4)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertFalse(decoded.anyVal.typeURL.isEmpty, "typeURL should be set")
     }
@@ -489,7 +515,7 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - Struct
 
-  func test_wkt_struct_bidirectional() throws {
+  func test_wkt_struct_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.structVal.fields["name"] = Google_Protobuf_Value.with { $0.stringValue = "test" }
     proto.structVal.fields["count"] = Google_Protobuf_Value.with { $0.numberValue = 5 }
@@ -497,7 +523,7 @@ final class JSONCompatWKTTests: XCTestCase {
 
     let desc = CompatDescriptors.wktHolder()
     // Direction A: verify actual field data is preserved
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let structDyn = try XCTUnwrap(try msg.get(forField: 5) as? DynamicMessage)
       XCTAssertEqual(structDyn.descriptor.name, "Struct")
     }
@@ -522,7 +548,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(structDyn, forField: 5)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertTrue(decoded.hasStructVal)
       XCTAssertEqual(decoded.structVal.fields["name"]?.stringValue, "test")
@@ -533,7 +560,7 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - Value (all 6 kinds)
 
-  func test_wkt_value_allKinds_bidirectional() throws {
+  func test_wkt_value_allKinds_bidirectional() async throws {
     // All 6 Value kinds: null, number, string, bool, struct, list
     var protoNull = Testcompat_WKTHolder()
     protoNull.valueVal = Google_Protobuf_Value.with { $0.nullValue = .nullValue }
@@ -562,7 +589,7 @@ final class JSONCompatWKTTests: XCTestCase {
 
     // Direction A: each kind
     for (proto, label) in allProtos {
-      try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+      try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
         let valDyn = try XCTUnwrap(try msg.get(forField: 6) as? DynamicMessage)
         XCTAssertEqual(valDyn.descriptor.name, "Value", "Value descriptor name for kind \(label)")
       }
@@ -575,7 +602,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(valDyn, forField: 6)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertTrue(decoded.hasValueVal)
       XCTAssertEqual(decoded.valueVal.numberValue, 3.14, accuracy: 0.001)
@@ -587,7 +615,11 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamicStr = DynamicMessage(descriptor: desc)
     try dynamicStr.set(valDynStr, forField: 6)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamicStr, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamicStr,
+      registry: registry,
+      protoType: Testcompat_WKTHolder.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.valueVal.stringValue, "hello")
     }
@@ -598,7 +630,11 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamicBool = DynamicMessage(descriptor: desc)
     try dynamicBool.set(valDynBool, forField: 6)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamicBool, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamicBool,
+      registry: registry,
+      protoType: Testcompat_WKTHolder.self
+    ) {
       decoded in
       XCTAssertTrue(decoded.valueVal.boolValue)
     }
@@ -606,7 +642,7 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - ListValue
 
-  func test_wkt_listValue_bidirectional() throws {
+  func test_wkt_listValue_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.listVal.values = [
       Google_Protobuf_Value.with { $0.numberValue = 1 },
@@ -616,7 +652,7 @@ final class JSONCompatWKTTests: XCTestCase {
 
     let desc = CompatDescriptors.wktHolder()
     // Direction A: verify ListValue is deserialized correctly
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let listDyn = try XCTUnwrap(try msg.get(forField: 7) as? DynamicMessage)
       XCTAssertEqual(listDyn.descriptor.name, "ListValue")
     }
@@ -639,7 +675,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(listDyn, forField: 7)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertTrue(decoded.hasListVal)
       XCTAssertEqual(decoded.listVal.values.count, 3)
@@ -651,14 +688,14 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - WKT nested: Inner with Timestamp + Duration + wrapper
 
-  func test_wkt_nested_innerWithWKTs_bidirectional() throws {
+  func test_wkt_nested_innerWithWKTs_bidirectional() async throws {
     var proto = Testcompat_WKTNested()
     proto.primary.created.seconds = 12345
     proto.primary.ttl.seconds = 60
     proto.primary.count.value = 7
 
     let desc = CompatDescriptors.wktNested()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let primary = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       let created = try XCTUnwrap(try primary.get(forField: 1) as? DynamicMessage)
       XCTAssertEqual(try created.get(forField: 1) as? Int64, 12345)
@@ -690,7 +727,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(innerDyn, forField: 1)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTNested.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTNested.self)
+    {
       decoded in
       XCTAssertEqual(decoded.primary.created.seconds, 12345)
       XCTAssertEqual(decoded.primary.ttl.seconds, 60)
@@ -700,7 +738,7 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - WKT nested: repeated history
 
-  func test_wkt_nested_repeatedHistory_bidirectional() throws {
+  func test_wkt_nested_repeatedHistory_bidirectional() async throws {
     var proto = Testcompat_WKTNested()
     var e1 = Testcompat_WKTNested.Inner()
     e1.created.seconds = 100
@@ -709,7 +747,7 @@ final class JSONCompatWKTTests: XCTestCase {
     proto.history = [e1, e2]
 
     let desc = CompatDescriptors.wktNested()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let hist = try XCTUnwrap(try msg.get(forField: 2) as? [DynamicMessage])
       XCTAssertEqual(hist.count, 2)
       let ts0 = try XCTUnwrap(try hist[0].get(forField: 1) as? DynamicMessage)
@@ -732,7 +770,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set([inner1, inner2] as [DynamicMessage], forField: 2)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTNested.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTNested.self)
+    {
       decoded in
       XCTAssertEqual(decoded.history.count, 2)
       XCTAssertEqual(decoded.history[0].created.seconds, 100)
@@ -741,14 +780,14 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - WKT mixed: oneof with Duration
 
-  func test_wkt_mixed_oneofDuration_bidirectional() throws {
+  func test_wkt_mixed_oneofDuration_bidirectional() async throws {
     var proto = Testcompat_WKTMixed()
     proto.ts.seconds = 500
     proto.durVal.seconds = 120
     proto.status = .active
 
     let desc = CompatDescriptors.wktMixed()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let tsDyn = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       XCTAssertEqual(try tsDyn.get(forField: 1) as? Int64, 500)
       let durDyn = try XCTUnwrap(try msg.get(forField: 4) as? DynamicMessage)
@@ -768,7 +807,8 @@ final class JSONCompatWKTTests: XCTestCase {
     try dynamic.set(tsDyn, forField: 1)
     try dynamic.set(durDyn, forField: 4)
     try dynamic.set(Int32(1), forField: 12)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTMixed.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTMixed.self)
+    {
       decoded in
       XCTAssertEqual(decoded.ts.seconds, 500)
       if case .durVal(let d) = decoded.wktOrScalar {
@@ -783,14 +823,14 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - WKT map: map<string, Struct>
 
-  func test_wkt_mapValues_structMap_bidirectional() throws {
+  func test_wkt_mapValues_structMap_bidirectional() async throws {
     var proto = Testcompat_MapWKTValues()
     proto.structMap["config"] = Google_Protobuf_Struct.with {
       $0.fields["key"] = Google_Protobuf_Value.with { $0.stringValue = "v" }
     }
 
     let desc = CompatDescriptors.mapWKTValues()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let map = try XCTUnwrap(try msg.get(forField: 4) as? [AnyHashable: Any])
       let sDyn = try XCTUnwrap(map["config"] as? DynamicMessage)
       XCTAssertEqual(sDyn.descriptor.name, "Struct")
@@ -800,7 +840,11 @@ final class JSONCompatWKTTests: XCTestCase {
     let structDyn = DynamicMessage(descriptor: structDesc)
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.setMapEntry(structDyn, forKey: "config", inField: 4)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_MapWKTValues.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_MapWKTValues.self
+    ) {
       decoded in
       XCTAssertNotNil(decoded.structMap["config"])
     }
@@ -808,7 +852,7 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - All WKT fields at once (WKTHolder fully populated)
 
-  func test_wkt_allFieldsAtOnce_bidirectional() throws {
+  func test_wkt_allFieldsAtOnce_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.ts.seconds = 1_000_000
     proto.dur.seconds = 3600
@@ -825,7 +869,7 @@ final class JSONCompatWKTTests: XCTestCase {
     proto.emptyVal = Google_Protobuf_Empty()
 
     let desc = CompatDescriptors.wktHolder()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let tsDyn = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       XCTAssertEqual(try tsDyn.get(forField: 1) as? Int64, 1_000_000)
       let i64wDyn = try XCTUnwrap(try msg.get(forField: 10) as? DynamicMessage)
@@ -845,7 +889,8 @@ final class JSONCompatWKTTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(tsDyn, forField: 1)
     try dynamic.set(strwDyn, forField: 15)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertEqual(decoded.ts.seconds, 1_000_000)
       XCTAssertEqual(decoded.strW.value, "hello")
@@ -854,7 +899,7 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - Any wrapping a WKT (Timestamp)
 
-  func test_wkt_any_wktValue_bidirectional() throws {
+  func test_wkt_any_wktValue_bidirectional() async throws {
     let ts = Google_Protobuf_Timestamp.with {
       $0.seconds = 1_700_000_000
       $0.nanos = 500_000_000
@@ -867,7 +912,7 @@ final class JSONCompatWKTTests: XCTestCase {
     let desc = CompatDescriptors.wktHolder()
     let anyDesc = CompatDescriptors.wktAny()
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let anyDyn = try XCTUnwrap(try msg.get(forField: 4) as? DynamicMessage)
       XCTAssertEqual(anyDyn.descriptor.name, "Any")
       let typeUrl = try XCTUnwrap(try anyDyn.get(forField: 1) as? String)
@@ -881,7 +926,8 @@ final class JSONCompatWKTTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(anyDyn, forField: 4)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WKTHolder.self)
+    {
       decoded in
       XCTAssertTrue(
         decoded.anyVal.typeURL.contains("Timestamp"),
@@ -895,14 +941,14 @@ final class JSONCompatWKTTests: XCTestCase {
 
   // MARK: - All WKTs absent → empty JSON
 
-  func test_wkt_allAbsent_emptyJSON() throws {
+  func test_wkt_allAbsent_emptyJSON() async throws {
     let proto = Testcompat_WKTHolder()
     let jsonStr = try proto.jsonString()
     XCTAssertEqual(jsonStr, "{}")
 
     let desc = CompatDescriptors.wktHolder()
     let dynamic = DynamicMessage(descriptor: desc)
-    let jsonData = try CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
+    let jsonData = try await CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
     let ourJson = try XCTUnwrap(String(data: jsonData, encoding: .utf8))
     XCTAssertEqual(ourJson, "{}")
   }

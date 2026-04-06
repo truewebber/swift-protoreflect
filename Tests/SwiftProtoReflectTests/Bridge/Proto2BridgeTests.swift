@@ -16,14 +16,14 @@ final class Proto2BridgeTests: XCTestCase {
 
   private var bridge: DescriptorBridge!
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     bridge = DescriptorBridge()
   }
 
   // MARK: - Syntax propagation through bridge
 
-  func test_bridge_fromProtobufFile_syntaxPropagatesToFields() throws {
+  func test_bridge_fromProtobufFile_syntaxPropagatesToFields() async throws {
     var fileProto = Google_Protobuf_FileDescriptorProto()
     fileProto.name = "test.proto"
     fileProto.syntax = "proto2"
@@ -48,7 +48,7 @@ final class Proto2BridgeTests: XCTestCase {
     XCTAssertEqual(field?.isRequired, true)
   }
 
-  func test_bridge_fromProtobuf_requiredLabel_proto2_setsIsRequired() throws {
+  func test_bridge_fromProtobuf_requiredLabel_proto2_setsIsRequired() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "req"
     fieldProto.number = 1
@@ -59,7 +59,7 @@ final class Proto2BridgeTests: XCTestCase {
     XCTAssertTrue(field.isRequired)
   }
 
-  func test_bridge_fromProtobuf_requiredLabel_proto3_ignores() throws {
+  func test_bridge_fromProtobuf_requiredLabel_proto3_ignores() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "req"
     fieldProto.number = 1
@@ -72,7 +72,7 @@ final class Proto2BridgeTests: XCTestCase {
 
   // MARK: - Default value parsing
 
-  func test_bridge_fromProtobuf_defaultValue_string() throws {
+  func test_bridge_fromProtobuf_defaultValue_string() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "name"
     fieldProto.number = 1
@@ -84,7 +84,7 @@ final class Proto2BridgeTests: XCTestCase {
     XCTAssertEqual(field.defaultValue, .string("hello"))
   }
 
-  func test_bridge_fromProtobuf_defaultValue_int32() throws {
+  func test_bridge_fromProtobuf_defaultValue_int32() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "count"
     fieldProto.number = 1
@@ -96,7 +96,7 @@ final class Proto2BridgeTests: XCTestCase {
     XCTAssertEqual(field.defaultValue, .int(42))
   }
 
-  func test_bridge_fromProtobuf_defaultValue_bool_true() throws {
+  func test_bridge_fromProtobuf_defaultValue_bool_true() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "flag"
     fieldProto.number = 1
@@ -108,7 +108,7 @@ final class Proto2BridgeTests: XCTestCase {
     XCTAssertEqual(field.defaultValue, .bool(true))
   }
 
-  func test_bridge_fromProtobuf_defaultValue_double() throws {
+  func test_bridge_fromProtobuf_defaultValue_double() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "ratio"
     fieldProto.number = 1
@@ -120,7 +120,7 @@ final class Proto2BridgeTests: XCTestCase {
     XCTAssertEqual(field.defaultValue, .double(3.14))
   }
 
-  func test_bridge_fromProtobuf_defaultValue_float() throws {
+  func test_bridge_fromProtobuf_defaultValue_float() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "weight"
     fieldProto.number = 1
@@ -132,7 +132,7 @@ final class Proto2BridgeTests: XCTestCase {
     XCTAssertEqual(field.defaultValue, .float(1.5))
   }
 
-  func test_bridge_fromProtobuf_emptyDefaultValue_meansNoDefault() throws {
+  func test_bridge_fromProtobuf_emptyDefaultValue_meansNoDefault() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "name"
     fieldProto.number = 1
@@ -145,7 +145,7 @@ final class Proto2BridgeTests: XCTestCase {
 
   // MARK: - isPacked from options
 
-  func test_bridge_fromProtobuf_packed_option_true() throws {
+  func test_bridge_fromProtobuf_packed_option_true() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "values"
     fieldProto.number = 1
@@ -157,7 +157,7 @@ final class Proto2BridgeTests: XCTestCase {
     XCTAssertEqual(field.isPacked, true)
   }
 
-  func test_bridge_fromProtobuf_packed_option_false() throws {
+  func test_bridge_fromProtobuf_packed_option_false() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "values"
     fieldProto.number = 1
@@ -169,7 +169,7 @@ final class Proto2BridgeTests: XCTestCase {
     XCTAssertEqual(field.isPacked, false)
   }
 
-  func test_bridge_fromProtobuf_noPacked_option_nil() throws {
+  func test_bridge_fromProtobuf_noPacked_option_nil() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "values"
     fieldProto.number = 1
@@ -182,7 +182,7 @@ final class Proto2BridgeTests: XCTestCase {
 
   // MARK: - Extension ranges
 
-  func test_bridge_fromProtobuf_extensionRange_converted() throws {
+  func test_bridge_fromProtobuf_extensionRange_converted() async throws {
     var msgProto = Google_Protobuf_DescriptorProto()
     msgProto.name = "Extendable"
 
@@ -197,7 +197,7 @@ final class Proto2BridgeTests: XCTestCase {
     XCTAssertEqual(desc.extensionRanges[0].end, 200)
   }
 
-  func test_bridge_fromProtobuf_multipleExtensionRanges() throws {
+  func test_bridge_fromProtobuf_multipleExtensionRanges() async throws {
     var msgProto = Google_Protobuf_DescriptorProto()
     msgProto.name = "Extendable"
 
@@ -213,7 +213,7 @@ final class Proto2BridgeTests: XCTestCase {
     XCTAssertEqual(desc.extensionRanges.count, 2)
   }
 
-  func test_bridge_toProtobuf_extensionRange_preserved() throws {
+  func test_bridge_toProtobuf_extensionRange_preserved() async throws {
     var desc = MessageDescriptor(name: "Extendable", fullName: "test.Extendable")
     desc.addExtensionRange(ExtensionRange(start: 100, end: 200))
 

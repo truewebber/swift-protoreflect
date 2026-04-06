@@ -7,7 +7,7 @@ final class DynamicMessageEdgeCaseTests: XCTestCase {
 
   // MARK: - Set Message/Group field with wrong type
 
-  func test_set_messageFieldWithString_throwsTypeMismatch() throws {
+  func test_set_messageFieldWithString_throwsTypeMismatch() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(
       FieldDescriptor(
@@ -28,7 +28,7 @@ final class DynamicMessageEdgeCaseTests: XCTestCase {
     }
   }
 
-  func test_set_groupFieldWithString_throwsTypeMismatch() throws {
+  func test_set_groupFieldWithString_throwsTypeMismatch() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(
       FieldDescriptor(
@@ -51,7 +51,7 @@ final class DynamicMessageEdgeCaseTests: XCTestCase {
 
   // MARK: - clearOneofField for map/repeated
 
-  func test_clearOneof_repeatedField_clearsRepeated() throws {
+  func test_clearOneof_repeatedField_clearsRepeated() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(
       FieldDescriptor(
@@ -74,7 +74,7 @@ final class DynamicMessageEdgeCaseTests: XCTestCase {
     XCTAssertNil(after)
   }
 
-  func test_clearOneof_mapField_clearsMap() throws {
+  func test_clearOneof_mapField_clearsMap() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(
       FieldDescriptor(
@@ -104,7 +104,7 @@ final class DynamicMessageEdgeCaseTests: XCTestCase {
 
   // MARK: - NSNumber conversion for double field
 
-  func test_set_doubleFieldWithNSNumber_convertsToDouble() throws {
+  func test_set_doubleFieldWithNSNumber_convertsToDouble() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(FieldDescriptor(name: "val", number: 1, type: .double))
     var msg = DynamicMessage(descriptor: desc)
@@ -117,7 +117,7 @@ final class DynamicMessageEdgeCaseTests: XCTestCase {
 
   // MARK: - invalidMapKeyType error
 
-  func test_set_mapWithInvalidKeyType_throwsError() throws {
+  func test_set_mapWithInvalidKeyType_throwsError() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(
       FieldDescriptor(

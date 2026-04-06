@@ -13,7 +13,7 @@ final class AnyHandlerTests: XCTestCase {
 
   // MARK: - Handler Basic Properties
 
-  func testHandlerBasicProperties() {
+  func testHandlerBasicProperties() async throws {
     // Check basic handler properties
     XCTAssertEqual(AnyHandler.handledTypeName, WellKnownTypeNames.any)
     XCTAssertEqual(AnyHandler.supportPhase, .advanced)
@@ -21,7 +21,7 @@ final class AnyHandlerTests: XCTestCase {
 
   // MARK: - AnyValue Initialization
 
-  func testAnyValueInitialization() throws {
+  func testAnyValueInitialization() async throws {
     // Test successful initialization
     let typeUrl = "type.googleapis.com/google.protobuf.Duration"
     let data = Data([0x08, 0x96, 0x01])
@@ -31,7 +31,7 @@ final class AnyHandlerTests: XCTestCase {
     XCTAssertEqual(anyValue.value, data)
   }
 
-  func testAnyValueInitializationWithInvalidTypeUrl() {
+  func testAnyValueInitializationWithInvalidTypeUrl() async throws {
     // Test failed initialization with invalid URL
     let invalidUrls = [
       "",  // empty
@@ -51,21 +51,21 @@ final class AnyHandlerTests: XCTestCase {
 
   // MARK: - URL Utilities
 
-  func testCreateTypeUrl() {
+  func testCreateTypeUrl() async throws {
     let typeName = "google.protobuf.Duration"
     let expectedUrl = "type.googleapis.com/google.protobuf.Duration"
     let actualUrl = AnyHandler.AnyValue.createTypeUrl(for: typeName)
     XCTAssertEqual(actualUrl, expectedUrl)
   }
 
-  func testExtractTypeName() {
+  func testExtractTypeName() async throws {
     let typeUrl = "type.googleapis.com/google.protobuf.Duration"
     let expectedTypeName = "google.protobuf.Duration"
     let actualTypeName = AnyHandler.AnyValue.extractTypeName(from: typeUrl)
     XCTAssertEqual(actualTypeName, expectedTypeName)
   }
 
-  func testExtractTypeNameFromSimpleUrl() {
+  func testExtractTypeNameFromSimpleUrl() async throws {
     // Test extraction from simple URL without prefix
     let typeUrl = "simple.type.Name"
     let expectedTypeName = "simple.type.Name"
@@ -73,7 +73,7 @@ final class AnyHandlerTests: XCTestCase {
     XCTAssertEqual(actualTypeName, expectedTypeName)
   }
 
-  func testIsValidTypeUrl() {
+  func testIsValidTypeUrl() async throws {
     // Valid URLs
     let validUrls = [
       "type.googleapis.com/google.protobuf.Duration",
@@ -102,7 +102,7 @@ final class AnyHandlerTests: XCTestCase {
 
   // MARK: - Pack/Unpack Operations
 
-  func testPackUnpackSimpleMessage() throws {
+  func testPackUnpackSimpleMessage() async throws {
     // Create simple message for packing
     let originalMessage = try createTestMessage()
 
@@ -118,7 +118,7 @@ final class AnyHandlerTests: XCTestCase {
     XCTAssertEqual(anyValue.getTypeName(), "test.package.TestMessage")
 
     // Unpack back
-    let unpackedMessage = try anyValue.unpack(to: originalMessage.descriptor)
+    let unpackedMessage = try await anyValue.unpack(to: originalMessage.descriptor)
 
     // Check that data matches
     XCTAssertEqual(
@@ -131,7 +131,7 @@ final class AnyHandlerTests: XCTestCase {
     )
   }
 
-  func testUnpackTypeMismatch() throws {
+  func testUnpackTypeMismatch() async throws {
     // Create message and pack
     let originalMessage = try createTestMessage()
     let anyValue = try AnyHandler.AnyValue.pack(originalMessage)
@@ -139,9 +139,11 @@ final class AnyHandlerTests: XCTestCase {
     // Try to unpack to different type
     let wrongDescriptor = try createWrongMessageDescriptor()
 
-    XCTAssertThrowsError(
-      try anyValue.unpack(to: wrongDescriptor)
-    ) { error in
+    do {
+      try await anyValue.unpack(to: wrongDescriptor)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       guard case WellKnownTypeError.conversionFailed = error else {
         XCTFail("Expected conversionFailed error")
         return
@@ -151,7 +153,7 @@ final class AnyHandlerTests: XCTestCase {
 
   // MARK: - Handler Implementation
 
-  func testCreateSpecializedFromMessage() throws {
+  func testCreateSpecializedFromMessage() async throws {
     // Create Any message
     let anyDescriptor = try createAnyDescriptor()
     let factory = MessageFactory()
@@ -170,7 +172,7 @@ final class AnyHandlerTests: XCTestCase {
     XCTAssertEqual(anyValue.value, Data([0x08, 0x96, 0x01]))
   }
 
-  func testCreateSpecializedFromInvalidMessage() throws {
+  func testCreateSpecializedFromInvalidMessage() async throws {
     // Attempt to create from wrong message type
     let wrongMessage = try createTestMessage()
 
@@ -184,7 +186,7 @@ final class AnyHandlerTests: XCTestCase {
     }
   }
 
-  func testCreateSpecializedWithMissingFields() throws {
+  func testCreateSpecializedWithMissingFields() async throws {
     // Create Any message without required fields
     let anyDescriptor = try createAnyDescriptor()
     let factory = MessageFactory()
@@ -201,7 +203,7 @@ final class AnyHandlerTests: XCTestCase {
     }
   }
 
-  func testCreateDynamicFromSpecialized() throws {
+  func testCreateDynamicFromSpecialized() async throws {
     // Create AnyValue
     let anyValue = try AnyHandler.AnyValue(
       typeUrl: "type.googleapis.com/test.Message",
@@ -223,7 +225,7 @@ final class AnyHandlerTests: XCTestCase {
     )
   }
 
-  func testCreateDynamicFromInvalidSpecialized() {
+  func testCreateDynamicFromInvalidSpecialized() async throws {
     // Attempt to create from wrong type
     let wrongObject = "not an AnyValue"
 
@@ -239,7 +241,7 @@ final class AnyHandlerTests: XCTestCase {
 
   // MARK: - Validation
 
-  func testValidate() throws {
+  func testValidate() async throws {
     // Valid AnyValue
     let validAnyValue = try AnyHandler.AnyValue(
       typeUrl: "type.googleapis.com/test.Message",
@@ -254,7 +256,7 @@ final class AnyHandlerTests: XCTestCase {
 
   // MARK: - DynamicMessage Extensions
 
-  func testPackIntoAnyExtension() throws {
+  func testPackIntoAnyExtension() async throws {
     let originalMessage = try createTestMessage()
     let anyMessage = try originalMessage.packIntoAny()
 
@@ -263,13 +265,13 @@ final class AnyHandlerTests: XCTestCase {
     XCTAssertNotNil(try anyMessage.get(forField: "value"))
   }
 
-  func testUnpackFromAnyExtension() throws {
+  func testUnpackFromAnyExtension() async throws {
     // Create and pack message
     let originalMessage = try createTestMessage()
     let anyMessage = try originalMessage.packIntoAny()
 
     // Unpack back
-    let unpackedMessage = try anyMessage.unpackFromAny(to: originalMessage.descriptor)
+    let unpackedMessage = try await anyMessage.unpackFromAny(to: originalMessage.descriptor)
 
     // Check data
     XCTAssertEqual(
@@ -278,12 +280,14 @@ final class AnyHandlerTests: XCTestCase {
     )
   }
 
-  func testUnpackFromAnyWithWrongMessage() throws {
+  func testUnpackFromAnyWithWrongMessage() async throws {
     let wrongMessage = try createTestMessage()
 
-    XCTAssertThrowsError(
-      try wrongMessage.unpackFromAny(to: wrongMessage.descriptor)
-    ) { error in
+    do {
+      try await wrongMessage.unpackFromAny(to: wrongMessage.descriptor)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       guard case WellKnownTypeError.invalidData = error else {
         XCTFail("Expected invalidData error")
         return
@@ -291,7 +295,7 @@ final class AnyHandlerTests: XCTestCase {
     }
   }
 
-  func testIsAnyOfExtension() throws {
+  func testIsAnyOfExtension() async throws {
     let originalMessage = try createTestMessage()
     let anyMessage = try originalMessage.packIntoAny()
 
@@ -299,7 +303,7 @@ final class AnyHandlerTests: XCTestCase {
     XCTAssertFalse(try anyMessage.isAnyOf(typeName: "other.package.OtherMessage"))
   }
 
-  func testGetAnyTypeNameExtension() throws {
+  func testGetAnyTypeNameExtension() async throws {
     let originalMessage = try createTestMessage()
     let anyMessage = try originalMessage.packIntoAny()
 
@@ -309,13 +313,13 @@ final class AnyHandlerTests: XCTestCase {
 
   // MARK: - TypeRegistry Integration
 
-  func testUnpackUsingRegistry() throws {
+  func testUnpackUsingRegistry() async throws {
     // Create registry and register type
     let registry = TypeRegistry()
     let testDescriptor = try createTestMessageDescriptor()
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test.package")
     fileDescriptor.addMessage(testDescriptor)
-    try registry.registerFile(fileDescriptor)
+    try await registry.registerFile(fileDescriptor)
 
     // Create and pack message
     let factory = MessageFactory()
@@ -326,7 +330,7 @@ final class AnyHandlerTests: XCTestCase {
     let anyValue = try AnyHandler.AnyValue.pack(originalMessage)
 
     // Unpack using registry
-    let unpackedMessage = try anyValue.unpack(using: registry)
+    let unpackedMessage = try await anyValue.unpack(using: registry)
 
     XCTAssertEqual(
       try unpackedMessage.get(forField: "name") as? String,
@@ -338,7 +342,7 @@ final class AnyHandlerTests: XCTestCase {
     )
   }
 
-  func testUnpackUsingRegistryWithUnknownType() throws {
+  func testUnpackUsingRegistryWithUnknownType() async throws {
     let registry = TypeRegistry()
 
     let anyValue = try AnyHandler.AnyValue(
@@ -346,9 +350,11 @@ final class AnyHandlerTests: XCTestCase {
       value: Data([0x08, 0x96, 0x01])
     )
 
-    XCTAssertThrowsError(
-      try anyValue.unpack(using: registry)
-    ) { error in
+    do {
+      try await anyValue.unpack(using: registry)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       guard case WellKnownTypeError.conversionFailed = error else {
         XCTFail("Expected conversionFailed error")
         return
@@ -358,7 +364,7 @@ final class AnyHandlerTests: XCTestCase {
 
   // MARK: - Registry Integration
 
-  func testRegistryIntegration() {
+  func testRegistryIntegration() async throws {
     let registry = WellKnownTypesRegistry.shared
 
     // Check that AnyHandler is registered
@@ -367,7 +373,7 @@ final class AnyHandlerTests: XCTestCase {
     XCTAssertTrue(handler is AnyHandler.Type)
   }
 
-  func testRegistryCreateSpecialized() throws {
+  func testRegistryCreateSpecialized() async throws {
     let registry = WellKnownTypesRegistry.shared
 
     // Create Any message
@@ -386,7 +392,7 @@ final class AnyHandlerTests: XCTestCase {
     XCTAssertTrue(specialized is AnyHandler.AnyValue)
   }
 
-  func testRegistryCreateDynamic() throws {
+  func testRegistryCreateDynamic() async throws {
     let registry = WellKnownTypesRegistry.shared
 
     let anyValue = try AnyHandler.AnyValue(
@@ -404,7 +410,7 @@ final class AnyHandlerTests: XCTestCase {
 
   // MARK: - Round-trip Conversion
 
-  func testRoundTripConversion() throws {
+  func testRoundTripConversion() async throws {
     // Create original message
     var originalMessage = try createTestMessage()
     try originalMessage.set("round_trip_test", forField: "name")
@@ -412,7 +418,7 @@ final class AnyHandlerTests: XCTestCase {
 
     // Any Value round-trip
     let anyValue = try AnyHandler.AnyValue.pack(originalMessage)
-    let unpackedMessage = try anyValue.unpack(to: originalMessage.descriptor)
+    let unpackedMessage = try await anyValue.unpack(to: originalMessage.descriptor)
 
     XCTAssertEqual(
       try unpackedMessage.get(forField: "name") as? String,
@@ -432,7 +438,7 @@ final class AnyHandlerTests: XCTestCase {
 
   // MARK: - Description and Equality
 
-  func testAnyValueDescription() throws {
+  func testAnyValueDescription() async throws {
     let anyValue = try AnyHandler.AnyValue(
       typeUrl: "type.googleapis.com/test.Message",
       value: Data([0x08, 0x96, 0x01])
@@ -444,7 +450,7 @@ final class AnyHandlerTests: XCTestCase {
     XCTAssertTrue(description.contains("3 bytes"))
   }
 
-  func testAnyValueEquality() throws {
+  func testAnyValueEquality() async throws {
     let anyValue1 = try AnyHandler.AnyValue(
       typeUrl: "type.googleapis.com/test.Message",
       value: Data([0x08, 0x96, 0x01])
@@ -466,25 +472,23 @@ final class AnyHandlerTests: XCTestCase {
 
   // MARK: - Performance Tests
 
-  func testPackUnpackPerformance() throws {
+  func testPackUnpackPerformance() async throws {
     let originalMessage = try createTestMessage()
 
     // Warm-up for performance stabilization
     for _ in 0..<10 {
       let anyValue = try AnyHandler.AnyValue.pack(originalMessage)
-      _ = try anyValue.unpack(to: originalMessage.descriptor)
+      _ = try await anyValue.unpack(to: originalMessage.descriptor)
     }
 
-    measure {
-      do {
-        for _ in 0..<200 {  // Increase iterations for stability
-          let anyValue = try AnyHandler.AnyValue.pack(originalMessage)
-          _ = try anyValue.unpack(to: originalMessage.descriptor)
-        }
+    do {
+      for _ in 0..<200 {  // Increase iterations for stability
+        let anyValue = try AnyHandler.AnyValue.pack(originalMessage)
+        _ = try await anyValue.unpack(to: originalMessage.descriptor)
       }
-      catch {
-        XCTFail("Performance test failed: \(error)")
-      }
+    }
+    catch {
+      XCTFail("Performance test failed: \(error)")
     }
   }
 

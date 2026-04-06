@@ -11,12 +11,12 @@ import XCTest
 
 final class JSONSerializationOptionsTests: XCTestCase {
 
-  func test_options_defaultCanonicalWKTEncoding_isTrue() {
+  func test_options_defaultCanonicalWKTEncoding_isTrue() async throws {
     let options = JSONSerializationOptions(typeRegistry: TypeRegistry())
     XCTAssertTrue(options.useCanonicalWellKnownTypeEncoding)
   }
 
-  func test_options_customCanonicalWKTEncoding_respectsValue() {
+  func test_options_customCanonicalWKTEncoding_respectsValue() async throws {
     let optionsTrue = JSONSerializationOptions(
       useCanonicalWellKnownTypeEncoding: true,
       typeRegistry: TypeRegistry()

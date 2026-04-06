@@ -12,14 +12,14 @@ final class ListValueHandlerTests: XCTestCase {
 
   // MARK: - Registration
 
-  func test_listValue_registered() {
+  func test_listValue_registered() async throws {
     let registry = WellKnownTypesRegistry.shared
     XCTAssertNotNil(registry.getHandler(for: WellKnownTypeNames.listValue))
   }
 
   // MARK: - createSpecialized
 
-  func test_listValue_createSpecialized_emptyList() throws {
+  func test_listValue_createSpecialized_emptyList() async throws {
     let descriptor = ListValueHandler.createListValueDescriptor()
     let factory = MessageFactory()
     let msg = factory.createMessage(from: descriptor)
@@ -32,7 +32,7 @@ final class ListValueHandlerTests: XCTestCase {
     XCTAssertTrue(values.isEmpty)
   }
 
-  func test_listValue_createSpecialized_withValues() throws {
+  func test_listValue_createSpecialized_withValues() async throws {
     let v1 = StructHandler.ValueValue.numberValue(1.0)
     let v2 = StructHandler.ValueValue.stringValue("hello")
     let v3 = StructHandler.ValueValue.boolValue(true)
@@ -51,13 +51,13 @@ final class ListValueHandlerTests: XCTestCase {
 
   // MARK: - createDynamic
 
-  func test_listValue_createDynamic_emptyList() throws {
+  func test_listValue_createDynamic_emptyList() async throws {
     let values: [StructHandler.ValueValue] = []
     let msg = try ListValueHandler.createDynamic(from: values)
     XCTAssertEqual(msg.descriptor.fullName, WellKnownTypeNames.listValue)
   }
 
-  func test_listValue_createDynamic_withValues() throws {
+  func test_listValue_createDynamic_withValues() async throws {
     let values: [StructHandler.ValueValue] = [
       .numberValue(42.0),
       .stringValue("test"),
@@ -69,7 +69,7 @@ final class ListValueHandlerTests: XCTestCase {
 
   // MARK: - Round-trip
 
-  func test_listValue_roundTrip_preservesValues() throws {
+  func test_listValue_roundTrip_preservesValues() async throws {
     let original: [StructHandler.ValueValue] = [
       .numberValue(1.0),
       .stringValue("hello"),
@@ -87,23 +87,23 @@ final class ListValueHandlerTests: XCTestCase {
 
   // MARK: - Validation
 
-  func test_listValue_validate_validArray() {
+  func test_listValue_validate_validArray() async throws {
     let values: [StructHandler.ValueValue] = [.numberValue(1.0)]
     XCTAssertTrue(ListValueHandler.validate(values))
   }
 
-  func test_listValue_validate_invalidType() {
+  func test_listValue_validate_invalidType() async throws {
     XCTAssertFalse(ListValueHandler.validate("not an array"))
   }
 
-  func test_listValue_validate_emptyArray() {
+  func test_listValue_validate_emptyArray() async throws {
     let values: [StructHandler.ValueValue] = []
     XCTAssertTrue(ListValueHandler.validate(values))
   }
 
   // MARK: - OPE-265 / OPE-266: New repeated-message wire-format tests
 
-  func test_createDynamic_listValue_fieldIsRepeatedMessageNotBytes() throws {
+  func test_createDynamic_listValue_fieldIsRepeatedMessageNotBytes() async throws {
     let values: [StructHandler.ValueValue] = [.boolValue(true), .nullValue, .numberValue(7)]
     let msg = try ListValueHandler.createDynamic(from: values)
 
@@ -116,7 +116,7 @@ final class ListValueHandlerTests: XCTestCase {
     }
   }
 
-  func test_createDynamic_storesValuesAsRepeatedMessageNotBytes() throws {
+  func test_createDynamic_storesValuesAsRepeatedMessageNotBytes() async throws {
     let values: [StructHandler.ValueValue] = [.numberValue(1.0), .stringValue("a")]
     let msg = try ListValueHandler.createDynamic(from: values)
 
@@ -128,7 +128,7 @@ final class ListValueHandlerTests: XCTestCase {
     XCTAssertEqual(list?.count, 2)
   }
 
-  func test_createSpecialized_decodesRepeatedValueMessages() throws {
+  func test_createSpecialized_decodesRepeatedValueMessages() async throws {
     let values: [StructHandler.ValueValue] = [.numberValue(1.0), .stringValue("a")]
     let msg = try ListValueHandler.createDynamic(from: values)
 
@@ -144,7 +144,7 @@ final class ListValueHandlerTests: XCTestCase {
     XCTAssertEqual(try second.get(forField: 3) as? String, "a")
   }
 
-  func test_roundTrip_withMixedValueKinds_preservesOrderAndValues() throws {
+  func test_roundTrip_withMixedValueKinds_preservesOrderAndValues() async throws {
     let original: [StructHandler.ValueValue] = [
       .nullValue,
       .numberValue(3.14),
@@ -160,7 +160,7 @@ final class ListValueHandlerTests: XCTestCase {
     XCTAssertEqual(result, original)
   }
 
-  func test_roundTrip_emptyList() throws {
+  func test_roundTrip_emptyList() async throws {
     let original: [StructHandler.ValueValue] = []
     let msg = try ListValueHandler.createDynamic(from: original)
     let result = try XCTUnwrap(

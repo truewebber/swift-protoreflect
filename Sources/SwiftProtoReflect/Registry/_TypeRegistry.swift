@@ -7,8 +7,9 @@
 
 import Foundation
 
-// @unchecked Sendable: all mutations serialised on `accessQueue` (concurrent reads, barrier writes)
-internal final class _TypeRegistry: @unchecked Sendable {
+// MARK: - _TypeRegistry
+
+internal struct _TypeRegistry {
 
   // MARK: - Properties
 
@@ -16,7 +17,6 @@ internal final class _TypeRegistry: @unchecked Sendable {
   private var messageDescriptors: [String: _MessageDescriptor] = [:]
   private var enumDescriptors: [String: _EnumDescriptor] = [:]
   private var serviceDescriptors: [String: _ServiceDescriptor] = [:]
-  private let accessQueue = DispatchQueue(label: "com.swiftprotoreflect.typeregistry", attributes: .concurrent)
 
   // MARK: - Initialization
 
@@ -24,17 +24,15 @@ internal final class _TypeRegistry: @unchecked Sendable {
 
   // MARK: - File Registration
 
-  func registerFile(_ fileDescriptor: _FileDescriptor) throws {
-    try accessQueue.sync(flags: .barrier) {
-      if fileDescriptors[fileDescriptor.name] != nil {
-        throw _RegistryError.duplicateFile(fileDescriptor.name)
-      }
-      fileDescriptors[fileDescriptor.name] = fileDescriptor
-      try registerTypesFromFile(fileDescriptor)
+  mutating func registerFile(_ fileDescriptor: _FileDescriptor) throws {
+    if fileDescriptors[fileDescriptor.name] != nil {
+      throw _RegistryError.duplicateFile(fileDescriptor.name)
     }
+    fileDescriptors[fileDescriptor.name] = fileDescriptor
+    try registerTypesFromFile(fileDescriptor)
   }
 
-  private func registerTypesFromFile(_ fileDescriptor: _FileDescriptor) throws {
+  private mutating func registerTypesFromFile(_ fileDescriptor: _FileDescriptor) throws {
     for (_, messageDescriptor) in fileDescriptor.messages {
       try registerMessageRecursively(messageDescriptor)
     }
@@ -52,7 +50,7 @@ internal final class _TypeRegistry: @unchecked Sendable {
     }
   }
 
-  private func registerMessageRecursively(_ messageDescriptor: _MessageDescriptor) throws {
+  private mutating func registerMessageRecursively(_ messageDescriptor: _MessageDescriptor) throws {
     if messageDescriptors[messageDescriptor.fullName] != nil {
       throw _RegistryError.duplicateType(messageDescriptor.fullName)
     }
@@ -70,46 +68,40 @@ internal final class _TypeRegistry: @unchecked Sendable {
 
   // MARK: - Direct Type Registration
 
-  func registerMessage(_ messageDescriptor: _MessageDescriptor) throws {
-    try accessQueue.sync(flags: .barrier) {
-      try registerMessageRecursively(messageDescriptor)
-    }
+  mutating func registerMessage(_ messageDescriptor: _MessageDescriptor) throws {
+    try registerMessageRecursively(messageDescriptor)
   }
 
-  func registerEnum(_ enumDescriptor: _EnumDescriptor) throws {
-    try accessQueue.sync(flags: .barrier) {
-      if enumDescriptors[enumDescriptor.fullName] != nil {
-        throw _RegistryError.duplicateType(enumDescriptor.fullName)
-      }
-      enumDescriptors[enumDescriptor.fullName] = enumDescriptor
+  mutating func registerEnum(_ enumDescriptor: _EnumDescriptor) throws {
+    if enumDescriptors[enumDescriptor.fullName] != nil {
+      throw _RegistryError.duplicateType(enumDescriptor.fullName)
     }
+    enumDescriptors[enumDescriptor.fullName] = enumDescriptor
   }
 
-  func registerService(_ serviceDescriptor: _ServiceDescriptor) throws {
-    try accessQueue.sync(flags: .barrier) {
-      if serviceDescriptors[serviceDescriptor.fullName] != nil {
-        throw _RegistryError.duplicateType(serviceDescriptor.fullName)
-      }
-      serviceDescriptors[serviceDescriptor.fullName] = serviceDescriptor
+  mutating func registerService(_ serviceDescriptor: _ServiceDescriptor) throws {
+    if serviceDescriptors[serviceDescriptor.fullName] != nil {
+      throw _RegistryError.duplicateType(serviceDescriptor.fullName)
     }
+    serviceDescriptors[serviceDescriptor.fullName] = serviceDescriptor
   }
 
   // MARK: - Lookup
 
   func findFile(named fileName: String) -> _FileDescriptor? {
-    accessQueue.sync { fileDescriptors[fileName] }
+    fileDescriptors[fileName]
   }
 
   func findMessage(named fullName: String) -> _MessageDescriptor? {
-    accessQueue.sync { messageDescriptors[fullName] }
+    messageDescriptors[fullName]
   }
 
   func findEnum(named fullName: String) -> _EnumDescriptor? {
-    accessQueue.sync { enumDescriptors[fullName] }
+    enumDescriptors[fullName]
   }
 
   func findService(named fullName: String) -> _ServiceDescriptor? {
-    accessQueue.sync { serviceDescriptors[fullName] }
+    serviceDescriptors[fullName]
   }
 
   func syntaxForType(_ fullName: String) -> String? {
@@ -141,35 +133,36 @@ internal final class _TypeRegistry: @unchecked Sendable {
   // MARK: - Enumeration
 
   func allFiles() -> [_FileDescriptor] {
-    accessQueue.sync { Array(fileDescriptors.values) }
+    Array(fileDescriptors.values)
   }
 
   func allMessages() -> [_MessageDescriptor] {
-    accessQueue.sync { Array(messageDescriptors.values) }
+    Array(messageDescriptors.values)
   }
 
   func allEnums() -> [_EnumDescriptor] {
-    accessQueue.sync { Array(enumDescriptors.values) }
+    Array(enumDescriptors.values)
   }
 
   func allServices() -> [_ServiceDescriptor] {
-    accessQueue.sync { Array(serviceDescriptors.values) }
+    Array(serviceDescriptors.values)
   }
 
   // MARK: - Dependency Resolution
 
   func resolveDependencies(for fullName: String) throws -> [String] {
-    return try accessQueue.sync {
-      guard let messageDescriptor = messageDescriptors[fullName] else {
-        throw _RegistryError.typeNotFound(fullName)
-      }
-      var dependencies: Set<String> = []
-      collectDependencies(from: messageDescriptor, into: &dependencies)
-      return Array(dependencies).sorted()
+    guard let messageDescriptor = messageDescriptors[fullName] else {
+      throw _RegistryError.typeNotFound(fullName)
     }
+    var dependencies: Set<String> = []
+    collectDependencies(from: messageDescriptor, into: &dependencies)
+    return Array(dependencies).sorted()
   }
 
-  private func collectDependencies(from messageDescriptor: _MessageDescriptor, into dependencies: inout Set<String>) {
+  private func collectDependencies(
+    from messageDescriptor: _MessageDescriptor,
+    into dependencies: inout Set<String>
+  ) {
     for field in messageDescriptor.allFields() {
       if let typeName = field.typeName, !typeName.isEmpty {
         dependencies.insert(typeName)
@@ -189,26 +182,22 @@ internal final class _TypeRegistry: @unchecked Sendable {
 
   // MARK: - Clear / Remove
 
-  func clear() {
-    accessQueue.sync(flags: .barrier) {
-      fileDescriptors.removeAll()
-      messageDescriptors.removeAll()
-      enumDescriptors.removeAll()
-      serviceDescriptors.removeAll()
-    }
+  mutating func clear() {
+    fileDescriptors.removeAll()
+    messageDescriptors.removeAll()
+    enumDescriptors.removeAll()
+    serviceDescriptors.removeAll()
   }
 
-  func removeFile(named fileName: String) -> Bool {
-    return accessQueue.sync(flags: .barrier) {
-      guard let fileDescriptor = fileDescriptors.removeValue(forKey: fileName) else {
-        return false
-      }
-      removeTypesFromFile(fileDescriptor)
-      return true
+  mutating func removeFile(named fileName: String) -> Bool {
+    guard let fileDescriptor = fileDescriptors.removeValue(forKey: fileName) else {
+      return false
     }
+    removeTypesFromFile(fileDescriptor)
+    return true
   }
 
-  private func removeTypesFromFile(_ fileDescriptor: _FileDescriptor) {
+  private mutating func removeTypesFromFile(_ fileDescriptor: _FileDescriptor) {
     for (_, messageDescriptor) in fileDescriptor.messages {
       removeMessageRecursively(messageDescriptor)
     }
@@ -220,7 +209,7 @@ internal final class _TypeRegistry: @unchecked Sendable {
     }
   }
 
-  private func removeMessageRecursively(_ messageDescriptor: _MessageDescriptor) {
+  private mutating func removeMessageRecursively(_ messageDescriptor: _MessageDescriptor) {
     messageDescriptors.removeValue(forKey: messageDescriptor.fullName)
     for (_, nestedMessage) in messageDescriptor.nestedMessages {
       removeMessageRecursively(nestedMessage)

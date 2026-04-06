@@ -14,7 +14,7 @@ final class FieldMaskHandlerTests: XCTestCase {
 
   // MARK: - FieldMaskValue Tests
 
-  func testFieldMaskValueInitialization() {
+  func testFieldMaskValueInitialization() async throws {
     // Valid initialization
     XCTAssertNoThrow(try FieldMaskHandler.FieldMaskValue(paths: ["name", "age", "address.city"]))
     XCTAssertNoThrow(try FieldMaskHandler.FieldMaskValue(paths: []))
@@ -49,7 +49,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     }
   }
 
-  func testFieldMaskValueContains() {
+  func testFieldMaskValueContains() async throws {
     do {
       let fieldMask = try FieldMaskHandler.FieldMaskValue(paths: ["name", "age", "address.city"])
 
@@ -64,7 +64,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     }
   }
 
-  func testFieldMaskValueCovers() {
+  func testFieldMaskValueCovers() async throws {
     do {
       let fieldMask = try FieldMaskHandler.FieldMaskValue(paths: ["name", "address"])
 
@@ -85,7 +85,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     }
   }
 
-  func testFieldMaskValueAdding() {
+  func testFieldMaskValueAdding() async throws {
     do {
       let originalMask = try FieldMaskHandler.FieldMaskValue(paths: ["name"])
 
@@ -112,7 +112,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     }
   }
 
-  func testFieldMaskValueRemoving() {
+  func testFieldMaskValueRemoving() async throws {
     do {
       let originalMask = try FieldMaskHandler.FieldMaskValue(paths: ["name", "age", "address"])
 
@@ -130,7 +130,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     }
   }
 
-  func testFieldMaskValueUnion() {
+  func testFieldMaskValueUnion() async throws {
     do {
       let mask1 = try FieldMaskHandler.FieldMaskValue(paths: ["name", "age"])
       let mask2 = try FieldMaskHandler.FieldMaskValue(paths: ["age", "address"])
@@ -143,7 +143,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     }
   }
 
-  func testFieldMaskValueIntersection() {
+  func testFieldMaskValueIntersection() async throws {
     do {
       let mask1 = try FieldMaskHandler.FieldMaskValue(paths: ["name", "age", "address"])
       let mask2 = try FieldMaskHandler.FieldMaskValue(paths: ["age", "address", "phone"])
@@ -156,7 +156,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     }
   }
 
-  func testFieldMaskValueStaticMethods() {
+  func testFieldMaskValueStaticMethods() async throws {
     // Empty mask
     let emptyMask = FieldMaskHandler.FieldMaskValue.empty()
     XCTAssertEqual(emptyMask.paths, [])
@@ -171,7 +171,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     }
   }
 
-  func testFieldMaskValueDescription() {
+  func testFieldMaskValueDescription() async throws {
     do {
       let emptyMask = FieldMaskHandler.FieldMaskValue.empty()
       XCTAssertEqual(emptyMask.description, "FieldMask(empty)")
@@ -184,7 +184,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     }
   }
 
-  func testFieldMaskValueEquality() {
+  func testFieldMaskValueEquality() async throws {
     do {
       let mask1 = try FieldMaskHandler.FieldMaskValue(paths: ["name", "age"])
       let mask2 = try FieldMaskHandler.FieldMaskValue(paths: ["name", "age"])
@@ -200,7 +200,7 @@ final class FieldMaskHandlerTests: XCTestCase {
 
   // MARK: - Path Validation Tests
 
-  func testPathValidation() {
+  func testPathValidation() async throws {
     // Valid paths
     XCTAssertTrue(FieldMaskHandler.FieldMaskValue.isValidPath("name"))
     XCTAssertTrue(FieldMaskHandler.FieldMaskValue.isValidPath("user_name"))
@@ -220,12 +220,12 @@ final class FieldMaskHandlerTests: XCTestCase {
 
   // MARK: - Handler Implementation Tests
 
-  func testHandlerBasicProperties() {
+  func testHandlerBasicProperties() async throws {
     XCTAssertEqual(FieldMaskHandler.handledTypeName, "google.protobuf.FieldMask")
     XCTAssertEqual(FieldMaskHandler.supportPhase, .important)
   }
 
-  func testCreateSpecializedFromMessage() throws {
+  func testCreateSpecializedFromMessage() async throws {
     // Create FieldMask message
     let fieldMaskMessage = try createFieldMaskMessage(paths: ["name", "age", "address.city"])
 
@@ -240,7 +240,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     XCTAssertEqual(fieldMask.paths.sorted(), ["address.city", "age", "name"])
   }
 
-  func testCreateSpecializedFromMessageWithEmptyPaths() throws {
+  func testCreateSpecializedFromMessageWithEmptyPaths() async throws {
     // Create message with empty paths
     let fieldMaskMessage = try createFieldMaskMessage(paths: [])
 
@@ -254,7 +254,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     XCTAssertEqual(fieldMask.paths, [])
   }
 
-  func testCreateSpecializedFromMessageWithMissingField() throws {
+  func testCreateSpecializedFromMessageWithMissingField() async throws {
     // Create message without paths field
     let fieldMaskMessage = try createFieldMaskMessage(paths: nil)
 
@@ -268,7 +268,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     XCTAssertEqual(fieldMask.paths, [])
   }
 
-  func testCreateSpecializedFromInvalidMessage() throws {
+  func testCreateSpecializedFromInvalidMessage() async throws {
     // Create message of wrong type
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "NotFieldMask", parent: fileDescriptor)
@@ -286,7 +286,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     }
   }
 
-  func testCreateDynamicFromSpecialized() throws {
+  func testCreateDynamicFromSpecialized() async throws {
     let fieldMask = try FieldMaskHandler.FieldMaskValue(paths: ["name", "age", "address.city"])
 
     let dynamicMessage = try FieldMaskHandler.createDynamic(from: fieldMask)
@@ -297,7 +297,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     XCTAssertEqual(paths.sorted(), ["address.city", "age", "name"])
   }
 
-  func testCreateDynamicFromInvalidSpecialized() throws {
+  func testCreateDynamicFromInvalidSpecialized() async throws {
     let wrongSpecialized = "not a field mask"
 
     XCTAssertThrowsError(try FieldMaskHandler.createDynamic(from: wrongSpecialized)) { error in
@@ -310,7 +310,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     }
   }
 
-  func testValidate() throws {
+  func testValidate() async throws {
     // Valid values
     let validFieldMask = try FieldMaskHandler.FieldMaskValue(paths: ["name", "age"])
     XCTAssertTrue(FieldMaskHandler.validate(validFieldMask))
@@ -324,7 +324,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     XCTAssertFalse(FieldMaskHandler.validate(["name", "age"]))
   }
 
-  func testRoundTripConversion() throws {
+  func testRoundTripConversion() async throws {
     let originalFieldMask = try FieldMaskHandler.FieldMaskValue(paths: ["name", "age", "address.city"])
 
     // Convert to dynamic message and back
@@ -341,14 +341,14 @@ final class FieldMaskHandlerTests: XCTestCase {
 
   // MARK: - Convenience Extensions Tests
 
-  func testArrayExtension() throws {
+  func testArrayExtension() async throws {
     let paths = ["name", "age", "address.city"]
     let fieldMask = try paths.toFieldMaskValue()
 
     XCTAssertEqual(fieldMask.paths, paths)
   }
 
-  func testArrayExtensionWithInvalidPaths() throws {
+  func testArrayExtensionWithInvalidPaths() async throws {
     let invalidPaths = ["name", "invalid-path"]
 
     XCTAssertThrowsError(try invalidPaths.toFieldMaskValue()) { error in
@@ -359,7 +359,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     }
   }
 
-  func testDynamicMessageExtensions() throws {
+  func testDynamicMessageExtensions() async throws {
     let paths = ["name", "age", "address.city"]
 
     let fieldMaskMessage = try DynamicMessage.fieldMaskMessage(from: paths)
@@ -369,7 +369,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     XCTAssertEqual(convertedPaths.sorted(), paths.sorted())
   }
 
-  func testDynamicMessageToFieldPathsWithInvalidMessage() throws {
+  func testDynamicMessageToFieldPathsWithInvalidMessage() async throws {
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "NotFieldMask", parent: fileDescriptor)
     fileDescriptor.addMessage(messageDescriptor)
@@ -387,7 +387,7 @@ final class FieldMaskHandlerTests: XCTestCase {
 
   // MARK: - Edge Cases Tests
 
-  func testComplexPaths() throws {
+  func testComplexPaths() async throws {
     let complexPaths = [
       "user.personal_info.name",
       "user.address.street_address.line1",
@@ -404,7 +404,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     XCTAssertFalse(fieldMask.covers("user.personal_info.age"))
   }
 
-  func testLargePaths() throws {
+  func testLargePaths() async throws {
     // Test with large number of paths
     let largePaths = (1...100).map { "field\($0)" }
     let fieldMask = try FieldMaskHandler.FieldMaskValue(paths: largePaths)
@@ -414,7 +414,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     XCTAssertFalse(fieldMask.contains("field101"))
   }
 
-  func testDuplicatePathsInOperations() throws {
+  func testDuplicatePathsInOperations() async throws {
     let mask1 = try FieldMaskHandler.FieldMaskValue(paths: ["name", "age"])
     let mask2 = try FieldMaskHandler.FieldMaskValue(paths: ["name", "address"])
 
@@ -424,7 +424,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     XCTAssertEqual(unionMask.paths.count, 3)  // Should not have duplicates
   }
 
-  func testCoversWithComplexHierarchy() throws {
+  func testCoversWithComplexHierarchy() async throws {
     let fieldMask = try FieldMaskHandler.FieldMaskValue(paths: ["user", "metadata.tags"])
 
     // user should cover all child paths
@@ -442,7 +442,7 @@ final class FieldMaskHandlerTests: XCTestCase {
 
   // MARK: - Performance Tests
 
-  func testPerformanceWithLargeFieldMask() {
+  func testPerformanceWithLargeFieldMask() async throws {
     let largePaths = (1...1000).map { "field\($0).subfield\($0).value" }
 
     measure {
@@ -457,7 +457,7 @@ final class FieldMaskHandlerTests: XCTestCase {
     }
   }
 
-  func testHandlerPerformance() throws {
+  func testHandlerPerformance() async throws {
     let fieldMaskMessage = try createFieldMaskMessage(paths: ["name", "age", "address.city"])
 
     measure {

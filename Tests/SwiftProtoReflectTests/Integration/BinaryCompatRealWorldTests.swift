@@ -35,24 +35,24 @@ final class BinaryCompatRealWorldTests: XCTestCase {
   private var registry: TypeRegistry!
   private let serializer = BinaryCompatHelpers.makeSerializer()
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - 1. NullableUint32: null_val variant (oneof field 1, NullValue=0)
 
-  func test_realworld_nullableUint32_null_bidirectional() throws {
+  func test_realworld_nullableUint32_null_bidirectional() async throws {
     var proto = Testcompat_NullableUint32()
     proto.nullVal = .nullValue  // oneof field 1, enum NullValue=0
 
     let desc = CompatDescriptors.nullableUint32()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -79,12 +79,12 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 2. NullableUint32: value variant (oneof field 2, uint32=42)
 
-  func test_realworld_nullableUint32_value_bidirectional() throws {
+  func test_realworld_nullableUint32_value_bidirectional() async throws {
     var proto = Testcompat_NullableUint32()
     proto.value = 42
 
     let desc = CompatDescriptors.nullableUint32()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -110,12 +110,12 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 3. NullableDouble: null_val variant (oneof field 1, NullValue=0)
 
-  func test_realworld_nullableDouble_null_bidirectional() throws {
+  func test_realworld_nullableDouble_null_bidirectional() async throws {
     var proto = Testcompat_NullableDouble()
     proto.nullVal = .nullValue
 
     let desc = CompatDescriptors.nullableDouble()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -141,12 +141,12 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 4. NullableDouble: value=3.14 (oneof field 2, 8-byte fixed IEEE 754)
 
-  func test_realworld_nullableDouble_value_bidirectional() throws {
+  func test_realworld_nullableDouble_value_bidirectional() async throws {
     var proto = Testcompat_NullableDouble()
     proto.value = 3.14
 
     let desc = CompatDescriptors.nullableDouble()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -172,7 +172,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 5. WithNullables: count.value=10, active.nullVal=0, label.value="label_val", name="outer"
 
-  func test_realworld_withNullables_mixed_bidirectional() throws {
+  func test_realworld_withNullables_mixed_bidirectional() async throws {
     var proto = Testcompat_WithNullables()
     proto.count.value = 10
     proto.active.nullVal = .nullValue
@@ -184,7 +184,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     let nullableBoolDesc = CompatDescriptors.nullableBool()
     let nullableStringDesc = CompatDescriptors.nullableString()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -248,7 +248,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 6. NonSequentialFields: all fields with non-sequential and large field numbers
 
-  func test_realworld_nonSequentialFields_bidirectional() throws {
+  func test_realworld_nonSequentialFields_bidirectional() async throws {
     var proto = Testcompat_NonSequentialFields()
     proto.name = "name_val"
     proto.code = 42
@@ -263,7 +263,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     let desc = CompatDescriptors.nonSequentialFields()
     let tsDesc = CompatDescriptors.wktTimestamp()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -312,7 +312,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 7. WithReserved: active fields only (reserved field numbers produce no bytes)
 
-  func test_realworld_withReserved_activeFields_bidirectional() throws {
+  func test_realworld_withReserved_activeFields_bidirectional() async throws {
     var proto = Testcompat_WithReserved()
     proto.name = "reserved_test"
     proto.version = 5
@@ -320,7 +320,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     proto.priority = 10
 
     let desc = CompatDescriptors.withReserved()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -349,7 +349,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 8. ReportResponse: basic fields + one keyword with tags
 
-  func test_realworld_reportResponse_basic_bidirectional() throws {
+  func test_realworld_reportResponse_basic_bidirectional() async throws {
     var keyword = Testcompat_ReportResponse.Keyword()
     keyword.keyword = "swift"
     keyword.tags = ["ios", "mobile"]
@@ -363,7 +363,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     let desc = CompatDescriptors.reportResponse()
     let keywordDesc = try XCTUnwrap(desc.nestedMessage(named: "Keyword"))
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -399,14 +399,14 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 9. DateValue: year=2024, month=3, day=15 (all varint fields)
 
-  func test_realworld_dateValue_bidirectional() throws {
+  func test_realworld_dateValue_bidirectional() async throws {
     var proto = Testcompat_DateValue()
     proto.year = 2024
     proto.month = 3
     proto.day = 15
 
     let desc = CompatDescriptors.dateValue()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -432,12 +432,12 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 10. NullableBool: value=false (oneof field 2, binary encodes as varint 0)
 
-  func test_realworld_nullableBool_false_bidirectional() throws {
+  func test_realworld_nullableBool_false_bidirectional() async throws {
     var proto = Testcompat_NullableBool()
     proto.value = false  // explicitly sets oneof to .value(false)
 
     let desc = CompatDescriptors.nullableBool()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -464,12 +464,12 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 11. NullableString: value="hello_null" (oneof field 2, length-delimited)
 
-  func test_realworld_nullableString_value_bidirectional() throws {
+  func test_realworld_nullableString_value_bidirectional() async throws {
     var proto = Testcompat_NullableString()
     proto.value = "hello_null"
 
     let desc = CompatDescriptors.nullableString()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -495,7 +495,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 12. NullableMessage: value=SimpleMessage(id=77, name="nullable_inner")
 
-  func test_realworld_nullableMessage_value_bidirectional() throws {
+  func test_realworld_nullableMessage_value_bidirectional() async throws {
     var inner = Testcompat_SimpleMessage()
     inner.id = 77
     inner.name = "nullable_inner"
@@ -506,7 +506,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     let desc = CompatDescriptors.nullableMessage()
     let simpleDesc = CompatDescriptors.simpleMessage()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -539,7 +539,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 13. Unset oneof produces no wire bytes (Data())
 
-  func test_realworld_nullable_unset_producesEmptyData() throws {
+  func test_realworld_nullable_unset_producesEmptyData() async throws {
     // Direction A: oracle with no variant set → serializedData() = Data()
     let proto = Testcompat_NullableUint32()  // kind = nil
     let referenceData = try proto.serializedData()
@@ -548,13 +548,13 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     // Direction B: our serializer with no fields set → Data()
     let desc = CompatDescriptors.nullableUint32()
     let dynamic = DynamicMessage(descriptor: desc)
-    let ourData = try serializer.serialize(dynamic)
+    let ourData = try await serializer.serialize(dynamic)
     XCTAssertEqual(ourData, Data(), "BinarySerializer must produce empty bytes when no oneof variant is set")
   }
 
   // MARK: - 14. Proto3OptionalMessages: set optSimple (id=55) vs unset (no LEN tag)
 
-  func test_realworld_proto3Optional_messageField_setVsUnset_bidirectional() throws {
+  func test_realworld_proto3Optional_messageField_setVsUnset_bidirectional() async throws {
     let desc = CompatDescriptors.proto3OptionalMessages()
     let simpleDesc = CompatDescriptors.simpleMessage()
 
@@ -562,7 +562,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     var protoSet = Testcompat_Proto3OptionalMessages()
     protoSet.optSimple.id = 55
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: protoSet,
       descriptor: desc,
       registry: registry,
@@ -595,7 +595,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     )
 
     let dynamicUnset = DynamicMessage(descriptor: desc)
-    let ourUnsetData = try serializer.serialize(dynamicUnset)
+    let ourUnsetData = try await serializer.serialize(dynamicUnset)
     XCTAssertFalse(
       ourUnsetData.contains(0x0A),
       "BinarySerializer must produce no tag for unset optional message field"
@@ -604,7 +604,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 15. Proto3OptionalMessages: set optTs (seconds=42) vs unset
 
-  func test_realworld_proto3Optional_wktField_setVsUnset_bidirectional() throws {
+  func test_realworld_proto3Optional_wktField_setVsUnset_bidirectional() async throws {
     let desc = CompatDescriptors.proto3OptionalMessages()
     let tsDesc = CompatDescriptors.wktTimestamp()
 
@@ -612,7 +612,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     var protoSet = Testcompat_Proto3OptionalMessages()
     protoSet.optTs.seconds = 42
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: protoSet,
       descriptor: desc,
       registry: registry,
@@ -645,7 +645,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     )
 
     let dynamicUnset = DynamicMessage(descriptor: desc)
-    let ourUnsetData = try serializer.serialize(dynamicUnset)
+    let ourUnsetData = try await serializer.serialize(dynamicUnset)
     XCTAssertFalse(
       ourUnsetData.contains(0x1A),
       "BinarySerializer must produce no tag for unset optional Timestamp field"
@@ -654,7 +654,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 16. IntentHolder: intent=8 (COMMERCIAL), allIntents packed, byName map
 
-  func test_realworld_intentHolder_allIntentFlags_bidirectional() throws {
+  func test_realworld_intentHolder_allIntentFlags_bidirectional() async throws {
     var proto = Testcompat_IntentHolder()
     proto.intent = .intentCommercial  // 8
     proto.allIntents = [
@@ -664,7 +664,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     proto.byName = ["commercial": .intentCommercial, "info": .intentInformational]
 
     let desc = CompatDescriptors.intentHolder()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -701,7 +701,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 17. WithNullables: all five nested fields + name set
 
-  func test_realworld_withNullables_allSet_bidirectional() throws {
+  func test_realworld_withNullables_allSet_bidirectional() async throws {
     var inner = Testcompat_SimpleMessage()
     inner.id = 1
     inner.name = "inner_detail"
@@ -722,7 +722,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     let nullableMessageDesc = CompatDescriptors.nullableMessage()
     let simpleDesc = CompatDescriptors.simpleMessage()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -820,7 +820,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 18. ReportResponse: keyword with cpc NullableDouble + volume NullableUint32 + tags
 
-  func test_realworld_reportResponse_deepSiblingDefs_bidirectional() throws {
+  func test_realworld_reportResponse_deepSiblingDefs_bidirectional() async throws {
     var cpc = Testcompat_NullableDouble()
     cpc.value = 1.5
 
@@ -842,7 +842,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     let nullableDoubleDesc = CompatDescriptors.nullableDouble()
     let nullableUint32Desc = CompatDescriptors.nullableUint32()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -905,18 +905,18 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 19. NullableBool: false (field 2) vs null (field 1) — different wire tags
 
-  func test_realworld_nullableBool_false_vs_null_binaryDistinct() throws {
+  func test_realworld_nullableBool_false_vs_null_binaryDistinct() async throws {
     let desc = CompatDescriptors.nullableBool()
 
     // false: oneof field 2 (bool), tag = (2 << 3) | 0 = 0x10
     var falseMsg = DynamicMessage(descriptor: desc)
     try falseMsg.set(false, forField: 2)
-    let falseData = try serializer.serialize(falseMsg)
+    let falseData = try await serializer.serialize(falseMsg)
 
     // null: oneof field 1 (enum NullValue=0), tag = (1 << 3) | 0 = 0x08
     var nullMsg = DynamicMessage(descriptor: desc)
     try nullMsg.set(Int32(0), forField: 1)
-    let nullData = try serializer.serialize(nullMsg)
+    let nullData = try await serializer.serialize(nullMsg)
 
     XCTAssertNotEqual(falseData, nullData, "false and null variants must produce different wire bytes")
 
@@ -947,13 +947,13 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 20. NonSequentialFields: flag at field 100 encodes as varint tag 0xA0 0x06
 
-  func test_realworld_nonSequentialFields_largeFieldNumber_wireTag() throws {
+  func test_realworld_nonSequentialFields_largeFieldNumber_wireTag() async throws {
     let desc = CompatDescriptors.nonSequentialFields()
 
     // Direction B only: build DynamicMessage with only flag=true set
     var d = DynamicMessage(descriptor: desc)
     try d.set(true, forField: 100)
-    let data = try serializer.serialize(d)
+    let data = try await serializer.serialize(d)
 
     // flag at field 100, wire type 0 (varint): tag = (100 << 3) | 0 = 800
     // Varint(800): 800 = 0x320; low 7 bits = 0x20 with continuation = 0xA0; next 7 bits = 0x06
@@ -973,7 +973,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
 
   // MARK: - 21. WithNullables with no fields set → empty Data()
 
-  func test_realworld_withNullables_allUnset_producesEmptyData() throws {
+  func test_realworld_withNullables_allUnset_producesEmptyData() async throws {
     // Direction A: oracle with no fields set → serializedData() = Data()
     let proto = Testcompat_WithNullables()
     let referenceData = try proto.serializedData()
@@ -982,7 +982,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     // Direction B: our serializer with no fields set → Data()
     let desc = CompatDescriptors.withNullables()
     let dynamic = DynamicMessage(descriptor: desc)
-    let ourData = try serializer.serialize(dynamic)
+    let ourData = try await serializer.serialize(dynamic)
     XCTAssertEqual(ourData, Data(), "BinarySerializer must produce empty bytes for all-unset WithNullables")
   }
 }

@@ -29,19 +29,19 @@ final class BinaryCompatScalarsTests: XCTestCase {
   private var registry: TypeRegistry!
   private let serializer = BinaryCompatHelpers.makeSerializer()
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - All 15 scalar types set to non-zero values
 
-  func test_scalars_allTypes_nonZeroValues_bidirectional() throws {
+  func test_scalars_allTypes_nonZeroValues_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
 
     var proto = Testcompat_ScalarMessage()
@@ -61,7 +61,7 @@ final class BinaryCompatScalarsTests: XCTestCase {
     proto.stringField = "hello"
     proto.bytesField = Data([0x01, 0x02, 0x03])
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -123,20 +123,20 @@ final class BinaryCompatScalarsTests: XCTestCase {
 
   // MARK: - Proto3 zero values are not serialized
 
-  func test_scalars_proto3ZeroValues_notSerialized() throws {
+  func test_scalars_proto3ZeroValues_notSerialized() async throws {
     let proto = Testcompat_ScalarMessage()
     let referenceData = try proto.serializedData()
     XCTAssertEqual(referenceData, Data(), "swift-protobuf must produce empty bytes for all-zero proto3 message")
 
     let desc = CompatDescriptors.scalarMessage()
     let dynamic = DynamicMessage(descriptor: desc)
-    let ourData = try serializer.serialize(dynamic)
+    let ourData = try await serializer.serialize(dynamic)
     XCTAssertEqual(ourData, Data(), "BinarySerializer must produce empty bytes for all-zero proto3 message")
   }
 
   // MARK: - Varint boundary values
 
-  func test_scalars_int32_varint150_correctEncoding() throws {
+  func test_scalars_int32_varint150_correctEncoding() async throws {
     // Field 3, wire type 0 (varint): tag = 0x18; value 150 = 0x96 0x01
     let expected = Data([0x18, 0x96, 0x01])
 
@@ -147,15 +147,16 @@ final class BinaryCompatScalarsTests: XCTestCase {
     let desc = CompatDescriptors.scalarMessage()
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(150), forField: 3)
-    XCTAssertEqual(try serializer.serialize(dynamic), expected)
+    let _asyncResult21 = try await serializer.serialize(dynamic)
+    XCTAssertEqual(_asyncResult21, expected)
   }
 
-  func test_scalars_int32_maxValue_bidirectional() throws {
+  func test_scalars_int32_maxValue_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
     var proto = Testcompat_ScalarMessage()
     proto.int32Field = Int32.max
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -169,12 +170,12 @@ final class BinaryCompatScalarsTests: XCTestCase {
     )
   }
 
-  func test_scalars_int32_minValue_bidirectional() throws {
+  func test_scalars_int32_minValue_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
     var proto = Testcompat_ScalarMessage()
     proto.int32Field = Int32.min
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -188,12 +189,12 @@ final class BinaryCompatScalarsTests: XCTestCase {
     )
   }
 
-  func test_scalars_uint64_maxValue_bidirectional() throws {
+  func test_scalars_uint64_maxValue_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
     var proto = Testcompat_ScalarMessage()
     proto.uint64Field = UInt64.max
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -209,7 +210,7 @@ final class BinaryCompatScalarsTests: XCTestCase {
 
   // MARK: - sint32/sint64 zigzag encoding
 
-  func test_scalars_sint32_negativeValue_zigzagEncoding() throws {
+  func test_scalars_sint32_negativeValue_zigzagEncoding() async throws {
     // sint32 uses zigzag: -1 → 1, -2 → 3, 1 → 2, 2 → 4
     // Field 7, tag = (7 << 3) | 0 = 0x38; value -1 zigzag = 1 → 0x38 0x01
     let expected = Data([0x38, 0x01])
@@ -225,19 +226,20 @@ final class BinaryCompatScalarsTests: XCTestCase {
     let desc = CompatDescriptors.scalarMessage()
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(-1), forField: 7)
+    let _asyncResult22 = try await serializer.serialize(dynamic)
     XCTAssertEqual(
-      try serializer.serialize(dynamic),
+      _asyncResult22,
       expected,
       "BinarySerializer: sint32 = -1 should zigzag-encode to varint 1"
     )
   }
 
-  func test_scalars_sint64_largeNegativeValue_bidirectional() throws {
+  func test_scalars_sint64_largeNegativeValue_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
     var proto = Testcompat_ScalarMessage()
     proto.sint64Field = Int64.min
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -253,7 +255,7 @@ final class BinaryCompatScalarsTests: XCTestCase {
 
   // MARK: - fixed32/fixed64/sfixed32/sfixed64 (little-endian fixed width)
 
-  func test_scalars_fixed32_littleEndianEncoding() throws {
+  func test_scalars_fixed32_littleEndianEncoding() async throws {
     // fixed32 field 9: tag = (9 << 3) | 5 = 0x4D; value 1 = 0x01 0x00 0x00 0x00
     let expected = Data([0x4D, 0x01, 0x00, 0x00, 0x00])
 
@@ -264,10 +266,11 @@ final class BinaryCompatScalarsTests: XCTestCase {
     let desc = CompatDescriptors.scalarMessage()
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(UInt32(1), forField: 9)
-    XCTAssertEqual(try serializer.serialize(dynamic), expected)
+    let _asyncResult23 = try await serializer.serialize(dynamic)
+    XCTAssertEqual(_asyncResult23, expected)
   }
 
-  func test_scalars_fixed64_littleEndianEncoding() throws {
+  func test_scalars_fixed64_littleEndianEncoding() async throws {
     // fixed64 field 10: tag = (10 << 3) | 1 = 0x51; value 1 = 8 little-endian bytes
     let expected = Data([0x51, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
 
@@ -278,17 +281,18 @@ final class BinaryCompatScalarsTests: XCTestCase {
     let desc = CompatDescriptors.scalarMessage()
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(UInt64(1), forField: 10)
-    XCTAssertEqual(try serializer.serialize(dynamic), expected)
+    let _asyncResult24 = try await serializer.serialize(dynamic)
+    XCTAssertEqual(_asyncResult24, expected)
   }
 
   // MARK: - String encoding
 
-  func test_scalars_string_utf8MultibyteCharacters_bidirectional() throws {
+  func test_scalars_string_utf8MultibyteCharacters_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
     var proto = Testcompat_ScalarMessage()
     proto.stringField = "Привет 🌍"
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -307,13 +311,14 @@ final class BinaryCompatScalarsTests: XCTestCase {
   // set, so BinarySerializer includes the field tag + 0-length payload (2 bytes).
   // Both are valid proto3 wire representations; zero-length LEN field is legal per spec.
   // The unset case (field never touched) matches: both produce empty Data.
-  func test_scalars_string_unset_notSerialized() throws {
+  func test_scalars_string_unset_notSerialized() async throws {
     let proto = Testcompat_ScalarMessage()
     XCTAssertEqual(try proto.serializedData(), Data())
 
     let desc = CompatDescriptors.scalarMessage()
     let dynamic = DynamicMessage(descriptor: desc)
-    XCTAssertEqual(try serializer.serialize(dynamic), Data())
+    let _asyncResult25 = try await serializer.serialize(dynamic)
+    XCTAssertEqual(_asyncResult25, Data())
   }
 
   // TODO: BinarySerializer bug — proto3 non-optional fields explicitly set to their default
@@ -326,7 +331,7 @@ final class BinaryCompatScalarsTests: XCTestCase {
   //   • field is not repeated, not a map, not a message/group
   //   • field.isOptional == false && field.proto3Optional == false
   //   • stored value equals the proto3 scalar default (0 / false / "" / Data())
-  func test_scalars_proto3NonOptional_defaultValues_mustBeOmitted() throws {
+  func test_scalars_proto3NonOptional_defaultValues_mustBeOmitted() async throws {
     let desc = CompatDescriptors.scalarMessage()
 
     // Each sub-test: set one field to its proto3 default, expect empty wire output.
@@ -353,7 +358,7 @@ final class BinaryCompatScalarsTests: XCTestCase {
     for (label, fieldNumber, value) in cases {
       var dynamic = DynamicMessage(descriptor: desc)
       try dynamic.set(value, forField: fieldNumber)
-      let data = try serializer.serialize(dynamic)
+      let data = try await serializer.serialize(dynamic)
       XCTAssertEqual(
         data,
         Data(),
@@ -364,13 +369,13 @@ final class BinaryCompatScalarsTests: XCTestCase {
 
   // MARK: - Bytes encoding
 
-  func test_scalars_bytes_allByteValues_bidirectional() throws {
+  func test_scalars_bytes_allByteValues_bidirectional() async throws {
     let allBytes = Data((0..<256).map { UInt8($0) })
     let desc = CompatDescriptors.scalarMessage()
     var proto = Testcompat_ScalarMessage()
     proto.bytesField = allBytes
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -386,12 +391,12 @@ final class BinaryCompatScalarsTests: XCTestCase {
 
   // MARK: - double/float special values
 
-  func test_scalars_double_infinity_bidirectional() throws {
+  func test_scalars_double_infinity_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
     var proto = Testcompat_ScalarMessage()
     proto.doubleField = Double.infinity
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -405,12 +410,12 @@ final class BinaryCompatScalarsTests: XCTestCase {
     )
   }
 
-  func test_scalars_float_nan_bidirectional() throws {
+  func test_scalars_float_nan_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
     var proto = Testcompat_ScalarMessage()
     proto.floatField = Float.nan
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -429,7 +434,7 @@ final class BinaryCompatScalarsTests: XCTestCase {
 
   // MARK: - Proto3 optional scalar (explicit presence)
 
-  func test_scalars_proto3Optional_zeroValuePresent_bidirectional() throws {
+  func test_scalars_proto3Optional_zeroValuePresent_bidirectional() async throws {
     let desc = CompatDescriptors.optionalScalarMessage()
 
     var proto = Testcompat_OptionalScalarMessage()
@@ -437,7 +442,7 @@ final class BinaryCompatScalarsTests: XCTestCase {
     proto.optBool = false
     // plainInt32 left at default (0) — must NOT appear in wire format
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,

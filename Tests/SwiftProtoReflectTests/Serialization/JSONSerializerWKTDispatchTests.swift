@@ -31,7 +31,7 @@ final class JSONSerializerWKTDispatchTests: XCTestCase {
 
   // MARK: - Non-WKT messages always use standard field-by-field encoding
 
-  func test_serialize_nonWKTMessage_withCanonicalEnabled_usesStandardEncoding() throws {
+  func test_serialize_nonWKTMessage_withCanonicalEnabled_usesStandardEncoding() async throws {
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     desc.addField(FieldDescriptor(name: "name", number: 1, type: .string, jsonName: "name"))
     var msg = DynamicMessage(descriptor: desc)
@@ -43,12 +43,12 @@ final class JSONSerializerWKTDispatchTests: XCTestCase {
         typeRegistry: TypeRegistry()
       )
     )
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
     XCTAssertEqual(json?["name"] as? String, "hello")
   }
 
-  func test_serialize_nonWKTMessage_withCanonicalDisabled_usesStandardEncoding() throws {
+  func test_serialize_nonWKTMessage_withCanonicalDisabled_usesStandardEncoding() async throws {
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     desc.addField(FieldDescriptor(name: "value", number: 1, type: .int32, jsonName: "value"))
     var msg = DynamicMessage(descriptor: desc)
@@ -60,14 +60,14 @@ final class JSONSerializerWKTDispatchTests: XCTestCase {
         typeRegistry: TypeRegistry()
       )
     )
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
     XCTAssertEqual(json?["value"] as? Int, 42)
   }
 
   // MARK: - WKT with canonical disabled uses standard field-by-field encoding
 
-  func test_serialize_wktMessage_withCanonicalDisabled_usesStandardEncoding() throws {
+  func test_serialize_wktMessage_withCanonicalDisabled_usesStandardEncoding() async throws {
     let desc = makeEmptyDescriptor()
     let msg = DynamicMessage(descriptor: desc)
 
@@ -77,14 +77,14 @@ final class JSONSerializerWKTDispatchTests: XCTestCase {
         typeRegistry: TypeRegistry()
       )
     )
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
     XCTAssertNotNil(json)
   }
 
   // MARK: - WKT dispatch — Timestamp uses canonical RFC 3339 encoding
 
-  func test_serializeMessageToAny_dispatchesToWKTEncoder() throws {
+  func test_serializeMessageToAny_dispatchesToWKTEncoder() async throws {
     let desc = makeTimestampDescriptor()
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(Int64(0), forField: 1)
@@ -95,14 +95,14 @@ final class JSONSerializerWKTDispatchTests: XCTestCase {
         typeRegistry: TypeRegistry()
       )
     )
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let str = try XCTUnwrap(String(data: data, encoding: .utf8))
     XCTAssertEqual(str, #""1970-01-01T00:00:00Z""#)
   }
 
   // MARK: - google.protobuf.Empty canonical encoding produces {}
 
-  func test_serialize_empty_withCanonicalEnabled_producesEmptyObject() throws {
+  func test_serialize_empty_withCanonicalEnabled_producesEmptyObject() async throws {
     let desc = makeEmptyDescriptor()
     let msg = DynamicMessage(descriptor: desc)
 
@@ -112,7 +112,7 @@ final class JSONSerializerWKTDispatchTests: XCTestCase {
         typeRegistry: TypeRegistry()
       )
     )
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
     XCTAssertNotNil(json)
     XCTAssertEqual(json?.count, 0)

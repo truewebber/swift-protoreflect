@@ -7,7 +7,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
 
   let bridge = DescriptorBridge()
 
-  func test_fromProtobufDescriptor_allScalarFieldTypes_preservedCorrectly() throws {
+  func test_fromProtobufDescriptor_allScalarFieldTypes_preservedCorrectly() async throws {
     let fields = [
       makeFieldProto(name: "f_bool", number: 1, type: .bool),
       makeFieldProto(name: "f_int32", number: 2, type: .int32),
@@ -33,14 +33,14 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     XCTAssertNotNil(result.field(named: "f_bytes"))
   }
 
-  func test_fromProtobufDescriptor_repeatedField_isRepeatedTrue() throws {
+  func test_fromProtobufDescriptor_repeatedField_isRepeatedTrue() async throws {
     let field = makeFieldProto(name: "items", number: 1, type: .string, label: .repeated)
     let msgProto = makeMessageProto(name: "Msg", fields: [field])
     let result = try bridge.fromProtobufDescriptor(msgProto, parent: nil as (any DescriptorParent)?)
     XCTAssertTrue(result.field(named: "items")!.isRepeated)
   }
 
-  func test_fromProtobufDescriptor_requiredField_proto2_isRequiredTrue() throws {
+  func test_fromProtobufDescriptor_requiredField_proto2_isRequiredTrue() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "name"
     fieldProto.number = 1
@@ -52,7 +52,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     XCTAssertTrue(result.field(named: "name")!.isRequired)
   }
 
-  func test_fromProtobufDescriptor_mapField_isMapTrue_mapEntryInfoSet() throws {
+  func test_fromProtobufDescriptor_mapField_isMapTrue_mapEntryInfoSet() async throws {
     var mapValue = Google_Protobuf_FieldDescriptorProto()
     mapValue.name = "value"
     mapValue.number = 2
@@ -85,7 +85,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     XCTAssertNotNil(result.field(named: "data")!.mapEntryInfo)
   }
 
-  func test_fromProtobufDescriptor_packedField_isPackedTrue() throws {
+  func test_fromProtobufDescriptor_packedField_isPackedTrue() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "nums"
     fieldProto.number = 1
@@ -99,7 +99,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     XCTAssertEqual(result.field(named: "nums")?.isPacked, true)
   }
 
-  func test_fromProtobufDescriptor_oneofDecl_countAndNamesPreserved() throws {
+  func test_fromProtobufDescriptor_oneofDecl_countAndNamesPreserved() async throws {
     var oneof = Google_Protobuf_OneofDescriptorProto()
     oneof.name = "payload"
     var oneofField = Google_Protobuf_FieldDescriptorProto()
@@ -117,7 +117,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     XCTAssertEqual(result.oneofDecls[0].name, "payload")
   }
 
-  func test_fromProtobufDescriptor_extensionRange_preservedCorrectly() throws {
+  func test_fromProtobufDescriptor_extensionRange_preservedCorrectly() async throws {
     var rangeProto = Google_Protobuf_DescriptorProto.ExtensionRange()
     rangeProto.start = 100
     rangeProto.end = 200
@@ -130,7 +130,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     XCTAssertEqual(result.extensionRanges[0].end, 200)
   }
 
-  func test_fromProtobufDescriptor_proto2DefaultValues_preservedCorrectly() throws {
+  func test_fromProtobufDescriptor_proto2DefaultValues_preservedCorrectly() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "name"
     fieldProto.number = 1
@@ -143,14 +143,14 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     XCTAssertNotNil(result.field(named: "name")?.defaultValue)
   }
 
-  func test_fromProtobufFileDescriptor_fileEnumsAtTopLevel_qualifiedByPackage() throws {
+  func test_fromProtobufFileDescriptor_fileEnumsAtTopLevel_qualifiedByPackage() async throws {
     let topEnum = makeEnumProto(name: "TopLevel", values: [("NONE", 0)])
     let fileProto = makeFileProto(name: "t.proto", package: "pkg", enums: [topEnum])
     let fd = try bridge.fromProtobufFileDescriptor(fileProto)
     XCTAssertEqual(fd.enums["TopLevel"]?.fullName, "pkg.TopLevel")
   }
 
-  func test_fromProtobufFileDescriptor_services_convertedCorrectly() throws {
+  func test_fromProtobufFileDescriptor_services_convertedCorrectly() async throws {
     var methodProto = Google_Protobuf_MethodDescriptorProto()
     methodProto.name = "GetFoo"
     methodProto.inputType = ".pkg.FooRequest"
@@ -168,7 +168,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     XCTAssertEqual(fd.services["FooService"]?.allMethods().first?.name, "GetFoo")
   }
 
-  func test_fromProtobufFileDescriptor_dependencies_preservedCorrectly() throws {
+  func test_fromProtobufFileDescriptor_dependencies_preservedCorrectly() async throws {
     var fileProto = Google_Protobuf_FileDescriptorProto()
     fileProto.name = "t.proto"
     fileProto.package = "pkg"
@@ -178,7 +178,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     XCTAssertEqual(fd.dependencies, ["google/protobuf/timestamp.proto", "other.proto"])
   }
 
-  func test_toProtobufDescriptor_roundTrip_flatMessage_identicalFields() throws {
+  func test_toProtobufDescriptor_roundTrip_flatMessage_identicalFields() async throws {
     let field = makeFieldProto(name: "name", number: 1, type: .string)
     let msgProto = makeMessageProto(name: "Person", fields: [field])
     let fd = FileDescriptor(name: "t.proto", package: "pkg")
@@ -189,7 +189,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     XCTAssertEqual(backToProto.field[0].name, "name")
   }
 
-  func test_toProtobufDescriptor_roundTrip_messageWithNestedMessage_identicalStructure() throws {
+  func test_toProtobufDescriptor_roundTrip_messageWithNestedMessage_identicalStructure() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     let parent = fd.messages["Parent"]!
     let backToProto = try bridge.toProtobufDescriptor(from: parent)
@@ -198,7 +198,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     XCTAssertEqual(backToProto.nestedType[0].name, "Child")
   }
 
-  func test_toProtobufDescriptor_roundTrip_messageWithNestedEnum_identicalValues() throws {
+  func test_toProtobufDescriptor_roundTrip_messageWithNestedEnum_identicalValues() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     let parent = fd.messages["Parent"]!
     let backToProto = try bridge.toProtobufDescriptor(from: parent)
@@ -207,7 +207,7 @@ final class DescriptorBridgeRegressionTests: XCTestCase {
     XCTAssertEqual(backToProto.enumType[0].value.count, 2)
   }
 
-  func test_fromProtobufDescriptor_jsonName_preservedFromProto() throws {
+  func test_fromProtobufDescriptor_jsonName_preservedFromProto() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "first_name"
     fieldProto.number = 1

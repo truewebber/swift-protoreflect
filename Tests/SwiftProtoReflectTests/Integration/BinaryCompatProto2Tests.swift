@@ -34,26 +34,26 @@ final class BinaryCompatProto2Tests: XCTestCase {
   private var registry: TypeRegistry!
   private let serializer = BinaryCompatHelpers.makeSerializer()
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Group 1: Required field presence — Proto2Basic (4 tests)
 
-  func test_proto2_required_allPresent_bidirectional() throws {
+  func test_proto2_required_allPresent_bidirectional() async throws {
     let desc = CompatDescriptors.proto2Basic()
 
     var proto = Testcompat2_Proto2Basic()
     proto.requiredString = "test"
     proto.requiredInt32 = 100
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -74,7 +74,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     )
   }
 
-  func test_proto2_required_defaultInt_alwaysSerialized() throws {
+  func test_proto2_required_defaultInt_alwaysSerialized() async throws {
     let desc = CompatDescriptors.proto2Basic()
 
     // Direction B: required_int32=0 MUST be serialized (unlike proto3 which omits 0)
@@ -83,7 +83,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set("r", forField: 1)
     try d.set(Int32(0), forField: 2)
 
-    let data = try serializer.serialize(d)
+    let data = try await serializer.serialize(d)
     let bytes = [UInt8](data)
 
     XCTAssertTrue(bytes.contains(0x10), "required_int32=0 must produce tag 0x10 in wire output")
@@ -93,7 +93,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     XCTAssertEqual(decoded.requiredInt32, 0)
   }
 
-  func test_proto2_required_emptyString_alwaysSerialized() throws {
+  func test_proto2_required_emptyString_alwaysSerialized() async throws {
     let desc = CompatDescriptors.proto2Basic()
 
     // Direction B: required_string="" is always serialized (tag + length 0 in wire)
@@ -102,7 +102,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set("", forField: 1)
     try d.set(Int32(1), forField: 2)
 
-    let data = try serializer.serialize(d)
+    let data = try await serializer.serialize(d)
     let bytes = [UInt8](data)
 
     XCTAssertTrue(bytes.contains(0x0A), "required_string=\"\" must produce tag 0x0A in wire output")
@@ -112,7 +112,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     XCTAssertEqual(decoded.requiredString, "")
   }
 
-  func test_proto2_required_exactWireTag() throws {
+  func test_proto2_required_exactWireTag() async throws {
     let desc = CompatDescriptors.proto2Basic()
 
     // Direction B: Proto2Basic.required_int32 (field 2, wire type 0) → exact tag byte = 0x10
@@ -121,7 +121,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set("x", forField: 1)
     try d.set(Int32(1), forField: 2)
 
-    let data = try serializer.serialize(d)
+    let data = try await serializer.serialize(d)
     let bytes = [UInt8](data)
 
     XCTAssertTrue(
@@ -132,7 +132,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
 
   // MARK: - Group 2: Optional field presence — Proto2Basic (5 tests)
 
-  func test_proto2_optional_set_bidirectional() throws {
+  func test_proto2_optional_set_bidirectional() async throws {
     let desc = CompatDescriptors.proto2Basic()
 
     var proto = Testcompat2_Proto2Basic()
@@ -143,7 +143,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     proto.optBool = false
     proto.optDouble = 1.5
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -172,7 +172,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     )
   }
 
-  func test_proto2_optional_setToZero_serialized() throws {
+  func test_proto2_optional_setToZero_serialized() async throws {
     let desc = CompatDescriptors.proto2Basic()
 
     // Direction B: opt_int32=0 explicitly set IS serialized (proto2 presence semantics)
@@ -182,7 +182,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set(Int32(1), forField: 2)
     try d.set(Int32(0), forField: 4)
 
-    let data = try serializer.serialize(d)
+    let data = try await serializer.serialize(d)
     let bytes = [UInt8](data)
 
     XCTAssertTrue(bytes.contains(0x20), "Explicitly set opt_int32=0 must produce tag 0x20 in wire output")
@@ -192,7 +192,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     XCTAssertEqual(decoded.optInt32, 0)
   }
 
-  func test_proto2_optional_unset_producesNoBytes() throws {
+  func test_proto2_optional_unset_producesNoBytes() async throws {
     let desc = CompatDescriptors.proto2Basic()
 
     // Direction A: oracle with only required fields → unset optionals absent from DynamicMessage
@@ -200,7 +200,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     proto.requiredString = "r"
     proto.requiredInt32 = 1
 
-    try BinaryCompatHelpers.assertOracleToUs(
+    try await BinaryCompatHelpers.assertOracleToUs(
       proto: proto,
       descriptor: desc,
       registry: registry
@@ -220,7 +220,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set("r", forField: 1)
     try d.set(Int32(1), forField: 2)
 
-    let data = try serializer.serialize(d)
+    let data = try await serializer.serialize(d)
     let bytes = [UInt8](data)
 
     // Tag for field 3 LEN: (3 << 3) | 2 = 0x1A; tag for field 4 varint: (4 << 3) | 0 = 0x20
@@ -228,7 +228,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     XCTAssertFalse(bytes.contains(0x20), "Unset opt_int32 must produce no tag 0x20 in wire")
   }
 
-  func test_proto2_optional_string_unsetVsEmpty() throws {
+  func test_proto2_optional_string_unsetVsEmpty() async throws {
     let desc = CompatDescriptors.proto2Basic()
 
     // Unset opt_string → no tag in wire
@@ -236,7 +236,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try unsetD.set("r", forField: 1)
     try unsetD.set(Int32(1), forField: 2)
 
-    let unsetBytes = [UInt8](try serializer.serialize(unsetD))
+    let unsetBytes = [UInt8](try await serializer.serialize(unsetD))
     // Tag for field 3, wire type 2 (LEN): (3 << 3) | 2 = 0x1A
     XCTAssertFalse(unsetBytes.contains(0x1A), "Unset opt_string produces no tag 0x1A")
 
@@ -246,7 +246,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try emptyD.set(Int32(1), forField: 2)
     try emptyD.set("", forField: 3)
 
-    let emptyData = try serializer.serialize(emptyD)
+    let emptyData = try await serializer.serialize(emptyD)
     let emptyBytes = [UInt8](emptyData)
     XCTAssertTrue(emptyBytes.contains(0x1A), "opt_string=\"\" must produce tag 0x1A")
 
@@ -255,7 +255,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     XCTAssertEqual(decoded.optString, "")
   }
 
-  func test_proto2_required_vs_optional_differentWire() throws {
+  func test_proto2_required_vs_optional_differentWire() async throws {
     let desc = CompatDescriptors.proto2Basic()
 
     // required_int32(field 2)=0 → tag 0x10 always present
@@ -266,7 +266,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set(Int32(0), forField: 2)
     // field 4 (opt_int32) intentionally NOT set
 
-    let data = try serializer.serialize(d)
+    let data = try await serializer.serialize(d)
     let bytes = [UInt8](data)
 
     XCTAssertTrue(bytes.contains(0x10), "required_int32=0 must produce tag 0x10 (field 2 varint)")
@@ -275,14 +275,14 @@ final class BinaryCompatProto2Tests: XCTestCase {
 
   // MARK: - Group 3: Custom default values — Proto2Defaults (5 tests)
 
-  func test_proto2_defaults_nonDefault_bidirectional() throws {
+  func test_proto2_defaults_nonDefault_bidirectional() async throws {
     let desc = CompatDescriptors.proto2Defaults()
 
     var proto = Testcompat2_Proto2Defaults()
     proto.count = 100  // overrides default 42
     proto.label = "custom"  // overrides default "hello"
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -303,7 +303,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     )
   }
 
-  func test_proto2_defaults_setToExactDefault_serialized() throws {
+  func test_proto2_defaults_setToExactDefault_serialized() async throws {
     let desc = CompatDescriptors.proto2Defaults()
 
     // Direction B: setting count to exactly 42 (the default) IS still serialized in proto2
@@ -312,7 +312,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     var d = DynamicMessage(descriptor: desc)
     try d.set(Int32(42), forField: 1)
 
-    let data = try serializer.serialize(d)
+    let data = try await serializer.serialize(d)
     let bytes = [UInt8](data)
 
     XCTAssertTrue(
@@ -325,14 +325,14 @@ final class BinaryCompatProto2Tests: XCTestCase {
     XCTAssertEqual(decoded.count, 42)
   }
 
-  func test_proto2_defaults_enum_override_bidirectional() throws {
+  func test_proto2_defaults_enum_override_bidirectional() async throws {
     let desc = CompatDescriptors.proto2Defaults()
 
     // Proto2Defaults: kind(7) = P2_ALPHA (raw 1), overriding default P2_BETA (raw 2)
     var proto = Testcompat2_Proto2Defaults()
     proto.kind = .p2Alpha
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -351,14 +351,14 @@ final class BinaryCompatProto2Tests: XCTestCase {
     )
   }
 
-  func test_proto2_defaults_bool_override_bidirectional() throws {
+  func test_proto2_defaults_bool_override_bidirectional() async throws {
     let desc = CompatDescriptors.proto2Defaults()
 
     // Proto2Defaults: active(3) = false, overriding default true; varint 0 in wire
     var protoFalse = Testcompat2_Proto2Defaults()
     protoFalse.active = false
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: protoFalse,
       descriptor: desc,
       registry: registry,
@@ -379,17 +379,17 @@ final class BinaryCompatProto2Tests: XCTestCase {
 
     // Unset → no bytes for field 3; tag for field 3, wire type 0: (3 << 3) | 0 = 24 = 0x18
     let emptyD = DynamicMessage(descriptor: desc)
-    let emptyBytes = [UInt8](try serializer.serialize(emptyD))
+    let emptyBytes = [UInt8](try await serializer.serialize(emptyD))
     XCTAssertFalse(emptyBytes.contains(0x18), "Unset active must produce no tag 0x18")
   }
 
-  func test_proto2_defaults_bytes_bidirectional() throws {
+  func test_proto2_defaults_bytes_bidirectional() async throws {
     let desc = CompatDescriptors.proto2Defaults()
 
     var proto = Testcompat2_Proto2Defaults()
     proto.magic = Data([0xDE, 0xAD, 0xBE, 0xEF])
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -409,7 +409,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
 
   // MARK: - Group 4: Groups — wire type 3/4 (3 tests)
 
-  func test_proto2_group_basic_bidirectional() throws {
+  func test_proto2_group_basic_bidirectional() async throws {
     let desc = CompatDescriptors.proto2WithGroup()
     let grpDesc = try XCTUnwrap(desc.nestedMessages["MyGroup"])
 
@@ -418,7 +418,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     proto.myGroup.name = "grp"
     proto.myGroup.value = 42
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -445,7 +445,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     )
   }
 
-  func test_proto2_group_multipleGroups_bidirectional() throws {
+  func test_proto2_group_multipleGroups_bidirectional() async throws {
     let desc = CompatDescriptors.proto2WithGroup()
     let myGrpDesc = try XCTUnwrap(desc.nestedMessages["MyGroup"])
     let anotherGrpDesc = try XCTUnwrap(desc.nestedMessages["AnotherGroup"])
@@ -457,7 +457,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     proto.anotherGroup.flag = true
     proto.anotherGroup.detail = "detail_val"
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -499,7 +499,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
   // only written in encodeSingleField. Swift-protobuf's BinaryDecoder returns "truncated" because
   // the EGROUP tag is never found. Fix: encodeRepeatedField must write the end-group tag after
   // each group element, mirroring the logic in encodeSingleField.
-  func test_proto2_group_repeatedWithEnum_bidirectional() throws {
+  func test_proto2_group_repeatedWithEnum_bidirectional() async throws {
     let desc = CompatDescriptors.proto2Complex()
     let itemDesc = try XCTUnwrap(desc.nestedMessages["Item"])
 
@@ -517,7 +517,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     proto.title = "grp_test"
     proto.item = [i1, i2]
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -555,7 +555,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
 
   // MARK: - Group 5: Extensions (3 tests)
 
-  func test_proto2_extension_scalar_bidirectional() throws {
+  func test_proto2_extension_scalar_bidirectional() async throws {
     let desc = CompatDescriptors.proto2Extendable()
 
     // Direction A: oracle with extensions → our DynamicMessage
@@ -566,7 +566,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     proto.Testcompat2_extCount = 99
     proto.Testcompat2_extFlag = true
 
-    try BinaryCompatHelpers.assertOracleToUs(
+    try await BinaryCompatHelpers.assertOracleToUs(
       proto: proto,
       descriptor: desc,
       registry: registry
@@ -586,7 +586,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set(Int32(99), forField: 101)
     try d.set(true, forField: 102)
 
-    let ourData = try serializer.serialize(d)
+    let ourData = try await serializer.serialize(d)
     let decoded = try Testcompat2_Proto2Extendable(
       serializedBytes: ourData,
       extensions: Testcompat2_Proto2Types_Extensions
@@ -598,7 +598,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     XCTAssertTrue(decoded.Testcompat2_extFlag)
   }
 
-  func test_proto2_extension_message_bidirectional() throws {
+  func test_proto2_extension_message_bidirectional() async throws {
     let desc = CompatDescriptors.proto2Extendable()
     let innerDesc = CompatDescriptors.proto2Basic()
 
@@ -611,7 +611,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     proto.baseField = "base2"
     proto.Testcompat2_extMsg = inner
 
-    try BinaryCompatHelpers.assertOracleToUs(
+    try await BinaryCompatHelpers.assertOracleToUs(
       proto: proto,
       descriptor: desc,
       registry: registry
@@ -631,7 +631,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set("base2", forField: 1)
     try d.set(innerDyn, forField: 104)
 
-    let ourData = try serializer.serialize(d)
+    let ourData = try await serializer.serialize(d)
     let decoded = try Testcompat2_Proto2Extendable(
       serializedBytes: ourData,
       extensions: Testcompat2_Proto2Types_Extensions
@@ -649,7 +649,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
   // invocation and the array is reset to empty each time. Result: only the last value is
   // kept. Fix: decodeRepeatedField should use field.number (not field.name) when retrieving
   // accumulated values, or call fieldAccess.hasValue(field.number) instead.
-  func test_proto2_extension_repeated_bidirectional() throws {
+  func test_proto2_extension_repeated_bidirectional() async throws {
     let desc = CompatDescriptors.proto2Extendable()
 
     // Direction A: oracle with repeated extensions → our DynamicMessage
@@ -658,7 +658,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     proto.Testcompat2_extTags = ["tag1", "tag2", "tag3"]
     proto.Testcompat2_extIds = [1, 2, 3]
 
-    try BinaryCompatHelpers.assertOracleToUs(
+    try await BinaryCompatHelpers.assertOracleToUs(
       proto: proto,
       descriptor: desc,
       registry: registry
@@ -674,7 +674,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set(["tag1", "tag2", "tag3"] as [String], forField: 105)
     try d.set([Int32(1), Int32(2), Int32(3)] as [Int32], forField: 106)
 
-    let ourData = try serializer.serialize(d)
+    let ourData = try await serializer.serialize(d)
     let decoded = try Testcompat2_Proto2Extendable(
       serializedBytes: ourData,
       extensions: Testcompat2_Proto2Types_Extensions
@@ -686,14 +686,14 @@ final class BinaryCompatProto2Tests: XCTestCase {
 
   // MARK: - Group 6: Oneof in proto2 (2 tests)
 
-  func test_proto2_oneof_strVariant_bidirectional() throws {
+  func test_proto2_oneof_strVariant_bidirectional() async throws {
     let desc = CompatDescriptors.proto2Oneof()
 
     var proto = Testcompat2_Proto2Oneof()
     proto.strVal = "hello"
     proto.label = "outer"
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -719,7 +719,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     )
   }
 
-  func test_proto2_oneof_msgVariant_bidirectional() throws {
+  func test_proto2_oneof_msgVariant_bidirectional() async throws {
     let desc = CompatDescriptors.proto2Oneof()
     let innerDesc = CompatDescriptors.proto2Basic()
 
@@ -731,7 +731,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     proto.msgVal = inner
     proto.label = "outer"
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -771,7 +771,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
   // Swift-protobuf's BinaryDecoder, it finds an unterminated group and throws "truncated".
   // The Header group (field 3, single) serializes correctly; only the repeated Item group
   // (field 4) causes the failure. Fix: same fix as test_proto2_group_repeatedWithEnum.
-  func test_proto2_complex_fullyPopulated_bidirectional() throws {
+  func test_proto2_complex_fullyPopulated_bidirectional() async throws {
     let desc = CompatDescriptors.proto2Complex()
     let headerDesc = try XCTUnwrap(desc.nestedMessages["Header"])
     let itemDesc = try XCTUnwrap(desc.nestedMessages["Item"])
@@ -799,7 +799,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     proto.items = [basic]
     proto.meta = ["k": "v"]
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -855,7 +855,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     )
   }
 
-  func test_proto2_kitchenSink_bidirectional() throws {
+  func test_proto2_kitchenSink_bidirectional() async throws {
     let desc = CompatDescriptors.proto2KitchenSink()
     let basicDesc = CompatDescriptors.proto2Basic()
     let detailDesc = try XCTUnwrap(desc.nestedMessages["Detail"])
@@ -883,7 +883,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     proto.nested = nestedBasic
     proto.items = [itemBasic]
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,

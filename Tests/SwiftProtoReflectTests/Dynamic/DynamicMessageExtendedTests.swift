@@ -20,8 +20,8 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
   // MARK: - Setup
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     // Create test file descriptor
     fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
@@ -81,17 +81,17 @@ final class DynamicMessageExtendedTests: XCTestCase {
     fileDescriptor.addMessage(personMessage)
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     fileDescriptor = nil
     personMessage = nil
     addressMessage = nil
     enumDescriptor = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Field Not Found Error Tests
 
-  func testFieldNotFoundErrors() {
+  func testFieldNotFoundErrors() async throws {
     var message = DynamicMessage(descriptor: personMessage)
 
     // Test fieldNotFound error for set methods
@@ -217,7 +217,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
   // MARK: - Message Type Validation Tests
 
-  func testMessageTypeMismatchErrors() {
+  func testMessageTypeMismatchErrors() async throws {
     var message = DynamicMessage(descriptor: personMessage)
 
     // Create message with wrong type
@@ -259,7 +259,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
   // MARK: - Enum Type Validation Tests
 
-  func testEnumTypeValidation() {
+  func testEnumTypeValidation() async throws {
     // Create message with enum field
     var messageDesc = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     messageDesc.addField(
@@ -294,7 +294,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
   // MARK: - Group Type Tests
 
-  func testGroupTypeValidation() {
+  func testGroupTypeValidation() async throws {
     // Create message with group field (deprecated type)
     var messageDesc = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     messageDesc.addField(
@@ -339,7 +339,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
   // MARK: - Repeated Field Error Tests
 
-  func testRepeatedFieldErrors() {
+  func testRepeatedFieldErrors() async throws {
     var message = DynamicMessage(descriptor: personMessage)
 
     // Test fieldNotFoundByNumber error for addRepeatedValue
@@ -375,7 +375,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
   // MARK: - Map Field Error Tests
 
-  func testMapFieldErrors() {
+  func testMapFieldErrors() async throws {
     var message = DynamicMessage(descriptor: personMessage)
 
     // Test fieldNotFoundByNumber error for setMapEntry
@@ -411,7 +411,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
   // MARK: - Clear Nested Message Field Tests
 
-  func testClearNestedMessageField() {
+  func testClearNestedMessageField() async throws {
     var message = DynamicMessage(descriptor: personMessage)
 
     do {
@@ -438,7 +438,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
   // MARK: - Map Key Type Validation Tests
 
-  func testMapKeyTypeValidation() {
+  func testMapKeyTypeValidation() async throws {
     // Create various map fields for testing all key types
     var messageDesc = MessageDescriptor(name: "MapKeyTest", parent: fileDescriptor)
 
@@ -535,7 +535,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
   // MARK: - Invalid Map Key Type Test
 
-  func testInvalidMapKeyType() {
+  func testInvalidMapKeyType() async throws {
     // Test DynamicMessageError.invalidMapKeyType error directly
     let error = DynamicMessageError.invalidMapKeyType(type: .double)
     XCTAssertEqual(error.errorDescription, "Invalid key type double for map field")
@@ -550,7 +550,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
   // MARK: - NSNumber Conversion Tests
 
-  func testNSNumberConversions() {
+  func testNSNumberConversions() async throws {
     // Create message with fields for NSNumber conversions
     var messageDesc = MessageDescriptor(name: "NSNumberTest", parent: fileDescriptor)
     messageDesc.addField(FieldDescriptor(name: "float_field", number: 1, type: .float))
@@ -582,7 +582,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
   // MARK: - Map Key Conversion Tests
 
-  func testMapKeyConversions() {
+  func testMapKeyConversions() async throws {
     // Create map fields for testing key conversions
     var messageDesc = MessageDescriptor(name: "MapKeyConversion", parent: fileDescriptor)
 
@@ -675,7 +675,7 @@ final class DynamicMessageExtendedTests: XCTestCase {
 
   // MARK: - Map Field Validation Error Tests
 
-  func testMapFieldValidationErrors() {
+  func testMapFieldValidationErrors() async throws {
     // Create normal (non-map) field to test notMapField error
     var normalMessage = MessageDescriptor(name: "NormalMessage", parent: fileDescriptor)
     normalMessage.addField(

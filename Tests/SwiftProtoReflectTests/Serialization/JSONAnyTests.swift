@@ -50,8 +50,8 @@ final class JSONAnyTests: XCTestCase {
     return anyMsg
   }
 
-  private func makeRegistry(with file: FileDescriptor) throws -> TypeRegistry {
-    return try TypeRegistry(fileDescriptors: [file])
+  private func makeRegistry(with file: FileDescriptor) async throws -> TypeRegistry {
+    return try await TypeRegistry(fileDescriptors: [file])
   }
 
   private func canonicalSerializer(registry: TypeRegistry) -> JSONSerializer {
@@ -69,13 +69,13 @@ final class JSONAnyTests: XCTestCase {
 
   // MARK: - Encoder tests
 
-  func test_serialize_any_regularMessage_expandsFields() throws {
+  func test_serialize_any_regularMessage_expandsFields() async throws {
     let (pingFile, _) = makePingFileAndDescriptor()
-    let registry = try makeRegistry(with: pingFile)
+    let registry = try await makeRegistry(with: pingFile)
     let ping = try makePingMessage(id: 42)
     let anyMsg = try packIntoAny(ping)
 
-    let data = try canonicalSerializer(registry: registry).serialize(anyMsg)
+    let data = try await canonicalSerializer(registry: registry).serialize(anyMsg)
     let json = try XCTUnwrap(
       try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed) as? [String: Any]
     )
@@ -86,7 +86,7 @@ final class JSONAnyTests: XCTestCase {
     XCTAssertNil(json["value"])
   }
 
-  func test_serialize_any_wktValue_usesValueKey() throws {
+  func test_serialize_any_wktValue_usesValueKey() async throws {
     // Pack a google.protobuf.StringValue inside Any
     let strDesc = MessageDescriptor(name: "StringValue", fullName: WellKnownTypeNames.stringValue)
     _ = DynamicMessage(descriptor: strDesc)
@@ -109,8 +109,8 @@ final class JSONAnyTests: XCTestCase {
     try anyMsg.set(typeUrl, forField: 1)
     try anyMsg.set(binaryData, forField: 2)
 
-    let registry = try TypeRegistry(fileDescriptors: [fileWKT])
-    let data = try canonicalSerializer(registry: registry).serialize(anyMsg)
+    let registry = try await TypeRegistry(fileDescriptors: [fileWKT])
+    let data = try await canonicalSerializer(registry: registry).serialize(anyMsg)
     let json = try XCTUnwrap(
       try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed) as? [String: Any]
     )
@@ -120,13 +120,13 @@ final class JSONAnyTests: XCTestCase {
     XCTAssertEqual(json["value"] as? String, "hello")
   }
 
-  func test_serialize_any_unknownType_fallsBackToStandard() throws {
+  func test_serialize_any_unknownType_fallsBackToStandard() async throws {
     // Type not in registry → standard field-by-field fallback
     let registry = TypeRegistry()
     let ping = try makePingMessage(id: 7)
     let anyMsg = try packIntoAny(ping)
 
-    let data = try canonicalSerializer(registry: registry).serialize(anyMsg)
+    let data = try await canonicalSerializer(registry: registry).serialize(anyMsg)
     let json = try XCTUnwrap(
       try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed) as? [String: Any]
     )
@@ -138,15 +138,15 @@ final class JSONAnyTests: XCTestCase {
 
   // MARK: - Decoder tests
 
-  func test_deserialize_any_regularMessage_fromExpandedFields() throws {
+  func test_deserialize_any_regularMessage_fromExpandedFields() async throws {
     let (pingFile, _) = makePingFileAndDescriptor()
-    let registry = try makeRegistry(with: pingFile)
+    let registry = try await makeRegistry(with: pingFile)
 
     let jsonStr = #"{"@type":"type.googleapis.com/test.Ping","id":42}"#
     let data = jsonStr.data(using: .utf8)!
     let anyDesc = makeAnyDescriptor()
 
-    let msg = try deserializer(registry: registry).deserialize(data, using: anyDesc)
+    let msg = try await deserializer(registry: registry).deserialize(data, using: anyDesc)
     let typeUrl = try XCTUnwrap(try msg.get(forField: 1) as? String)
     let valueBytes = try XCTUnwrap(try msg.get(forField: 2) as? Data)
 
@@ -155,66 +155,69 @@ final class JSONAnyTests: XCTestCase {
 
     // Verify the packed message decodes back to id=42
     let (_, pingDesc) = makePingFileAndDescriptor()
-    let unpacked = try BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry())).deserialize(
-      valueBytes,
-      using: pingDesc
-    )
+    let unpacked = try await BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry()))
+      .deserialize(
+        valueBytes,
+        using: pingDesc
+      )
     XCTAssertEqual(try unpacked.get(forField: 1) as? Int32, 42)
   }
 
-  func test_deserialize_any_wktValue_fromValueKey() throws {
+  func test_deserialize_any_wktValue_fromValueKey() async throws {
     var fileWKT = FileDescriptor(name: "google/protobuf/wrappers.proto", package: "google.protobuf")
     var strDesc = MessageDescriptor(name: "StringValue", parent: fileWKT)
     strDesc.addField(FieldDescriptor(name: "value", number: 1, type: .string))
     fileWKT.addMessage(strDesc)
-    let registry = try TypeRegistry(fileDescriptors: [fileWKT])
+    let registry = try await TypeRegistry(fileDescriptors: [fileWKT])
 
     let jsonStr =
       #"{"@type":"type.googleapis.com/google.protobuf.StringValue","value":"hello"}"#
     let data = jsonStr.data(using: .utf8)!
     let anyDesc = makeAnyDescriptor()
 
-    let msg = try deserializer(registry: registry).deserialize(data, using: anyDesc)
+    let msg = try await deserializer(registry: registry).deserialize(data, using: anyDesc)
     let typeUrl = try XCTUnwrap(try msg.get(forField: 1) as? String)
     let valueBytes = try XCTUnwrap(try msg.get(forField: 2) as? Data)
 
     XCTAssertEqual(typeUrl, "type.googleapis.com/google.protobuf.StringValue")
 
     let actualStrDesc = fileWKT.messages["StringValue"]!
-    let unpacked = try BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry())).deserialize(
-      valueBytes,
-      using: actualStrDesc
-    )
+    let unpacked = try await BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry()))
+      .deserialize(
+        valueBytes,
+        using: actualStrDesc
+      )
     XCTAssertEqual(try unpacked.get(forField: 1) as? String, "hello")
   }
 
   // MARK: - Round-trip tests
 
-  func test_roundTrip_any_regularMessage_preservesData() throws {
+  func test_roundTrip_any_regularMessage_preservesData() async throws {
     let (pingFile, pingDesc) = makePingFileAndDescriptor()
-    let registry = try makeRegistry(with: pingFile)
+    let registry = try await makeRegistry(with: pingFile)
 
     let ping = try makePingMessage(id: 99)
     let anyMsg = try packIntoAny(ping)
     let anyDesc = makeAnyDescriptor()
 
-    let serialized = try canonicalSerializer(registry: registry).serialize(anyMsg)
-    let roundTripped = try deserializer(registry: registry).deserialize(serialized, using: anyDesc)
+    let serialized = try await canonicalSerializer(registry: registry).serialize(anyMsg)
+    let roundTripped = try await deserializer(registry: registry).deserialize(serialized, using: anyDesc)
 
     let valueBytes = try XCTUnwrap(try roundTripped.get(forField: 2) as? Data)
-    let unpacked = try BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry())).deserialize(
-      valueBytes,
-      using: pingDesc
-    )
+    let unpacked = try await BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry()))
+      .deserialize(
+        valueBytes,
+        using: pingDesc
+      )
     XCTAssertEqual(try unpacked.get(forField: 1) as? Int32, 99)
   }
 
-  func test_roundTrip_any_wktMessage_preservesData() throws {
+  func test_roundTrip_any_wktMessage_preservesData() async throws {
     var fileWKT = FileDescriptor(name: "google/protobuf/wrappers.proto", package: "google.protobuf")
     var strDesc = MessageDescriptor(name: "StringValue", parent: fileWKT)
     strDesc.addField(FieldDescriptor(name: "value", number: 1, type: .string))
     fileWKT.addMessage(strDesc)
-    let registry = try TypeRegistry(fileDescriptors: [fileWKT])
+    let registry = try await TypeRegistry(fileDescriptors: [fileWKT])
     let actualStrDesc = fileWKT.messages["StringValue"]!
 
     var innerMsg = DynamicMessage(descriptor: actualStrDesc)
@@ -227,14 +230,15 @@ final class JSONAnyTests: XCTestCase {
     try anyMsg.set(typeUrl, forField: 1)
     try anyMsg.set(binaryData, forField: 2)
 
-    let serialized = try canonicalSerializer(registry: registry).serialize(anyMsg)
-    let roundTripped = try deserializer(registry: registry).deserialize(serialized, using: anyDesc)
+    let serialized = try await canonicalSerializer(registry: registry).serialize(anyMsg)
+    let roundTripped = try await deserializer(registry: registry).deserialize(serialized, using: anyDesc)
 
     let valueBytes = try XCTUnwrap(try roundTripped.get(forField: 2) as? Data)
-    let unpacked = try BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry())).deserialize(
-      valueBytes,
-      using: actualStrDesc
-    )
+    let unpacked = try await BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry()))
+      .deserialize(
+        valueBytes,
+        using: actualStrDesc
+      )
     XCTAssertEqual(try unpacked.get(forField: 1) as? String, "round-trip")
   }
 }

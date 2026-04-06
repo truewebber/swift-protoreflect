@@ -27,28 +27,28 @@ final class WrapperTypeTests: XCTestCase {
 
   // MARK: - StringValue
 
-  func test_stringValue_createSpecialized_returnsString() throws {
+  func test_stringValue_createSpecialized_returnsString() async throws {
     let desc = makeWrapperDescriptor(name: "StringValue", fieldType: .string)
     let msg = try makeDynamic(descriptor: desc, value: "hello")
     let result = try StringValueHandler.createSpecialized(from: msg)
     XCTAssertEqual(result as? String, "hello")
   }
 
-  func test_stringValue_createDynamic_wrapsString() throws {
+  func test_stringValue_createDynamic_wrapsString() async throws {
     let msg = try StringValueHandler.createDynamic(from: "hello")
     let value = try msg.get(forField: "value")
     XCTAssertEqual(value as? String, "hello")
   }
 
-  func test_stringValue_validate_validString_returnsTrue() {
+  func test_stringValue_validate_validString_returnsTrue() async throws {
     XCTAssertTrue(StringValueHandler.validate("hello"))
   }
 
-  func test_stringValue_validate_nonString_returnsFalse() {
+  func test_stringValue_validate_nonString_returnsFalse() async throws {
     XCTAssertFalse(StringValueHandler.validate(42))
   }
 
-  func test_stringValue_empty_createSpecialized() throws {
+  func test_stringValue_empty_createSpecialized() async throws {
     let desc = makeWrapperDescriptor(name: "StringValue", fieldType: .string)
     let msg = try makeDynamic(descriptor: desc, value: "")
     let result = try StringValueHandler.createSpecialized(from: msg)
@@ -57,20 +57,20 @@ final class WrapperTypeTests: XCTestCase {
 
   // MARK: - Int32Value
 
-  func test_int32Value_createSpecialized_returnsInt32() throws {
+  func test_int32Value_createSpecialized_returnsInt32() async throws {
     let desc = makeWrapperDescriptor(name: "Int32Value", fieldType: .int32)
     let msg = try makeDynamic(descriptor: desc, value: Int32(42))
     let result = try Int32ValueHandler.createSpecialized(from: msg)
     XCTAssertEqual(result as? Int32, 42)
   }
 
-  func test_int32Value_createDynamic_wrapsInt32() throws {
+  func test_int32Value_createDynamic_wrapsInt32() async throws {
     let msg = try Int32ValueHandler.createDynamic(from: Int32(42))
     let value = try msg.get(forField: "value")
     XCTAssertEqual(value as? Int32, 42)
   }
 
-  func test_int32Value_zero_createSpecialized() throws {
+  func test_int32Value_zero_createSpecialized() async throws {
     let desc = makeWrapperDescriptor(name: "Int32Value", fieldType: .int32)
     let msg = try makeDynamic(descriptor: desc, value: Int32(0))
     let result = try Int32ValueHandler.createSpecialized(from: msg)
@@ -79,14 +79,14 @@ final class WrapperTypeTests: XCTestCase {
 
   // MARK: - Int64Value
 
-  func test_int64Value_createSpecialized_returnsInt64() throws {
+  func test_int64Value_createSpecialized_returnsInt64() async throws {
     let desc = makeWrapperDescriptor(name: "Int64Value", fieldType: .int64)
     let msg = try makeDynamic(descriptor: desc, value: Int64(123_456_789))
     let result = try Int64ValueHandler.createSpecialized(from: msg)
     XCTAssertEqual(result as? Int64, 123_456_789)
   }
 
-  func test_int64Value_createDynamic_wrapsInt64() throws {
+  func test_int64Value_createDynamic_wrapsInt64() async throws {
     let msg = try Int64ValueHandler.createDynamic(from: Int64(123_456_789))
     let value = try msg.get(forField: "value")
     XCTAssertEqual(value as? Int64, 123_456_789)
@@ -94,14 +94,14 @@ final class WrapperTypeTests: XCTestCase {
 
   // MARK: - UInt32Value
 
-  func test_uint32Value_createSpecialized_returnsUInt32() throws {
+  func test_uint32Value_createSpecialized_returnsUInt32() async throws {
     let desc = makeWrapperDescriptor(name: "UInt32Value", fieldType: .uint32)
     let msg = try makeDynamic(descriptor: desc, value: UInt32(42))
     let result = try UInt32ValueHandler.createSpecialized(from: msg)
     XCTAssertEqual(result as? UInt32, 42)
   }
 
-  func test_uint32Value_createDynamic_wrapsUInt32() throws {
+  func test_uint32Value_createDynamic_wrapsUInt32() async throws {
     let msg = try UInt32ValueHandler.createDynamic(from: UInt32(42))
     let value = try msg.get(forField: "value")
     XCTAssertEqual(value as? UInt32, 42)
@@ -109,14 +109,14 @@ final class WrapperTypeTests: XCTestCase {
 
   // MARK: - UInt64Value
 
-  func test_uint64Value_createSpecialized_returnsUInt64() throws {
+  func test_uint64Value_createSpecialized_returnsUInt64() async throws {
     let desc = makeWrapperDescriptor(name: "UInt64Value", fieldType: .uint64)
     let msg = try makeDynamic(descriptor: desc, value: UInt64(123_456_789))
     let result = try UInt64ValueHandler.createSpecialized(from: msg)
     XCTAssertEqual(result as? UInt64, 123_456_789)
   }
 
-  func test_uint64Value_createDynamic_wrapsUInt64() throws {
+  func test_uint64Value_createDynamic_wrapsUInt64() async throws {
     let msg = try UInt64ValueHandler.createDynamic(from: UInt64(123_456_789))
     let value = try msg.get(forField: "value")
     XCTAssertEqual(value as? UInt64, 123_456_789)
@@ -124,20 +124,20 @@ final class WrapperTypeTests: XCTestCase {
 
   // MARK: - BoolValue
 
-  func test_boolValue_createSpecialized_returnsBool() throws {
+  func test_boolValue_createSpecialized_returnsBool() async throws {
     let desc = makeWrapperDescriptor(name: "BoolValue", fieldType: .bool)
     let msg = try makeDynamic(descriptor: desc, value: true)
     let result = try BoolValueHandler.createSpecialized(from: msg)
     XCTAssertEqual(result as? Bool, true)
   }
 
-  func test_boolValue_createDynamic_wrapsBool() throws {
+  func test_boolValue_createDynamic_wrapsBool() async throws {
     let msg = try BoolValueHandler.createDynamic(from: false)
     let value = try msg.get(forField: "value")
     XCTAssertEqual(value as? Bool, false)
   }
 
-  func test_boolValue_false_createSpecialized() throws {
+  func test_boolValue_false_createSpecialized() async throws {
     let desc = makeWrapperDescriptor(name: "BoolValue", fieldType: .bool)
     let msg = try makeDynamic(descriptor: desc, value: false)
     let result = try BoolValueHandler.createSpecialized(from: msg)
@@ -146,14 +146,14 @@ final class WrapperTypeTests: XCTestCase {
 
   // MARK: - FloatValue
 
-  func test_floatValue_createSpecialized_returnsFloat() throws {
+  func test_floatValue_createSpecialized_returnsFloat() async throws {
     let desc = makeWrapperDescriptor(name: "FloatValue", fieldType: .float)
     let msg = try makeDynamic(descriptor: desc, value: Float(3.14))
     let result = try FloatValueHandler.createSpecialized(from: msg)
     XCTAssertEqual(result as? Float, Float(3.14))
   }
 
-  func test_floatValue_createDynamic_wrapsFloat() throws {
+  func test_floatValue_createDynamic_wrapsFloat() async throws {
     let msg = try FloatValueHandler.createDynamic(from: Float(3.14))
     let value = try msg.get(forField: "value")
     XCTAssertEqual(value as? Float, Float(3.14))
@@ -161,14 +161,14 @@ final class WrapperTypeTests: XCTestCase {
 
   // MARK: - DoubleValue
 
-  func test_doubleValue_createSpecialized_returnsDouble() throws {
+  func test_doubleValue_createSpecialized_returnsDouble() async throws {
     let desc = makeWrapperDescriptor(name: "DoubleValue", fieldType: .double)
     let msg = try makeDynamic(descriptor: desc, value: 3.14159)
     let result = try DoubleValueHandler.createSpecialized(from: msg)
     XCTAssertEqual(result as? Double, 3.14159)
   }
 
-  func test_doubleValue_createDynamic_wrapsDouble() throws {
+  func test_doubleValue_createDynamic_wrapsDouble() async throws {
     let msg = try DoubleValueHandler.createDynamic(from: 3.14159)
     let value = try msg.get(forField: "value")
     XCTAssertEqual(value as? Double, 3.14159)
@@ -176,7 +176,7 @@ final class WrapperTypeTests: XCTestCase {
 
   // MARK: - BytesValue
 
-  func test_bytesValue_createSpecialized_returnsData() throws {
+  func test_bytesValue_createSpecialized_returnsData() async throws {
     let desc = makeWrapperDescriptor(name: "BytesValue", fieldType: .bytes)
     let data = "Hello".data(using: .utf8)!
     let msg = try makeDynamic(descriptor: desc, value: data)
@@ -184,7 +184,7 @@ final class WrapperTypeTests: XCTestCase {
     XCTAssertEqual(result as? Data, data)
   }
 
-  func test_bytesValue_createDynamic_wrapsData() throws {
+  func test_bytesValue_createDynamic_wrapsData() async throws {
     let data = "Hello".data(using: .utf8)!
     let msg = try BytesValueHandler.createDynamic(from: data)
     let value = try msg.get(forField: "value")
@@ -193,7 +193,7 @@ final class WrapperTypeTests: XCTestCase {
 
   // MARK: - Registry Integration
 
-  func test_registry_hasAllWrapperHandlers() {
+  func test_registry_hasAllWrapperHandlers() async throws {
     let registry = WellKnownTypesRegistry.shared
     let wrapperTypes = [
       WellKnownTypeNames.doubleValue,

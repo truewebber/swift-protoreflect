@@ -19,8 +19,8 @@ final class MessageFactoryTests: XCTestCase {
 
   // MARK: - Setup
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     factory = MessageFactory()
 
     // Create test descriptor for tests
@@ -82,17 +82,17 @@ final class MessageFactoryTests: XCTestCase {
     )
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     factory = nil
     fileDescriptor = nil
     messageDescriptor = nil
     nestedMessageDescriptor = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Basic Creation Tests
 
-  func testCreateEmptyMessage() {
+  func testCreateEmptyMessage() async throws {
     let message = factory.createMessage(from: messageDescriptor)
 
     XCTAssertEqual(message.descriptor.name, "TestMessage")
@@ -105,7 +105,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertFalse(try message.hasValue(forField: "is_active"))
   }
 
-  func testCreateMessageWithFieldValuesByName() throws {
+  func testCreateMessageWithFieldValuesByName() async throws {
     let fieldValues: [String: Any] = [
       "id": Int32(42),
       "name": "Test Name",
@@ -121,7 +121,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertEqual(try message.get(forField: "data") as? Data, Data("test data".utf8))
   }
 
-  func testCreateMessageWithFieldValuesByNumber() throws {
+  func testCreateMessageWithFieldValuesByNumber() async throws {
     let fieldValues: [Int: Any] = [
       1: Int32(42),
       2: "Test Name",
@@ -135,7 +135,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertEqual(try message.get(forField: 4) as? Bool, true)
   }
 
-  func testCreateMessageWithInvalidFieldName() {
+  func testCreateMessageWithInvalidFieldName() async throws {
     let fieldValues: [String: Any] = [
       "nonexistent_field": "value"
     ]
@@ -151,7 +151,7 @@ final class MessageFactoryTests: XCTestCase {
     }
   }
 
-  func testCreateMessageWithInvalidFieldNumber() {
+  func testCreateMessageWithInvalidFieldNumber() async throws {
     let fieldValues: [Int: Any] = [
       999: "value"
     ]
@@ -167,7 +167,7 @@ final class MessageFactoryTests: XCTestCase {
     }
   }
 
-  func testCreateMessageWithInvalidType() {
+  func testCreateMessageWithInvalidType() async throws {
     let fieldValues: [String: Any] = [
       "id": "not_a_number"  // id field should be Int32
     ]
@@ -179,7 +179,7 @@ final class MessageFactoryTests: XCTestCase {
 
   // MARK: - Cloning Tests
 
-  func testCloneEmptyMessage() throws {
+  func testCloneEmptyMessage() async throws {
     let original = factory.createMessage(from: messageDescriptor)
     let cloned = try factory.clone(original)
 
@@ -188,7 +188,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertFalse(try cloned.hasValue(forField: "name"))
   }
 
-  func testCloneSimpleMessage() throws {
+  func testCloneSimpleMessage() async throws {
     var original = factory.createMessage(from: messageDescriptor)
     try original.set(Int32(42), forField: "id")
     try original.set("Test Name", forField: "name")
@@ -201,7 +201,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertEqual(try cloned.get(forField: "is_active") as? Bool, true)
   }
 
-  func testCloneMessageWithNestedMessage() throws {
+  func testCloneMessageWithNestedMessage() async throws {
     var nested = factory.createMessage(from: nestedMessageDescriptor)
     try nested.set("nested value", forField: "value")
 
@@ -222,7 +222,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertEqual(try clonedNested?.get(forField: "value") as? String, "nested value")
   }
 
-  func testCloneMessageWithRepeatedField() throws {
+  func testCloneMessageWithRepeatedField() async throws {
     var original = factory.createMessage(from: messageDescriptor)
     try original.set(["tag1", "tag2", "tag3"], forField: "tags")
 
@@ -232,7 +232,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertEqual(clonedTags, ["tag1", "tag2", "tag3"])
   }
 
-  func testCloneMessageWithRepeatedNestedMessages() throws {
+  func testCloneMessageWithRepeatedNestedMessages() async throws {
     // Create repeated field with nested messages
     messageDescriptor.addField(
       FieldDescriptor(
@@ -266,7 +266,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertEqual(try clonedArray?[0].get(forField: "value") as? String, "value1")
   }
 
-  func testCloneMessageWithMapField() throws {
+  func testCloneMessageWithMapField() async throws {
     var original = factory.createMessage(from: messageDescriptor)
     try original.setMapEntry("value1", forKey: "key1", inField: "metadata")
     try original.setMapEntry("value2", forKey: "key2", inField: "metadata")
@@ -278,7 +278,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertEqual(clonedMap?["key2"], "value2")
   }
 
-  func testCloneMessageWithMapFieldContainingMessages() throws {
+  func testCloneMessageWithMapFieldContainingMessages() async throws {
     // Create map field with messages as values
     let mapField = FieldDescriptor(
       name: "message_map",
@@ -317,7 +317,7 @@ final class MessageFactoryTests: XCTestCase {
 
   // MARK: - Validation Tests
 
-  func testValidateValidMessage() throws {
+  func testValidateValidMessage() async throws {
     var message = factory.createMessage(from: messageDescriptor)
     try message.set("required value", forField: "required_field")
 
@@ -327,7 +327,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertTrue(result.errors.isEmpty)
   }
 
-  func testValidateMissingRequiredField() {
+  func testValidateMissingRequiredField() async throws {
     messageDescriptor.syntax = "proto2"
     let message = factory.createMessage(from: messageDescriptor)
 
@@ -344,7 +344,7 @@ final class MessageFactoryTests: XCTestCase {
     }
   }
 
-  func testValidateNestedMessage() throws {
+  func testValidateNestedMessage() async throws {
     // Create nested message with required field
     nestedMessageDescriptor.addField(
       FieldDescriptor(
@@ -385,7 +385,7 @@ final class MessageFactoryTests: XCTestCase {
     }
   }
 
-  func testValidateRepeatedFieldWithMessages() throws {
+  func testValidateRepeatedFieldWithMessages() async throws {
     // Create repeated field with messages
     messageDescriptor.addField(
       FieldDescriptor(
@@ -436,7 +436,7 @@ final class MessageFactoryTests: XCTestCase {
     }
   }
 
-  func testValidateMapFieldWithMessages() throws {
+  func testValidateMapFieldWithMessages() async throws {
     // Create map field with messages as values
     let mapField = FieldDescriptor(
       name: "message_map",
@@ -491,7 +491,7 @@ final class MessageFactoryTests: XCTestCase {
     }
   }
 
-  func testValidationResultEquality() {
+  func testValidationResultEquality() async throws {
     let error1 = ValidationError.missingRequiredField(fieldName: "test")
     let error2 = ValidationError.missingRequiredField(fieldName: "test")
     let error3 = ValidationError.missingRequiredField(fieldName: "other")
@@ -507,7 +507,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertEqual(result2.errors.count, 1)
   }
 
-  func testValidationErrorDescriptions() {
+  func testValidationErrorDescriptions() async throws {
     let missingFieldError = ValidationError.missingRequiredField(fieldName: "test")
     XCTAssertTrue(missingFieldError.localizedDescription.contains("Missing required field: test"))
 
@@ -538,7 +538,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertTrue(validationError.localizedDescription.contains("Validation error for field 'field'"))
   }
 
-  func testValidationErrorEquality() {
+  func testValidationErrorEquality() async throws {
     let error1 = ValidationError.nestedMessageValidationFailed(
       fieldName: "test",
       nestedErrors: [ValidationError.missingRequiredField(fieldName: "nested")]
@@ -595,7 +595,7 @@ final class MessageFactoryTests: XCTestCase {
 
   // MARK: - Edge Cases
 
-  func testCreateMessageWithComplexFieldValues() throws {
+  func testCreateMessageWithComplexFieldValues() async throws {
     var nestedMessage = factory.createMessage(from: nestedMessageDescriptor)
     try nestedMessage.set("nested value", forField: "value")
 
@@ -626,7 +626,7 @@ final class MessageFactoryTests: XCTestCase {
     XCTAssertEqual(retrievedMetadata?["key"], "value")
   }
 
-  func testValidationWithFieldAccessError() throws {
+  func testValidationWithFieldAccessError() async throws {
     // Create message that will cause field access errors
     var brokenDescriptor = MessageDescriptor(name: "BrokenMessage", parent: fileDescriptor)
     brokenDescriptor.addField(FieldDescriptor(name: "test", number: 1, type: .string))

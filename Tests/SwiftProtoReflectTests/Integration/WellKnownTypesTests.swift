@@ -13,7 +13,7 @@ final class WellKnownTypesTests: XCTestCase {
 
   // MARK: - WellKnownTypeNames Tests
 
-  func testTypeNameConstants() {
+  func testTypeNameConstants() async throws {
     XCTAssertEqual(WellKnownTypeNames.timestamp, "google.protobuf.Timestamp")
     XCTAssertEqual(WellKnownTypeNames.duration, "google.protobuf.Duration")
     XCTAssertEqual(WellKnownTypeNames.empty, "google.protobuf.Empty")
@@ -25,7 +25,7 @@ final class WellKnownTypesTests: XCTestCase {
     XCTAssertEqual(WellKnownTypeNames.nullValue, "google.protobuf.NullValue")
   }
 
-  func testTypeCollections() {
+  func testTypeCollections() async throws {
     // All types should contain all types
     XCTAssertEqual(WellKnownTypeNames.allTypes.count, 18)
     XCTAssertTrue(WellKnownTypeNames.allTypes.contains(WellKnownTypeNames.timestamp))
@@ -51,7 +51,7 @@ final class WellKnownTypesTests: XCTestCase {
     XCTAssertTrue(WellKnownTypeNames.advancedTypes.contains(WellKnownTypeNames.nullValue))
   }
 
-  func testCollectionsDoNotOverlap() {
+  func testCollectionsDoNotOverlap() async throws {
     // Check that collections do not overlap
     let criticalAndImportant = WellKnownTypeNames.criticalTypes.intersection(WellKnownTypeNames.importantTypes)
     XCTAssertTrue(criticalAndImportant.isEmpty)
@@ -65,7 +65,7 @@ final class WellKnownTypesTests: XCTestCase {
 
   // MARK: - WellKnownTypeDetector Tests
 
-  func testIsWellKnownType() {
+  func testIsWellKnownType() async throws {
     // Positive cases
     XCTAssertTrue(WellKnownTypeDetector.isWellKnownType("google.protobuf.Timestamp"))
     XCTAssertTrue(WellKnownTypeDetector.isWellKnownType("google.protobuf.Duration"))
@@ -79,7 +79,7 @@ final class WellKnownTypesTests: XCTestCase {
     XCTAssertFalse(WellKnownTypeDetector.isWellKnownType("timestamp"))
   }
 
-  func testGetSupportPhase() {
+  func testGetSupportPhase() async throws {
     // Critical types
     XCTAssertEqual(WellKnownTypeDetector.getSupportPhase(for: "google.protobuf.Timestamp"), .critical)
     XCTAssertEqual(WellKnownTypeDetector.getSupportPhase(for: "google.protobuf.Duration"), .critical)
@@ -100,7 +100,7 @@ final class WellKnownTypesTests: XCTestCase {
     XCTAssertNil(WellKnownTypeDetector.getSupportPhase(for: ""))
   }
 
-  func testGetSimpleName() {
+  func testGetSimpleName() async throws {
     XCTAssertEqual(WellKnownTypeDetector.getSimpleName(for: "google.protobuf.Timestamp"), "Timestamp")
     XCTAssertEqual(WellKnownTypeDetector.getSimpleName(for: "google.protobuf.Duration"), "Duration")
     XCTAssertEqual(WellKnownTypeDetector.getSimpleName(for: "google.protobuf.Empty"), "Empty")
@@ -113,7 +113,7 @@ final class WellKnownTypesTests: XCTestCase {
 
   // MARK: - WellKnownSupportPhase Tests
 
-  func testSupportPhaseProperties() {
+  func testSupportPhaseProperties() async throws {
     XCTAssertEqual(WellKnownSupportPhase.critical.rawValue, 1)
     XCTAssertEqual(WellKnownSupportPhase.important.rawValue, 2)
     XCTAssertEqual(WellKnownSupportPhase.advanced.rawValue, 3)
@@ -123,13 +123,13 @@ final class WellKnownTypesTests: XCTestCase {
     XCTAssertEqual(WellKnownSupportPhase.advanced.description, "Advanced Types (Phase 3)")
   }
 
-  func testSupportPhaseIncludedTypes() {
+  func testSupportPhaseIncludedTypes() async throws {
     XCTAssertEqual(WellKnownSupportPhase.critical.includedTypes, WellKnownTypeNames.criticalTypes)
     XCTAssertEqual(WellKnownSupportPhase.important.includedTypes, WellKnownTypeNames.importantTypes)
     XCTAssertEqual(WellKnownSupportPhase.advanced.includedTypes, WellKnownTypeNames.advancedTypes)
   }
 
-  func testAllCases() {
+  func testAllCases() async throws {
     let allCases = WellKnownSupportPhase.allCases
     XCTAssertEqual(allCases.count, 3)
     XCTAssertTrue(allCases.contains(.critical))
@@ -139,7 +139,7 @@ final class WellKnownTypesTests: XCTestCase {
 
   // MARK: - WellKnownTypeError Tests
 
-  func testErrorEquality() {
+  func testErrorEquality() async throws {
     let error1 = WellKnownTypeError.unsupportedType("TestType")
     let error2 = WellKnownTypeError.unsupportedType("TestType")
     let error3 = WellKnownTypeError.unsupportedType("OtherType")
@@ -155,7 +155,7 @@ final class WellKnownTypesTests: XCTestCase {
     XCTAssertNotEqual(conversionError1, conversionError3)
   }
 
-  func testErrorDescriptions() {
+  func testErrorDescriptions() async throws {
     let unsupportedError = WellKnownTypeError.unsupportedType("TestType")
     XCTAssertEqual(unsupportedError.description, "Unsupported well-known type: TestType")
 
@@ -174,7 +174,7 @@ final class WellKnownTypesTests: XCTestCase {
 
   // MARK: - WellKnownTypesRegistry Tests
 
-  func testRegistryInitialization() {
+  func testRegistryInitialization() async throws {
     let registry = WellKnownTypesRegistry.shared
 
     // Check that registry is initialized
@@ -186,7 +186,7 @@ final class WellKnownTypesTests: XCTestCase {
   }
 
   @MainActor
-  func testRegistryThreadSafety() {
+  func testRegistryThreadSafety() async throws {
     let registry = WellKnownTypesRegistry.shared
     let expectation = self.expectation(description: "Thread safety test")
     expectation.expectedFulfillmentCount = 10
@@ -209,7 +209,7 @@ final class WellKnownTypesTests: XCTestCase {
     waitForExpectations(timeout: 1.0)
   }
 
-  func testGetHandler() {
+  func testGetHandler() async throws {
     let registry = WellKnownTypesRegistry.shared
 
     // Get registered handler
@@ -222,7 +222,7 @@ final class WellKnownTypesTests: XCTestCase {
     XCTAssertNil(unknownHandler)
   }
 
-  func testRegistryCreateSpecializedSuccess() {
+  func testRegistryCreateSpecializedSuccess() async throws {
     let registry = WellKnownTypesRegistry.shared
 
     // Create timestamp message for testing
@@ -243,7 +243,7 @@ final class WellKnownTypesTests: XCTestCase {
     }
   }
 
-  func testRegistryCreateSpecializedHandlerNotFound() {
+  func testRegistryCreateSpecializedHandlerNotFound() async throws {
     let registry = WellKnownTypesRegistry.shared
 
     // Create arbitrary message
@@ -264,7 +264,7 @@ final class WellKnownTypesTests: XCTestCase {
     }
   }
 
-  func testRegistryCreateDynamicSuccess() {
+  func testRegistryCreateDynamicSuccess() async throws {
     let registry = WellKnownTypesRegistry.shared
 
     // Create TimestampValue for testing
@@ -286,7 +286,7 @@ final class WellKnownTypesTests: XCTestCase {
     }
   }
 
-  func testRegistryCreateDynamicHandlerNotFound() {
+  func testRegistryCreateDynamicHandlerNotFound() async throws {
     let registry = WellKnownTypesRegistry.shared
 
     let testSpecialized = "not a well-known type"
@@ -301,7 +301,7 @@ final class WellKnownTypesTests: XCTestCase {
     }
   }
 
-  func testRegistryClear() {
+  func testRegistryClear() async throws {
     // Create new registry for isolated testing
     // Since WellKnownTypesRegistry is a singleton, we test clear() indirectly
     let registry = WellKnownTypesRegistry.shared
@@ -312,7 +312,7 @@ final class WellKnownTypesTests: XCTestCase {
     XCTAssertTrue(typesBeforeClear.contains("google.protobuf.Timestamp"))
 
     // Clear registry
-    registry.clear()
+    await registry.clear()
 
     // Check that registry is empty
     let typesAfterClear = registry.getRegisteredTypes()
@@ -331,7 +331,7 @@ final class WellKnownTypesTests: XCTestCase {
     XCTAssertTrue(restoredTypes.contains("google.protobuf.Timestamp"))
   }
 
-  func testRegistryConversionWithHandlerErrors() {
+  func testRegistryConversionWithHandlerErrors() async throws {
     let registry = WellKnownTypesRegistry.shared
 
     // Create wrong message for timestamp handler

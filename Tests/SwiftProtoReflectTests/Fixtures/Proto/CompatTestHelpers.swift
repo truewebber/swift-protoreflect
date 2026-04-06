@@ -44,13 +44,13 @@ enum CompatHelpers {
     file: StaticString = #file,
     line: UInt = #line,
     validate: (DynamicMessage) throws -> Void
-  ) throws -> DynamicMessage {
+  ) async throws -> DynamicMessage {
     let jsonStr = try proto.jsonString()
     guard let jsonData = jsonStr.data(using: .utf8) else {
       XCTFail("Failed to encode JSON string to Data", file: file, line: line)
       throw CompatError.jsonEncodingFailed
     }
-    let msg = try makeDeserializer(registry: registry).deserialize(jsonData, using: descriptor)
+    let msg = try await makeDeserializer(registry: registry).deserialize(jsonData, using: descriptor)
     try validate(msg)
     return msg
   }
@@ -68,8 +68,8 @@ enum CompatHelpers {
     file: StaticString = #file,
     line: UInt = #line,
     validate: (P) throws -> Void
-  ) throws -> P {
-    let jsonData = try makeSerializer(registry: registry).serialize(dynamic)
+  ) async throws -> P {
+    let jsonData = try await makeSerializer(registry: registry).serialize(dynamic)
     guard let jsonStr = String(data: jsonData, encoding: .utf8) else {
       XCTFail("Failed to decode JSON Data to String", file: file, line: line)
       throw CompatError.jsonDecodingFailed
@@ -93,8 +93,8 @@ enum CompatHelpers {
     validateDynamic: (DynamicMessage) throws -> Void,
     buildDynamic: () throws -> DynamicMessage,
     validateProto: (P) throws -> Void
-  ) throws {
-    try assertProtocToUs(
+  ) async throws {
+    try await assertProtocToUs(
       proto: proto,
       descriptor: descriptor,
       registry: registry,
@@ -103,7 +103,7 @@ enum CompatHelpers {
       validate: validateDynamic
     )
     let dynamic = try buildDynamic()
-    try assertUsToProtoc(
+    try await assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: P.self,
@@ -127,11 +127,11 @@ enum CompatHelpers {
     file: StaticString = #file,
     line: UInt = #line,
     validate: (DynamicMessage) throws -> Void
-  ) throws {
+  ) async throws {
     let serializer = makeSerializer(registry: registry)
     let deserializer = makeDeserializer(registry: registry)
-    let jsonData = try serializer.serialize(dynamic)
-    let restored = try deserializer.deserialize(jsonData, using: dynamic.descriptor)
+    let jsonData = try await serializer.serialize(dynamic)
+    let restored = try await deserializer.deserialize(jsonData, using: dynamic.descriptor)
     try validate(restored)
   }
 }

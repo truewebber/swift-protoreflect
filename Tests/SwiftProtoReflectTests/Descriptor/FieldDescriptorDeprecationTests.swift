@@ -13,14 +13,14 @@ final class FieldDescriptorDeprecationTests: XCTestCase {
 
   // MARK: - isRequired Default
 
-  func test_isRequired_defaultFalse() {
+  func test_isRequired_defaultFalse() async throws {
     let field = FieldDescriptor(name: "value", number: 1, type: .int32)
     XCTAssertFalse(field.isRequired)
   }
 
   // MARK: - Validation Gated on Syntax
 
-  func test_validate_proto3Message_requiredFieldIgnored() {
+  func test_validate_proto3Message_requiredFieldIgnored() async throws {
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg", syntax: "proto3")
     desc.addField(FieldDescriptor(name: "value", number: 1, type: .int32, isRequired: true))
 
@@ -31,7 +31,7 @@ final class FieldDescriptorDeprecationTests: XCTestCase {
     XCTAssertTrue(result.isValid, "Proto3 should ignore isRequired: \(result.errors)")
   }
 
-  func test_validate_proto2Message_requiredFieldChecked() {
+  func test_validate_proto2Message_requiredFieldChecked() async throws {
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg", syntax: "proto2")
     desc.addField(FieldDescriptor(name: "value", number: 1, type: .int32, isRequired: true))
 
@@ -44,7 +44,7 @@ final class FieldDescriptorDeprecationTests: XCTestCase {
 
   // MARK: - Bridge
 
-  func test_bridge_proto3Label_neverSetsRequired() throws {
+  func test_bridge_proto3Label_neverSetsRequired() async throws {
     var proto = Google_Protobuf_FieldDescriptorProto()
     proto.name = "value"
     proto.number = 1
@@ -56,7 +56,7 @@ final class FieldDescriptorDeprecationTests: XCTestCase {
     XCTAssertFalse(field.isRequired, "Proto3 should never have isRequired = true")
   }
 
-  func test_bridge_proto2Label_setsRequired() throws {
+  func test_bridge_proto2Label_setsRequired() async throws {
     var proto = Google_Protobuf_FieldDescriptorProto()
     proto.name = "value"
     proto.number = 1

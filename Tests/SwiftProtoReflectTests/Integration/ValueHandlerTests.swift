@@ -13,14 +13,14 @@ final class ValueHandlerTests: XCTestCase {
 
   // MARK: - Basic Handler Properties Tests
 
-  func testHandlerBasicProperties() {
+  func testHandlerBasicProperties() async throws {
     XCTAssertEqual(ValueHandler.handledTypeName, WellKnownTypeNames.value)
     XCTAssertEqual(ValueHandler.supportPhase, .important)
   }
 
   // MARK: - ValueValue Initialization Tests
 
-  func testValueValueFromBasicTypes() {
+  func testValueValueFromBasicTypes() async throws {
     // Null value
     let nullValue = ValueHandler.ValueValue.nullValue
     XCTAssertEqual(nullValue, .nullValue)
@@ -39,7 +39,7 @@ final class ValueHandlerTests: XCTestCase {
     XCTAssertEqual(ValueHandler.ValueValue.boolValue(false), .boolValue(false))
   }
 
-  func testValueValueFromAnyTypes() throws {
+  func testValueValueFromAnyTypes() async throws {
     // NSNull
     let nullValue = try ValueHandler.ValueValue(from: NSNull())
     XCTAssertEqual(nullValue, .nullValue)
@@ -85,7 +85,7 @@ final class ValueHandlerTests: XCTestCase {
     }
   }
 
-  func testValueValueUnsupportedType() {
+  func testValueValueUnsupportedType() async throws {
     // Custom class should fail
     class CustomClass {}
     let customObject = CustomClass()
@@ -103,7 +103,7 @@ final class ValueHandlerTests: XCTestCase {
 
   // MARK: - ValueValue to Any Conversion Tests
 
-  func testValueValueToAny() {
+  func testValueValueToAny() async throws {
     // Null
     let nullValue = ValueHandler.ValueValue.nullValue
     let nullAny = nullValue.toAny()
@@ -127,7 +127,7 @@ final class ValueHandlerTests: XCTestCase {
 
   // MARK: - Handler Implementation Tests
 
-  func testCreateDynamicFromSpecialized() throws {
+  func testCreateDynamicFromSpecialized() async throws {
     // number_value → field 2 (double)
     let numberMessage = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.numberValue(42.5))
     XCTAssertEqual(numberMessage.descriptor.fullName, WellKnownTypeNames.value)
@@ -150,7 +150,7 @@ final class ValueHandlerTests: XCTestCase {
     XCTAssertEqual(try nullMessage.get(forField: 1) as? Int32, Int32(0))
   }
 
-  func testCreateDynamicFromInvalidSpecialized() {
+  func testCreateDynamicFromInvalidSpecialized() async throws {
     XCTAssertThrowsError(try ValueHandler.createDynamic(from: "invalid")) { error in
       guard let wellKnownError = error as? WellKnownTypeError,
         case .conversionFailed(_, _, _) = wellKnownError
@@ -163,7 +163,7 @@ final class ValueHandlerTests: XCTestCase {
 
   // MARK: - Validation Tests
 
-  func testValidate() {
+  func testValidate() async throws {
     XCTAssertTrue(ValueHandler.validate(ValueHandler.ValueValue.nullValue))
     XCTAssertTrue(ValueHandler.validate(ValueHandler.ValueValue.numberValue(42)))
     XCTAssertTrue(ValueHandler.validate(ValueHandler.ValueValue.stringValue("test")))
@@ -176,7 +176,7 @@ final class ValueHandlerTests: XCTestCase {
 
   // MARK: - Registry Integration Tests
 
-  func testRegistryIntegration() throws {
+  func testRegistryIntegration() async throws {
     let registry = WellKnownTypesRegistry.shared
     let handler = registry.getHandler(for: WellKnownTypeNames.value)
     XCTAssertNotNil(handler)
@@ -196,7 +196,7 @@ final class ValueHandlerTests: XCTestCase {
 
   // MARK: - Convenience Extensions Tests
 
-  func testAnyExtensions() throws {
+  func testAnyExtensions() async throws {
     let value: Any = 42.5
     let valueValue = try ValueHandler.ValueValue(from: value)
     XCTAssertEqual(valueValue, .numberValue(42.5))
@@ -206,7 +206,7 @@ final class ValueHandlerTests: XCTestCase {
     XCTAssertEqual(stringValueValue, .stringValue("test"))
   }
 
-  func testDynamicMessageExtensions() throws {
+  func testDynamicMessageExtensions() async throws {
     let message = try DynamicMessage.valueMessage(from: 42.5)
     XCTAssertEqual(message.descriptor.fullName, WellKnownTypeNames.value)
 
@@ -220,7 +220,7 @@ final class ValueHandlerTests: XCTestCase {
 
   // MARK: - Round-Trip Tests
 
-  func testRoundTripConversion() throws {
+  func testRoundTripConversion() async throws {
     let testValues: [ValueHandler.ValueValue] = [
       .nullValue,
       .numberValue(42.5),
@@ -242,7 +242,7 @@ final class ValueHandlerTests: XCTestCase {
 
   // MARK: - Performance Tests
 
-  func testValueConversionPerformance() {
+  func testValueConversionPerformance() async throws {
     measure {
       for i in 0..<1000 {
         let value = ValueHandler.ValueValue.numberValue(Double(i))
@@ -251,7 +251,7 @@ final class ValueHandlerTests: XCTestCase {
     }
   }
 
-  func testHandlerPerformance() {
+  func testHandlerPerformance() async throws {
     let values = (0..<100).map { ValueHandler.ValueValue.numberValue(Double($0)) }
 
     measure {
@@ -269,7 +269,7 @@ final class ValueHandlerTests: XCTestCase {
 
   // MARK: - Error Handling Tests
 
-  func testCreateSpecializedWithWrongMessageType() throws {
+  func testCreateSpecializedWithWrongMessageType() async throws {
     // Create a message with different type name
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     var messageDescriptor = MessageDescriptor(name: "WrongType", parent: fileDescriptor)
@@ -299,14 +299,14 @@ final class ValueHandlerTests: XCTestCase {
     }
   }
 
-  func testCreateSpecializedWithEmptyValueData() throws {
+  func testCreateSpecializedWithEmptyValueData() async throws {
     // A Value message with no oneof field set should return .nullValue.
     let message = DynamicMessage(descriptor: StructProtoDescriptors.valueDescriptor)
     let result = try ValueHandler.createSpecialized(from: message)
     XCTAssertEqual(result as? ValueHandler.ValueValue, .nullValue)
   }
 
-  func testCreateSpecializedWithMissingValueData() throws {
+  func testCreateSpecializedWithMissingValueData() async throws {
     // Create a Value message without setting value_data
     let valueDescriptor = try createTestValueDescriptor()
     let factory = MessageFactory()
@@ -318,7 +318,7 @@ final class ValueHandlerTests: XCTestCase {
     XCTAssertEqual(valueValue, .nullValue)
   }
 
-  func testCreateSpecializedWithInvalidJSON() throws {
+  func testCreateSpecializedWithInvalidJSON() async throws {
     // In the new wire format there is no JSON — invalid descriptor is rejected by fullName check.
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let wrongDescriptor = MessageDescriptor(name: "Value", parent: fileDescriptor)
@@ -336,7 +336,7 @@ final class ValueHandlerTests: XCTestCase {
     }
   }
 
-  func testCreateSpecializedWithMalformedJSONStructure() throws {
+  func testCreateSpecializedWithMalformedJSONStructure() async throws {
     // In the new wire format a Value message with string_value set (field 3)
     // always decodes correctly — there is no JSON wrapping.
     var message = DynamicMessage(descriptor: StructProtoDescriptors.valueDescriptor)
@@ -346,7 +346,7 @@ final class ValueHandlerTests: XCTestCase {
     XCTAssertEqual(result as? ValueHandler.ValueValue, .stringValue("hello"))
   }
 
-  func testToAnyValueWithWrongMessageType() throws {
+  func testToAnyValueWithWrongMessageType() async throws {
     // Create a message with different type name
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "WrongType", parent: fileDescriptor)
@@ -376,7 +376,7 @@ final class ValueHandlerTests: XCTestCase {
 
   // MARK: - OPE-264 / OPE-266: New oneof wire-format tests
 
-  func test_createDynamic_value_activeOneofFieldIsCorrect() throws {
+  func test_createDynamic_value_activeOneofFieldIsCorrect() async throws {
     let stringMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.stringValue("hi"))
     XCTAssertEqual(stringMsg.descriptor.fullName, "google.protobuf.Value")
     XCTAssertNil(try? stringMsg.get(forField: "value_data"), "value_data field must not exist")
@@ -391,7 +391,7 @@ final class ValueHandlerTests: XCTestCase {
     XCTAssertTrue(try numMsg.hasValue(forField: 2), "number_value must be at field 2")
   }
 
-  func test_createDynamic_nullValue_setsEnumField1() throws {
+  func test_createDynamic_nullValue_setsEnumField1() async throws {
     let message = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.nullValue)
 
     XCTAssertEqual(message.descriptor.fullName, "google.protobuf.Value")
@@ -404,7 +404,7 @@ final class ValueHandlerTests: XCTestCase {
     XCTAssertFalse(try message.hasValue(forField: 6))
   }
 
-  func test_createDynamic_numberValue_setsDoubleField2() throws {
+  func test_createDynamic_numberValue_setsDoubleField2() async throws {
     let message = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.numberValue(3.14))
 
     XCTAssertTrue(try message.hasValue(forField: 2))
@@ -413,7 +413,7 @@ final class ValueHandlerTests: XCTestCase {
     XCTAssertFalse(try message.hasValue(forField: 1))
   }
 
-  func test_createDynamic_structValue_setsMessageField5() throws {
+  func test_createDynamic_structValue_setsMessageField5() async throws {
     let sv = StructHandler.StructValue(fields: ["k": .numberValue(1)])
     let message = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.structValue(sv))
 
@@ -424,7 +424,7 @@ final class ValueHandlerTests: XCTestCase {
     XCTAssertFalse(try message.hasValue(forField: 6))
   }
 
-  func test_createDynamic_listValue_setsMessageField6() throws {
+  func test_createDynamic_listValue_setsMessageField6() async throws {
     let message = try ValueHandler.createDynamic(
       from: ValueHandler.ValueValue.listValue([.numberValue(1), .stringValue("x")])
     )
@@ -436,7 +436,7 @@ final class ValueHandlerTests: XCTestCase {
     XCTAssertFalse(try message.hasValue(forField: 5))
   }
 
-  func test_createSpecialized_roundTrip_allSixKinds() throws {
+  func test_createSpecialized_roundTrip_allSixKinds() async throws {
     let cases: [ValueHandler.ValueValue] = [
       .nullValue,
       .numberValue(42.5),

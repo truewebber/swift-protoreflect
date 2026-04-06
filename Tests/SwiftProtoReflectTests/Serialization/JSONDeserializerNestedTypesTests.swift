@@ -7,10 +7,10 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
 
   let bridge = DescriptorBridge()
 
-  private func makeRegistry(from fileProto: Google_Protobuf_FileDescriptorProto) throws -> TypeRegistry {
+  private func makeRegistry(from fileProto: Google_Protobuf_FileDescriptorProto) async throws -> TypeRegistry {
     let fd = try bridge.fromProtobufFileDescriptor(fileProto)
     let registry = TypeRegistry()
-    try registry.registerFile(fd)
+    try await registry.registerFile(fd)
     return registry
   }
 
@@ -25,22 +25,22 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
 
   // MARK: - Group 7.1 — Deserialization with nested message fields (Failure 2 fix)
 
-  func test_deserialize_nestedMessageField_succeeds() throws {
-    let registry = try makeRegistry(from: adsRequestFileProto)
+  func test_deserialize_nestedMessageField_succeeds() async throws {
+    let registry = try await makeRegistry(from: adsRequestFileProto)
     let fd = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["search_filters": ["title": "test"], "limit": 10]
-    XCTAssertNoThrow(try deserializer.deserializeFromJSONObject(json, using: requestDesc))
+    try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
   }
 
-  func test_deserialize_nestedMessageField_nestedFieldValuesCorrect() throws {
-    let registry = try makeRegistry(from: adsRequestFileProto)
+  func test_deserialize_nestedMessageField_nestedFieldValuesCorrect() async throws {
+    let registry = try await makeRegistry(from: adsRequestFileProto)
     let fd = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["search_filters": ["title": "test_title"], "limit": 5]
-    let result = try deserializer.deserializeFromJSONObject(json, using: requestDesc)
+    let result = try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
     guard let filters = try result.get(forField: "search_filters") as? DynamicMessage else {
       XCTFail("Expected DynamicMessage for search_filters")
       return
@@ -48,8 +48,8 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     XCTAssertEqual(try filters.get(forField: "title") as? String, "test_title")
   }
 
-  func test_deserialize_twoNestedMessageFields_bothDeserializeCorrectly() throws {
-    let registry = try makeRegistry(from: adsResponseFileProto)
+  func test_deserialize_twoNestedMessageFields_bothDeserializeCorrectly() async throws {
+    let registry = try await makeRegistry(from: adsResponseFileProto)
     let fd = try bridge.fromProtobufFileDescriptor(adsResponseFileProto)
     let responseDesc = fd.messages["GetGroupedAdsResponse"]!
     let deserializer = makeDeserializer(registry: registry)
@@ -57,17 +57,17 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
       "cursor": ["next_page_token": "tok123"],
       "items": [["id": "item1"]],
     ]
-    let result = try deserializer.deserializeFromJSONObject(json, using: responseDesc)
+    let result = try await deserializer.deserializeFromJSONObject(json, using: responseDesc)
     XCTAssertNotNil(try result.get(forField: "cursor"))
     XCTAssertNotNil(try result.get(forField: "items"))
   }
 
-  func test_deserialize_doublyNestedMessageField_succeeds() throws {
-    _ = try makeRegistry(from: deepNestingFileProto)
+  func test_deserialize_doublyNestedMessageField_succeeds() async throws {
+    _ = try await makeRegistry(from: deepNestingFileProto)
     let fd = try bridge.fromProtobufFileDescriptor(deepNestingFileProto)
     _ = fd.messages["A"]!
     let aRegistry = TypeRegistry()
-    try aRegistry.registerFile(fd)
+    try await aRegistry.registerFile(fd)
 
     let bField = makeFieldProto(
       name: "b",
@@ -91,21 +91,19 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let customFileProto = makeFileProto(name: "custom.proto", package: "pkg", messages: [aWithB])
     let customFd = try bridge.fromProtobufFileDescriptor(customFileProto)
     let customRegistry = TypeRegistry()
-    try customRegistry.registerFile(customFd)
+    try await customRegistry.registerFile(customFd)
     let customDeserializer = makeDeserializer(registry: customRegistry)
     let json: [String: Any] = ["b": [:]]
-    XCTAssertNoThrow(
-      try customDeserializer.deserializeFromJSONObject(json, using: customFd.messages["A"]!)
-    )
+    try await customDeserializer.deserializeFromJSONObject(json, using: customFd.messages["A"]!)
   }
 
-  func test_deserialize_repeatedNestedMessageField_succeeds() throws {
-    let registry = try makeRegistry(from: adsResponseFileProto)
+  func test_deserialize_repeatedNestedMessageField_succeeds() async throws {
+    let registry = try await makeRegistry(from: adsResponseFileProto)
     let fd = try bridge.fromProtobufFileDescriptor(adsResponseFileProto)
     let responseDesc = fd.messages["GetGroupedAdsResponse"]!
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["items": [["id": "a"], ["id": "b"], ["id": "c"]]]
-    let result = try deserializer.deserializeFromJSONObject(json, using: responseDesc)
+    let result = try await deserializer.deserializeFromJSONObject(json, using: responseDesc)
     if let items = try result.get(forField: "items") as? [Any] {
       XCTAssertEqual(items.count, 3)
     }
@@ -114,49 +112,49 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     }
   }
 
-  func test_deserialize_repeatedNestedMessageField_arrayCountCorrect() throws {
-    let registry = try makeRegistry(from: adsResponseFileProto)
+  func test_deserialize_repeatedNestedMessageField_arrayCountCorrect() async throws {
+    let registry = try await makeRegistry(from: adsResponseFileProto)
     let fd = try bridge.fromProtobufFileDescriptor(adsResponseFileProto)
     let responseDesc = fd.messages["GetGroupedAdsResponse"]!
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["items": [["id": "a"], ["id": "b"], ["id": "c"]]]
-    let result = try deserializer.deserializeFromJSONObject(json, using: responseDesc)
+    let result = try await deserializer.deserializeFromJSONObject(json, using: responseDesc)
     let items = try result.get(forField: "items") as? [Any]
     XCTAssertEqual(items?.count, 3)
   }
 
-  func test_deserialize_nullNestedField_handledGracefully() throws {
-    let registry = try makeRegistry(from: adsRequestFileProto)
+  func test_deserialize_nullNestedField_handledGracefully() async throws {
+    let registry = try await makeRegistry(from: adsRequestFileProto)
     let fd = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = JSONDeserializer(
       options: JSONDeserializationOptions(ignoreUnknownFields: true, typeRegistry: registry)
     )
     let json: [String: Any] = ["limit": 5]
-    XCTAssertNoThrow(try deserializer.deserializeFromJSONObject(json, using: requestDesc))
+    try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
   }
 
-  func test_deserialize_missingNestedField_noError() throws {
-    let registry = try makeRegistry(from: adsRequestFileProto)
+  func test_deserialize_missingNestedField_noError() async throws {
+    let registry = try await makeRegistry(from: adsRequestFileProto)
     let fd = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["limit": 10]
-    XCTAssertNoThrow(try deserializer.deserializeFromJSONObject(json, using: requestDesc))
+    try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
   }
 
   // MARK: - Group 7.1b — Leading dot in field.typeName
 
-  func test_deserialize_fieldTypeNameWithLeadingDot_lookupSucceeds() throws {
-    let registry = try makeRegistry(from: adsRequestFileProto)
+  func test_deserialize_fieldTypeNameWithLeadingDot_lookupSucceeds() async throws {
+    let registry = try await makeRegistry(from: adsRequestFileProto)
     let fd = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["search_filters": ["title": "test"]]
-    XCTAssertNoThrow(try deserializer.deserializeFromJSONObject(json, using: requestDesc))
+    try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
   }
 
-  func test_deserialize_fieldTypeNameWithoutLeadingDot_lookupSucceeds() throws {
+  func test_deserialize_fieldTypeNameWithoutLeadingDot_lookupSucceeds() async throws {
     let filtersMsg = makeMessageProto(
       name: "SearchFilters",
       fields: [makeFieldProto(name: "title", number: 1, type: .string)]
@@ -173,15 +171,15 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
       nestedMessages: [filtersMsg]
     )
     let fileProto = makeFileProto(name: "ads.proto", package: "pkg", messages: [request])
-    let registry = try makeRegistry(from: fileProto)
+    let registry = try await makeRegistry(from: fileProto)
     let fd = try bridge.fromProtobufFileDescriptor(fileProto)
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["search_filters": ["title": "hello"]]
-    XCTAssertNoThrow(try deserializer.deserializeFromJSONObject(json, using: requestDesc))
+    try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
   }
 
-  func test_deserialize_fieldTypeNameEmpty_throwsMissingTypeName() throws {
+  func test_deserialize_fieldTypeNameEmpty_throwsMissingTypeName() async throws {
     let fieldWithEmptyType = FieldDescriptor(
       name: "nested",
       number: 1,
@@ -193,7 +191,11 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let registry = TypeRegistry()
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["nested": ["key": "val"]]
-    XCTAssertThrowsError(try deserializer.deserializeFromJSONObject(json, using: msgDesc)) { error in
+    do {
+      try await deserializer.deserializeFromJSONObject(json, using: msgDesc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       guard case JSONDeserializationError.missingTypeName = error else {
         XCTFail("Expected missingTypeName, got \(error)")
         return
@@ -201,7 +203,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     }
   }
 
-  func test_deserialize_fieldTypeNameOnlyDot_throwsMissingTypeName() throws {
+  func test_deserialize_fieldTypeNameOnlyDot_throwsMissingTypeName() async throws {
     let fieldWithDotType = FieldDescriptor(
       name: "nested",
       number: 1,
@@ -213,7 +215,11 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let registry = TypeRegistry()
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["nested": ["key": "val"]]
-    XCTAssertThrowsError(try deserializer.deserializeFromJSONObject(json, using: msgDesc)) { error in
+    do {
+      try await deserializer.deserializeFromJSONObject(json, using: msgDesc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       // Should throw either missingTypeName or nestedMessageDescriptorNotFound (not a crash)
       XCTAssertTrue(
         error is JSONDeserializationError,
@@ -224,13 +230,17 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
 
   // MARK: - Group 7.2 — Error cases (error 16)
 
-  func test_deserialize_nestedTypeNotInRegistry_throwsError16() throws {
+  func test_deserialize_nestedTypeNotInRegistry_throwsError16() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let emptyRegistry = TypeRegistry()
     let deserializer = makeDeserializer(registry: emptyRegistry)
     let json: [String: Any] = ["search_filters": ["title": "test"]]
-    XCTAssertThrowsError(try deserializer.deserializeFromJSONObject(json, using: requestDesc)) { error in
+    do {
+      try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       guard case JSONDeserializationError.nestedMessageDescriptorNotFound = error else {
         XCTFail("Expected nestedMessageDescriptorNotFound (error 16), got \(error)")
         return
@@ -238,7 +248,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     }
   }
 
-  func test_deserialize_nestedTypeInRegistryByBareName_throwsError16() throws {
+  func test_deserialize_nestedTypeInRegistryByBareName_throwsError16() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let registry = TypeRegistry()
@@ -253,10 +263,14 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
       messages: [filtersMsg]
     )
     let filtersFd = try bridge.fromProtobufFileDescriptor(filtersFileProto)
-    try registry.registerFile(filtersFd)
+    try await registry.registerFile(filtersFd)
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["search_filters": ["title": "test"]]
-    XCTAssertThrowsError(try deserializer.deserializeFromJSONObject(json, using: requestDesc)) { error in
+    do {
+      try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       guard case JSONDeserializationError.nestedMessageDescriptorNotFound = error else {
         XCTFail("Expected nestedMessageDescriptorNotFound (error 16), got \(error)")
         return
@@ -264,18 +278,18 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     }
   }
 
-  func test_deserialize_nestedTypeInRegistryByQualifiedName_succeeds() throws {
-    let registry = try makeRegistry(from: adsRequestFileProto)
+  func test_deserialize_nestedTypeInRegistryByQualifiedName_succeeds() async throws {
+    let registry = try await makeRegistry(from: adsRequestFileProto)
     let fd = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["search_filters": ["title": "test"]]
-    XCTAssertNoThrow(try deserializer.deserializeFromJSONObject(json, using: requestDesc))
+    try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
   }
 
   // MARK: - Group 7.3 — Nested enums in JSON
 
-  func test_deserialize_nestedEnumField_knownValue_succeeds() throws {
+  func test_deserialize_nestedEnumField_knownValue_succeeds() async throws {
     let status = makeEnumProto(name: "Status", values: [("UNKNOWN", 0), ("ACTIVE", 1)])
     let statusField = makeFieldProto(
       name: "status",
@@ -289,11 +303,11 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let parentDesc = fd.messages["Parent"]!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let json: [String: Any] = ["status": "ACTIVE"]
-    let result = try deserializer.deserializeFromJSONObject(json, using: parentDesc)
+    let result = try await deserializer.deserializeFromJSONObject(json, using: parentDesc)
     XCTAssertEqual(try result.get(forField: "status") as? Int32, 1)
   }
 
-  func test_deserialize_nestedEnumField_unknownValue_handledPerSyntax() throws {
+  func test_deserialize_nestedEnumField_unknownValue_handledPerSyntax() async throws {
     let status = makeEnumProto(name: "Status", values: [("UNKNOWN", 0)])
     let statusField = makeFieldProto(
       name: "status",
@@ -307,15 +321,19 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let parentDesc = fd.messages["Parent"]!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
     // For proto3 unknown string enum values should be treated as errors
-    XCTAssertThrowsError(
-      try deserializer.deserializeFromJSONObject(["status": "UNKNOWN_VALUE"], using: parentDesc)
-    )
+    do {
+      try await deserializer.deserializeFromJSONObject(["status": "UNKNOWN_VALUE"], using: parentDesc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
   // MARK: - Group 7.4 — Exact ISSUE.md reproductions
 
-  func test_deserialize_issueMd_failure2_exactRepro_succeeds() throws {
-    let registry = try makeRegistry(from: adsRequestFileProto)
+  func test_deserialize_issueMd_failure2_exactRepro_succeeds() async throws {
+    let registry = try await makeRegistry(from: adsRequestFileProto)
     let fd = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = makeDeserializer(registry: registry)
@@ -323,16 +341,16 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
       "search_filters": ["title": "test"],
       "limit": 10,
     ]
-    XCTAssertNoThrow(try deserializer.deserializeFromJSONObject(json, using: requestDesc))
+    try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
   }
 
-  func test_deserialize_issueMd_failure2_searchFiltersTitle_correct() throws {
-    let registry = try makeRegistry(from: adsRequestFileProto)
+  func test_deserialize_issueMd_failure2_searchFiltersTitle_correct() async throws {
+    let registry = try await makeRegistry(from: adsRequestFileProto)
     let fd = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["search_filters": ["title": "test"]]
-    let result = try deserializer.deserializeFromJSONObject(json, using: requestDesc)
+    let result = try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
     if let filters = try result.get(forField: "search_filters") as? DynamicMessage {
       XCTAssertEqual(try filters.get(forField: "title") as? String, "test")
     }
@@ -341,24 +359,28 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     }
   }
 
-  func test_deserialize_issueMd_failure2_limitField_correct() throws {
-    let registry = try makeRegistry(from: adsRequestFileProto)
+  func test_deserialize_issueMd_failure2_limitField_correct() async throws {
+    let registry = try await makeRegistry(from: adsRequestFileProto)
     let fd = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["limit": 10]
-    let result = try deserializer.deserializeFromJSONObject(json, using: requestDesc)
+    let result = try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
     XCTAssertEqual(try result.get(forField: "limit") as? Int32, 10)
   }
 
   // MARK: - Group 7.5 — No registry (empty registry)
 
-  func test_deserialize_nestedFieldWithoutRegistry_throwsNestedMessageDescriptorNotFound() throws {
+  func test_deserialize_nestedFieldWithoutRegistry_throwsNestedMessageDescriptorNotFound() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let json: [String: Any] = ["search_filters": ["title": "test"]]
-    XCTAssertThrowsError(try deserializer.deserializeFromJSONObject(json, using: requestDesc)) { error in
+    do {
+      try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       guard case JSONDeserializationError.nestedMessageDescriptorNotFound = error else {
         XCTFail("Expected nestedMessageDescriptorNotFound, got \(error)")
         return
@@ -368,7 +390,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
 
   // MARK: - Group 7.7 — Regressions
 
-  func test_deserialize_flatMessage_unchanged() throws {
+  func test_deserialize_flatMessage_unchanged() async throws {
     let msgProto = makeMessageProto(
       name: "Flat",
       fields: [makeFieldProto(name: "name", number: 1, type: .string)]
@@ -377,11 +399,11 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let fd = try bridge.fromProtobufFileDescriptor(fileProto)
     let flatDesc = fd.messages["Flat"]!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let result = try deserializer.deserializeFromJSONObject(["name": "hello"], using: flatDesc)
+    let result = try await deserializer.deserializeFromJSONObject(["name": "hello"], using: flatDesc)
     XCTAssertEqual(try result.get(forField: "name") as? String, "hello")
   }
 
-  func test_deserialize_allScalarTypes_unchanged() throws {
+  func test_deserialize_allScalarTypes_unchanged() async throws {
     let fields = [
       makeFieldProto(name: "b", number: 1, type: .bool),
       makeFieldProto(name: "i", number: 2, type: .int32),
@@ -393,33 +415,33 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let scalarDesc = fd.messages["Scalars"]!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let json: [String: Any] = ["b": true, "i": 42, "s": "hello"]
-    let result = try deserializer.deserializeFromJSONObject(json, using: scalarDesc)
+    let result = try await deserializer.deserializeFromJSONObject(json, using: scalarDesc)
     XCTAssertEqual(try result.get(forField: "b") as? Bool, true)
     XCTAssertEqual(try result.get(forField: "i") as? Int32, 42)
     XCTAssertEqual(try result.get(forField: "s") as? String, "hello")
   }
 
-  func test_deserialize_repeatedScalarField_unchanged() throws {
+  func test_deserialize_repeatedScalarField_unchanged() async throws {
     let field = makeFieldProto(name: "nums", number: 1, type: .int32, label: .repeated)
     let msgProto = makeMessageProto(name: "Msg", fields: [field])
     let fileProto = makeFileProto(name: "t.proto", package: "pkg", messages: [msgProto])
     let fd = try bridge.fromProtobufFileDescriptor(fileProto)
     let msgDesc = fd.messages["Msg"]!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let result = try deserializer.deserializeFromJSONObject(["nums": [1, 2, 3]], using: msgDesc)
+    let result = try await deserializer.deserializeFromJSONObject(["nums": [1, 2, 3]], using: msgDesc)
     XCTAssertNotNil(try result.get(forField: "nums"))
   }
 
-  func test_deserialize_emptyMessage_unchanged() throws {
+  func test_deserialize_emptyMessage_unchanged() async throws {
     let msgProto = makeMessageProto(name: "Empty")
     let fileProto = makeFileProto(name: "t.proto", package: "pkg", messages: [msgProto])
     let fd = try bridge.fromProtobufFileDescriptor(fileProto)
     let msgDesc = fd.messages["Empty"]!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    XCTAssertNoThrow(try deserializer.deserializeFromJSONObject([:], using: msgDesc))
+    try await deserializer.deserializeFromJSONObject([:], using: msgDesc)
   }
 
-  func test_deserialize_nestedMessageWithAllScalarTypes_allFieldsCorrect() throws {
+  func test_deserialize_nestedMessageWithAllScalarTypes_allFieldsCorrect() async throws {
     let innerFields = [
       makeFieldProto(name: "name", number: 1, type: .string),
       makeFieldProto(name: "count", number: 2, type: .int32),
@@ -433,12 +455,12 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     )
     let outerMsg = makeMessageProto(name: "Outer", fields: [outerField], nestedMessages: [innerMsg])
     let fileProto = makeFileProto(name: "t.proto", package: "pkg", messages: [outerMsg])
-    let registry = try makeRegistry(from: fileProto)
+    let registry = try await makeRegistry(from: fileProto)
     let fd = try bridge.fromProtobufFileDescriptor(fileProto)
     let outerDesc = fd.messages["Outer"]!
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["inner": ["name": "hello", "count": 5]]
-    let result = try deserializer.deserializeFromJSONObject(json, using: outerDesc)
+    let result = try await deserializer.deserializeFromJSONObject(json, using: outerDesc)
     if let inner = try result.get(forField: "inner") as? DynamicMessage {
       XCTAssertEqual(try inner.get(forField: "name") as? String, "hello")
       XCTAssertEqual(try inner.get(forField: "count") as? Int32, 5)
@@ -448,7 +470,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     }
   }
 
-  func test_deserialize_proto2MessageWithNestedField_succeeds() throws {
+  func test_deserialize_proto2MessageWithNestedField_succeeds() async throws {
     let innerMsg = makeMessageProto(
       name: "Inner",
       fields: [makeFieldProto(name: "val", number: 1, type: .string)]
@@ -470,17 +492,15 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
       syntax: "proto2",
       messages: [outerMsg]
     )
-    let registry = try makeRegistry(from: fileProto)
+    let registry = try await makeRegistry(from: fileProto)
     let fd = try bridge.fromProtobufFileDescriptor(fileProto)
     let outerDesc = fd.messages["Outer"]!
     let deserializer = makeDeserializer(registry: registry)
-    XCTAssertNoThrow(
-      try deserializer.deserializeFromJSONObject(["inner": ["val": "x"]], using: outerDesc)
-    )
+    try await deserializer.deserializeFromJSONObject(["inner": ["val": "x"]], using: outerDesc)
   }
 
-  func test_deserialize_mixedNestedAndScalarFields_allDeserialized() throws {
-    let registry = try makeRegistry(from: adsRequestFileProto)
+  func test_deserialize_mixedNestedAndScalarFields_allDeserialized() async throws {
+    let registry = try await makeRegistry(from: adsRequestFileProto)
     let fd = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = makeDeserializer(registry: registry)
@@ -488,20 +508,24 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
       "search_filters": ["title": "hello"],
       "limit": 42,
     ]
-    let result = try deserializer.deserializeFromJSONObject(json, using: requestDesc)
+    let result = try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
     XCTAssertNotNil(try result.get(forField: "search_filters"))
     XCTAssertEqual(try result.get(forField: "limit") as? Int32, 42)
   }
 
   // MARK: - Group 7.2 addendum — error contains fieldName and qualified typeName
 
-  func test_deserialize_errorContainsFieldNameAndQualifiedTypeName() throws {
+  func test_deserialize_errorContainsFieldNameAndQualifiedTypeName() async throws {
     let fd = try bridge.fromProtobufFileDescriptor(adsRequestFileProto)
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let emptyRegistry = TypeRegistry()
     let deserializer = makeDeserializer(registry: emptyRegistry)
     let json: [String: Any] = ["search_filters": ["title": "test"]]
-    XCTAssertThrowsError(try deserializer.deserializeFromJSONObject(json, using: requestDesc)) { error in
+    do {
+      try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if case JSONDeserializationError.nestedMessageDescriptorNotFound(
         let fieldName,
         let typeName
@@ -517,7 +541,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
 
   // MARK: - Group 7.6 — Oneof with nested message type
 
-  func test_deserialize_oneofContainingNestedMessageType_succeeds() throws {
+  func test_deserialize_oneofContainingNestedMessageType_succeeds() async throws {
     // Build: Wrapper { oneof payload { NestedMsg msg = 1; } }
     let innerMsg = makeMessageProto(
       name: "Inner",
@@ -535,7 +559,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
       nestedMessages: [innerMsg]
     )
     let fileProto = makeFileProto(name: "t.proto", package: "pkg", messages: [wrapperMsg])
-    let registry = try makeRegistry(from: fileProto)
+    let registry = try await makeRegistry(from: fileProto)
     let fd = try bridge.fromProtobufFileDescriptor(fileProto)
     var wrapperDesc = fd.messages["Wrapper"]!
     // Attach a oneofDecl so the field has a oneofIndex
@@ -552,12 +576,12 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
 
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["msg": ["val": "hello"]]
-    XCTAssertNoThrow(try deserializer.deserializeFromJSONObject(json, using: wrapperDesc))
+    try await deserializer.deserializeFromJSONObject(json, using: wrapperDesc)
   }
 
   // MARK: - Group 7.7 addendum — regression tests for map and enum fields
 
-  func test_deserialize_mapField_unchanged() throws {
+  func test_deserialize_mapField_unchanged() async throws {
     // map<string, int32> — verifies map deserialization not broken by nested type changes
     let keyInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
@@ -574,12 +598,12 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     msgDesc.addField(mapField)
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let json: [String: Any] = ["scores": ["alice": 10, "bob": 20]]
-    let result = try deserializer.deserializeFromJSONObject(json, using: msgDesc)
+    let result = try await deserializer.deserializeFromJSONObject(json, using: msgDesc)
     let scores = try result.get(forField: "scores") as? [AnyHashable: Any]
     XCTAssertEqual(scores?.count, 2)
   }
 
-  func test_deserialize_topLevelEnumField_unchanged() throws {
+  func test_deserialize_topLevelEnumField_unchanged() async throws {
     // Enum field (not nested): verifies top-level enum handling unchanged
     var statusEnum = EnumDescriptor(name: "Status")
     statusEnum.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0))
@@ -588,11 +612,11 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     msgDesc.addField(FieldDescriptor(name: "status", number: 1, type: .int32))
     msgDesc.addNestedEnum(statusEnum)
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let result = try deserializer.deserializeFromJSONObject(["status": 1], using: msgDesc)
+    let result = try await deserializer.deserializeFromJSONObject(["status": 1], using: msgDesc)
     XCTAssertEqual(try result.get(forField: "status") as? Int32, 1)
   }
 
-  func test_deserialize_messageWithMapFieldWhereValueIsNestedMessage_succeeds() throws {
+  func test_deserialize_messageWithMapFieldWhereValueIsNestedMessage_succeeds() async throws {
     // map<string, NestedMsg> — value is a nested message type
     let innerMsg = makeMessageProto(
       name: "Inner",
@@ -600,7 +624,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     )
     let outerMsg = makeMessageProto(name: "Outer", nestedMessages: [innerMsg])
     let fileProto = makeFileProto(name: "t.proto", package: "pkg", messages: [outerMsg])
-    let registry = try makeRegistry(from: fileProto)
+    let registry = try await makeRegistry(from: fileProto)
     let fd = try bridge.fromProtobufFileDescriptor(fileProto)
     let outerDesc = fd.messages["Outer"]!
 
@@ -625,6 +649,6 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
 
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["items": ["k1": ["val": "hello"]]]
-    XCTAssertNoThrow(try deserializer.deserializeFromJSONObject(json, using: outerWithMap))
+    try await deserializer.deserializeFromJSONObject(json, using: outerWithMap)
   }
 }

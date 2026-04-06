@@ -35,19 +35,19 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
   private var registry: TypeRegistry!
   private let serializer = BinaryCompatHelpers.makeSerializer()
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Test 1: Unicode strings (all scripts) survive binary round-trip
 
-  func test_edge_unicode_allScripts_bidirectional() throws {
+  func test_edge_unicode_allScripts_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
     // Covers CJK, Cyrillic, Arabic, emoji, control chars — all valid UTF-8 sequences.
     let unicodeStr =
@@ -56,7 +56,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     var proto = Testcompat_ScalarMessage()
     proto.stringField = unicodeStr
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -72,14 +72,14 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 2: Empty strings in repeated field (unpacked length-delimited)
 
-  func test_edge_emptyString_inRepeated_bidirectional() throws {
+  func test_edge_emptyString_inRepeated_bidirectional() async throws {
     let desc = CompatDescriptors.repeatedAllTypes()
     let strings: [String] = ["", "a", "", "b", ""]
 
     var proto = Testcompat_RepeatedAllTypes()
     proto.repString = strings
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -98,7 +98,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 3: Empty bytes omitted in proto3; Data([0x00]) IS serialized
 
-  func test_edge_emptyBytes_omittedInProto3() throws {
+  func test_edge_emptyBytes_omittedInProto3() async throws {
     let desc = CompatDescriptors.scalarMessage()
 
     // Oracle: swift-protobuf omits bytes_field when unset (proto3 default = Data())
@@ -111,8 +111,9 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
     // Direction B: DynamicMessage with bytes_field not set → empty wire output
     let unsetDynamic = DynamicMessage(descriptor: desc)
+    let _asyncResult26 = try await serializer.serialize(unsetDynamic)
     XCTAssertEqual(
-      try serializer.serialize(unsetDynamic),
+      _asyncResult26,
       Data(),
       "BinarySerializer must omit unset bytes_field in proto3"
     )
@@ -127,21 +128,19 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
     var dynamicWithNull = DynamicMessage(descriptor: desc)
     try dynamicWithNull.set(Data([0x00]), forField: 15)
-    XCTAssertFalse(
-      try serializer.serialize(dynamicWithNull).isEmpty,
-      "BinarySerializer must serialize Data([0x00]) for bytes_field"
-    )
+    let _asyncResult27 = try await serializer.serialize(dynamicWithNull).isEmpty
+    XCTAssertFalse(_asyncResult27, "BinarySerializer must serialize Data([0x00]) for bytes_field")
   }
 
   // MARK: - Test 4: Data([0x00]) (null byte) round-trips correctly
 
-  func test_edge_nonEmptyBytes_bidirectional() throws {
+  func test_edge_nonEmptyBytes_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
 
     var proto = Testcompat_ScalarMessage()
     proto.bytesField = Data([0x00])
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -157,13 +156,13 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 5: Int64.max as 9-byte varint
 
-  func test_edge_int64Max_varintEncoding_bidirectional() throws {
+  func test_edge_int64Max_varintEncoding_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
 
     var proto = Testcompat_ScalarMessage()
     proto.int64Field = Int64.max
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -179,13 +178,13 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 6: Int64.min as 10-byte two's-complement varint
 
-  func test_edge_int64Min_varintEncoding_bidirectional() throws {
+  func test_edge_int64Min_varintEncoding_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
 
     var proto = Testcompat_ScalarMessage()
     proto.int64Field = Int64.min
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -201,13 +200,13 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 7: UInt64.max as 10-byte varint
 
-  func test_edge_uint64Max_varintEncoding_bidirectional() throws {
+  func test_edge_uint64Max_varintEncoding_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
 
     var proto = Testcompat_ScalarMessage()
     proto.uint64Field = UInt64.max
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -223,7 +222,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 8: Zero int64 omitted in proto3 (Direction A + B)
 
-  func test_edge_zeroInt64_omittedInProto3() throws {
+  func test_edge_zeroInt64_omittedInProto3() async throws {
     let desc = CompatDescriptors.scalarMessage()
 
     // Direction A: swift-protobuf produces empty bytes for int64_field = 0 (proto3 default)
@@ -232,7 +231,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     XCTAssertEqual(referenceData, Data(), "swift-protobuf must produce empty bytes for int64_field=0 in proto3")
 
     // Deserialize empty data → field 4 must not be present
-    let dynamic = try BinaryCompatHelpers.makeDeserializer(registry: registry)
+    let dynamic = try await BinaryCompatHelpers.makeDeserializer(registry: registry)
       .deserialize(referenceData, using: desc)
     XCTAssertFalse(
       try dynamic.hasValue(forField: 4),
@@ -241,8 +240,9 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
     // Direction B: DynamicMessage without int64_field set → empty wire output
     let unsetDynamic = DynamicMessage(descriptor: desc)
+    let _asyncResult28 = try await serializer.serialize(unsetDynamic)
     XCTAssertEqual(
-      try serializer.serialize(unsetDynamic),
+      _asyncResult28,
       Data(),
       "BinarySerializer must omit unset int64_field in proto3"
     )
@@ -250,13 +250,13 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 9: Optional int64 = 0 IS serialized (explicit presence semantics)
 
-  func test_edge_optionalInt64_zero_serialized() throws {
+  func test_edge_optionalInt64_zero_serialized() async throws {
     let desc = CompatDescriptors.optionalScalarMessage()
 
     var proto = Testcompat_OptionalScalarMessage()
     proto.optInt64 = 0  // proto3 optional field explicitly set to zero — must appear in wire format
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -281,13 +281,13 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 10: Float NaN, +Infinity, -Infinity as 4-byte IEEE 754
 
-  func test_edge_nanInfinity_float_bidirectional() throws {
+  func test_edge_nanInfinity_float_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
 
     // NaN — must use .isNaN because NaN != NaN
     var nanProto = Testcompat_ScalarMessage()
     nanProto.floatField = Float.nan
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: nanProto,
       descriptor: desc,
       registry: registry,
@@ -306,7 +306,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     // +Infinity
     var infProto = Testcompat_ScalarMessage()
     infProto.floatField = Float.infinity
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: infProto,
       descriptor: desc,
       registry: registry,
@@ -322,7 +322,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     // -Infinity
     var negInfProto = Testcompat_ScalarMessage()
     negInfProto.floatField = -Float.infinity
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: negInfProto,
       descriptor: desc,
       registry: registry,
@@ -338,13 +338,13 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 11: Double NaN, +Infinity, -Infinity as 8-byte IEEE 754
 
-  func test_edge_nanInfinity_double_bidirectional() throws {
+  func test_edge_nanInfinity_double_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
 
     // NaN — must use .isNaN because NaN != NaN
     var nanProto = Testcompat_ScalarMessage()
     nanProto.doubleField = Double.nan
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: nanProto,
       descriptor: desc,
       registry: registry,
@@ -363,7 +363,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     // +Infinity
     var infProto = Testcompat_ScalarMessage()
     infProto.doubleField = Double.infinity
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: infProto,
       descriptor: desc,
       registry: registry,
@@ -379,7 +379,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     // -Infinity
     var negInfProto = Testcompat_ScalarMessage()
     negInfProto.doubleField = -Double.infinity
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: negInfProto,
       descriptor: desc,
       registry: registry,
@@ -395,7 +395,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 12: Empty message produces Data() (zero bytes)
 
-  func test_edge_emptyMessage_producesEmptyData() throws {
+  func test_edge_emptyMessage_producesEmptyData() async throws {
     let desc = CompatDescriptors.emptyCustom()
 
     // Oracle: EmptyCustom serializes to empty Data
@@ -408,8 +408,9 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
     // Direction B: DynamicMessage with EmptyCustom descriptor → empty wire output
     let dynamic = DynamicMessage(descriptor: desc)
+    let _asyncResult29 = try await serializer.serialize(dynamic)
     XCTAssertEqual(
-      try serializer.serialize(dynamic),
+      _asyncResult29,
       Data(),
       "BinarySerializer must produce empty bytes for EmptyCustom"
     )
@@ -417,11 +418,11 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 13: Empty message round-trip
 
-  func test_edge_emptyMessage_roundTrip_bidirectional() throws {
+  func test_edge_emptyMessage_roundTrip_bidirectional() async throws {
     let desc = CompatDescriptors.emptyCustom()
     let proto = Testcompat_EmptyCustom()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -437,7 +438,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 14: WideMessage (50+ fields) with subset set — bidirectional
 
-  func test_edge_wideMessage_50plusFields_bidirectional() throws {
+  func test_edge_wideMessage_50plusFields_bidirectional() async throws {
     let desc = CompatDescriptors.wideMessage()
 
     // Field number mapping (from wideMessage() descriptor):
@@ -457,7 +458,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     proto.fl1 = 1.5  // exactly representable in IEEE 754
     proto.fl2 = 2.5
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -501,13 +502,13 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 15: Single-element repeated int32 (packed encoding)
 
-  func test_edge_repeatedSingleElement_bidirectional() throws {
+  func test_edge_repeatedSingleElement_bidirectional() async throws {
     let desc = CompatDescriptors.repeatedAllTypes()
 
     var proto = Testcompat_RepeatedAllTypes()
     proto.repInt32 = [42]
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -526,7 +527,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 16: Map with single entry bidirectional
 
-  func test_edge_mapSingleEntry_bidirectional() throws {
+  func test_edge_mapSingleEntry_bidirectional() async throws {
     let desc = CompatDescriptors.mapAllKeyTypes()
 
     var proto = Testcompat_MapAllKeyTypes()
@@ -534,7 +535,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
     // Direction A: oracle → our deserializer
     let referenceData = try proto.serializedData()
-    let dynamic = try BinaryCompatHelpers.makeDeserializer(registry: registry)
+    let dynamic = try await BinaryCompatHelpers.makeDeserializer(registry: registry)
       .deserialize(referenceData, using: desc)
     let map = try XCTUnwrap(try dynamic.get(forField: 1) as? [AnyHashable: Any])
     XCTAssertEqual(map.count, 1, "Map must contain exactly one entry")
@@ -543,14 +544,14 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     // Direction B: our serializer → oracle
     var d = DynamicMessage(descriptor: desc)
     try d.setMapEntry("one", forKey: "only", inField: 1)
-    let ourData = try serializer.serialize(d)
+    let ourData = try await serializer.serialize(d)
     let decoded = try Testcompat_MapAllKeyTypes(serializedBytes: ourData)
     XCTAssertEqual(decoded.mapStringString, ["only": "one"])
   }
 
   // MARK: - Test 17: Unknown fields preserved in binary (Direction A)
 
-  func test_edge_unknownFields_preserved_directionA() throws {
+  func test_edge_unknownFields_preserved_directionA() async throws {
     let desc = CompatDescriptors.scalarMessage()
 
     // Crafted binary bytes containing:
@@ -561,7 +562,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     let craftedBytes = Data([0x18, 0x64, 0xB8, 0x3E, 0x07])
 
     // Deserialize — known field must be read correctly despite unknown field 999
-    let dynamic = try BinaryCompatHelpers.makeDeserializer(registry: registry)
+    let dynamic = try await BinaryCompatHelpers.makeDeserializer(registry: registry)
       .deserialize(craftedBytes, using: desc)
     XCTAssertEqual(
       try dynamic.get(forField: 3) as? Int32,
@@ -570,7 +571,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     )
 
     // Re-serialize — known field must survive; round-trip via oracle confirms correctness
-    let reserializedData = try serializer.serialize(dynamic)
+    let reserializedData = try await serializer.serialize(dynamic)
     let reparsed = try Testcompat_ScalarMessage(serializedBytes: reserializedData)
     XCTAssertEqual(
       reparsed.int32Field,
@@ -581,14 +582,14 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 18: Very long string (10 KB) — multi-byte varint length prefix
 
-  func test_edge_veryLongString_10KB_bidirectional() throws {
+  func test_edge_veryLongString_10KB_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
     let longString = String(repeating: "a", count: 10_000)
 
     var proto = Testcompat_ScalarMessage()
     proto.stringField = longString
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -604,14 +605,14 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 19: Very large bytes (10 KB) — multi-byte varint length prefix
 
-  func test_edge_veryLargeBytes_10KB_bidirectional() throws {
+  func test_edge_veryLargeBytes_10KB_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
     let largeBytes = Data(repeating: 0xAB, count: 10_000)
 
     var proto = Testcompat_ScalarMessage()
     proto.bytesField = largeBytes
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -627,7 +628,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 20: String with embedded null byte round-trips as raw UTF-8
 
-  func test_edge_stringWithNullByte_bidirectional() throws {
+  func test_edge_stringWithNullByte_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
     // U+0000 is a valid Unicode codepoint; binary serialization writes raw UTF-8 bytes (0x00).
     let nullByteString = "\u{0000}null\u{0000}"
@@ -635,7 +636,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     var proto = Testcompat_ScalarMessage()
     proto.stringField = nullByteString
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -651,7 +652,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 21: String with control characters (no binary escaping needed)
 
-  func test_edge_stringWithControlChars_bidirectional() throws {
+  func test_edge_stringWithControlChars_bidirectional() async throws {
     let desc = CompatDescriptors.scalarMessage()
     // Control chars \u{0001}, \u{001F}, \u{007F} are valid UTF-8; binary has no escaping concern.
     let controlString = "\u{0001}start\u{001F}middle\u{007F}end"
@@ -659,7 +660,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     var proto = Testcompat_ScalarMessage()
     proto.stringField = controlString
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -675,7 +676,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 22: Nested1 with name set, child absent — wire has only name tag+value
 
-  func test_edge_deeplyNested_emptyLeaf_bidirectional() throws {
+  func test_edge_deeplyNested_emptyLeaf_bidirectional() async throws {
     let desc = CompatDescriptors.nested1()
 
     // Nested1 descriptor: child (field 1, message Nested2), name (field 2, string)
@@ -683,7 +684,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     var proto = Testcompat_Nested1()
     proto.name = "top"
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -708,7 +709,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
   // MARK: - Test 23: Int32.max encodes as exactly 5 varint bytes (Direction B)
 
-  func test_edge_int32Max_varintEncoding_exactBytes() throws {
+  func test_edge_int32Max_varintEncoding_exactBytes() async throws {
     // Int32.max = 2147483647 = 0x7FFFFFFF
     // Varint encoding (5 bytes): 0xFF 0xFF 0xFF 0xFF 0x07
     // Field 3 (int32_field), wire type 0: tag = (3 << 3) | 0 = 0x18
@@ -728,8 +729,9 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     let desc = CompatDescriptors.scalarMessage()
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32.max, forField: 3)
+    let _asyncResult30 = try await serializer.serialize(dynamic)
     XCTAssertEqual(
-      try serializer.serialize(dynamic),
+      _asyncResult30,
       expectedBytes,
       "BinarySerializer must encode Int32.max as tag 0x18 + exactly 5 varint bytes"
     )

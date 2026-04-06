@@ -13,7 +13,7 @@ final class StructHandlerTests: XCTestCase {
 
   // MARK: - StructValue Tests
 
-  func testStructValueInitialization() {
+  func testStructValueInitialization() async throws {
     // Empty struct
     let emptyStruct = StructHandler.StructValue()
     XCTAssertTrue(emptyStruct.fields.isEmpty)
@@ -30,7 +30,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertEqual(structValue.getValue("name"), .stringValue("John"))
   }
 
-  func testStructValueFromDictionary() throws {
+  func testStructValueFromDictionary() async throws {
     let dictionary: [String: Any] = [
       "name": "John",
       "age": 30,
@@ -67,7 +67,7 @@ final class StructHandlerTests: XCTestCase {
     }
   }
 
-  func testStructValueOperations() {
+  func testStructValueOperations() async throws {
     let original = StructHandler.StructValue(fields: [
       "name": .stringValue("John"),
       "age": .numberValue(30),
@@ -100,7 +100,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertEqual(merged.getValue("city"), .stringValue("New York"))
   }
 
-  func testStructValueToDictionary() {
+  func testStructValueToDictionary() async throws {
     let structValue = StructHandler.StructValue(fields: [
       "name": .stringValue("John"),
       "age": .numberValue(30),
@@ -124,7 +124,7 @@ final class StructHandlerTests: XCTestCase {
 
   // MARK: - ValueValue Tests
 
-  func testValueValueFromBasicTypes() throws {
+  func testValueValueFromBasicTypes() async throws {
     // Null
     let nullValue = try StructHandler.ValueValue(from: NSNull())
     XCTAssertEqual(nullValue, .nullValue)
@@ -145,7 +145,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertEqual(doubleValue, .numberValue(3.14))
   }
 
-  func testValueValueFromCollections() throws {
+  func testValueValueFromCollections() async throws {
     // Array
     let arrayValue = try StructHandler.ValueValue(from: ["hello", 42, true])
     if case .listValue(let list) = arrayValue {
@@ -169,7 +169,7 @@ final class StructHandlerTests: XCTestCase {
     }
   }
 
-  func testValueValueToAny() {
+  func testValueValueToAny() async throws {
     let nullValue = StructHandler.ValueValue.nullValue
     XCTAssertTrue(nullValue.toAny() is NSNull)
 
@@ -189,7 +189,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertEqual(list?[1] as? Double, 1.0)
   }
 
-  func testValueValueDescription() {
+  func testValueValueDescription() async throws {
     XCTAssertEqual(StructHandler.ValueValue.nullValue.description, "null")
     XCTAssertEqual(StructHandler.ValueValue.stringValue("hello").description, "\"hello\"")
     XCTAssertEqual(StructHandler.ValueValue.boolValue(true).description, "true")
@@ -199,7 +199,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertEqual(listValue.description, "[\"a\", 1.0]")
   }
 
-  func testValueValueUnsupportedType() {
+  func testValueValueUnsupportedType() async throws {
     // Custom class should fail
     class CustomClass {}
     let customObject = CustomClass()
@@ -217,12 +217,12 @@ final class StructHandlerTests: XCTestCase {
 
   // MARK: - Handler Implementation Tests
 
-  func testHandlerBasicProperties() {
+  func testHandlerBasicProperties() async throws {
     XCTAssertEqual(StructHandler.handledTypeName, "google.protobuf.Struct")
     XCTAssertEqual(StructHandler.supportPhase, .important)
   }
 
-  func testCreateSpecializedFromMessage() throws {
+  func testCreateSpecializedFromMessage() async throws {
     let structMessage = try createStructMessage(fields: [
       "name": "John",
       "age": 30,
@@ -242,7 +242,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertEqual(structValue.getValue("active"), .boolValue(true))
   }
 
-  func testCreateSpecializedFromEmptyMessage() throws {
+  func testCreateSpecializedFromEmptyMessage() async throws {
     let emptyMessage = try createStructMessage(fields: [:])
 
     let specialized = try StructHandler.createSpecialized(from: emptyMessage)
@@ -255,7 +255,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertTrue(structValue.fields.isEmpty)
   }
 
-  func testCreateSpecializedFromInvalidMessage() throws {
+  func testCreateSpecializedFromInvalidMessage() async throws {
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "NotStruct", parent: fileDescriptor)
     fileDescriptor.addMessage(messageDescriptor)
@@ -272,7 +272,7 @@ final class StructHandlerTests: XCTestCase {
     }
   }
 
-  func testCreateDynamicFromSpecialized() throws {
+  func testCreateDynamicFromSpecialized() async throws {
     let structValue = try StructHandler.StructValue(from: [
       "name": "John",
       "age": 30,
@@ -297,7 +297,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertEqual(try dynamicMessageToValueValue(activeMsg), .boolValue(true))
   }
 
-  func testCreateDynamicFromInvalidSpecialized() throws {
+  func testCreateDynamicFromInvalidSpecialized() async throws {
     let wrongSpecialized = "not a struct"
 
     XCTAssertThrowsError(try StructHandler.createDynamic(from: wrongSpecialized)) { error in
@@ -310,7 +310,7 @@ final class StructHandlerTests: XCTestCase {
     }
   }
 
-  func testValidate() {
+  func testValidate() async throws {
     let validStruct = StructHandler.StructValue()
     XCTAssertTrue(StructHandler.validate(validStruct))
 
@@ -320,7 +320,7 @@ final class StructHandlerTests: XCTestCase {
 
   // MARK: - Round-trip Tests
 
-  func testRoundTripConversion() throws {
+  func testRoundTripConversion() async throws {
     let originalDict: [String: Any] = [
       "name": "John",
       "age": 30,
@@ -354,7 +354,7 @@ final class StructHandlerTests: XCTestCase {
 
   // MARK: - Registry Integration Tests
 
-  func testRegistryIntegration() throws {
+  func testRegistryIntegration() async throws {
     let registry = WellKnownTypesRegistry.shared
 
     // Verify StructHandler is registered
@@ -379,7 +379,7 @@ final class StructHandlerTests: XCTestCase {
 
   // MARK: - Convenience Extensions Tests
 
-  func testDictionaryExtensions() throws {
+  func testDictionaryExtensions() async throws {
     let dictionary = ["name": "John", "age": 30] as [String: Any]
     let structValue = try dictionary.toStructValue()
 
@@ -387,7 +387,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertEqual(structValue.getValue("age"), .numberValue(30.0))
   }
 
-  func testDynamicMessageExtensions() throws {
+  func testDynamicMessageExtensions() async throws {
     // Test structMessage creation
     let fields = ["name": "John", "age": 30] as [String: Any]
     let message = try DynamicMessage.structMessage(from: fields)
@@ -417,7 +417,7 @@ final class StructHandlerTests: XCTestCase {
 
   // MARK: - Complex Nested Structure Tests
 
-  func testComplexNestedStructure() throws {
+  func testComplexNestedStructure() async throws {
     let complexDict: [String: Any] = [
       "user": [
         "name": "John Doe",
@@ -495,14 +495,14 @@ final class StructHandlerTests: XCTestCase {
 
   // MARK: - Additional Coverage Tests
 
-  func testStructValueEmptyCreation() {
+  func testStructValueEmptyCreation() async throws {
     // Test empty() static method
     let emptyStruct = StructHandler.StructValue.empty()
     XCTAssertEqual(emptyStruct.fields.count, 0)
     XCTAssertEqual(emptyStruct, StructHandler.StructValue())
   }
 
-  func testStructValueDescription() {
+  func testStructValueDescription() async throws {
     // Test description for empty struct
     let emptyStruct = StructHandler.StructValue.empty()
     let emptyDescription = emptyStruct.description
@@ -521,7 +521,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertTrue(description.contains("active"))
   }
 
-  func testValueValueDescriptionForStructValue() {
+  func testValueValueDescriptionForStructValue() async throws {
     // Test ValueValue description when it contains a struct
     let structValue = StructHandler.StructValue(fields: [
       "key": .stringValue("value")
@@ -531,7 +531,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertTrue(description.contains("Struct"))
   }
 
-  func testValueValueFromNumericTypes() throws {
+  func testValueValueFromNumericTypes() async throws {
     // Test all numeric type conversions that are currently uncovered
 
     // Bool
@@ -571,7 +571,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertEqual(doubleValue, .numberValue(2.718))
   }
 
-  func testCreateSpecializedWithInvalidFieldsData() throws {
+  func testCreateSpecializedWithInvalidFieldsData() async throws {
     // With the new map-based wire format the handler rejects messages whose
     // descriptor fullName doesn't match "google.protobuf.Struct".
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
@@ -590,7 +590,7 @@ final class StructHandlerTests: XCTestCase {
     }
   }
 
-  func testCreateSpecializedWithEmptyFieldsData() throws {
+  func testCreateSpecializedWithEmptyFieldsData() async throws {
     // A Struct message with no map entries produces an empty StructValue.
     let message = DynamicMessage(descriptor: StructProtoDescriptors.structDescriptor)
 
@@ -599,7 +599,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertTrue(structValue.fields.isEmpty)
   }
 
-  func testCreateSpecializedWithMissingFieldsData() throws {
+  func testCreateSpecializedWithMissingFieldsData() async throws {
     // Create a Struct message without setting fields
     let structDescriptor = try createTestStructDescriptor()
     let factory = MessageFactory()
@@ -611,7 +611,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertEqual(structValue.fields.count, 0)
   }
 
-  func testCreateDynamicWithSerializationError() {
+  func testCreateDynamicWithSerializationError() async throws {
     // This test is tricky since JSONSerialization.data rarely fails with valid Swift objects
     // We'll test with a struct that contains a problematic value
 
@@ -637,7 +637,7 @@ final class StructHandlerTests: XCTestCase {
 
   // MARK: - OPE-263 / OPE-266: New wire-format tests
 
-  func test_createDynamic_struct_fieldIsMapNotBytes() throws {
+  func test_createDynamic_struct_fieldIsMapNotBytes() async throws {
     let structValue = StructHandler.StructValue(fields: [
       "alpha": .numberValue(1.5),
       "beta": .boolValue(true),
@@ -654,7 +654,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertNotNil(map?["beta"] as? DynamicMessage)
   }
 
-  func test_createDynamic_storesFieldsAsMapNotBytes() throws {
+  func test_createDynamic_storesFieldsAsMapNotBytes() async throws {
     let structValue = StructHandler.StructValue(fields: [
       "key": .stringValue("val"),
       "num": .numberValue(42),
@@ -670,7 +670,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertEqual(map?.count, 2)
   }
 
-  func test_createSpecialized_readsMapField() throws {
+  func test_createSpecialized_readsMapField() async throws {
     let original = StructHandler.StructValue(fields: [
       "x": .numberValue(1),
       "y": .stringValue("hello"),
@@ -687,7 +687,7 @@ final class StructHandlerTests: XCTestCase {
     XCTAssertEqual(structValue.getValue("flag"), .boolValue(false))
   }
 
-  func test_roundTrip_withNestedStructAndList_preservesAllFields() throws {
+  func test_roundTrip_withNestedStructAndList_preservesAllFields() async throws {
     let original = StructHandler.StructValue(fields: [
       "name": .stringValue("Alice"),
       "scores": .listValue([.numberValue(10), .numberValue(20)]),

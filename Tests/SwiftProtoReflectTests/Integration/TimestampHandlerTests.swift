@@ -14,7 +14,7 @@ final class TimestampHandlerTests: XCTestCase {
 
   // MARK: - TimestampValue Tests
 
-  func testTimestampValueInitialization() {
+  func testTimestampValueInitialization() async throws {
     // Valid initialization
     XCTAssertNoThrow(try TimestampHandler.TimestampValue(seconds: 1_234_567_890, nanos: 123_456_789))
     XCTAssertNoThrow(try TimestampHandler.TimestampValue(seconds: 0, nanos: 0))
@@ -38,7 +38,7 @@ final class TimestampHandlerTests: XCTestCase {
     }
   }
 
-  func testTimestampValueFromDate() {
+  func testTimestampValueFromDate() async throws {
     let date = Date(timeIntervalSince1970: 1234567890.123456789)
     let timestamp = TimestampHandler.TimestampValue(from: date)
 
@@ -47,7 +47,7 @@ final class TimestampHandlerTests: XCTestCase {
     XCTAssertTrue(abs(timestamp.nanos - 123_456_789) < 1000)  // Up to microsecond accuracy
   }
 
-  func testTimestampValueToDate() {
+  func testTimestampValueToDate() async throws {
     do {
       let timestamp = try TimestampHandler.TimestampValue(seconds: 1_234_567_890, nanos: 123_456_789)
       let date = timestamp.toDate()
@@ -60,7 +60,7 @@ final class TimestampHandlerTests: XCTestCase {
     }
   }
 
-  func testTimestampValueRoundTrip() {
+  func testTimestampValueRoundTrip() async throws {
     let originalDate = Date()
     let timestamp = TimestampHandler.TimestampValue(from: originalDate)
     let convertedDate = timestamp.toDate()
@@ -69,7 +69,7 @@ final class TimestampHandlerTests: XCTestCase {
     XCTAssertEqual(originalDate.timeIntervalSince1970, convertedDate.timeIntervalSince1970, accuracy: 0.001)
   }
 
-  func testTimestampValueNow() {
+  func testTimestampValueNow() async throws {
     let now = TimestampHandler.TimestampValue.now()
     let currentTime = Date().timeIntervalSince1970
     let timestampTime = now.toDate().timeIntervalSince1970
@@ -78,7 +78,7 @@ final class TimestampHandlerTests: XCTestCase {
     XCTAssertEqual(currentTime, timestampTime, accuracy: 1.0)
   }
 
-  func testTimestampValueDescription() {
+  func testTimestampValueDescription() async throws {
     do {
       let timestamp = try TimestampHandler.TimestampValue(seconds: 1_234_567_890, nanos: 123_456_789)
       let description = timestamp.description
@@ -93,7 +93,7 @@ final class TimestampHandlerTests: XCTestCase {
     }
   }
 
-  func testTimestampValueEquality() {
+  func testTimestampValueEquality() async throws {
     do {
       let timestamp1 = try TimestampHandler.TimestampValue(seconds: 1_234_567_890, nanos: 123_456_789)
       let timestamp2 = try TimestampHandler.TimestampValue(seconds: 1_234_567_890, nanos: 123_456_789)
@@ -109,12 +109,12 @@ final class TimestampHandlerTests: XCTestCase {
 
   // MARK: - Handler Implementation Tests
 
-  func testHandlerBasicProperties() {
+  func testHandlerBasicProperties() async throws {
     XCTAssertEqual(TimestampHandler.handledTypeName, "google.protobuf.Timestamp")
     XCTAssertEqual(TimestampHandler.supportPhase, .critical)
   }
 
-  func testCreateSpecializedFromMessage() throws {
+  func testCreateSpecializedFromMessage() async throws {
     // Create timestamp message
     let timestampMessage = try createTimestampMessage(seconds: 1_234_567_890, nanos: 123_456_789)
 
@@ -130,7 +130,7 @@ final class TimestampHandlerTests: XCTestCase {
     XCTAssertEqual(timestamp.nanos, 123_456_789)
   }
 
-  func testCreateSpecializedFromMessageWithMissingFields() throws {
+  func testCreateSpecializedFromMessageWithMissingFields() async throws {
     // Create message with seconds only
     let timestampMessage = try createTimestampMessage(seconds: 1_234_567_890, nanos: nil)
 
@@ -145,7 +145,7 @@ final class TimestampHandlerTests: XCTestCase {
     XCTAssertEqual(timestamp.nanos, 0)  // Should be default value
   }
 
-  func testCreateSpecializedFromInvalidMessage() throws {
+  func testCreateSpecializedFromInvalidMessage() async throws {
     // Create message of wrong type
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "NotTimestamp", parent: fileDescriptor)
@@ -163,7 +163,7 @@ final class TimestampHandlerTests: XCTestCase {
     }
   }
 
-  func testCreateDynamicFromSpecialized() throws {
+  func testCreateDynamicFromSpecialized() async throws {
     let timestamp = try TimestampHandler.TimestampValue(seconds: 1_234_567_890, nanos: 123_456_789)
 
     let dynamicMessage = try TimestampHandler.createDynamic(from: timestamp)
@@ -177,7 +177,7 @@ final class TimestampHandlerTests: XCTestCase {
     XCTAssertEqual(nanos, 123_456_789)
   }
 
-  func testCreateDynamicFromInvalidSpecialized() throws {
+  func testCreateDynamicFromInvalidSpecialized() async throws {
     let wrongSpecialized = "not a timestamp"
 
     XCTAssertThrowsError(try TimestampHandler.createDynamic(from: wrongSpecialized)) { error in
@@ -190,7 +190,7 @@ final class TimestampHandlerTests: XCTestCase {
     }
   }
 
-  func testValidate() throws {
+  func testValidate() async throws {
     // Valid values
     let validTimestamp = try TimestampHandler.TimestampValue(seconds: 1_234_567_890, nanos: 123_456_789)
     XCTAssertTrue(TimestampHandler.validate(validTimestamp))
@@ -201,7 +201,7 @@ final class TimestampHandlerTests: XCTestCase {
     XCTAssertFalse(TimestampHandler.validate(Date()))
   }
 
-  func testRoundTripConversion() throws {
+  func testRoundTripConversion() async throws {
     let originalTimestamp = try TimestampHandler.TimestampValue(seconds: 1_234_567_890, nanos: 123_456_789)
 
     // Convert to dynamic message and back
@@ -218,7 +218,7 @@ final class TimestampHandlerTests: XCTestCase {
 
   // MARK: - Convenience Extensions Tests
 
-  func testDateExtensions() {
+  func testDateExtensions() async throws {
     let originalDate = Date(timeIntervalSince1970: 1234567890.123)
     let timestampValue = originalDate.toTimestampValue()
     let convertedDate = Date(from: timestampValue)
@@ -226,7 +226,7 @@ final class TimestampHandlerTests: XCTestCase {
     XCTAssertEqual(originalDate.timeIntervalSince1970, convertedDate.timeIntervalSince1970, accuracy: 0.001)
   }
 
-  func testDynamicMessageTimestampExtension() throws {
+  func testDynamicMessageTimestampExtension() async throws {
     let date = Date(timeIntervalSince1970: 1234567890.123)
 
     let timestampMessage = try DynamicMessage.timestampMessage(from: date)
@@ -236,7 +236,7 @@ final class TimestampHandlerTests: XCTestCase {
     XCTAssertEqual(date.timeIntervalSince1970, convertedDate.timeIntervalSince1970, accuracy: 0.001)
   }
 
-  func testDynamicMessageToDateWithInvalidMessage() throws {
+  func testDynamicMessageToDateWithInvalidMessage() async throws {
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "NotTimestamp", parent: fileDescriptor)
     fileDescriptor.addMessage(messageDescriptor)
@@ -254,7 +254,7 @@ final class TimestampHandlerTests: XCTestCase {
 
   // MARK: - Edge Cases Tests
 
-  func testExtremeTimestamps() throws {
+  func testExtremeTimestamps() async throws {
     // Unix epoch
     let epoch = try TimestampHandler.TimestampValue(seconds: 0, nanos: 0)
     XCTAssertEqual(epoch.toDate().timeIntervalSince1970, 0)
@@ -268,7 +268,7 @@ final class TimestampHandlerTests: XCTestCase {
     XCTAssertTrue(past.toDate().timeIntervalSince1970 < 0)
   }
 
-  func testMaxNanos() throws {
+  func testMaxNanos() async throws {
     // Test value that does not round up to the next whole second
     let timestamp = try TimestampHandler.TimestampValue(seconds: 1, nanos: 500_000_000)  // 1.5 seconds
     XCTAssertEqual(timestamp.nanos, 500_000_000)
@@ -290,7 +290,7 @@ final class TimestampHandlerTests: XCTestCase {
     )
   }
 
-  func testExtremeNanos() throws {
+  func testExtremeNanos() async throws {
     // Separate test for extreme nanosecond values
     // Maximum nanosecond value (999,999,999) can round to the next second
     let extremeTimestamp = try TimestampHandler.TimestampValue(seconds: 0, nanos: 999_999_999)
@@ -310,7 +310,7 @@ final class TimestampHandlerTests: XCTestCase {
 
   // MARK: - Performance Tests
 
-  func testConversionPerformance() {
+  func testConversionPerformance() async throws {
     let date = Date()
 
     measure {
@@ -321,7 +321,7 @@ final class TimestampHandlerTests: XCTestCase {
     }
   }
 
-  func testHandlerPerformance() throws {
+  func testHandlerPerformance() async throws {
     let timestampMessage = try createTimestampMessage(seconds: 1_234_567_890, nanos: 123_456_789)
 
     measure {

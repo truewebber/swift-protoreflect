@@ -28,7 +28,7 @@ final class BinarySerializationIntegrationTests: XCTestCase {
 
   // MARK: - E. Integration: End-to-End Binary
 
-  func test_e2e_fileDescriptorToRegistry_toBinaryDeserializer_succeedsRoundTrip() throws {
+  func test_e2e_fileDescriptorToRegistry_toBinaryDeserializer_succeedsRoundTrip() async throws {
     // Full pipeline: FileDescriptor → TypeRegistry → BinaryDeserializer.
     var descRequest = MessageDescriptor(name: "Request", fullName: "api.Request")
     descRequest.addField(FieldDescriptor(name: "query", number: 1, type: .string))
@@ -42,7 +42,7 @@ final class BinarySerializationIntegrationTests: XCTestCase {
     file.addMessage(descResponse)
 
     let registry = TypeRegistry()
-    try registry.registerFile(file)
+    try await registry.registerFile(file)
 
     // Build and serialise a Response containing a Request.
     var reqMsg = factory.createMessage(from: descRequest)
@@ -54,14 +54,14 @@ final class BinarySerializationIntegrationTests: XCTestCase {
 
     // Deserialise using the registry — must resolve api.Request.
     let deserializer = makeBinaryDeserializer(registry: registry)
-    let decoded = try deserializer.deserialize(data, using: descResponse)
+    let decoded = try await deserializer.deserialize(data, using: descResponse)
 
     XCTAssertEqual(try decoded.get(forField: "status") as? Int32, 200)
     let decodedReq = try XCTUnwrap(decoded.get(forField: "request") as? DynamicMessage)
     XCTAssertEqual(try decodedReq.get(forField: "query") as? String, "search")
   }
 
-  func test_e2e_binaryAndJsonDeserializersShareSameRegistry_produceIdenticalResult() throws {
+  func test_e2e_binaryAndJsonDeserializersShareSameRegistry_produceIdenticalResult() async throws {
     var descA = MessageDescriptor(name: "A", fullName: "shared.A")
     descA.addField(FieldDescriptor(name: "value", number: 1, type: .string))
 
@@ -69,8 +69,8 @@ final class BinarySerializationIntegrationTests: XCTestCase {
     descB.addField(FieldDescriptor(name: "a", number: 1, type: .message, typeName: "shared.A"))
 
     let registry = TypeRegistry()
-    try registry.registerMessage(descA)
-    try registry.registerMessage(descB)
+    try await registry.registerMessage(descA)
+    try await registry.registerMessage(descB)
 
     // Build the message.
     var msgA = factory.createMessage(from: descA)
@@ -82,19 +82,19 @@ final class BinarySerializationIntegrationTests: XCTestCase {
     let binaryData = try binarySerializer.serialize(msgB)
 
     // Serialise to JSON.
-    let jsonData = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serialize(msgB)
+    let jsonData = try await JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serialize(msgB)
     let jsonObject = try XCTUnwrap(
       try JSONSerialization.jsonObject(with: jsonData) as? [String: Any]
     )
 
     // Deserialise binary.
-    let binaryDecoded = try makeBinaryDeserializer(registry: registry).deserialize(
+    let binaryDecoded = try await makeBinaryDeserializer(registry: registry).deserialize(
       binaryData,
       using: descB
     )
 
     // Deserialise JSON.
-    let jsonDecoded = try makeJSONDeserializer(registry: registry).deserializeFromJSONObject(
+    let jsonDecoded = try await makeJSONDeserializer(registry: registry).deserializeFromJSONObject(
       jsonObject,
       using: descB
     )
@@ -107,7 +107,7 @@ final class BinarySerializationIntegrationTests: XCTestCase {
     XCTAssertEqual(try jsonA.get(forField: "value") as? String, "unified")
   }
 
-  func test_e2e_siblingMessagesWithEnum_fullRoundTrip() throws {
+  func test_e2e_siblingMessagesWithEnum_fullRoundTrip() async throws {
     var statusEnum = EnumDescriptor(name: "Status", fullName: "biz.Status")
     statusEnum.addValue(.init(name: "PENDING", number: 0))
     statusEnum.addValue(.init(name: "DONE", number: 1))
@@ -121,8 +121,8 @@ final class BinarySerializationIntegrationTests: XCTestCase {
     invoiceDesc.addField(FieldDescriptor(name: "total", number: 2, type: .double))
 
     let registry = TypeRegistry()
-    try registry.registerMessage(orderDesc)
-    try registry.registerMessage(invoiceDesc)
+    try await registry.registerMessage(orderDesc)
+    try await registry.registerMessage(invoiceDesc)
 
     var orderMsg = factory.createMessage(from: orderDesc)
     try orderMsg.set("order-123", forField: "id")
@@ -133,7 +133,7 @@ final class BinarySerializationIntegrationTests: XCTestCase {
     let data = try binarySerializer.serialize(invoiceMsg)
 
     let deserializer = makeBinaryDeserializer(registry: registry)
-    let decoded = try deserializer.deserialize(data, using: invoiceDesc)
+    let decoded = try await deserializer.deserialize(data, using: invoiceDesc)
 
     XCTAssertEqual(try decoded.get(forField: "total") as? Double, 99.99)
     let decodedOrder = try XCTUnwrap(decoded.get(forField: "order") as? DynamicMessage)
@@ -141,7 +141,7 @@ final class BinarySerializationIntegrationTests: XCTestCase {
     XCTAssertEqual(try decodedOrder.get(forField: "status") as? Int32, 1)
   }
 
-  func test_e2e_wellKnownTypes_valueListValue_binaryRoundTrip() throws {
+  func test_e2e_wellKnownTypes_valueListValue_binaryRoundTrip() async throws {
     // Simulates google.protobuf.Value / ListValue sibling relationship.
     var valueDesc = MessageDescriptor(name: "Value", fullName: "google.protobuf.Value")
     valueDesc.addField(FieldDescriptor(name: "string_value", number: 3, type: .string))
@@ -158,8 +158,8 @@ final class BinarySerializationIntegrationTests: XCTestCase {
     )
 
     let registry = TypeRegistry()
-    try registry.registerMessage(valueDesc)
-    try registry.registerMessage(listValueDesc)
+    try await registry.registerMessage(valueDesc)
+    try await registry.registerMessage(listValueDesc)
 
     // Serialise ListValue with two Value items (using lie for serialisation).
     var serListValueDesc = listValueDesc
@@ -175,7 +175,7 @@ final class BinarySerializationIntegrationTests: XCTestCase {
     let data = try binarySerializer.serialize(listMsg)
 
     let deserializer = makeBinaryDeserializer(registry: registry)
-    let decoded = try deserializer.deserialize(data, using: listValueDesc)
+    let decoded = try await deserializer.deserialize(data, using: listValueDesc)
 
     let items = try XCTUnwrap(decoded.get(forField: "values") as? [Any])
     XCTAssertEqual(items.count, 2)
@@ -185,7 +185,7 @@ final class BinarySerializationIntegrationTests: XCTestCase {
     XCTAssertEqual(try second.get(forField: "string_value") as? String, "beta")
   }
 
-  func test_e2e_concurrentDeserialization_sharedRegistry_isThreadSafe() throws {
+  func test_e2e_concurrentDeserialization_sharedRegistry_isThreadSafe() async throws {
     var descA = MessageDescriptor(name: "A", fullName: "concurrent.A")
     descA.addField(FieldDescriptor(name: "v", number: 1, type: .string))
 
@@ -193,8 +193,8 @@ final class BinarySerializationIntegrationTests: XCTestCase {
     descB.addField(FieldDescriptor(name: "a", number: 1, type: .message, typeName: "concurrent.A"))
 
     let registry = TypeRegistry()
-    try registry.registerMessage(descA)
-    try registry.registerMessage(descB)
+    try await registry.registerMessage(descA)
+    try await registry.registerMessage(descB)
 
     var msgA = factory.createMessage(from: descA)
     try msgA.set("thread-safe", forField: "v")
@@ -202,33 +202,16 @@ final class BinarySerializationIntegrationTests: XCTestCase {
     try msgB.set(msgA, forField: "a")
     let data = try binarySerializer.serialize(msgB)
 
-    var errors: [Error] = []
-    let lock = NSLock()
-    let dispatchGroup = DispatchGroup()
-    let concurrentQueue = DispatchQueue(
-      label: "test.concurrent.binary",
-      attributes: .concurrent
-    )
-
-    for _ in 0..<20 {
-      dispatchGroup.enter()
-      concurrentQueue.async {
-        do {
+    try await withThrowingTaskGroup(of: Void.self) { group in
+      for _ in 0..<20 {
+        group.addTask {
           let opts = DeserializationOptions(typeRegistry: registry)
-          let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: descB)
+          let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: descB)
           let decodedA = try decoded.get(forField: "a") as? DynamicMessage
           _ = try decodedA?.get(forField: "v")
         }
-        catch {
-          lock.lock()
-          errors.append(error)
-          lock.unlock()
-        }
-        dispatchGroup.leave()
       }
+      try await group.waitForAll()
     }
-
-    dispatchGroup.wait()
-    XCTAssertTrue(errors.isEmpty, "Concurrent deserialization produced errors: \(errors)")
   }
 }

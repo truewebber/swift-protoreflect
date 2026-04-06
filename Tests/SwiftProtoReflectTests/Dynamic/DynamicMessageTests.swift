@@ -20,8 +20,8 @@ final class DynamicMessageTests: XCTestCase {
 
   // MARK: - Setup
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     // Create test file descriptor
     fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
@@ -158,17 +158,17 @@ final class DynamicMessageTests: XCTestCase {
     fileDescriptor.addMessage(personMessage)
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     fileDescriptor = nil
     personMessage = nil
     addressMessage = nil
     enumDescriptor = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Initialization Tests
 
-  func testInitialization() {
+  func testInitialization() async throws {
     // Create DynamicMessage instance
     let message = DynamicMessage(descriptor: personMessage)
 
@@ -183,7 +183,7 @@ final class DynamicMessageTests: XCTestCase {
 
   // MARK: - Field Access Tests
 
-  func testSetAndGetScalarFields() {
+  func testSetAndGetScalarFields() async throws {
     var message = DynamicMessage(descriptor: personMessage)
 
     // Set and get string field
@@ -207,7 +207,7 @@ final class DynamicMessageTests: XCTestCase {
     }
   }
 
-  func testNestedMessageField() {
+  func testNestedMessageField() async throws {
     var message = DynamicMessage(descriptor: personMessage)
     var addressMsg = DynamicMessage(descriptor: addressMessage)
 
@@ -235,7 +235,7 @@ final class DynamicMessageTests: XCTestCase {
     }
   }
 
-  func testEnumField() {
+  func testEnumField() async throws {
     var message = DynamicMessage(descriptor: personMessage)
 
     do {
@@ -254,7 +254,7 @@ final class DynamicMessageTests: XCTestCase {
     }
   }
 
-  func testRepeatedField() {
+  func testRepeatedField() async throws {
     var message = DynamicMessage(descriptor: personMessage)
 
     do {
@@ -288,7 +288,7 @@ final class DynamicMessageTests: XCTestCase {
     }
   }
 
-  func testMapField() {
+  func testMapField() async throws {
     var message = DynamicMessage(descriptor: personMessage)
 
     do {
@@ -322,7 +322,7 @@ final class DynamicMessageTests: XCTestCase {
     }
   }
 
-  func testOneofField() {
+  func testOneofField() async throws {
     var message = DynamicMessage(descriptor: personMessage)
 
     do {
@@ -348,7 +348,7 @@ final class DynamicMessageTests: XCTestCase {
     }
   }
 
-  func testClearField() {
+  func testClearField() async throws {
     var message = DynamicMessage(descriptor: personMessage)
 
     do {
@@ -379,7 +379,7 @@ final class DynamicMessageTests: XCTestCase {
 
   // MARK: - Type Validation Tests
 
-  func testTypeValidation() {
+  func testTypeValidation() async throws {
     var message = DynamicMessage(descriptor: personMessage)
 
     // Check error when setting value with incorrect type
@@ -417,7 +417,7 @@ final class DynamicMessageTests: XCTestCase {
     }
   }
 
-  func testNonExistentFieldAccess() {
+  func testNonExistentFieldAccess() async throws {
     let message = DynamicMessage(descriptor: personMessage)
 
     // Check error when accessing non-existent field by name
@@ -453,7 +453,7 @@ final class DynamicMessageTests: XCTestCase {
 
   // MARK: - Equatable Tests
 
-  func testEquatable() {
+  func testEquatable() async throws {
     var message1 = DynamicMessage(descriptor: personMessage)
     var message2 = DynamicMessage(descriptor: personMessage)
 
@@ -495,7 +495,7 @@ final class DynamicMessageTests: XCTestCase {
     }
   }
 
-  func testEquatableWithComplexFields() {
+  func testEquatableWithComplexFields() async throws {
     var message1 = DynamicMessage(descriptor: personMessage)
     var message2 = DynamicMessage(descriptor: personMessage)
 
@@ -549,7 +549,7 @@ final class DynamicMessageTests: XCTestCase {
 
   // MARK: - Comprehensive Type Tests
 
-  func testAllScalarTypes() {
+  func testAllScalarTypes() async throws {
     // Create message with all scalar type fields
     var message = MessageDescriptor(name: "AllTypes", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "double_value", number: 1, type: .double))
@@ -653,7 +653,7 @@ final class DynamicMessageTests: XCTestCase {
     XCTAssertThrowsError(try dynamicMessage.set(UInt(UInt32.max) + 1, forField: "uint32_value"))
   }
 
-  func testComplexMapFieldOperations() {
+  func testComplexMapFieldOperations() async throws {
     // Create message with different types of map fields
     var messageDesc = MessageDescriptor(name: "MapTypes", parent: fileDescriptor)
 
@@ -769,7 +769,7 @@ final class DynamicMessageTests: XCTestCase {
     XCTAssertThrowsError(try message.setMapEntry("value", forKey: "key", inField: "name"))  // not a map field
   }
 
-  func testRepeatedFieldOperations() {
+  func testRepeatedFieldOperations() async throws {
     // Message with different repeated fields
     var messageDesc = MessageDescriptor(name: "RepeatedTypes", parent: fileDescriptor)
     messageDesc.addField(
@@ -890,7 +890,7 @@ final class DynamicMessageTests: XCTestCase {
     XCTAssertThrowsError(try message.set(mixedArray, forField: "repeated_string"))
   }
 
-  func testDefaultValues() {
+  func testDefaultValues() async throws {
     // Create message with fields with default values
     var messageDesc = MessageDescriptor(name: "DefaultValues", parent: fileDescriptor)
     messageDesc.addField(
@@ -957,7 +957,7 @@ final class DynamicMessageTests: XCTestCase {
     }
   }
 
-  func testComprehensiveEquatable() {
+  func testComprehensiveEquatable() async throws {
     // Create test for areValuesEqual method and comparison of different field types
     var message = MessageDescriptor(name: "EquatableTest", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "double_value", number: 1, type: .double))
@@ -1111,7 +1111,7 @@ final class DynamicMessageTests: XCTestCase {
     }
   }
 
-  func testErrorDescriptions() {
+  func testErrorDescriptions() async throws {
     // Check localized error descriptions
     let fieldNameError = DynamicMessageError.fieldNotFound(fieldName: "test_field")
     XCTAssertEqual(fieldNameError.errorDescription, "Field with name 'test_field' not found")

@@ -47,73 +47,77 @@ final class JSONTimestampTests: XCTestCase {
 
   // MARK: - Encoder tests
 
-  func test_serialize_timestamp_zeroNanos_producesRFC3339WithoutFraction() throws {
+  func test_serialize_timestamp_zeroNanos_producesRFC3339WithoutFraction() async throws {
     // 2009-02-13T23:31:30Z
     let msg = try makeTimestampMessage(seconds: 1_234_567_890, nanos: 0)
-    let data = try canonicalSerializer().serialize(msg)
+    let data = try await canonicalSerializer().serialize(msg)
     let str = try XCTUnwrap(String(data: data, encoding: .utf8))
     XCTAssertEqual(str, #""2009-02-13T23:31:30Z""#)
   }
 
-  func test_serialize_timestamp_millisNanos_produces3Digits() throws {
+  func test_serialize_timestamp_millisNanos_produces3Digits() async throws {
     // 500_000_000 ns = 500 ms
     let msg = try makeTimestampMessage(seconds: 0, nanos: 500_000_000)
-    let data = try canonicalSerializer().serialize(msg)
+    let data = try await canonicalSerializer().serialize(msg)
     let str = try XCTUnwrap(String(data: data, encoding: .utf8))
     XCTAssertEqual(str, #""1970-01-01T00:00:00.500Z""#)
   }
 
-  func test_serialize_timestamp_microsNanos_produces6Digits() throws {
+  func test_serialize_timestamp_microsNanos_produces6Digits() async throws {
     // 123_456_000 ns = 123456 µs
     let msg = try makeTimestampMessage(seconds: 0, nanos: 123_456_000)
-    let data = try canonicalSerializer().serialize(msg)
+    let data = try await canonicalSerializer().serialize(msg)
     let str = try XCTUnwrap(String(data: data, encoding: .utf8))
     XCTAssertEqual(str, #""1970-01-01T00:00:00.123456Z""#)
   }
 
-  func test_serialize_timestamp_fullNanos_produces9Digits() throws {
+  func test_serialize_timestamp_fullNanos_produces9Digits() async throws {
     // 123_456_789 ns
     let msg = try makeTimestampMessage(seconds: 0, nanos: 123_456_789)
-    let data = try canonicalSerializer().serialize(msg)
+    let data = try await canonicalSerializer().serialize(msg)
     let str = try XCTUnwrap(String(data: data, encoding: .utf8))
     XCTAssertEqual(str, #""1970-01-01T00:00:00.123456789Z""#)
   }
 
   // MARK: - Decoder tests
 
-  func test_deserialize_timestamp_fromRFC3339_basic() throws {
+  func test_deserialize_timestamp_fromRFC3339_basic() async throws {
     let json = #""2009-02-13T23:31:30Z""#.data(using: .utf8)!
     let desc = makeTimestampDescriptor()
-    let msg = try deserializer().deserialize(json, using: desc)
+    let msg = try await deserializer().deserialize(json, using: desc)
     let seconds = try XCTUnwrap(try msg.get(forField: 1) as? Int64)
     let nanos = try msg.get(forField: 2) as? Int32 ?? 0
     XCTAssertEqual(seconds, 1_234_567_890)
     XCTAssertEqual(nanos, 0)
   }
 
-  func test_deserialize_timestamp_fromRFC3339_withFractionalSeconds() throws {
+  func test_deserialize_timestamp_fromRFC3339_withFractionalSeconds() async throws {
     let json = #""1970-01-01T00:00:00.123456789Z""#.data(using: .utf8)!
     let desc = makeTimestampDescriptor()
-    let msg = try deserializer().deserialize(json, using: desc)
+    let msg = try await deserializer().deserialize(json, using: desc)
     let seconds = try XCTUnwrap(try msg.get(forField: 1) as? Int64)
     let nanos = try XCTUnwrap(try msg.get(forField: 2) as? Int32)
     XCTAssertEqual(seconds, 0)
     XCTAssertEqual(nanos, 123_456_789)
   }
 
-  func test_deserialize_timestamp_fromRFC3339_withTimezoneOffset() throws {
+  func test_deserialize_timestamp_fromRFC3339_withTimezoneOffset() async throws {
     // +00:00 is equivalent to Z
     let json = #""2009-02-13T23:31:30+00:00""#.data(using: .utf8)!
     let desc = makeTimestampDescriptor()
-    let msg = try deserializer().deserialize(json, using: desc)
+    let msg = try await deserializer().deserialize(json, using: desc)
     let seconds = try XCTUnwrap(try msg.get(forField: 1) as? Int64)
     XCTAssertEqual(seconds, 1_234_567_890)
   }
 
-  func test_deserialize_timestamp_nonString_throwsError() throws {
+  func test_deserialize_timestamp_nonString_throwsError() async throws {
     let json = #"{"seconds":1234567890,"nanos":0}"#.data(using: .utf8)!
     let desc = makeTimestampDescriptor()
-    XCTAssertThrowsError(try deserializer().deserialize(json, using: desc)) { error in
+    do {
+      try await deserializer().deserialize(json, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       guard case JSONDeserializationError.invalidJSONStructure = error else {
         XCTFail("Expected invalidJSONStructure, got \(error)")
         return
@@ -123,13 +127,13 @@ final class JSONTimestampTests: XCTestCase {
 
   // MARK: - Round-trip tests
 
-  func test_roundTrip_timestamp_preservesData() throws {
+  func test_roundTrip_timestamp_preservesData() async throws {
     let seconds: Int64 = 1_234_567_890
     let nanos: Int32 = 123_456_789
     let msg = try makeTimestampMessage(seconds: seconds, nanos: nanos)
 
-    let data = try canonicalSerializer().serialize(msg)
-    let roundTripped = try deserializer().deserialize(data, using: makeTimestampDescriptor())
+    let data = try await canonicalSerializer().serialize(msg)
+    let roundTripped = try await deserializer().deserialize(data, using: makeTimestampDescriptor())
 
     let rtSeconds = try XCTUnwrap(try roundTripped.get(forField: 1) as? Int64)
     let rtNanos = try XCTUnwrap(try roundTripped.get(forField: 2) as? Int32)

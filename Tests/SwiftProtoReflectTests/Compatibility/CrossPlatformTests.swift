@@ -21,7 +21,7 @@ final class CrossPlatformTests: XCTestCase {
 
   // MARK: - Deterministic field ordering
 
-  func test_fieldsSortedByNumber() throws {
+  func test_fieldsSortedByNumber() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "z", number: 3, type: .int32))
     desc.addField(FieldDescriptor(name: "a", number: 1, type: .int32))
@@ -32,8 +32,8 @@ final class CrossPlatformTests: XCTestCase {
     try msg.set(Int32(20), forField: "m")
     try msg.set(Int32(30), forField: "z")
 
-    let data = try serializer.serialize(msg)
-    let decoded = try deserializer.deserialize(data, using: desc)
+    let data = try await serializer.serialize(msg)
+    let decoded = try await deserializer.deserialize(data, using: desc)
     XCTAssertEqual(try decoded.get(forField: "a") as? Int32, 10)
     XCTAssertEqual(try decoded.get(forField: "m") as? Int32, 20)
     XCTAssertEqual(try decoded.get(forField: "z") as? Int32, 30)
@@ -43,7 +43,7 @@ final class CrossPlatformTests: XCTestCase {
 
   // MARK: - Reference payloads from other implementations
 
-  func test_deserialize_referencePayload_int32() throws {
+  func test_deserialize_referencePayload_int32() async throws {
     // protoc: message M { int32 a = 1; } with a = 150
     // Canonical output: 08 96 01
     let reference = Data([0x08, 0x96, 0x01])
@@ -51,11 +51,11 @@ final class CrossPlatformTests: XCTestCase {
     var desc = MessageDescriptor(name: "M", fullName: "ref.M")
     desc.addField(FieldDescriptor(name: "a", number: 1, type: .int32))
 
-    let msg = try deserializer.deserialize(reference, using: desc)
+    let msg = try await deserializer.deserialize(reference, using: desc)
     XCTAssertEqual(try msg.get(forField: "a") as? Int32, 150)
   }
 
-  func test_deserialize_referencePayload_string() throws {
+  func test_deserialize_referencePayload_string() async throws {
     // protoc: message M { string s = 2; } with s = "testing"
     // Canonical output: 12 07 74 65 73 74 69 6e 67
     let reference = Data([0x12, 0x07, 0x74, 0x65, 0x73, 0x74, 0x69, 0x6E, 0x67])
@@ -63,11 +63,11 @@ final class CrossPlatformTests: XCTestCase {
     var desc = MessageDescriptor(name: "M", fullName: "ref.M")
     desc.addField(FieldDescriptor(name: "s", number: 2, type: .string))
 
-    let msg = try deserializer.deserialize(reference, using: desc)
+    let msg = try await deserializer.deserialize(reference, using: desc)
     XCTAssertEqual(try msg.get(forField: "s") as? String, "testing")
   }
 
-  func test_deserialize_referencePayload_negativeSint32() throws {
+  func test_deserialize_referencePayload_negativeSint32() async throws {
     // protoc: message M { sint32 v = 1; } with v = -1
     // zigzag(-1) = 1, then varint 1 → 0x01
     let reference = Data([0x08, 0x01])
@@ -75,22 +75,22 @@ final class CrossPlatformTests: XCTestCase {
     var desc = MessageDescriptor(name: "M", fullName: "ref.M")
     desc.addField(FieldDescriptor(name: "v", number: 1, type: .sint32))
 
-    let msg = try deserializer.deserialize(reference, using: desc)
+    let msg = try await deserializer.deserialize(reference, using: desc)
     XCTAssertEqual(try msg.get(forField: "v") as? Int32, -1)
   }
 
   // MARK: - Empty message wire identity
 
-  func test_emptyMessage_emptyWire() throws {
+  func test_emptyMessage_emptyWire() async throws {
     let desc = MessageDescriptor(name: "M", fullName: "test.M")
     let msg = MessageFactory().createMessage(from: desc)
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     XCTAssertTrue(data.isEmpty, "All implementations encode empty message as zero bytes")
   }
 
   // MARK: - JSON cross-platform
 
-  func test_jsonRoundtrip_preservesValues() throws {
+  func test_jsonRoundtrip_preservesValues() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
     desc.addField(FieldDescriptor(name: "name", number: 2, type: .string))
@@ -101,8 +101,11 @@ final class CrossPlatformTests: XCTestCase {
     try msg.set("Alice", forField: "name")
     try msg.set(true, forField: "active")
 
-    let jsonData = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serialize(msg)
-    let restored = try JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(jsonData, using: desc)
+    let jsonData = try await JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serialize(msg)
+    let restored = try await JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      jsonData,
+      using: desc
+    )
 
     XCTAssertEqual(try restored.get(forField: "id") as? Int32, 42)
     XCTAssertEqual(try restored.get(forField: "name") as? String, "Alice")
