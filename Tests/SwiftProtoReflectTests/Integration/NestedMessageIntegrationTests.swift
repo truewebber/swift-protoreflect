@@ -96,7 +96,7 @@ final class NestedMessageIntegrationTests: XCTestCase {
     outerMsg.addField(FieldDescriptor(name: "inner", number: 1, type: .message, typeName: "pool.Inner"))
     file.addMessage(outerMsg)
 
-    try pool.addFileDescriptor(file)
+    try await pool.addFileDescriptor(file)
 
     let registry = TypeRegistry()
     try await registry.registerFile(file)
@@ -109,7 +109,7 @@ final class NestedMessageIntegrationTests: XCTestCase {
       {"inner": {"data": "from pool"}}
       """.data(using: .utf8)!
 
-    let outerDescriptor = pool.findMessageDescriptor(named: "pool.Outer")!
+    let outerDescriptor = await pool.findMessageDescriptor(named: "pool.Outer")!
     let result = try await deserializer.deserialize(data, using: outerDescriptor)
 
     let inner = try result.get(forField: "inner") as? DynamicMessage

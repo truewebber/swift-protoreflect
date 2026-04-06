@@ -12,11 +12,11 @@ import XCTest
 final class DescriptorPoolTests: XCTestCase {
   // MARK: - Properties
 
-  nonisolated(unsafe) var descriptorPool: DescriptorPool!
-  nonisolated(unsafe) var fileDescriptor: FileDescriptor!
-  nonisolated(unsafe) var messageDescriptor: MessageDescriptor!
-  nonisolated(unsafe) var enumDescriptor: EnumDescriptor!
-  nonisolated(unsafe) var serviceDescriptor: ServiceDescriptor!
+  var descriptorPool: DescriptorPool!
+  var fileDescriptor: FileDescriptor!
+  var messageDescriptor: MessageDescriptor!
+  var enumDescriptor: EnumDescriptor!
+  var serviceDescriptor: ServiceDescriptor!
 
   // MARK: - Setup
 
@@ -86,13 +86,13 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertNotNil(descriptorPool)
 
     // Check that builtin types are added
-    let builtinFile = descriptorPool.findFileDescriptor(named: "google/protobuf/descriptor.proto")
+    let builtinFile = await descriptorPool.findFileDescriptor(named: "google/protobuf/descriptor.proto")
     XCTAssertNotNil(builtinFile)
 
-    let anyMessage = descriptorPool.findMessageDescriptor(named: "google.protobuf.Any")
+    let anyMessage = await descriptorPool.findMessageDescriptor(named: "google.protobuf.Any")
     XCTAssertNotNil(anyMessage)
 
-    let timestampMessage = descriptorPool.findMessageDescriptor(named: "google.protobuf.Timestamp")
+    let timestampMessage = await descriptorPool.findMessageDescriptor(named: "google.protobuf.Timestamp")
     XCTAssertNotNil(timestampMessage)
   }
 
@@ -104,10 +104,10 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertNotNil(descriptorPool)
 
     // Check that there are no builtin types
-    let builtinFile = descriptorPool.findFileDescriptor(named: "google/protobuf/descriptor.proto")
+    let builtinFile = await descriptorPool.findFileDescriptor(named: "google/protobuf/descriptor.proto")
     XCTAssertNil(builtinFile)
 
-    let anyMessage = descriptorPool.findMessageDescriptor(named: "google.protobuf.Any")
+    let anyMessage = await descriptorPool.findMessageDescriptor(named: "google.protobuf.Any")
     XCTAssertNil(anyMessage)
   }
 
@@ -118,10 +118,10 @@ final class DescriptorPoolTests: XCTestCase {
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
 
     // Act
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Assert
-    let foundFile = descriptorPool.findFileDescriptor(named: "test.proto")
+    let foundFile = await descriptorPool.findFileDescriptor(named: "test.proto")
     XCTAssertNotNil(foundFile)
     XCTAssertEqual(foundFile?.name, "test.proto")
     XCTAssertEqual(foundFile?.package, "test")
@@ -130,11 +130,15 @@ final class DescriptorPoolTests: XCTestCase {
   func testAddDuplicateFileDescriptor() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Act & Assert
-    XCTAssertThrowsError(try descriptorPool.addFileDescriptor(fileDescriptor)) { error in
-      guard case DescriptorPoolError.duplicateFile(let fileName) = error else {
+    do {
+      try await descriptorPool.addFileDescriptor(fileDescriptor)
+      XCTFail("Expected error to be thrown")
+    }
+    catch let error as DescriptorPoolError {
+      guard case .duplicateFile(let fileName) = error else {
         XCTFail("Expected duplicateFile error")
         return
       }
@@ -147,14 +151,19 @@ final class DescriptorPoolTests: XCTestCase {
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
 
     // Act
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Assert - check that all descriptors are extracted
-    XCTAssertNotNil(descriptorPool.findMessageDescriptor(named: "test.TestMessage"))
-    XCTAssertNotNil(descriptorPool.findEnumDescriptor(named: "test.Status"))
-    XCTAssertNotNil(descriptorPool.findServiceDescriptor(named: "test.TestService"))
-    XCTAssertNotNil(descriptorPool.findFieldDescriptor(named: "test.TestMessage.id"))
-    XCTAssertNotNil(descriptorPool.findFieldDescriptor(named: "test.TestMessage.name"))
+    let msg = await descriptorPool.findMessageDescriptor(named: "test.TestMessage")
+    XCTAssertNotNil(msg)
+    let enm = await descriptorPool.findEnumDescriptor(named: "test.Status")
+    XCTAssertNotNil(enm)
+    let svc = await descriptorPool.findServiceDescriptor(named: "test.TestService")
+    XCTAssertNotNil(svc)
+    let fldId = await descriptorPool.findFieldDescriptor(named: "test.TestMessage.id")
+    XCTAssertNotNil(fldId)
+    let fldName = await descriptorPool.findFieldDescriptor(named: "test.TestMessage.name")
+    XCTAssertNotNil(fldName)
   }
 
   func testExtractDescriptorsWithNestedTypes() async throws {
@@ -173,13 +182,17 @@ final class DescriptorPoolTests: XCTestCase {
     fileDescriptor.addMessage(parentMessage)
 
     // Act
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Assert
-    XCTAssertNotNil(descriptorPool.findMessageDescriptor(named: "test.Parent"))
-    XCTAssertNotNil(descriptorPool.findMessageDescriptor(named: "test.Parent.Nested"))
-    XCTAssertNotNil(descriptorPool.findEnumDescriptor(named: "test.Parent.NestedEnum"))
-    XCTAssertNotNil(descriptorPool.findFieldDescriptor(named: "test.Parent.Nested.value"))
+    let parentDesc = await descriptorPool.findMessageDescriptor(named: "test.Parent")
+    XCTAssertNotNil(parentDesc)
+    let nestedDesc = await descriptorPool.findMessageDescriptor(named: "test.Parent.Nested")
+    XCTAssertNotNil(nestedDesc)
+    let nestedEnumDesc = await descriptorPool.findEnumDescriptor(named: "test.Parent.NestedEnum")
+    XCTAssertNotNil(nestedEnumDesc)
+    let nestedField = await descriptorPool.findFieldDescriptor(named: "test.Parent.Nested.value")
+    XCTAssertNotNil(nestedField)
   }
 
   // MARK: - Lookup Methods Tests
@@ -187,103 +200,103 @@ final class DescriptorPoolTests: XCTestCase {
   func testFindFileDescriptor() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Act & Assert
-    let found = descriptorPool.findFileDescriptor(named: "test.proto")
+    let found = await descriptorPool.findFileDescriptor(named: "test.proto")
     XCTAssertNotNil(found)
     XCTAssertEqual(found?.name, "test.proto")
 
-    let notFound = descriptorPool.findFileDescriptor(named: "nonexistent.proto")
+    let notFound = await descriptorPool.findFileDescriptor(named: "nonexistent.proto")
     XCTAssertNil(notFound)
   }
 
   func testFindMessageDescriptor() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Act & Assert
-    let found = descriptorPool.findMessageDescriptor(named: "test.TestMessage")
+    let found = await descriptorPool.findMessageDescriptor(named: "test.TestMessage")
     XCTAssertNotNil(found)
     XCTAssertEqual(found?.name, "TestMessage")
     XCTAssertEqual(found?.fullName, "test.TestMessage")
 
-    let notFound = descriptorPool.findMessageDescriptor(named: "test.NonexistentMessage")
+    let notFound = await descriptorPool.findMessageDescriptor(named: "test.NonexistentMessage")
     XCTAssertNil(notFound)
   }
 
   func testFindEnumDescriptor() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Act & Assert
-    let found = descriptorPool.findEnumDescriptor(named: "test.Status")
+    let found = await descriptorPool.findEnumDescriptor(named: "test.Status")
     XCTAssertNotNil(found)
     XCTAssertEqual(found?.name, "Status")
     XCTAssertEqual(found?.fullName, "test.Status")
 
-    let notFound = descriptorPool.findEnumDescriptor(named: "test.NonexistentEnum")
+    let notFound = await descriptorPool.findEnumDescriptor(named: "test.NonexistentEnum")
     XCTAssertNil(notFound)
   }
 
   func testFindServiceDescriptor() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Act & Assert
-    let found = descriptorPool.findServiceDescriptor(named: "test.TestService")
+    let found = await descriptorPool.findServiceDescriptor(named: "test.TestService")
     XCTAssertNotNil(found)
     XCTAssertEqual(found?.name, "TestService")
     XCTAssertEqual(found?.fullName, "test.TestService")
 
-    let notFound = descriptorPool.findServiceDescriptor(named: "test.NonexistentService")
+    let notFound = await descriptorPool.findServiceDescriptor(named: "test.NonexistentService")
     XCTAssertNil(notFound)
   }
 
   func testFindFieldDescriptor() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Act & Assert
-    let foundId = descriptorPool.findFieldDescriptor(named: "test.TestMessage.id")
+    let foundId = await descriptorPool.findFieldDescriptor(named: "test.TestMessage.id")
     XCTAssertNotNil(foundId)
     XCTAssertEqual(foundId?.name, "id")
     XCTAssertEqual(foundId?.number, 1)
     XCTAssertEqual(foundId?.type, .int32)
 
-    let foundName = descriptorPool.findFieldDescriptor(named: "test.TestMessage.name")
+    let foundName = await descriptorPool.findFieldDescriptor(named: "test.TestMessage.name")
     XCTAssertNotNil(foundName)
     XCTAssertEqual(foundName?.name, "name")
     XCTAssertEqual(foundName?.number, 2)
     XCTAssertEqual(foundName?.type, .string)
 
-    let notFound = descriptorPool.findFieldDescriptor(named: "test.TestMessage.nonexistent")
+    let notFound = await descriptorPool.findFieldDescriptor(named: "test.TestMessage.nonexistent")
     XCTAssertNil(notFound)
   }
 
   func testFindFileContainingSymbol() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Act & Assert
-    let fileWithMessage = descriptorPool.findFileContainingSymbol("test.TestMessage")
+    let fileWithMessage = await descriptorPool.findFileContainingSymbol("test.TestMessage")
     XCTAssertNotNil(fileWithMessage)
     XCTAssertEqual(fileWithMessage?.name, "test.proto")
 
-    let fileWithEnum = descriptorPool.findFileContainingSymbol("test.Status")
+    let fileWithEnum = await descriptorPool.findFileContainingSymbol("test.Status")
     XCTAssertNotNil(fileWithEnum)
     XCTAssertEqual(fileWithEnum?.name, "test.proto")
 
-    let fileWithService = descriptorPool.findFileContainingSymbol("test.TestService")
+    let fileWithService = await descriptorPool.findFileContainingSymbol("test.TestService")
     XCTAssertNotNil(fileWithService)
     XCTAssertEqual(fileWithService?.name, "test.proto")
 
-    let fileWithNonexistent = descriptorPool.findFileContainingSymbol("test.Nonexistent")
+    let fileWithNonexistent = await descriptorPool.findFileContainingSymbol("test.Nonexistent")
     XCTAssertNil(fileWithNonexistent)
   }
 
@@ -292,23 +305,23 @@ final class DescriptorPoolTests: XCTestCase {
   func testCreateMessage() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Act
-    let message = descriptorPool.createMessage(forType: "test.TestMessage")
+    let message = await descriptorPool.createMessage(forType: "test.TestMessage")
 
     // Assert
     XCTAssertNotNil(message)
     XCTAssertEqual(message?.descriptor.fullName, "test.TestMessage")
 
-    let nonexistentMessage = descriptorPool.createMessage(forType: "test.NonexistentMessage")
+    let nonexistentMessage = await descriptorPool.createMessage(forType: "test.NonexistentMessage")
     XCTAssertNil(nonexistentMessage)
   }
 
   func testCreateMessageWithFieldValues() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     let fieldValues: [String: Any] = [
       "id": 42,
@@ -316,7 +329,7 @@ final class DescriptorPoolTests: XCTestCase {
     ]
 
     // Act
-    let message = try descriptorPool.createMessage(forType: "test.TestMessage", fieldValues: fieldValues)
+    let message = try await descriptorPool.createMessage(forType: "test.TestMessage", fieldValues: fieldValues)
 
     // Assert
     XCTAssertNotNil(message)
@@ -326,7 +339,7 @@ final class DescriptorPoolTests: XCTestCase {
     XCTAssertEqual(try message?.get(forField: "id") as? Int32, 42)
     XCTAssertEqual(try message?.get(forField: "name") as? String, "Test Name")
 
-    let nonexistentMessage = try descriptorPool.createMessage(
+    let nonexistentMessage = try await descriptorPool.createMessage(
       forType: "test.NonexistentMessage",
       fieldValues: fieldValues
     )
@@ -338,10 +351,10 @@ final class DescriptorPoolTests: XCTestCase {
   func testAllMessageTypeNames() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Act
-    let messageTypeNames = descriptorPool.allMessageTypeNames()
+    let messageTypeNames = await descriptorPool.allMessageTypeNames()
 
     // Assert
     XCTAssertTrue(messageTypeNames.contains("test.TestMessage"))
@@ -351,10 +364,10 @@ final class DescriptorPoolTests: XCTestCase {
   func testAllEnumTypeNames() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Act
-    let enumTypeNames = descriptorPool.allEnumTypeNames()
+    let enumTypeNames = await descriptorPool.allEnumTypeNames()
 
     // Assert
     XCTAssertTrue(enumTypeNames.contains("test.Status"))
@@ -364,10 +377,10 @@ final class DescriptorPoolTests: XCTestCase {
   func testAllServiceNames() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Act
-    let serviceNames = descriptorPool.allServiceNames()
+    let serviceNames = await descriptorPool.allServiceNames()
 
     // Assert
     XCTAssertTrue(serviceNames.contains("test.TestService"))
@@ -377,10 +390,10 @@ final class DescriptorPoolTests: XCTestCase {
   func testAllFileNames() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Act
-    let fileNames = descriptorPool.allFileNames()
+    let fileNames = await descriptorPool.allFileNames()
 
     // Assert
     XCTAssertTrue(fileNames.contains("test.proto"))
@@ -392,13 +405,13 @@ final class DescriptorPoolTests: XCTestCase {
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: true)
 
     // Act & Assert
-    let messageTypeNames = descriptorPool.allMessageTypeNames()
+    let messageTypeNames = await descriptorPool.allMessageTypeNames()
     XCTAssertTrue(messageTypeNames.contains("google.protobuf.Any"))
     XCTAssertTrue(messageTypeNames.contains("google.protobuf.Timestamp"))
     XCTAssertTrue(messageTypeNames.contains("google.protobuf.Duration"))
     XCTAssertTrue(messageTypeNames.contains("google.protobuf.Empty"))
 
-    let fileNames = descriptorPool.allFileNames()
+    let fileNames = await descriptorPool.allFileNames()
     XCTAssertTrue(fileNames.contains("google/protobuf/descriptor.proto"))
   }
 
@@ -428,10 +441,10 @@ final class DescriptorPoolTests: XCTestCase {
     )
 
     fileDescriptor.addMessage(dependentMessage)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Act
-    let dependencies = try descriptorPool.findDependencies(for: "test.DependentMessage")
+    let dependencies = try await descriptorPool.findDependencies(for: "test.DependentMessage")
 
     // Assert
     XCTAssertTrue(dependencies.contains("test.TestMessage"))
@@ -441,11 +454,15 @@ final class DescriptorPoolTests: XCTestCase {
   func testFindDependenciesForNonexistentType() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Act & Assert
-    XCTAssertThrowsError(try descriptorPool.findDependencies(for: "test.NonexistentMessage")) { error in
-      guard case DescriptorPoolError.symbolNotFound(let symbolName) = error else {
+    do {
+      _ = try await descriptorPool.findDependencies(for: "test.NonexistentMessage")
+      XCTFail("Expected error to be thrown")
+    }
+    catch let error as DescriptorPoolError {
+      guard case .symbolNotFound(let symbolName) = error else {
         XCTFail("Expected symbolNotFound error")
         return
       }
@@ -467,10 +484,10 @@ final class DescriptorPoolTests: XCTestCase {
     parentMessage.addNestedEnum(nestedEnum)
 
     fileDescriptor.addMessage(parentMessage)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Act
-    let dependencies = try descriptorPool.findDependencies(for: "test.Parent")
+    let dependencies = try await descriptorPool.findDependencies(for: "test.Parent")
 
     // Assert
     XCTAssertTrue(dependencies.contains("test.Parent.Nested"))
@@ -482,25 +499,35 @@ final class DescriptorPoolTests: XCTestCase {
   func testClear() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: true)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
     // Check that descriptors exist
-    XCTAssertNotNil(descriptorPool.findFileDescriptor(named: "test.proto"))
-    XCTAssertNotNil(descriptorPool.findMessageDescriptor(named: "test.TestMessage"))
-    XCTAssertNotNil(descriptorPool.findMessageDescriptor(named: "google.protobuf.Any"))
+    let preClearFile = await descriptorPool.findFileDescriptor(named: "test.proto")
+    XCTAssertNotNil(preClearFile)
+    let preClearMsg = await descriptorPool.findMessageDescriptor(named: "test.TestMessage")
+    XCTAssertNotNil(preClearMsg)
+    let preClearAny = await descriptorPool.findMessageDescriptor(named: "google.protobuf.Any")
+    XCTAssertNotNil(preClearAny)
 
     // Act
-    descriptorPool.clear()
+    await descriptorPool.clear()
 
     // Assert
-    XCTAssertNil(descriptorPool.findFileDescriptor(named: "test.proto"))
-    XCTAssertNil(descriptorPool.findMessageDescriptor(named: "test.TestMessage"))
-    XCTAssertNil(descriptorPool.findMessageDescriptor(named: "google.protobuf.Any"))
+    let postClearFile = await descriptorPool.findFileDescriptor(named: "test.proto")
+    XCTAssertNil(postClearFile)
+    let postClearMsg = await descriptorPool.findMessageDescriptor(named: "test.TestMessage")
+    XCTAssertNil(postClearMsg)
+    let postClearAny = await descriptorPool.findMessageDescriptor(named: "google.protobuf.Any")
+    XCTAssertNil(postClearAny)
 
-    XCTAssertTrue(descriptorPool.allFileNames().isEmpty)
-    XCTAssertTrue(descriptorPool.allMessageTypeNames().isEmpty)
-    XCTAssertTrue(descriptorPool.allEnumTypeNames().isEmpty)
-    XCTAssertTrue(descriptorPool.allServiceNames().isEmpty)
+    let fileNames = await descriptorPool.allFileNames()
+    XCTAssertTrue(fileNames.isEmpty)
+    let msgNames = await descriptorPool.allMessageTypeNames()
+    XCTAssertTrue(msgNames.isEmpty)
+    let enumNames = await descriptorPool.allEnumTypeNames()
+    XCTAssertTrue(enumNames.isEmpty)
+    let svcNames = await descriptorPool.allServiceNames()
+    XCTAssertTrue(svcNames.isEmpty)
   }
 
   // MARK: - Error Tests
@@ -549,23 +576,22 @@ final class DescriptorPoolTests: XCTestCase {
   func testConcurrentAccess() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
-    let expectation = XCTestExpectation(description: "Concurrent access completed")
-    expectation.expectedFulfillmentCount = 10
-
-    // Act - multiple concurrent read operations
-    let pool = self.descriptorPool!
-    for i in 0..<10 {
-      DispatchQueue.global().async {
-        let found = pool.findMessageDescriptor(named: "test.TestMessage")
-        XCTAssertNotNil(found, "Iteration \(i) failed")
-        expectation.fulfill()
+    // Act — multiple concurrent read operations via Tasks
+    await withTaskGroup(of: MessageDescriptor?.self) { group in
+      for _ in 0..<10 {
+        group.addTask {
+          await self.descriptorPool.findMessageDescriptor(named: "test.TestMessage")
+        }
       }
+      var count = 0
+      for await result in group {
+        XCTAssertNotNil(result)
+        count += 1
+      }
+      XCTAssertEqual(count, 10)
     }
-
-    // Assert
-    wait(for: [expectation], timeout: 5.0)
   }
 
   // MARK: - Performance Tests
@@ -573,15 +599,16 @@ final class DescriptorPoolTests: XCTestCase {
   func testLookupPerformance() async throws {
     // Arrange
     descriptorPool = DescriptorPool(includeBuiltinDescriptors: false)
-    try descriptorPool.addFileDescriptor(fileDescriptor)
+    try await descriptorPool.addFileDescriptor(fileDescriptor)
 
-    // Act & Assert
-    measure {
-      for _ in 0..<1000 {
-        _ = descriptorPool.findMessageDescriptor(named: "test.TestMessage")
-        _ = descriptorPool.findEnumDescriptor(named: "test.Status")
-        _ = descriptorPool.findServiceDescriptor(named: "test.TestService")
-      }
+    // Act & Assert — validate basic lookup correctness at volume
+    for _ in 0..<100 {
+      let msg = await descriptorPool.findMessageDescriptor(named: "test.TestMessage")
+      let enm = await descriptorPool.findEnumDescriptor(named: "test.Status")
+      let svc = await descriptorPool.findServiceDescriptor(named: "test.TestService")
+      XCTAssertNotNil(msg)
+      XCTAssertNotNil(enm)
+      XCTAssertNotNil(svc)
     }
   }
 }

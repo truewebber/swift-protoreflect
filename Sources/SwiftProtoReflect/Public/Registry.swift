@@ -353,11 +353,11 @@ public actor TypeRegistry {
 /// - Support for builtin descriptors for standard Protocol Buffers types.
 /// - Descriptor lookup by various criteria.
 /// - Building dependency chains between descriptors.
-/// - Thread-safe operations.
+/// - Thread-safe operations via actor isolation.
 /// - Integration with MessageFactory for creating dynamic messages.
-public final class DescriptorPool: Sendable {
+public actor DescriptorPool {
 
-  private let impl: _DescriptorPool
+  private var storage: _DescriptorPoolStorage
 
   // MARK: - Initialization
 
@@ -365,7 +365,7 @@ public final class DescriptorPool: Sendable {
   ///
   /// - Parameter includeBuiltinDescriptors: If true, adds built-in descriptors for standard Protocol Buffers types.
   public init(includeBuiltinDescriptors: Bool = true) {
-    self.impl = _DescriptorPool(includeBuiltinDescriptors: includeBuiltinDescriptors)
+    self.storage = _DescriptorPoolStorage(includeBuiltinDescriptors: includeBuiltinDescriptors)
   }
 
   // MARK: - FileDescriptor Management
@@ -379,7 +379,7 @@ public final class DescriptorPool: Sendable {
   /// - Throws: `DescriptorPoolError.duplicateSymbol` if any symbol already exists
   public func addFileDescriptor(_ fileDescriptor: FileDescriptor) throws {
     do {
-      try impl.addFileDescriptor(_FileDescriptor(from: fileDescriptor))
+      try storage.addFileDescriptor(_FileDescriptor(from: fileDescriptor))
     }
     catch let e as _DescriptorPoolError {
       throw DescriptorPoolError(from: e)
@@ -393,7 +393,7 @@ public final class DescriptorPool: Sendable {
   /// - Parameter fileName: File name.
   /// - Returns: FileDescriptor or nil if not found.
   public func findFileDescriptor(named fileName: String) -> FileDescriptor? {
-    impl.findFileDescriptor(named: fileName).map { FileDescriptor(from: $0) }
+    storage.findFileDescriptor(named: fileName).map { FileDescriptor(from: $0) }
   }
 
   /// Finds MessageDescriptor by full name.
@@ -401,7 +401,7 @@ public final class DescriptorPool: Sendable {
   /// - Parameter fullName: Full message name.
   /// - Returns: MessageDescriptor or nil if not found.
   public func findMessageDescriptor(named fullName: String) -> MessageDescriptor? {
-    impl.findMessageDescriptor(named: fullName).map { MessageDescriptor(from: $0) }
+    storage.findMessageDescriptor(named: fullName).map { MessageDescriptor(from: $0) }
   }
 
   /// Finds EnumDescriptor by full name.
@@ -409,7 +409,7 @@ public final class DescriptorPool: Sendable {
   /// - Parameter fullName: Full enum name.
   /// - Returns: EnumDescriptor or nil if not found.
   public func findEnumDescriptor(named fullName: String) -> EnumDescriptor? {
-    impl.findEnumDescriptor(named: fullName).map { EnumDescriptor(from: $0) }
+    storage.findEnumDescriptor(named: fullName).map { EnumDescriptor(from: $0) }
   }
 
   /// Finds ServiceDescriptor by full name.
@@ -417,7 +417,7 @@ public final class DescriptorPool: Sendable {
   /// - Parameter fullName: Full service name.
   /// - Returns: ServiceDescriptor or nil if not found.
   public func findServiceDescriptor(named fullName: String) -> ServiceDescriptor? {
-    impl.findServiceDescriptor(named: fullName).map { ServiceDescriptor(from: $0) }
+    storage.findServiceDescriptor(named: fullName).map { ServiceDescriptor(from: $0) }
   }
 
   /// Finds FieldDescriptor by full name.
@@ -425,7 +425,7 @@ public final class DescriptorPool: Sendable {
   /// - Parameter fullName: Full field name (including containing message name).
   /// - Returns: FieldDescriptor or nil if not found.
   public func findFieldDescriptor(named fullName: String) -> FieldDescriptor? {
-    impl.findFieldDescriptor(named: fullName).map { FieldDescriptor(from: $0) }
+    storage.findFieldDescriptor(named: fullName).map { FieldDescriptor(from: $0) }
   }
 
   /// Finds FileDescriptor containing specified symbol.
@@ -433,7 +433,7 @@ public final class DescriptorPool: Sendable {
   /// - Parameter symbolName: Symbol name to search for.
   /// - Returns: FileDescriptor containing symbol or nil if not found.
   public func findFileContainingSymbol(_ symbolName: String) -> FileDescriptor? {
-    impl.findFileContainingSymbol(symbolName).map { FileDescriptor(from: $0) }
+    storage.findFileContainingSymbol(symbolName).map { FileDescriptor(from: $0) }
   }
 
   // MARK: - Factory Integration
@@ -443,7 +443,7 @@ public final class DescriptorPool: Sendable {
   /// - Parameter typeName: Full message type name.
   /// - Returns: New DynamicMessage or nil if type not found.
   public func createMessage(forType typeName: String) -> DynamicMessage? {
-    impl.createMessage(forType: typeName).map { DynamicMessage(impl: $0) }
+    storage.createMessage(forType: typeName).map { DynamicMessage(impl: $0) }
   }
 
   /// Creates DynamicMessage with pre-filled values.
@@ -454,7 +454,7 @@ public final class DescriptorPool: Sendable {
   /// - Returns: New DynamicMessage with set values or nil if type not found.
   /// - Throws: Creation or field value setting errors.
   public func createMessage(forType typeName: String, fieldValues: [String: Any]) throws -> DynamicMessage? {
-    try impl.createMessage(forType: typeName, fieldValues: fieldValues).map { DynamicMessage(impl: $0) }
+    try storage.createMessage(forType: typeName, fieldValues: fieldValues).map { DynamicMessage(impl: $0) }
   }
 
   // MARK: - Discovery
@@ -463,28 +463,28 @@ public final class DescriptorPool: Sendable {
   ///
   /// - Returns: Array of full names of all registered message types.
   public func allMessageTypeNames() -> [String] {
-    impl.allMessageTypeNames()
+    storage.allMessageTypeNames()
   }
 
   /// Returns all known enum type names.
   ///
   /// - Returns: Array of full names of all registered enum types.
   public func allEnumTypeNames() -> [String] {
-    impl.allEnumTypeNames()
+    storage.allEnumTypeNames()
   }
 
   /// Returns all known service names.
   ///
   /// - Returns: Array of full names of all registered services.
   public func allServiceNames() -> [String] {
-    impl.allServiceNames()
+    storage.allServiceNames()
   }
 
   /// Returns all known file names.
   ///
   /// - Returns: Array of names of all registered files.
   public func allFileNames() -> [String] {
-    impl.allFileNames()
+    storage.allFileNames()
   }
 
   // MARK: - Dependency Resolution
@@ -496,7 +496,7 @@ public final class DescriptorPool: Sendable {
   /// - Throws: `DescriptorPoolError.symbolNotFound` if type not found
   public func findDependencies(for typeName: String) throws -> [String] {
     do {
-      return try impl.findDependencies(for: typeName)
+      return try storage.findDependencies(for: typeName)
     }
     catch let e as _DescriptorPoolError {
       throw DescriptorPoolError(from: e)
@@ -507,6 +507,6 @@ public final class DescriptorPool: Sendable {
 
   /// Clears all descriptors from pool.
   public func clear() {
-    impl.clear()
+    storage.clear()
   }
 }

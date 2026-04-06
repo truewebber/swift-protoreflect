@@ -27,7 +27,7 @@ final class NestedTypesIntegrationTests: XCTestCase {
     let fileDesc = try bridge.fromProtobufFileDescriptor(adsResponseFileProto)
 
     let pool = DescriptorPool()
-    try pool.addFileDescriptor(fileDesc)
+    try await pool.addFileDescriptor(fileDesc)
 
     let registry = TypeRegistry()
     try await registry.registerFile(fileDesc)
@@ -69,11 +69,11 @@ final class NestedTypesIntegrationTests: XCTestCase {
   func test_integration_poolToRegistryViaRegisterFile_noError() async throws {
     let fileDesc = try bridge.fromProtobufFileDescriptor(adsResponseFileProto)
     let pool = DescriptorPool()
-    try pool.addFileDescriptor(fileDesc)
+    try await pool.addFileDescriptor(fileDesc)
 
     let registry = TypeRegistry()
     // registerFile via pool lookup must not throw
-    if let fd = pool.findFileDescriptor(named: "ads.proto") {
+    if let fd = await pool.findFileDescriptor(named: "ads.proto") {
       try await registry.registerFile(fd)
     }
     let _asyncResult4 = await registry.findMessage(named: "pkg.GetGroupedAdsResponse.Cursor")
@@ -226,11 +226,12 @@ final class NestedTypesIntegrationTests: XCTestCase {
 
     let fileDesc = try bridge.fromProtobufFileDescriptor(fileProto)
     let pool = DescriptorPool()
-    try pool.addFileDescriptor(fileDesc)
+    try await pool.addFileDescriptor(fileDesc)
     let registry = TypeRegistry()
     try await registry.registerFile(fileDesc)
 
-    XCTAssertTrue(pool.allEnumTypeNames().contains("pkg.A.B.Color"))
+    let enumNames = await pool.allEnumTypeNames()
+    XCTAssertTrue(enumNames.contains("pkg.A.B.Color"))
     let _asyncResult16 = await registry.findEnum(named: "pkg.A.B.Color")
     XCTAssertNotNil(_asyncResult16)
   }
@@ -336,12 +337,12 @@ final class NestedTypesIntegrationTests: XCTestCase {
     XCTAssertNotNil(_asyncResult27)
   }
 
-  func test_integration_pool_allMessageTypeNames_allQualified() throws {
+  func test_integration_pool_allMessageTypeNames_allQualified() async throws {
     let fileDesc = try bridge.fromProtobufFileDescriptor(adsResponseFileProto)
     let pool = DescriptorPool()
-    try pool.addFileDescriptor(fileDesc)
+    try await pool.addFileDescriptor(fileDesc)
 
-    let names = pool.allMessageTypeNames()
+    let names = await pool.allMessageTypeNames()
     let bareNames = names.filter { !$0.contains(".") }
     XCTAssertTrue(
       bareNames.isEmpty,
@@ -349,12 +350,12 @@ final class NestedTypesIntegrationTests: XCTestCase {
     )
   }
 
-  func test_integration_pool_allEnumTypeNames_allQualified() throws {
+  func test_integration_pool_allEnumTypeNames_allQualified() async throws {
     let fileDesc = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     let pool = DescriptorPool()
-    try pool.addFileDescriptor(fileDesc)
+    try await pool.addFileDescriptor(fileDesc)
 
-    let names = pool.allEnumTypeNames()
+    let names = await pool.allEnumTypeNames()
     let bareNames = names.filter { !$0.contains(".") }
     XCTAssertTrue(
       bareNames.isEmpty,
@@ -427,7 +428,7 @@ final class NestedTypesIntegrationTests: XCTestCase {
     do {
       let fileDesc = try bridge.fromProtobufFileDescriptor(fileProto)
       let pool = DescriptorPool()
-      try pool.addFileDescriptor(fileDesc)
+      try await pool.addFileDescriptor(fileDesc)
       let registry = TypeRegistry()
       try await registry.registerFile(fileDesc)
     }

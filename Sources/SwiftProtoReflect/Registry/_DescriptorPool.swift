@@ -7,8 +7,9 @@
 
 import Foundation
 
-// @unchecked Sendable: all mutations serialised on `accessQueue` (concurrent reads, barrier writes)
-internal final class _DescriptorPool: @unchecked Sendable {
+// MARK: - _DescriptorPoolStorage
+
+internal struct _DescriptorPoolStorage {
 
   // MARK: - Properties
 
@@ -17,13 +18,10 @@ internal final class _DescriptorPool: @unchecked Sendable {
   private var enumDescriptors: [String: _EnumDescriptor] = [:]
   private var serviceDescriptors: [String: _ServiceDescriptor] = [:]
   private var fieldDescriptors: [String: _FieldDescriptor] = [:]
-  private let accessQueue = DispatchQueue(label: "com.swiftprotoreflect.descriptorpool", attributes: .concurrent)
-  private let includeBuiltinDescriptors: Bool
 
   // MARK: - Initialization
 
   init(includeBuiltinDescriptors: Bool = true) {
-    self.includeBuiltinDescriptors = includeBuiltinDescriptors
     if includeBuiltinDescriptors {
       setupBuiltinDescriptors()
     }
@@ -31,17 +29,15 @@ internal final class _DescriptorPool: @unchecked Sendable {
 
   // MARK: - FileDescriptor Management
 
-  func addFileDescriptor(_ fileDescriptor: _FileDescriptor) throws {
-    try accessQueue.sync(flags: .barrier) {
-      if fileDescriptors[fileDescriptor.name] != nil {
-        throw _DescriptorPoolError.duplicateFile(fileDescriptor.name)
-      }
-      fileDescriptors[fileDescriptor.name] = fileDescriptor
-      try extractDescriptorsFromFile(fileDescriptor)
+  mutating func addFileDescriptor(_ fileDescriptor: _FileDescriptor) throws {
+    if fileDescriptors[fileDescriptor.name] != nil {
+      throw _DescriptorPoolError.duplicateFile(fileDescriptor.name)
     }
+    fileDescriptors[fileDescriptor.name] = fileDescriptor
+    try extractDescriptorsFromFile(fileDescriptor)
   }
 
-  private func extractDescriptorsFromFile(_ fileDescriptor: _FileDescriptor) throws {
+  private mutating func extractDescriptorsFromFile(_ fileDescriptor: _FileDescriptor) throws {
     for (_, messageDescriptor) in fileDescriptor.messages {
       try addMessageDescriptorRecursively(messageDescriptor)
     }
@@ -59,7 +55,7 @@ internal final class _DescriptorPool: @unchecked Sendable {
     }
   }
 
-  private func addMessageDescriptorRecursively(_ messageDescriptor: _MessageDescriptor) throws {
+  private mutating func addMessageDescriptorRecursively(_ messageDescriptor: _MessageDescriptor) throws {
     if messageDescriptors[messageDescriptor.fullName] != nil {
       throw _DescriptorPoolError.duplicateSymbol(messageDescriptor.fullName)
     }
@@ -82,38 +78,36 @@ internal final class _DescriptorPool: @unchecked Sendable {
   // MARK: - Lookup
 
   func findFileDescriptor(named fileName: String) -> _FileDescriptor? {
-    accessQueue.sync { fileDescriptors[fileName] }
+    fileDescriptors[fileName]
   }
 
   func findMessageDescriptor(named fullName: String) -> _MessageDescriptor? {
-    accessQueue.sync { messageDescriptors[fullName] }
+    messageDescriptors[fullName]
   }
 
   func findEnumDescriptor(named fullName: String) -> _EnumDescriptor? {
-    accessQueue.sync { enumDescriptors[fullName] }
+    enumDescriptors[fullName]
   }
 
   func findServiceDescriptor(named fullName: String) -> _ServiceDescriptor? {
-    accessQueue.sync { serviceDescriptors[fullName] }
+    serviceDescriptors[fullName]
   }
 
   func findFieldDescriptor(named fullName: String) -> _FieldDescriptor? {
-    accessQueue.sync { fieldDescriptors[fullName] }
+    fieldDescriptors[fullName]
   }
 
   func findFileContainingSymbol(_ symbolName: String) -> _FileDescriptor? {
-    return accessQueue.sync {
-      if let messageDescriptor = messageDescriptors[symbolName] {
-        return fileDescriptors[messageDescriptor.fileDescriptorPath ?? ""]
-      }
-      if let enumDescriptor = enumDescriptors[symbolName] {
-        return fileDescriptors[enumDescriptor.fileDescriptorPath ?? ""]
-      }
-      if let serviceDescriptor = serviceDescriptors[symbolName] {
-        return fileDescriptors[serviceDescriptor.fileDescriptorPath ?? ""]
-      }
-      return nil
+    if let messageDescriptor = messageDescriptors[symbolName] {
+      return fileDescriptors[messageDescriptor.fileDescriptorPath ?? ""]
     }
+    if let enumDescriptor = enumDescriptors[symbolName] {
+      return fileDescriptors[enumDescriptor.fileDescriptorPath ?? ""]
+    }
+    if let serviceDescriptor = serviceDescriptors[symbolName] {
+      return fileDescriptors[serviceDescriptor.fileDescriptorPath ?? ""]
+    }
+    return nil
   }
 
   // MARK: - Factory Integration
@@ -133,32 +127,30 @@ internal final class _DescriptorPool: @unchecked Sendable {
   // MARK: - Discovery
 
   func allMessageTypeNames() -> [String] {
-    accessQueue.sync { Array(messageDescriptors.keys).sorted() }
+    Array(messageDescriptors.keys).sorted()
   }
 
   func allEnumTypeNames() -> [String] {
-    accessQueue.sync { Array(enumDescriptors.keys).sorted() }
+    Array(enumDescriptors.keys).sorted()
   }
 
   func allServiceNames() -> [String] {
-    accessQueue.sync { Array(serviceDescriptors.keys).sorted() }
+    Array(serviceDescriptors.keys).sorted()
   }
 
   func allFileNames() -> [String] {
-    accessQueue.sync { Array(fileDescriptors.keys).sorted() }
+    Array(fileDescriptors.keys).sorted()
   }
 
   // MARK: - Dependency Resolution
 
   func findDependencies(for typeName: String) throws -> [String] {
-    return try accessQueue.sync {
-      guard let messageDescriptor = messageDescriptors[typeName] else {
-        throw _DescriptorPoolError.symbolNotFound(typeName)
-      }
-      var dependencies: Set<String> = []
-      collectDependencies(from: messageDescriptor, into: &dependencies)
-      return Array(dependencies).sorted()
+    guard let messageDescriptor = messageDescriptors[typeName] else {
+      throw _DescriptorPoolError.symbolNotFound(typeName)
     }
+    var dependencies: Set<String> = []
+    collectDependencies(from: messageDescriptor, into: &dependencies)
+    return Array(dependencies).sorted()
   }
 
   private func collectDependencies(from messageDescriptor: _MessageDescriptor, into dependencies: inout Set<String>) {
@@ -181,7 +173,7 @@ internal final class _DescriptorPool: @unchecked Sendable {
 
   // MARK: - Built-in Descriptors
 
-  private func setupBuiltinDescriptors() {
+  private mutating func setupBuiltinDescriptors() {
     var googleProtobufFile = _FileDescriptor(
       name: "google/protobuf/descriptor.proto",
       package: "google.protobuf"
@@ -190,7 +182,7 @@ internal final class _DescriptorPool: @unchecked Sendable {
     try? addFileDescriptor(googleProtobufFile)
   }
 
-  private func setupWellKnownTypes(_ file: inout _FileDescriptor) {
+  private mutating func setupWellKnownTypes(_ file: inout _FileDescriptor) {
     var anyMessage = _MessageDescriptor(name: "Any", parent: file)
     anyMessage.addField(_FieldDescriptor(name: "type_url", number: 1, type: .string))
     anyMessage.addField(_FieldDescriptor(name: "value", number: 2, type: .bytes))
@@ -212,14 +204,12 @@ internal final class _DescriptorPool: @unchecked Sendable {
 
   // MARK: - Clear
 
-  func clear() {
-    accessQueue.sync(flags: .barrier) {
-      fileDescriptors.removeAll()
-      messageDescriptors.removeAll()
-      enumDescriptors.removeAll()
-      serviceDescriptors.removeAll()
-      fieldDescriptors.removeAll()
-    }
+  mutating func clear() {
+    fileDescriptors.removeAll()
+    messageDescriptors.removeAll()
+    enumDescriptors.removeAll()
+    serviceDescriptors.removeAll()
+    fieldDescriptors.removeAll()
   }
 }
 

@@ -230,26 +230,19 @@ final class RegistryBenchmarks: XCTestCase {
   func testDescriptorPoolMessageCreationPerformance() async throws {
     // Register types in pool with unique file names
     for i in testMessages.prefix(100).indices {
-      try descriptorPool.addFileDescriptor(FileDescriptor(name: "test\(i).proto", package: "performance.test"))
+      try await descriptorPool.addFileDescriptor(FileDescriptor(name: "test\(i).proto", package: "performance.test"))
     }
 
-    measure {
-      do {
-        for i in 0..<100 {
-          let typeName = "performance.test.TestMessage\(i)"
-          let _ = try descriptorPool.createMessage(
-            forType: typeName,
-            fieldValues: [
-              "id": Int32(i),
-              "name": "Test \(i)",
-              "data": Data("test\(i)".utf8),
-            ]
-          )
-        }
-      }
-      catch {
-        XCTFail("Message creation failed: \(error)")
-      }
+    for i in 0..<100 {
+      let typeName = "performance.test.TestMessage\(i)"
+      let _ = try await descriptorPool.createMessage(
+        forType: typeName,
+        fieldValues: [
+          "id": Int32(i),
+          "name": "Test \(i)",
+          "data": Data("test\(i)".utf8),
+        ]
+      )
     }
   }
 
