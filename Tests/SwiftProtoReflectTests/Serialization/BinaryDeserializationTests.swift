@@ -757,6 +757,26 @@ final class BinaryDeserializationTests: XCTestCase {
     XCTAssertFalse(try deserialized.hasValue(forField: "optional_field"))
   }
 
+  func testDeserialize_repeatedExtensionField_accumulatesAllValues() throws {
+    var message = MessageDescriptor(name: "ExtMsg", parent: fileDescriptor)
+    message.addExtensionRange(ExtensionRange(start: 100, end: 200))
+    message.addExtension(FieldDescriptor(name: "ext_strings", number: 100, type: .string, isRepeated: true))
+    fileDescriptor.addMessage(message)
+
+    // tag for field 100 (string, length-delimited): (100 << 3) | 2 = 802
+    // varint(802): 802 = 34 + 6*128 → [0xA2, 0x06]
+    // "x" = [0x01, 0x78], "y" = [0x01, 0x79], "z" = [0x01, 0x7A]
+    let data = Data([
+      0xA2, 0x06, 0x01, 0x78,
+      0xA2, 0x06, 0x01, 0x79,
+      0xA2, 0x06, 0x01, 0x7A,
+    ])
+
+    let deserialized = try deserializer.deserialize(data, using: message)
+    let strings = try deserialized.get(forField: 100) as? [String]
+    XCTAssertEqual(strings, ["x", "y", "z"])
+  }
+
   func testDeserializeMessageWithLargeFieldNumbers() throws {
     var message = MessageDescriptor(name: "LargeFieldMessage", parent: fileDescriptor)
     // Large field number, but safe

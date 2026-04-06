@@ -156,6 +156,26 @@ final class Proto2BinarySerializationTests: XCTestCase {
     XCTAssertEqual(ext, "extended")
   }
 
+  func test_extension_repeated_roundTrip() throws {
+    var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg", syntax: "proto2")
+    desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
+    desc.addExtensionRange(ExtensionRange(start: 100, end: 200))
+    desc.addExtension(FieldDescriptor(name: "ext_tags", number: 101, type: .string, isRepeated: true))
+
+    var msg = DynamicMessage(descriptor: desc)
+    try msg.set(Int32(1), forField: 1)
+    try msg.set(["a", "b", "c"] as [Any], forField: 101)
+
+    let serializer = BinarySerializer()
+    let data = try serializer.serialize(msg)
+
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
+    let decoded = try deserializer.deserialize(data, using: desc)
+
+    let tags = try decoded.get(forField: 101) as? [String]
+    XCTAssertEqual(tags, ["a", "b", "c"])
+  }
+
   // MARK: - Repeated group wire format
 
   func test_group_repeated_serialize_startEndGroupTagsPerElement() throws {
