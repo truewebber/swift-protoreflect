@@ -221,7 +221,7 @@ final class TypeRegistryNestedTypesTests: XCTestCase {
     let fd = try bridge.fromProtobufFileDescriptor(parentWithEnumFileProto)
     try registry.registerFile(fd)
     XCTAssertNotNil(registry.findEnum(named: "pkg.Parent.Status"))
-    registry.removeFile(named: "parent.proto")
+    _ = registry.removeFile(named: "parent.proto")
     XCTAssertNil(registry.findEnum(named: "pkg.Parent.Status"))
   }
 

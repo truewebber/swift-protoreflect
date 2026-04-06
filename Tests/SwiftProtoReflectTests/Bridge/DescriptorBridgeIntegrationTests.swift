@@ -32,7 +32,7 @@ final class DescriptorBridgeIntegrationTests: XCTestCase {
     msg.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
 
     let proto = try bridge.toProtobufDescriptor(from: msg)
-    let round = try bridge.fromProtobufDescriptor(proto)
+    let round = try bridge.fromProtobufDescriptor(proto, parent: nil as (any DescriptorParent)?)
 
     for field in round.allFields() {
       if let idx = field.oneofIndex {
@@ -53,7 +53,10 @@ final class DescriptorBridgeIntegrationTests: XCTestCase {
     msg.addOneofDecl(OneofDescriptor(name: "source", index: 0))
     msg.addOneofDecl(OneofDescriptor(name: "currency", index: 1))
 
-    let round = try bridge.fromProtobufDescriptor(try bridge.toProtobufDescriptor(from: msg))
+    let round = try bridge.fromProtobufDescriptor(
+      try bridge.toProtobufDescriptor(from: msg),
+      parent: nil as (any DescriptorParent)?
+    )
 
     XCTAssertNil(round.field(named: "id")?.oneofIndex)
     XCTAssertEqual(round.field(named: "card")?.oneofIndex, 0)
@@ -78,7 +81,10 @@ final class DescriptorBridgeIntegrationTests: XCTestCase {
     outer.addOneofDecl(OneofDescriptor(name: "kind", index: 0))
     outer.addNestedMessage(inner)
 
-    let round = try bridge.fromProtobufDescriptor(try bridge.toProtobufDescriptor(from: outer))
+    let round = try bridge.fromProtobufDescriptor(
+      try bridge.toProtobufDescriptor(from: outer),
+      parent: nil as (any DescriptorParent)?
+    )
 
     XCTAssertEqual(round.oneofDecls.count, 1)
     XCTAssertEqual(round.oneof(at: 0)?.name, "kind")

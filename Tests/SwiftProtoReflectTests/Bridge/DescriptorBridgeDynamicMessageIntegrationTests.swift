@@ -43,7 +43,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
       valueType: .string
     )
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
 
     // Create DynamicMessage and use detected map field
     var dynamicMsg = DynamicMessage(descriptor: messageDescriptor)
@@ -71,7 +71,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
       valueType: .int32
     )
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
     var dynamicMsg = DynamicMessage(descriptor: messageDescriptor)
 
     // Set map entries
@@ -92,7 +92,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
       valueType: .string
     )
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
     var dynamicMsg = DynamicMessage(descriptor: messageDescriptor)
 
     // Set map entries with Int32 keys
@@ -113,7 +113,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
       valueType: .int64
     )
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
     var dynamicMsg = DynamicMessage(descriptor: messageDescriptor)
 
     // Set map entries with Int64
@@ -134,7 +134,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
       valueType: .string
     )
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
     var dynamicMsg = DynamicMessage(descriptor: messageDescriptor)
 
     // Set map entries with Bool keys
@@ -155,7 +155,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
       valueType: .string
     )
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
     var dynamicMsg = DynamicMessage(descriptor: messageDescriptor)
 
     // Set entire map at once
@@ -178,7 +178,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
       valueType: .int32
     )
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
     var dynamicMsg = DynamicMessage(descriptor: messageDescriptor)
 
     // Set map entries
@@ -245,7 +245,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
     messageProto.nestedType = [entryMessage1, entryMessage2, entryMessage3]
     messageProto.field = [mapField1, mapField2, mapField3]
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
     var dynamicMsg = DynamicMessage(descriptor: messageDescriptor)
 
     // Set values in all three maps
@@ -272,7 +272,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
       valueType: .string
     )
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
     var dynamicMsg = DynamicMessage(descriptor: messageDescriptor)
 
     // Set initial value
@@ -298,7 +298,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
       valueType: .string
     )
 
-    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto)
+    let messageDescriptor = try bridge.fromProtobufDescriptor(messageProto, parent: nil as (any DescriptorParent)?)
     var dynamicMsg = DynamicMessage(descriptor: messageDescriptor)
 
     // Set using DynamicMessage

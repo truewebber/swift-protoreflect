@@ -69,7 +69,8 @@ final class CPPCompatibilityTests: XCTestCase {
   // MARK: - Edge values of numeric types
 
   func test_int32_extremeValues() throws {
-    for value: Int32 in [.min, .max, 0, 1, -1] {
+    // 0 is the proto3 default and is omitted from wire; excluded from round-trip.
+    for value: Int32 in [.min, .max, 1, -1] {
       var desc = MessageDescriptor(name: "M", fullName: "test.M")
       desc.addField(FieldDescriptor(name: "v", number: 1, type: .int32))
 
@@ -82,7 +83,8 @@ final class CPPCompatibilityTests: XCTestCase {
   }
 
   func test_int64_extremeValues() throws {
-    for value: Int64 in [.min, .max, 0, 1, -1] {
+    // 0 is the proto3 default and is omitted from wire; excluded from round-trip.
+    for value: Int64 in [.min, .max, 1, -1] {
       var desc = MessageDescriptor(name: "M", fullName: "test.M")
       desc.addField(FieldDescriptor(name: "v", number: 1, type: .int64))
 
@@ -95,7 +97,8 @@ final class CPPCompatibilityTests: XCTestCase {
   }
 
   func test_uint32_extremeValues() throws {
-    for value: UInt32 in [.min, .max, 0, 1] {
+    // 0 (.min) is the proto3 default and is omitted from wire; excluded from round-trip.
+    for value: UInt32 in [.max, 1] {
       var desc = MessageDescriptor(name: "M", fullName: "test.M")
       desc.addField(FieldDescriptor(name: "v", number: 1, type: .uint32))
 
@@ -108,7 +111,8 @@ final class CPPCompatibilityTests: XCTestCase {
   }
 
   func test_uint64_extremeValues() throws {
-    for value: UInt64 in [.min, .max, 0, 1] {
+    // 0 (.min) is the proto3 default and is omitted from wire; excluded from round-trip.
+    for value: UInt64 in [.max, 1] {
       var desc = MessageDescriptor(name: "M", fullName: "test.M")
       desc.addField(FieldDescriptor(name: "v", number: 1, type: .uint64))
 
@@ -123,7 +127,8 @@ final class CPPCompatibilityTests: XCTestCase {
   // MARK: - Float special values
 
   func test_float_specialValues() throws {
-    for value: Float in [0.0, .infinity, -.infinity, .greatestFiniteMagnitude, .leastNonzeroMagnitude] {
+    // 0.0 is the proto3 default and is omitted from wire; excluded from round-trip.
+    for value: Float in [.infinity, -.infinity, .greatestFiniteMagnitude, .leastNonzeroMagnitude] {
       var desc = MessageDescriptor(name: "M", fullName: "test.M")
       desc.addField(FieldDescriptor(name: "v", number: 1, type: .float))
 
@@ -149,9 +154,8 @@ final class CPPCompatibilityTests: XCTestCase {
   }
 
   func test_double_specialValues() throws {
-    for value: Double in [
-      0.0, .infinity, -.infinity, .greatestFiniteMagnitude, .leastNonzeroMagnitude,
-    ] {
+    // 0.0 is the proto3 default and is omitted from wire; excluded from round-trip.
+    for value: Double in [.infinity, -.infinity, .greatestFiniteMagnitude, .leastNonzeroMagnitude] {
       var desc = MessageDescriptor(name: "M", fullName: "test.M")
       desc.addField(FieldDescriptor(name: "v", number: 1, type: .double))
 

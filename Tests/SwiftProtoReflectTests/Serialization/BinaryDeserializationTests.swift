@@ -126,11 +126,13 @@ final class BinaryDeserializationTests: XCTestCase {
     let deserializedTrue = try deserializer.deserialize(trueData, using: message)
     XCTAssertEqual(try deserializedTrue.get(forField: "value") as? Bool, true)
 
-    // Test false
+    // Test false: proto3 implicit-presence — false is the default and is omitted from wire,
+    // so after round-trip the field is absent (hasValue returns false).
     let falseMessage = try messageFactory.createMessage(from: message, with: ["value": false])
     let falseData = try serializer.serialize(falseMessage)
+    XCTAssertEqual(falseData.count, 0)
     let deserializedFalse = try deserializer.deserialize(falseData, using: message)
-    XCTAssertEqual(try deserializedFalse.get(forField: "value") as? Bool, false)
+    XCTAssertFalse(try deserializedFalse.hasValue(forField: "value"))
   }
 
   func testRoundTripStringValues() throws {
@@ -139,12 +141,12 @@ final class BinaryDeserializationTests: XCTestCase {
     fileDescriptor.addMessage(message)
 
     // Test various strings
+    // proto3 implicit-presence: empty string is the default and omitted from wire.
     let testStrings = [
       "Hello World",
       "Hello, world!",
       "你好世界",
       "🌍🚀✨",
-      "",
       "Multiple\nLine\nString",
     ]
 
@@ -161,8 +163,8 @@ final class BinaryDeserializationTests: XCTestCase {
     message.addField(FieldDescriptor(name: "value", number: 1, type: .bytes))
     fileDescriptor.addMessage(message)
 
+    // proto3 implicit-presence: empty Data() is the default and omitted from wire.
     let testBytes = [
-      Data(),  // Empty data
       Data([0x01]),  // One byte
       Data([0x01, 0x02, 0x03, 0xFF, 0xAB]),  // Several bytes
       Data(repeating: 0xAA, count: 1000),  // Large array
@@ -755,6 +757,26 @@ final class BinaryDeserializationTests: XCTestCase {
     let deserialized = try deserializer.deserialize(data, using: message)
 
     XCTAssertFalse(try deserialized.hasValue(forField: "optional_field"))
+  }
+
+  func testDeserialize_repeatedExtensionField_accumulatesAllValues() throws {
+    var message = MessageDescriptor(name: "ExtMsg", parent: fileDescriptor)
+    message.addExtensionRange(ExtensionRange(start: 100, end: 200))
+    message.addExtension(FieldDescriptor(name: "ext_strings", number: 100, type: .string, isRepeated: true))
+    fileDescriptor.addMessage(message)
+
+    // tag for field 100 (string, length-delimited): (100 << 3) | 2 = 802
+    // varint(802): 802 = 34 + 6*128 → [0xA2, 0x06]
+    // "x" = [0x01, 0x78], "y" = [0x01, 0x79], "z" = [0x01, 0x7A]
+    let data = Data([
+      0xA2, 0x06, 0x01, 0x78,
+      0xA2, 0x06, 0x01, 0x79,
+      0xA2, 0x06, 0x01, 0x7A,
+    ])
+
+    let deserialized = try deserializer.deserialize(data, using: message)
+    let strings = try deserialized.get(forField: 100) as? [String]
+    XCTAssertEqual(strings, ["x", "y", "z"])
   }
 
   func testDeserializeMessageWithLargeFieldNumbers() throws {

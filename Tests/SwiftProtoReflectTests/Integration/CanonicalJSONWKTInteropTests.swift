@@ -513,7 +513,10 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     let restoredBytes = try XCTUnwrap(try restored.get(forField: 2) as? Data)
     XCTAssertEqual(restoredTypeUrl, typeUrl)
 
-    let unpacked = try BinaryDeserializer().deserialize(restoredBytes, using: actualPingDesc)
+    let unpacked = try BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry())).deserialize(
+      restoredBytes,
+      using: actualPingDesc
+    )
     XCTAssertEqual(try unpacked.get(forField: 1) as? Int32, 42)
 
     // SwiftProtobuf → JSON  (note: SwiftProtobuf Any JSON interop requires proto2 registry, skip direct parse)
@@ -556,7 +559,10 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     let restoredBytes = try XCTUnwrap(try restored.get(forField: 2) as? Data)
     XCTAssertEqual(restoredTypeUrl, typeUrl)
 
-    let unpacked = try BinaryDeserializer().deserialize(restoredBytes, using: actualStrDesc)
+    let unpacked = try BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry())).deserialize(
+      restoredBytes,
+      using: actualStrDesc
+    )
     XCTAssertEqual(try unpacked.get(forField: 1) as? String, "interop-test")
   }
 

@@ -167,8 +167,8 @@ public struct BinaryDeserializer {
     let fieldAccess = FieldAccessor(message)
     var array: [Any] = []
 
-    if fieldAccess.hasValue(field.name) {
-      array = fieldAccess.getValue(field.name, as: [Any].self) ?? []
+    if fieldAccess.hasValue(field.number) {
+      array = fieldAccess.getValue(field.number, as: [Any].self) ?? []
     }
 
     array.append(value)

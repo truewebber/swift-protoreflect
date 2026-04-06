@@ -201,7 +201,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     )
 
     // Serialise using lie for the map value type.
-    var serItemDesc = itemDesc
+    let serItemDesc = itemDesc
     var serContainerDesc = containerDesc
     serContainerDesc.addNestedMessage(serItemDesc)
 

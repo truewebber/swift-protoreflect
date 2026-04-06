@@ -27,7 +27,7 @@ final class JSONCompatEnumTests: XCTestCase {
   // MARK: - Enum by name (protobuf JSON uses enum name, not number)
 
   func test_enum_topLevel_byName_bidirectional() throws {
-    var proto = Testcompat_SimpleMessage()
+    let proto = Testcompat_SimpleMessage()
     // Use WithNestedEnum for enum field
     var protoWNE = Testcompat_WithNestedEnum()
     protoWNE.kind = .innerAlpha
@@ -63,10 +63,10 @@ final class JSONCompatEnumTests: XCTestCase {
     let desc = CompatDescriptors.withNestedEnum()
 
     for (status, rawValue) in statuses {
-      var protoWNE = Testcompat_WithNestedEnum()
+      let protoWNE = Testcompat_WithNestedEnum()
       // Use a wrapper message that holds a Status enum field
       // For this test, we use IntentHolder for the Status-based test
-      var proto2 = Testcompat_MixedContainers()
+      let proto2 = Testcompat_MixedContainers()
       _ = proto2
       _ = protoWNE
       _ = status

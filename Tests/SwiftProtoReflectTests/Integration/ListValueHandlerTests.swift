@@ -110,7 +110,6 @@ final class ListValueHandlerTests: XCTestCase {
     XCTAssertEqual(msg.descriptor.fullName, "google.protobuf.ListValue")
     XCTAssertNil(try? msg.get(forField: "values_data"), "values_data field must not exist")
     let rawList = try XCTUnwrap(try msg.get(forField: 1) as? [Any], "field 1 must be a list")
-    XCTAssertNil(rawList as? Data, "field 1 must not be bytes")
     XCTAssertEqual(rawList.count, 3)
     for element in rawList {
       XCTAssertNotNil(element as? DynamicMessage, "each element must be a DynamicMessage")

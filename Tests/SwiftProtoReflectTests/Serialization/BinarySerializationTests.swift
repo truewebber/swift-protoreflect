@@ -141,13 +141,10 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(trueData[0], 8)  // Tag: (1 << 3) | 0 = 8
     XCTAssertEqual(trueData[1], 1)  // true = 1
 
-    // Test false
+    // Test false: proto3 implicit-presence — default value is omitted from wire
     let falseMessage = try messageFactory.createMessage(from: message, with: ["value": false])
     let falseData = try serializer.serialize(falseMessage)
-
-    XCTAssertEqual(falseData.count, 2)
-    XCTAssertEqual(falseData[0], 8)
-    XCTAssertEqual(falseData[1], 0)  // false = 0
+    XCTAssertEqual(falseData.count, 0)
   }
 
   // MARK: - String and Bytes Tests (Test-BIN-002)
@@ -201,9 +198,8 @@ final class BinarySerializationTests: XCTestCase {
     let dynamicMessage = try messageFactory.createMessage(from: message, with: ["value": ""])
     let data = try serializer.serialize(dynamicMessage)
 
-    XCTAssertEqual(data.count, 2)  // tag + length(0)
-    XCTAssertEqual(data[0], 10)  // Tag: (1 << 3) | 2 = 10
-    XCTAssertEqual(data[1], 0)  // Length = 0
+    // proto3 implicit-presence: empty string (default) is omitted from wire
+    XCTAssertEqual(data.count, 0)
   }
 
   // MARK: - Nested Messages Tests (Test-BIN-003)
@@ -891,6 +887,37 @@ final class BinarySerializationTests: XCTestCase {
 
     let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
+  }
+
+  func testSerialize_proto3ScalarField_explicitDefault_producesEmptyData() throws {
+    let cases: [(FieldType, Any)] = [
+      (.double, Double(0.0)),
+      (.float, Float(0.0)),
+      (.int32, Int32(0)),
+      (.int64, Int64(0)),
+      (.uint32, UInt32(0)),
+      (.uint64, UInt64(0)),
+      (.sint32, Int32(0)),
+      (.sint64, Int64(0)),
+      (.fixed32, UInt32(0)),
+      (.fixed64, UInt64(0)),
+      (.sfixed32, Int32(0)),
+      (.sfixed64, Int64(0)),
+      (.bool, false),
+      (.string, ""),
+      (.bytes, Data()),
+    ]
+
+    for (fieldType, defaultValue) in cases {
+      var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg", syntax: "proto3")
+      desc.addField(FieldDescriptor(name: "f", number: 1, type: fieldType))
+
+      var msg = DynamicMessage(descriptor: desc)
+      try msg.set(defaultValue, forField: 1)
+
+      let data = try serializer.serialize(msg)
+      XCTAssertEqual(data, Data(), "proto3 \(fieldType) explicitly set to default must produce empty wire bytes")
+    }
   }
 
   func testSerializeMapFieldWithBoolKey() throws {
