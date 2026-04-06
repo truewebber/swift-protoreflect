@@ -94,6 +94,8 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
     }
     // [DynamicMessage] does not bridge to [Any] at runtime through Any boxing,
     // so we handle it explicitly before the generic [Any] path.
+    // TODO(Strangler migration / OPE-302): Remove once field storage is typed (ProtoValue),
+    // eliminating the need for explicit [DynamicMessage] ↔ [_DynamicMessage] round-trips.
     if let arr = value as? [DynamicMessage] {
       return arr.map(\.impl) as [Any]
     }

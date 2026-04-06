@@ -326,6 +326,8 @@ internal struct _BinarySerializer: Sendable {
       if let m = value as? _DynamicMessage {
         messageValue = m
       }
+      // TODO(Strangler migration / OPE-302): Remove once wrapAnyForImpl guarantees internal
+      // storage never holds public DynamicMessage values.
       else if let pub = value as? DynamicMessage {
         messageValue = _DynamicMessage(from: pub)
       }
@@ -358,6 +360,8 @@ internal struct _BinarySerializer: Sendable {
       if let m = value as? _DynamicMessage {
         groupMessage = m
       }
+      // TODO(Strangler migration / OPE-302): Remove once wrapAnyForImpl guarantees internal
+      // storage never holds public DynamicMessage values.
       else if let pub = value as? DynamicMessage {
         groupMessage = _DynamicMessage(from: pub)
       }

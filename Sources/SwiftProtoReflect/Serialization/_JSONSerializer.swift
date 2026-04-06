@@ -218,6 +218,7 @@ internal struct _JSONSerializer {
       let nested: _DynamicMessage
       if let m = raw as? _DynamicMessage {
         nested = m
+        // TODO(Strangler migration / OPE-302): Remove once internal storage never holds public DynamicMessage.
       }
       else if let pub = raw as? DynamicMessage {
         nested = _DynamicMessage(from: pub)
@@ -232,6 +233,7 @@ internal struct _JSONSerializer {
       let nested: _DynamicMessage
       if let m = raw as? _DynamicMessage {
         nested = m
+        // TODO(Strangler migration / OPE-302): Remove once internal storage never holds public DynamicMessage.
       }
       else if let pub = raw as? DynamicMessage {
         nested = _DynamicMessage(from: pub)
@@ -252,6 +254,7 @@ internal struct _JSONSerializer {
       let valueMsg: _DynamicMessage
       if let m = value as? _DynamicMessage {
         valueMsg = m
+        // TODO(Strangler migration / OPE-302): Remove once internal storage never holds public DynamicMessage.
       }
       else if let pub = value as? DynamicMessage {
         valueMsg = _DynamicMessage(from: pub)
@@ -270,6 +273,7 @@ internal struct _JSONSerializer {
       let valueMsg: _DynamicMessage
       if let m = item as? _DynamicMessage {
         valueMsg = m
+        // TODO(Strangler migration / OPE-302): Remove once internal storage never holds public DynamicMessage.
       }
       else if let pub = item as? DynamicMessage {
         valueMsg = _DynamicMessage(from: pub)
@@ -578,6 +582,7 @@ internal struct _JSONSerializer {
       let messageValue: _DynamicMessage
       if let m = value as? _DynamicMessage {
         messageValue = m
+        // TODO(Strangler migration / OPE-302): Remove once internal storage never holds public DynamicMessage.
       }
       else if let pub = value as? DynamicMessage {
         messageValue = _DynamicMessage(from: pub)
@@ -608,6 +613,7 @@ internal struct _JSONSerializer {
       let groupMessage: _DynamicMessage
       if let m = value as? _DynamicMessage {
         groupMessage = m
+        // TODO(Strangler migration / OPE-302): Remove once internal storage never holds public DynamicMessage.
       }
       else if let pub = value as? DynamicMessage {
         groupMessage = _DynamicMessage(from: pub)
