@@ -427,18 +427,18 @@ final class BinarySerializationTests: XCTestCase {
 
   func testZigZagEncoding() {
     // Test ZigZag encoding for sint32
-    XCTAssertEqual(BinarySerializer.zigzagEncode32(0), 0)
-    XCTAssertEqual(BinarySerializer.zigzagEncode32(-1), 1)
-    XCTAssertEqual(BinarySerializer.zigzagEncode32(1), 2)
-    XCTAssertEqual(BinarySerializer.zigzagEncode32(-2), 3)
-    XCTAssertEqual(BinarySerializer.zigzagEncode32(2_147_483_647), 4_294_967_294)
-    XCTAssertEqual(BinarySerializer.zigzagEncode32(-2_147_483_648), 4_294_967_295)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode32(0), 0)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode32(-1), 1)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode32(1), 2)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode32(-2), 3)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode32(2_147_483_647), 4_294_967_294)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode32(-2_147_483_648), 4_294_967_295)
 
     // Test ZigZag encoding for sint64
-    XCTAssertEqual(BinarySerializer.zigzagEncode64(0), 0)
-    XCTAssertEqual(BinarySerializer.zigzagEncode64(-1), 1)
-    XCTAssertEqual(BinarySerializer.zigzagEncode64(1), 2)
-    XCTAssertEqual(BinarySerializer.zigzagEncode64(-2), 3)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode64(0), 0)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode64(-1), 1)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode64(1), 2)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode64(-2), 3)
   }
 
   func testSerializeSint32Value() throws {

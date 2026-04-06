@@ -14,11 +14,11 @@ final class JSONSerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Test Infrastructure
 
-  private var serializer: JSONSerializer!
+  private var serializer: _JSONSerializer!
 
   override func setUp() {
     super.setUp()
-    serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
+    serializer = _JSONSerializer(options: _JSONSerializationOptions(typeRegistry: _TypeRegistry()))
   }
 
   override func tearDown() {
@@ -390,10 +390,10 @@ final class JSONSerializerTypeMismatchTests: XCTestCase {
     file: StaticString = #filePath,
     line: UInt = #line
   ) {
-    guard let jsonError = error as? JSONSerializationError,
+    guard let jsonError = error as? _JSONSerializationError,
       case .valueTypeMismatch(let expectedType, let actualType) = jsonError
     else {
-      XCTFail("Expected JSONSerializationError.valueTypeMismatch, got: \(error)", file: file, line: line)
+      XCTFail("Expected _JSONSerializationError.valueTypeMismatch, got: \(error)", file: file, line: line)
       return
     }
     XCTAssertEqual(expectedType, expected, file: file, line: line)
@@ -408,15 +408,15 @@ final class JSONSerializerTypeMismatchTests: XCTestCase {
 
 // MARK: - JSONSerializer Testing Extension
 
-extension JSONSerializer {
+extension _JSONSerializer {
 
   /// FOR TESTING ONLY: Provides access to private method convertValueToJSON.
-  func testConvertValueToJSON(_ value: Any, type: FieldType, typeName: String?) throws -> Any {
+  func testConvertValueToJSON(_ value: Any, type: _FieldType, typeName: String?) throws -> Any {
     return try self.convertValueToJSON(value, type: type, typeName: typeName)
   }
 
   /// FOR TESTING ONLY: Provides access to private method convertMapKeyToJSONString.
-  func testConvertMapKeyToJSONString(_ key: Any, keyType: FieldType) throws -> String {
+  func testConvertMapKeyToJSONString(_ key: Any, keyType: _FieldType) throws -> String {
     return try self.convertMapKeyToJSONString(key, keyType: keyType)
   }
 }

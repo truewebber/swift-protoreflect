@@ -182,20 +182,20 @@ final class BinaryDeserializationTests: XCTestCase {
 
   func testZigZagDecoding() {
     // Test ZigZag decoding for sint32
-    XCTAssertEqual(BinaryDeserializer.zigzagDecode32(0), 0)
-    XCTAssertEqual(BinaryDeserializer.zigzagDecode32(1), -1)
-    XCTAssertEqual(BinaryDeserializer.zigzagDecode32(2), 1)
-    XCTAssertEqual(BinaryDeserializer.zigzagDecode32(3), -2)
-    XCTAssertEqual(BinaryDeserializer.zigzagDecode32(4_294_967_294), 2_147_483_647)
-    XCTAssertEqual(BinaryDeserializer.zigzagDecode32(4_294_967_295), -2_147_483_648)
+    XCTAssertEqual(_BinaryDeserializer.zigzagDecode32(0), 0)
+    XCTAssertEqual(_BinaryDeserializer.zigzagDecode32(1), -1)
+    XCTAssertEqual(_BinaryDeserializer.zigzagDecode32(2), 1)
+    XCTAssertEqual(_BinaryDeserializer.zigzagDecode32(3), -2)
+    XCTAssertEqual(_BinaryDeserializer.zigzagDecode32(4_294_967_294), 2_147_483_647)
+    XCTAssertEqual(_BinaryDeserializer.zigzagDecode32(4_294_967_295), -2_147_483_648)
 
     // Test ZigZag decoding for sint64 (more conservative values)
-    XCTAssertEqual(BinaryDeserializer.zigzagDecode64(0), 0)
-    XCTAssertEqual(BinaryDeserializer.zigzagDecode64(1), -1)
-    XCTAssertEqual(BinaryDeserializer.zigzagDecode64(2), 1)
-    XCTAssertEqual(BinaryDeserializer.zigzagDecode64(3), -2)
-    XCTAssertEqual(BinaryDeserializer.zigzagDecode64(200), 100)
-    XCTAssertEqual(BinaryDeserializer.zigzagDecode64(201), -101)
+    XCTAssertEqual(_BinaryDeserializer.zigzagDecode64(0), 0)
+    XCTAssertEqual(_BinaryDeserializer.zigzagDecode64(1), -1)
+    XCTAssertEqual(_BinaryDeserializer.zigzagDecode64(2), 1)
+    XCTAssertEqual(_BinaryDeserializer.zigzagDecode64(3), -2)
+    XCTAssertEqual(_BinaryDeserializer.zigzagDecode64(200), 100)
+    XCTAssertEqual(_BinaryDeserializer.zigzagDecode64(201), -101)
   }
 
   func testRoundTripSintValues() throws {

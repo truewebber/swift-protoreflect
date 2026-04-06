@@ -92,6 +92,11 @@ public struct DynamicMessage: Equatable, @unchecked Sendable {
     if let m = value as? DynamicMessage {
       return m.impl
     }
+    // [DynamicMessage] does not bridge to [Any] at runtime through Any boxing,
+    // so we handle it explicitly before the generic [Any] path.
+    if let arr = value as? [DynamicMessage] {
+      return arr.map(\.impl) as [Any]
+    }
     if let arr = value as? [Any] {
       return try arr.map { try wrapAnyForImpl($0) }
     }

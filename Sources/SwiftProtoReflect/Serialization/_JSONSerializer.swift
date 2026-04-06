@@ -1,5 +1,5 @@
 //
-// JSONSerializer.swift
+// _JSONSerializer.swift
 // SwiftProtoReflect
 //
 // Created: 2025-05-25
@@ -7,51 +7,15 @@
 
 import Foundation
 
-/// JSONSerializer.
-///
-/// Provides functionality for serializing dynamic Protocol Buffers messages
-/// to JSON format according to official Protocol Buffers JSON mapping specification.
-/// Ensures full compatibility with protoc --json_out.
-public struct JSONSerializer {
+internal struct _JSONSerializer {
 
   // MARK: - Properties
 
-  /// JSON serialization options.
-  public let options: JSONSerializationOptions
-
-  // MARK: - Initialization
-
-  /// Creates new JSONSerializer instance.
-  ///
-  /// - Parameter options: JSON serialization options.
-  public init(options: JSONSerializationOptions) {
-    self.options = options
-  }
-
-  /// Creates a JSONSerializer with default options and an empty TypeRegistry.
-  ///
-  /// - Note: Deprecated. Use `init(options:)` with an explicit `TypeRegistry` so that
-  ///   cross-file message types can be resolved correctly.
-  @available(*, deprecated, message: "Use init(options:) with an explicit TypeRegistry")
-  public init() {
-    self.init(
-      options: JSONSerializationOptions(
-        useOriginalFieldNames: false,
-        prettyPrinted: false,
-        includeDefaultValues: false,
-        typeRegistry: TypeRegistry()
-      )
-    )
-  }
+  let options: _JSONSerializationOptions
 
   // MARK: - Serialization Methods
 
-  /// Serializes dynamic message to JSON format.
-  ///
-  /// - Parameter message: Dynamic message to serialize.
-  /// - Returns: JSON string in Data format.
-  /// - Throws: JSONSerializationError if serialization failed.
-  public func serialize(_ message: DynamicMessage) throws -> Data {
+  func serialize(_ message: _DynamicMessage) throws -> Data {
     let jsonValue = try serializeMessageToAny(message)
 
     var writingOptions: JSONSerialization.WritingOptions = .fragmentsAllowed
@@ -63,24 +27,11 @@ public struct JSONSerializer {
       return try JSONSerialization.data(withJSONObject: jsonValue, options: writingOptions)
     }
     catch {
-      throw JSONSerializationError.jsonWriteError(underlyingError: error)
+      throw _JSONSerializationError.jsonWriteError(underlyingError: error)
     }
   }
 
-  /// Serializes a dynamic message to an `Any` value.
-  ///
-  /// When `useCanonicalWellKnownTypeEncoding` is enabled and the message is a well-known type,
-  /// this method routes to a WKT-specific encoder. For all other messages it falls through to
-  /// standard field-by-field encoding via `serializeToJSONObject`.
-  ///
-  /// The return type is `Any` rather than `[String: Any]` because canonical WKT output can be
-  /// a non-object JSON value (e.g. a bare `String`, `Bool`, `NSNull`, or `[Any]`).
-  ///
-  /// - Parameter message: Dynamic message to serialize.
-  /// - Returns: JSON-compatible value (`Any`).
-  /// - Throws: `JSONSerializationError.unsupportedWellKnownTypeEncoding` when canonical mode is
-  ///   enabled for a WKT whose encoder has not yet been implemented.
-  internal func serializeMessageToAny(_ message: DynamicMessage) throws -> Any {
+  internal func serializeMessageToAny(_ message: _DynamicMessage) throws -> Any {
     let fullName = message.descriptor.fullName
     guard options.useCanonicalWellKnownTypeEncoding,
       WellKnownTypeDetector.isWellKnownType(fullName)
@@ -90,8 +41,7 @@ public struct JSONSerializer {
     return try encodeWellKnownType(message, fullName: fullName)
   }
 
-  /// Dispatches to a WKT-specific canonical JSON encoder.
-  private func encodeWellKnownType(_ message: DynamicMessage, fullName: String) throws -> Any {
+  private func encodeWellKnownType(_ message: _DynamicMessage, fullName: String) throws -> Any {
     switch fullName {
     case WellKnownTypeNames.empty:
       return [String: Any]()
@@ -120,18 +70,11 @@ public struct JSONSerializer {
       WellKnownTypeNames.bytesValue:
       return try encodeWrapperMessage(message, fullName: fullName)
     default:
-      throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: fullName)
+      throw _JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: fullName)
     }
   }
 
-  /// Encodes any of the 9 protobuf wrapper types to their canonical JSON value.
-  ///
-  /// Each wrapper holds a single `value` field (field 1). The field is read and
-  /// returned as the raw JSON-compatible value:
-  /// - Int64/UInt64 → quoted decimal string (to preserve precision beyond JS Number)
-  /// - Data (BytesValue) → base64 string
-  /// - All others → the native Swift value (Double, Float, Int32, UInt32, Bool, String)
-  private func encodeWrapperMessage(_ message: DynamicMessage, fullName: String) throws -> Any {
+  private func encodeWrapperMessage(_ message: _DynamicMessage, fullName: String) throws -> Any {
     let rawValue = try? message.get(forField: 1)
 
     switch fullName {
@@ -161,12 +104,7 @@ public struct JSONSerializer {
     }
   }
 
-  /// Encodes `google.protobuf.Timestamp` to its canonical RFC 3339 JSON string.
-  ///
-  /// Field layout: 1 seconds (int64), 2 nanos (int32).
-  /// Fractional precision: 0 digits when nanos==0, 3 when millis-aligned,
-  /// 6 when micros-aligned, 9 otherwise.
-  private func encodeTimestampMessage(_ message: DynamicMessage) throws -> Any {
+  private func encodeTimestampMessage(_ message: _DynamicMessage) throws -> Any {
     let seconds = (try? message.get(forField: 1) as? Int64) ?? 0
     let nanos = (try? message.get(forField: 2) as? Int32) ?? 0
 
@@ -191,13 +129,7 @@ public struct JSONSerializer {
     }
   }
 
-  /// Encodes `google.protobuf.Duration` to its canonical JSON string with `s` suffix.
-  ///
-  /// Field layout: 1 seconds (int64), 2 nanos (int32).
-  /// If nanos is zero the output is `"Xs"`. Otherwise the 9-digit nanosecond fraction
-  /// is appended with trailing zeros trimmed, e.g. `"1.5s"`. Negative durations
-  /// carry a single leading `-` sign covering both the seconds and nanos parts.
-  private func encodeDurationMessage(_ message: DynamicMessage) throws -> Any {
+  private func encodeDurationMessage(_ message: _DynamicMessage) throws -> Any {
     let seconds = (try? message.get(forField: 1) as? Int64) ?? 0
     let nanos = (try? message.get(forField: 2) as? Int32) ?? 0
 
@@ -214,18 +146,12 @@ public struct JSONSerializer {
     return "\(sign)\(absSeconds).\(fracStr)s"
   }
 
-  /// Encodes `google.protobuf.FieldMask` to its canonical comma-separated camelCase JSON string.
-  ///
-  /// Field layout: 1 paths (repeated string, snake_case).
-  /// Each snake_case path is converted to lowerCamelCase and joined with `,`.
-  /// An empty paths array produces an empty string `""`.
-  private func encodeFieldMaskMessage(_ message: DynamicMessage) throws -> Any {
+  private func encodeFieldMaskMessage(_ message: _DynamicMessage) throws -> Any {
     let paths = (try? message.get(forField: 1) as? [String]) ?? []
     let camelPaths = paths.map { snakeToCamelCase($0) }
     return camelPaths.joined(separator: ",")
   }
 
-  /// Converts a snake_case string to lowerCamelCase.
   private func snakeToCamelCase(_ snake: String) -> String {
     let parts = snake.split(separator: "_", omittingEmptySubsequences: false)
     guard !parts.isEmpty else { return snake }
@@ -238,18 +164,10 @@ public struct JSONSerializer {
     return result
   }
 
-  /// Encodes `google.protobuf.Any` to its canonical expanded JSON form.
-  ///
-  /// Reads `type_url` (field 1) and `value` (field 2, bytes) from the Any message.
-  /// The type is looked up in `options.typeRegistry`:
-  /// - If found and is a WKT: `{"@type": url, "value": <canonical WKT>}`.
-  /// - If found and is a regular message: `serializeToJSONObject` result + `"@type"` key.
-  /// - If not found: falls back to standard field-by-field encoding (no `@type` expansion).
-  private func encodeAnyMessage(_ message: DynamicMessage) throws -> Any {
+  private func encodeAnyMessage(_ message: _DynamicMessage) throws -> Any {
     let typeUrl = (try? message.get(forField: 1) as? String) ?? ""
     let valueBytes = (try? message.get(forField: 2) as? Data) ?? Data()
 
-    // Extract the fully-qualified type name from the URL (everything after the last '/').
     guard !typeUrl.isEmpty, let slashIdx = typeUrl.lastIndex(of: "/") else {
       return try serializeToJSONObject(message)
     }
@@ -259,8 +177,8 @@ public struct JSONSerializer {
       return try serializeToJSONObject(message)
     }
 
-    let packedMessage = try BinaryDeserializer(
-      options: DeserializationOptions(typeRegistry: options.typeRegistry)
+    let packedMessage = try _BinaryDeserializer(
+      options: _DeserializationOptions(typeRegistry: options.typeRegistry)
     ).deserialize(valueBytes, using: packedDescriptor)
 
     if WellKnownTypeDetector.isWellKnownType(typeName) {
@@ -273,86 +191,101 @@ public struct JSONSerializer {
     return jsonObject
   }
 
-  /// Encodes `google.protobuf.Value` to its canonical JSON form.
-  ///
-  /// Field layout (oneof kind):
-  ///   1 null_value (enum), 2 number_value (double), 3 string_value,
-  ///   4 bool_value, 5 struct_value (message), 6 list_value (message).
-  /// When no field is set the canonical output is JSON null.
-  private func encodeValueMessage(_ message: DynamicMessage) throws -> Any {
+  private func encodeValueMessage(_ message: _DynamicMessage) throws -> Any {
     if (try? message.hasValue(forField: 1)) == true {
       return NSNull()
     }
     if (try? message.hasValue(forField: 2)) == true {
       guard let d = try message.get(forField: 2) as? Double else {
-        throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.value)
+        throw _JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.value)
       }
       return convertDoubleToJSON(d)
     }
     if (try? message.hasValue(forField: 3)) == true {
       guard let s = try message.get(forField: 3) as? String else {
-        throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.value)
+        throw _JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.value)
       }
       return s
     }
     if (try? message.hasValue(forField: 4)) == true {
       guard let b = try message.get(forField: 4) as? Bool else {
-        throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.value)
+        throw _JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.value)
       }
       return b
     }
     if (try? message.hasValue(forField: 5)) == true {
-      guard let nested = try message.get(forField: 5) as? DynamicMessage else {
-        throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.value)
+      let raw = try message.get(forField: 5)
+      let nested: _DynamicMessage
+      if let m = raw as? _DynamicMessage {
+        nested = m
+      }
+      else if let pub = raw as? DynamicMessage {
+        nested = _DynamicMessage(from: pub)
+      }
+      else {
+        throw _JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.value)
       }
       return try encodeStructMessage(nested)
     }
     if (try? message.hasValue(forField: 6)) == true {
-      guard let nested = try message.get(forField: 6) as? DynamicMessage else {
-        throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.value)
+      let raw = try message.get(forField: 6)
+      let nested: _DynamicMessage
+      if let m = raw as? _DynamicMessage {
+        nested = m
+      }
+      else if let pub = raw as? DynamicMessage {
+        nested = _DynamicMessage(from: pub)
+      }
+      else {
+        throw _JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.value)
       }
       return try encodeListValueMessage(nested)
     }
     return NSNull()
   }
 
-  /// Encodes `google.protobuf.Struct` to its canonical JSON form: `[String: Any]`.
-  ///
-  /// Reads the `map<string, Value>` at field 1 and canonically encodes each value.
-  private func encodeStructMessage(_ message: DynamicMessage) throws -> [String: Any] {
+  private func encodeStructMessage(_ message: _DynamicMessage) throws -> [String: Any] {
     let rawMap = (try? message.get(forField: 1) as? [AnyHashable: Any]) ?? [:]
     var result: [String: Any] = [:]
     for (key, value) in rawMap {
       guard let stringKey = key as? String else { continue }
-      guard let valueMsg = value as? DynamicMessage else { continue }
+      let valueMsg: _DynamicMessage
+      if let m = value as? _DynamicMessage {
+        valueMsg = m
+      }
+      else if let pub = value as? DynamicMessage {
+        valueMsg = _DynamicMessage(from: pub)
+      }
+      else {
+        continue
+      }
       result[stringKey] = try encodeValueMessage(valueMsg)
     }
     return result
   }
 
-  /// Encodes `google.protobuf.ListValue` to its canonical JSON form: `[Any]`.
-  ///
-  /// Reads the `repeated Value` at field 1 and canonically encodes each element.
-  private func encodeListValueMessage(_ message: DynamicMessage) throws -> [Any] {
+  private func encodeListValueMessage(_ message: _DynamicMessage) throws -> [Any] {
     let rawList = (try? message.get(forField: 1) as? [Any]) ?? []
     return try rawList.map { item -> Any in
-      guard let valueMsg = item as? DynamicMessage else {
-        throw JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.listValue)
+      let valueMsg: _DynamicMessage
+      if let m = item as? _DynamicMessage {
+        valueMsg = m
+      }
+      else if let pub = item as? DynamicMessage {
+        valueMsg = _DynamicMessage(from: pub)
+      }
+      else {
+        throw _JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: WellKnownTypeNames.listValue)
       }
       return try encodeValueMessage(valueMsg)
     }
   }
 
-  /// Serializes dynamic message to JSON object.
-  ///
-  /// - Parameter message: Dynamic message to serialize.
-  /// - Returns: JSON compatible object (Dictionary).
-  /// - Throws: JSONSerializationError if serialization failed.
-  public func serializeToJSONObject(_ message: DynamicMessage) throws -> [String: Any] {
+  internal func serializeToJSONObject(_ message: _DynamicMessage) throws -> [String: Any] {
     var result: [String: Any] = [:]
 
     let descriptor = message.descriptor
-    let fieldAccess = FieldAccessor(message)
+    let fieldAccess = _FieldAccessor(message)
 
     var allFields = descriptor.allFields()
     allFields.append(contentsOf: descriptor.extensions.values)
@@ -362,9 +295,6 @@ public struct JSONSerializer {
       let fieldName = options.useOriginalFieldNames ? field.name : field.jsonName
 
       if hasValue {
-        // Per proto3 JSON spec, scalar fields at their default value must be omitted
-        // unless the field has explicit presence (proto3 optional, proto2 required/optional)
-        // or the caller requested includeDefaultValues.
         if !options.includeDefaultValues
           && isProto3ImplicitPresenceScalar(field)
           && isProto3ScalarDefault(fieldAccess.getValue(field.number, as: Any.self), type: field.type)
@@ -384,19 +314,7 @@ public struct JSONSerializer {
     return result
   }
 
-  /// Returns `true` when the field is a proto3 implicit-presence scalar.
-  ///
-  /// Such fields have no explicit presence: setting them to their default value is
-  /// semantically equivalent to not setting them, so the value must be omitted from
-  /// JSON output per the proto3 JSON mapping specification.
-  ///
-  /// Exclusions:
-  /// - `proto3Optional`, `isRequired`, `isOptional` — explicit presence.
-  /// - `isRepeated`, `isMap` — collections; empty is handled separately.
-  /// - `oneofIndex != nil` — oneof fields have explicit presence by virtue of being the active branch.
-  /// - `.message`, `.group` — non-scalar; omission handled via `hasValue` on `nestedMessages`.
-  /// - `.enum` — enum zero-value omission is intentionally deferred; existing tests assert emission.
-  private func isProto3ImplicitPresenceScalar(_ field: FieldDescriptor) -> Bool {
+  private func isProto3ImplicitPresenceScalar(_ field: _FieldDescriptor) -> Bool {
     guard !field.proto3Optional, !field.isRequired, !field.isOptional,
       !field.isRepeated, !field.isMap,
       field.oneofIndex == nil
@@ -407,8 +325,7 @@ public struct JSONSerializer {
     }
   }
 
-  /// Returns `true` when `value` equals the proto3 default for the given scalar type.
-  private func isProto3ScalarDefault(_ value: Any?, type: FieldType) -> Bool {
+  private func isProto3ScalarDefault(_ value: Any?, type: _FieldType) -> Bool {
     guard let value else { return true }
     switch type {
     case .double: return (value as? Double) == 0.0
@@ -425,27 +342,21 @@ public struct JSONSerializer {
     }
   }
 
-  /// Resolves an `EnumDescriptor` for a field.
-  ///
-  /// 1. `options.typeRegistry` by fully-qualified name (primary).
-  /// 2. Structural nesting on `descriptor` (deprecated fallback).
   private func resolveEnumDescriptor(
-    for field: FieldDescriptor,
-    in descriptor: MessageDescriptor
-  ) -> EnumDescriptor? {
+    for field: _FieldDescriptor,
+    in descriptor: _MessageDescriptor
+  ) -> _EnumDescriptor? {
     guard case .enum = field.type, let typeName = field.typeName else { return nil }
     let normalized = typeName.hasPrefix(".") ? String(typeName.dropFirst()) : typeName
     if let desc = options.typeRegistry.findEnum(named: normalized) {
       return desc
     }
     // DEPRECATED: Legacy structural nesting fallback. Will be removed in a future major version.
-    // Users should register all types in TypeRegistry instead of relying on addNestedEnum().
     let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
-    return descriptor.nestedEnum(named: simpleName)
+    return descriptor.nestedEnums[simpleName]
   }
 
-  /// Returns the proto3 JSON default for a field that has no value set.
-  private func proto3DefaultJSON(for field: FieldDescriptor, in descriptor: MessageDescriptor) -> Any {
+  private func proto3DefaultJSON(for field: _FieldDescriptor, in descriptor: _MessageDescriptor) -> Any {
     if field.isMap {
       return [String: Any]()
     }
@@ -461,7 +372,7 @@ public struct JSONSerializer {
     case .bytes: return ""
     case .enum:
       if let enumDesc = resolveEnumDescriptor(for: field, in: descriptor),
-        let zeroVal = enumDesc.value(number: 0)
+        let zeroVal = enumDesc.valuesByNumber[0]
       {
         return zeroVal.name
       }
@@ -472,11 +383,10 @@ public struct JSONSerializer {
 
   // MARK: - Private Methods
 
-  /// Serializes field value to JSON compatible object.
   private func serializeFieldValue(
-    _ field: FieldDescriptor,
-    from fieldAccess: FieldAccessor,
-    descriptor: MessageDescriptor
+    _ field: _FieldDescriptor,
+    from fieldAccess: _FieldAccessor,
+    descriptor: _MessageDescriptor
   ) throws -> Any {
     if field.isMap {
       return try serializeMapField(field, from: fieldAccess, descriptor: descriptor)
@@ -489,28 +399,26 @@ public struct JSONSerializer {
     }
   }
 
-  /// Serializes single field.
   private func serializeSingleField(
-    _ field: FieldDescriptor,
-    from fieldAccess: FieldAccessor,
-    descriptor: MessageDescriptor
+    _ field: _FieldDescriptor,
+    from fieldAccess: _FieldAccessor,
+    descriptor: _MessageDescriptor
   ) throws -> Any {
     guard let value = fieldAccess.getValue(field.number, as: Any.self) else {
-      throw JSONSerializationError.missingFieldValue(fieldName: field.name)
+      throw _JSONSerializationError.missingFieldValue(fieldName: field.name)
     }
 
     let enumDesc = resolveEnumDescriptor(for: field, in: descriptor)
     return try convertValueToJSON(value, type: field.type, typeName: field.typeName, enumDescriptor: enumDesc)
   }
 
-  /// Serializes repeated field.
   private func serializeRepeatedField(
-    _ field: FieldDescriptor,
-    from fieldAccess: FieldAccessor,
-    descriptor: MessageDescriptor
+    _ field: _FieldDescriptor,
+    from fieldAccess: _FieldAccessor,
+    descriptor: _MessageDescriptor
   ) throws -> Any {
     guard let values = fieldAccess.getValue(field.number, as: [Any].self) else {
-      throw JSONSerializationError.invalidFieldType(
+      throw _JSONSerializationError.invalidFieldType(
         fieldName: field.name,
         expectedType: "Array",
         actualType: String(describing: type(of: fieldAccess.getValue(field.number, as: Any.self)))
@@ -532,18 +440,17 @@ public struct JSONSerializer {
     return jsonArray
   }
 
-  /// Serializes map field.
   private func serializeMapField(
-    _ field: FieldDescriptor,
-    from fieldAccess: FieldAccessor,
-    descriptor: MessageDescriptor
+    _ field: _FieldDescriptor,
+    from fieldAccess: _FieldAccessor,
+    descriptor: _MessageDescriptor
   ) throws -> Any {
     guard let mapEntryInfo = field.mapEntryInfo else {
-      throw JSONSerializationError.missingMapEntryInfo(fieldName: field.name)
+      throw _JSONSerializationError.missingMapEntryInfo(fieldName: field.name)
     }
 
     guard let mapValues = fieldAccess.getValue(field.number, as: [AnyHashable: Any].self) else {
-      throw JSONSerializationError.invalidFieldType(
+      throw _JSONSerializationError.invalidFieldType(
         fieldName: field.name,
         expectedType: "Dictionary",
         actualType: String(describing: type(of: fieldAccess.getValue(field.number, as: Any.self)))
@@ -552,7 +459,7 @@ public struct JSONSerializer {
 
     var jsonObject: [String: Any] = [:]
 
-    let enumDesc: EnumDescriptor? = {
+    let enumDesc: _EnumDescriptor? = {
       guard case .enum = mapEntryInfo.valueFieldInfo.type,
         let typeName = mapEntryInfo.valueFieldInfo.typeName
       else { return nil }
@@ -561,9 +468,8 @@ public struct JSONSerializer {
         return desc
       }
       // DEPRECATED: Legacy structural nesting fallback. Will be removed in a future major version.
-      // Users should register all types in TypeRegistry instead of relying on addNestedEnum().
       let simpleName = typeName.split(separator: ".").last.map(String.init) ?? typeName
-      return descriptor.nestedEnum(named: simpleName)
+      return descriptor.nestedEnums[simpleName]
     }()
 
     for (key, value) in mapValues {
@@ -580,17 +486,16 @@ public struct JSONSerializer {
     return jsonObject
   }
 
-  /// Converts value to JSON compatible type.
   internal func convertValueToJSON(
     _ value: Any,
-    type: FieldType,
+    type: _FieldType,
     typeName: String?,
-    enumDescriptor: EnumDescriptor? = nil
+    enumDescriptor: _EnumDescriptor? = nil
   ) throws -> Any {
     switch type {
     case .double:
       guard let doubleValue = value as? Double else {
-        throw JSONSerializationError.valueTypeMismatch(
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "Double",
           actual: String(describing: Swift.type(of: value))
         )
@@ -599,7 +504,7 @@ public struct JSONSerializer {
 
     case .float:
       guard let floatValue = value as? Float else {
-        throw JSONSerializationError.valueTypeMismatch(
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "Float",
           actual: String(describing: Swift.type(of: value))
         )
@@ -608,7 +513,7 @@ public struct JSONSerializer {
 
     case .int32, .sint32, .sfixed32:
       guard let int32Value = value as? Int32 else {
-        throw JSONSerializationError.valueTypeMismatch(
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "Int32",
           actual: String(describing: Swift.type(of: value))
         )
@@ -617,17 +522,16 @@ public struct JSONSerializer {
 
     case .int64, .sint64, .sfixed64:
       guard let int64Value = value as? Int64 else {
-        throw JSONSerializationError.valueTypeMismatch(
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "Int64",
           actual: String(describing: Swift.type(of: value))
         )
       }
-      // int64 is represented as string in JSON
       return String(int64Value)
 
     case .uint32, .fixed32:
       guard let uint32Value = value as? UInt32 else {
-        throw JSONSerializationError.valueTypeMismatch(
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "UInt32",
           actual: String(describing: Swift.type(of: value))
         )
@@ -636,17 +540,16 @@ public struct JSONSerializer {
 
     case .uint64, .fixed64:
       guard let uint64Value = value as? UInt64 else {
-        throw JSONSerializationError.valueTypeMismatch(
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "UInt64",
           actual: String(describing: Swift.type(of: value))
         )
       }
-      // uint64 is represented as string in JSON
       return String(uint64Value)
 
     case .bool:
       guard let boolValue = value as? Bool else {
-        throw JSONSerializationError.valueTypeMismatch(
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "Bool",
           actual: String(describing: Swift.type(of: value))
         )
@@ -655,7 +558,7 @@ public struct JSONSerializer {
 
     case .string:
       guard let stringValue = value as? String else {
-        throw JSONSerializationError.valueTypeMismatch(
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "String",
           actual: String(describing: Swift.type(of: value))
         )
@@ -664,17 +567,23 @@ public struct JSONSerializer {
 
     case .bytes:
       guard let bytesValue = value as? Data else {
-        throw JSONSerializationError.valueTypeMismatch(
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "Data",
           actual: String(describing: Swift.type(of: value))
         )
       }
-      // bytes are represented as base64 string
       return bytesValue.base64EncodedString()
 
     case .message:
-      guard let messageValue = value as? DynamicMessage else {
-        throw JSONSerializationError.valueTypeMismatch(
+      let messageValue: _DynamicMessage
+      if let m = value as? _DynamicMessage {
+        messageValue = m
+      }
+      else if let pub = value as? DynamicMessage {
+        messageValue = _DynamicMessage(from: pub)
+      }
+      else {
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "DynamicMessage",
           actual: String(describing: Swift.type(of: value))
         )
@@ -683,21 +592,28 @@ public struct JSONSerializer {
 
     case .enum:
       guard let enumValue = value as? Int32 else {
-        throw JSONSerializationError.valueTypeMismatch(
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "Int32",
           actual: String(describing: Swift.type(of: value))
         )
       }
       if let enumDesc = enumDescriptor,
-        let enumVal = enumDesc.value(number: Int(enumValue))
+        let enumVal = enumDesc.valuesByNumber[Int(enumValue)]
       {
         return enumVal.name
       }
       return Int(enumValue)
 
     case .group:
-      guard let groupMessage = value as? DynamicMessage else {
-        throw JSONSerializationError.valueTypeMismatch(
+      let groupMessage: _DynamicMessage
+      if let m = value as? _DynamicMessage {
+        groupMessage = m
+      }
+      else if let pub = value as? DynamicMessage {
+        groupMessage = _DynamicMessage(from: pub)
+      }
+      else {
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "DynamicMessage (group)",
           actual: String(describing: Swift.type(of: value))
         )
@@ -706,12 +622,11 @@ public struct JSONSerializer {
     }
   }
 
-  /// Converts map key to JSON string.
-  internal func convertMapKeyToJSONString(_ key: Any, keyType: FieldType) throws -> String {
+  internal func convertMapKeyToJSONString(_ key: Any, keyType: _FieldType) throws -> String {
     switch keyType {
     case .string:
       guard let stringKey = key as? String else {
-        throw JSONSerializationError.valueTypeMismatch(
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "String",
           actual: String(describing: Swift.type(of: key))
         )
@@ -720,7 +635,7 @@ public struct JSONSerializer {
 
     case .int32, .sint32, .sfixed32:
       guard let int32Key = key as? Int32 else {
-        throw JSONSerializationError.valueTypeMismatch(
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "Int32",
           actual: String(describing: Swift.type(of: key))
         )
@@ -729,7 +644,7 @@ public struct JSONSerializer {
 
     case .int64, .sint64, .sfixed64:
       guard let int64Key = key as? Int64 else {
-        throw JSONSerializationError.valueTypeMismatch(
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "Int64",
           actual: String(describing: Swift.type(of: key))
         )
@@ -738,7 +653,7 @@ public struct JSONSerializer {
 
     case .uint32, .fixed32:
       guard let uint32Key = key as? UInt32 else {
-        throw JSONSerializationError.valueTypeMismatch(
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "UInt32",
           actual: String(describing: Swift.type(of: key))
         )
@@ -747,7 +662,7 @@ public struct JSONSerializer {
 
     case .uint64, .fixed64:
       guard let uint64Key = key as? UInt64 else {
-        throw JSONSerializationError.valueTypeMismatch(
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "UInt64",
           actual: String(describing: Swift.type(of: key))
         )
@@ -756,7 +671,7 @@ public struct JSONSerializer {
 
     case .bool:
       guard let boolKey = key as? Bool else {
-        throw JSONSerializationError.valueTypeMismatch(
+        throw _JSONSerializationError.valueTypeMismatch(
           expected: "Bool",
           actual: String(describing: Swift.type(of: key))
         )
@@ -764,11 +679,10 @@ public struct JSONSerializer {
       return boolKey ? "true" : "false"
 
     default:
-      throw JSONSerializationError.invalidMapKeyType(keyType: String(describing: keyType))
+      throw _JSONSerializationError.invalidMapKeyType(keyType: String(describing: keyType))
     }
   }
 
-  /// Converts double value with handling of special cases.
   private func convertDoubleToJSON(_ value: Double) -> Any {
     if value.isInfinite {
       return value > 0 ? "Infinity" : "-Infinity"
@@ -781,7 +695,6 @@ public struct JSONSerializer {
     }
   }
 
-  /// Converts float value with handling of special cases.
   private func convertFloatToJSON(_ value: Float) -> Any {
     if value.isInfinite {
       return value > 0 ? "Infinity" : "-Infinity"
@@ -797,44 +710,19 @@ public struct JSONSerializer {
 
 // MARK: - JSON Serialization Options
 
-/// Options for JSON serialization.
-public struct JSONSerializationOptions {
-  /// Use original field names instead of camelCase.
-  public let useOriginalFieldNames: Bool
+internal struct _JSONSerializationOptions {
+  let useOriginalFieldNames: Bool
+  let prettyPrinted: Bool
+  let includeDefaultValues: Bool
+  let useCanonicalWellKnownTypeEncoding: Bool
+  let typeRegistry: _TypeRegistry
 
-  /// Format JSON with indentation for readability.
-  public let prettyPrinted: Bool
-
-  /// Include fields with default values.
-  public let includeDefaultValues: Bool
-
-  /// Use protobuf-spec canonical representations for well-known types.
-  ///
-  /// When `true`, the serializer emits well-known type values using their canonical
-  /// protobuf JSON mapping (e.g. `Timestamp` as an RFC 3339 string) instead of
-  /// generic field-by-field encoding. Defaults to `true`.
-  public let useCanonicalWellKnownTypeEncoding: Bool
-
-  /// Registry for resolving message types by fully-qualified name.
-  ///
-  /// Pass a populated `TypeRegistry` to enable cross-file type resolution during serialization.
-  /// For hand-built descriptors without cross-file references, an empty `TypeRegistry()` is sufficient.
-  public let typeRegistry: TypeRegistry
-
-  /// Creates JSON serialization options with a required TypeRegistry.
-  ///
-  /// - Parameters:
-  ///   - useOriginalFieldNames: Whether to use original proto field names instead of camelCase. Defaults to `false`.
-  ///   - prettyPrinted: Whether to format JSON with indentation. Defaults to `false`.
-  ///   - includeDefaultValues: Whether to include fields with default values. Defaults to `false`.
-  ///   - useCanonicalWellKnownTypeEncoding: Whether to use canonical protobuf JSON for well-known types. Defaults to `true`.
-  ///   - typeRegistry: Registry for resolving message types by fully-qualified name.
-  public init(
+  init(
     useOriginalFieldNames: Bool = false,
     prettyPrinted: Bool = false,
     includeDefaultValues: Bool = false,
     useCanonicalWellKnownTypeEncoding: Bool = true,
-    typeRegistry: TypeRegistry
+    typeRegistry: _TypeRegistry
   ) {
     self.useOriginalFieldNames = useOriginalFieldNames
     self.prettyPrinted = prettyPrinted
@@ -842,36 +730,11 @@ public struct JSONSerializationOptions {
     self.useCanonicalWellKnownTypeEncoding = useCanonicalWellKnownTypeEncoding
     self.typeRegistry = typeRegistry
   }
-
-  /// Creates JSON serialization options with an empty TypeRegistry.
-  ///
-  /// - Note: Deprecated. Use `init(useOriginalFieldNames:prettyPrinted:includeDefaultValues:useCanonicalWellKnownTypeEncoding:typeRegistry:)`
-  ///   with an explicit `TypeRegistry` so that cross-file message types can be resolved correctly.
-  @available(
-    *,
-    deprecated,
-    message:
-      "Use init(useOriginalFieldNames:prettyPrinted:includeDefaultValues:useCanonicalWellKnownTypeEncoding:typeRegistry:) with an explicit TypeRegistry"
-  )
-  public init(
-    useOriginalFieldNames: Bool = false,
-    prettyPrinted: Bool = false,
-    includeDefaultValues: Bool = false
-  ) {
-    self.init(
-      useOriginalFieldNames: useOriginalFieldNames,
-      prettyPrinted: prettyPrinted,
-      includeDefaultValues: includeDefaultValues,
-      useCanonicalWellKnownTypeEncoding: true,
-      typeRegistry: TypeRegistry()
-    )
-  }
 }
 
 // MARK: - JSON Serialization Errors
 
-/// JSON serialization errors.
-public enum JSONSerializationError: Error, Equatable {
+internal enum _JSONSerializationError: Error, Equatable {
   case invalidFieldType(fieldName: String, expectedType: String, actualType: String)
   case valueTypeMismatch(expected: String, actual: String)
   case missingMapEntryInfo(fieldName: String)
@@ -879,10 +742,9 @@ public enum JSONSerializationError: Error, Equatable {
   case unsupportedFieldType(type: String)
   case invalidMapKeyType(keyType: String)
   case jsonWriteError(underlyingError: Error)
-  /// Canonical JSON encoding for a well-known type is not yet implemented.
   case unsupportedWellKnownTypeEncoding(typeName: String)
 
-  public var description: String {
+  var description: String {
     switch self {
     case .invalidFieldType(let fieldName, let expectedType, let actualType):
       return "Invalid field type for field '\(fieldName)': expected \(expectedType), got \(actualType)"
@@ -903,7 +765,7 @@ public enum JSONSerializationError: Error, Equatable {
     }
   }
 
-  public static func == (lhs: JSONSerializationError, rhs: JSONSerializationError) -> Bool {
+  static func == (lhs: _JSONSerializationError, rhs: _JSONSerializationError) -> Bool {
     switch (lhs, rhs) {
     case (
       .invalidFieldType(let lField, let lExpected, let lActual),
@@ -924,7 +786,6 @@ public enum JSONSerializationError: Error, Equatable {
     case (.invalidMapKeyType(let lType), .invalidMapKeyType(let rType)):
       return lType == rType
     case (.jsonWriteError(_), .jsonWriteError(_)):
-      // Hard to compare underlying errors, so consider equal if both are jsonWriteError
       return true
     case (
       .unsupportedWellKnownTypeEncoding(let lType),

@@ -125,6 +125,10 @@ public final class TypeRegistry: Sendable {
   // Internal registry kept in sync on every write; currently no internal module reads from it.
   private let impl: _TypeRegistry
 
+  // Internal accessor so Serialization/Bridge modules can pass the impl directly to
+  // _BinaryDeserializer, _JSONSerializer, etc. without going through the public layer.
+  var typeRegistryImpl: _TypeRegistry { impl }
+
   // MARK: - Initialization
 
   /// Creates a new TypeRegistry instance.

@@ -1,5 +1,5 @@
 //
-// DescriptorBridge.swift
+// _DescriptorBridge.swift
 // SwiftProtoReflect
 //
 // Created: 2025-05-25
@@ -8,58 +8,35 @@
 import Foundation
 import SwiftProtobuf
 
-/// DescriptorBridge provides conversion between SwiftProtoReflect descriptors
-/// and Swift Protobuf descriptors.
-///
-/// This component allows:
-/// - Converting SwiftProtoReflect descriptors to Swift Protobuf format.
-/// - Creating SwiftProtoReflect descriptors from Swift Protobuf descriptors.
-/// - Ensuring compatibility between different metadata representations.
-public struct DescriptorBridge {
-
-  // MARK: - Initialization
-
-  /// Creates new DescriptorBridge instance.
-  public init() {}
+internal struct _DescriptorBridge {
 
   // MARK: - Message Descriptor Conversion
 
-  /// Converts MessageDescriptor to Google_Protobuf_DescriptorProto.
-  ///
-  /// - Parameter messageDescriptor: SwiftProtoReflect message descriptor.
-  /// - Returns: Message descriptor in Swift Protobuf format.
-  /// - Throws: Error if conversion is impossible.
-  public func toProtobufDescriptor(
-    from messageDescriptor: MessageDescriptor
+  func toSwiftProtobuf(
+    from messageDescriptor: _MessageDescriptor
   ) throws -> Google_Protobuf_DescriptorProto {
     var proto = Google_Protobuf_DescriptorProto()
 
-    // Set message name
     proto.name = messageDescriptor.name
 
-    // Convert fields
     proto.field = try messageDescriptor.allFields().map { field in
       try toProtobufFieldDescriptor(from: field)
     }
 
-    // Convert nested messages
     proto.nestedType = try Array(messageDescriptor.nestedMessages.values).map { nestedMessage in
-      try toProtobufDescriptor(from: nestedMessage)
+      try toSwiftProtobuf(from: nestedMessage)
     }
 
-    // Convert nested enums
     proto.enumType = try Array(messageDescriptor.nestedEnums.values).map { nestedEnum in
       try toProtobufEnumDescriptor(from: nestedEnum)
     }
 
-    // Serialize oneof declarations ordered by index
     proto.oneofDecl = messageDescriptor.oneofDecls.sorted { $0.index < $1.index }.map { oneof in
       var oneofProto = Google_Protobuf_OneofDescriptorProto()
       oneofProto.name = oneof.name
       return oneofProto
     }
 
-    // Convert extension ranges
     proto.extensionRange = messageDescriptor.extensionRanges.map { range in
       var rangeProto = Google_Protobuf_DescriptorProto.ExtensionRange()
       rangeProto.start = Int32(range.start)
@@ -67,7 +44,6 @@ public struct DescriptorBridge {
       return rangeProto
     }
 
-    // Set options if present
     if !messageDescriptor.options.isEmpty {
       proto.options = try toProtobufMessageOptions(from: messageDescriptor.options)
     }
@@ -75,36 +51,25 @@ public struct DescriptorBridge {
     return proto
   }
 
-  /// Creates `MessageDescriptor` from `Google_Protobuf_DescriptorProto`.
-  ///
-  /// - Parameters:
-  ///   - protobufDescriptor: Message descriptor in Swift Protobuf format.
-  ///   - parent: Parent context. Pass a `FileDescriptor` for top-level messages,
-  ///     or a `MessageDescriptor` for nested messages.
-  /// - Returns: SwiftProtoReflect message descriptor with correctly qualified `fullName`.
-  /// - Throws: `DescriptorBridgeError` on conversion failure.
-  public func fromProtobufDescriptor(
+  func fromProtobufDescriptor(
     _ protobufDescriptor: Google_Protobuf_DescriptorProto,
-    parent: (any DescriptorParent)? = nil
-  ) throws -> MessageDescriptor {
-    var messageDescriptor = MessageDescriptor(
+    parent: (any _DescriptorParent)? = nil
+  ) throws -> _MessageDescriptor {
+    var messageDescriptor = _MessageDescriptor(
       name: protobufDescriptor.name,
       parent: parent
     )
 
-    // Recurse with messageDescriptor as parent so nested fullNames are qualified.
     for nestedProto in protobufDescriptor.nestedType {
       let nestedMessage = try fromProtobufDescriptor(nestedProto, parent: messageDescriptor)
       messageDescriptor.addNestedMessage(nestedMessage)
     }
 
-    // Pass messageDescriptor as parent to nested enums for the same reason.
     for enumProto in protobufDescriptor.enumType {
       let nestedEnum = try fromProtobufEnumDescriptor(enumProto, parent: messageDescriptor)
       messageDescriptor.addNestedEnum(nestedEnum)
     }
 
-    // Convert fields (now with nested messages available for map detection)
     let syntax = messageDescriptor.syntax
     for fieldProto in protobufDescriptor.field {
       let field = try fromProtobufFieldDescriptor(
@@ -117,12 +82,12 @@ public struct DescriptorBridge {
     }
 
     for (index, oneofProto) in protobufDescriptor.oneofDecl.enumerated() {
-      messageDescriptor.addOneofDecl(OneofDescriptor(name: oneofProto.name, index: index))
+      messageDescriptor.addOneofDecl(_OneofDescriptor(name: oneofProto.name, index: index))
     }
 
     for rangeProto in protobufDescriptor.extensionRange {
       messageDescriptor.addExtensionRange(
-        ExtensionRange(start: Int(rangeProto.start), end: Int(rangeProto.end))
+        _ExtensionRange(start: Int(rangeProto.start), end: Int(rangeProto.end))
       )
     }
 
@@ -133,44 +98,17 @@ public struct DescriptorBridge {
     return messageDescriptor
   }
 
-  /// Creates `MessageDescriptor` from `Google_Protobuf_DescriptorProto`.
-  ///
-  /// - Deprecated: Use `fromProtobufDescriptor(_:parent:)` with `DescriptorParent`.
-  @available(
-    *,
-    deprecated,
-    message: "Use fromProtobufDescriptor(_:parent:) where parent conforms to DescriptorParent."
-  )
-  public func fromProtobufDescriptor(
-    _ protobufDescriptor: Google_Protobuf_DescriptorProto,
-    parent: FileDescriptor? = nil
-  ) throws -> MessageDescriptor {
-    return try fromProtobufDescriptor(
-      protobufDescriptor,
-      parent: parent as (any DescriptorParent)?
-    )
-  }
-
   // MARK: - Field Descriptor Conversion
 
-  /// Converts FieldDescriptor to Google_Protobuf_FieldDescriptorProto.
-  ///
-  /// - Parameter fieldDescriptor: SwiftProtoReflect field descriptor.
-  /// - Returns: Field descriptor in Swift Protobuf format.
-  /// - Throws: Error if conversion is impossible.
-  public func toProtobufFieldDescriptor(
-    from fieldDescriptor: FieldDescriptor
+  func toProtobufFieldDescriptor(
+    from fieldDescriptor: _FieldDescriptor
   ) throws -> Google_Protobuf_FieldDescriptorProto {
     var proto = Google_Protobuf_FieldDescriptorProto()
 
-    // Set basic properties
     proto.name = fieldDescriptor.name
     proto.number = Int32(fieldDescriptor.number)
-
-    // Convert field type
     proto.type = try toProtobufFieldType(from: fieldDescriptor.type)
 
-    // Set label (repeated, optional, required)
     if fieldDescriptor.isRepeated {
       proto.label = .repeated
     }
@@ -181,22 +119,18 @@ public struct DescriptorBridge {
       proto.label = .optional
     }
 
-    // Set type name for complex types
     if let typeName = fieldDescriptor.typeName {
       proto.typeName = typeName
     }
 
-    // Set JSON name if different
     if fieldDescriptor.jsonName != fieldDescriptor.name {
       proto.jsonName = fieldDescriptor.jsonName
     }
 
-    // Set oneofIndex if the field belongs to a oneof group
     if let idx = fieldDescriptor.oneofIndex {
       proto.oneofIndex = Int32(idx)
     }
 
-    // Set options if present
     if !fieldDescriptor.options.isEmpty {
       proto.options = try toProtobufFieldOptions(from: fieldDescriptor.options)
     }
@@ -204,17 +138,10 @@ public struct DescriptorBridge {
     return proto
   }
 
-  /// Creates FieldDescriptor from Google_Protobuf_FieldDescriptorProto.
-  ///
-  /// - Parameters:
-  ///   - protobufDescriptor: Field descriptor in Swift Protobuf format.
-  ///   - syntax: Proto syntax version. Defaults to `"proto3"`.
-  /// - Returns: SwiftProtoReflect field descriptor.
-  /// - Throws: Error if conversion is impossible.
-  public func fromProtobufFieldDescriptor(
+  func fromProtobufFieldDescriptor(
     _ protobufDescriptor: Google_Protobuf_FieldDescriptorProto,
     syntax: String = "proto3"
-  ) throws -> FieldDescriptor {
+  ) throws -> _FieldDescriptor {
     return try fromProtobufFieldDescriptor(
       protobufDescriptor,
       messageDescriptor: nil,
@@ -223,34 +150,22 @@ public struct DescriptorBridge {
     )
   }
 
-  /// Creates FieldDescriptor from Google_Protobuf_FieldDescriptorProto with map detection.
-  ///
-  /// - Parameters:
-  ///   - protobufDescriptor: Field descriptor in Swift Protobuf format.
-  ///   - messageDescriptor: Parent message descriptor for nested type resolution.
-  ///   - nestedMessages: Dictionary of nested messages for map entry detection.
-  /// - Returns: SwiftProtoReflect field descriptor.
-  /// - Throws: Error if conversion is impossible.
   private func fromProtobufFieldDescriptor(
     _ protobufDescriptor: Google_Protobuf_FieldDescriptorProto,
     messageDescriptor: Google_Protobuf_DescriptorProto?,
-    nestedMessages: [String: MessageDescriptor],
+    nestedMessages: [String: _MessageDescriptor],
     syntax: String = "proto3"
-  ) throws -> FieldDescriptor {
-    // Convert field type
+  ) throws -> _FieldDescriptor {
     let fieldType = try fromProtobufFieldType(protobufDescriptor.type)
 
-    // Determine flags
     let isRepeated = protobufDescriptor.label == .repeated
     let isRequired = syntax != "proto3" && protobufDescriptor.label == .required
     let isOptional = protobufDescriptor.label == .optional
 
-    // Check if this is a map field
     var isMap = false
-    var mapEntryInfo: MapEntryInfo? = nil
+    var mapEntryInfo: _MapEntryInfo? = nil
 
     if isRepeated && fieldType == .message && protobufDescriptor.hasTypeName {
-      // Try to detect map field
       if let mapInfo = try detectMapField(
         fieldDescriptor: protobufDescriptor,
         messageDescriptor: messageDescriptor,
@@ -266,7 +181,7 @@ public struct DescriptorBridge {
     let defaultValue = parseDefaultValue(protobufDescriptor, fieldType: fieldType)
     let isPacked = parseIsPacked(protobufDescriptor)
 
-    let fieldDescriptor = FieldDescriptor(
+    let fieldDescriptor = _FieldDescriptor(
       name: protobufDescriptor.name,
       number: Int(protobufDescriptor.number),
       type: fieldType,
@@ -282,7 +197,6 @@ public struct DescriptorBridge {
       isPacked: isPacked
     )
 
-    // Convert options
     if protobufDescriptor.hasOptions {
       _ = try fromProtobufFieldOptions(protobufDescriptor.options)
     }
@@ -292,159 +206,96 @@ public struct DescriptorBridge {
 
   // MARK: - Enum Descriptor Conversion
 
-  /// Converts EnumDescriptor to Google_Protobuf_EnumDescriptorProto.
-  ///
-  /// - Parameter enumDescriptor: SwiftProtoReflect enum descriptor.
-  /// - Returns: Enum descriptor in Swift Protobuf format.
-  /// - Throws: Error if conversion is impossible.
-  public func toProtobufEnumDescriptor(
-    from enumDescriptor: EnumDescriptor
+  func toProtobufEnumDescriptor(
+    from enumDescriptor: _EnumDescriptor
   ) throws -> Google_Protobuf_EnumDescriptorProto {
     var proto = Google_Protobuf_EnumDescriptorProto()
 
-    // Set enum name
     proto.name = enumDescriptor.name
 
-    // Convert enum values
-    proto.value = enumDescriptor.allValues().map { enumValue in
+    proto.value = enumDescriptor.valuesByName.values.sorted { $0.number < $1.number }.map { enumValue in
       var valueProto = Google_Protobuf_EnumValueDescriptorProto()
       valueProto.name = enumValue.name
       valueProto.number = Int32(enumValue.number)
-
-      // Set value options if present
-      if !enumValue.options.isEmpty {
-        // In real implementation there should be options conversion
-        // valueProto.options = ...
-      }
-
       return valueProto
-    }
-
-    // Set enum options if present
-    if !enumDescriptor.options.isEmpty {
-      // In real implementation there should be options conversion
-      // proto.options = ...
     }
 
     return proto
   }
 
-  /// Creates `EnumDescriptor` from `Google_Protobuf_EnumDescriptorProto`.
-  ///
-  /// - Parameters:
-  ///   - protobufDescriptor: Enum descriptor in Swift Protobuf format.
-  ///   - parent: Parent context (`FileDescriptor` or `MessageDescriptor`).
-  /// - Returns: SwiftProtoReflect enum descriptor.
-  /// - Throws: `DescriptorBridgeError` on conversion failure.
-  public func fromProtobufEnumDescriptor(
+  func fromProtobufEnumDescriptor(
     _ protobufDescriptor: Google_Protobuf_EnumDescriptorProto,
-    parent: (any DescriptorParent)? = nil
-  ) throws -> EnumDescriptor {
-    var enumDescriptor = EnumDescriptor(
+    parent: (any _DescriptorParent)? = nil
+  ) throws -> _EnumDescriptor {
+    var enumDescriptor = _EnumDescriptor(
       name: protobufDescriptor.name,
       parent: parent
     )
     for valueProto in protobufDescriptor.value {
       enumDescriptor.addValue(
-        EnumDescriptor.EnumValue(name: valueProto.name, number: Int(valueProto.number))
+        _EnumDescriptor._EnumValue(name: valueProto.name, number: Int(valueProto.number))
       )
     }
     return enumDescriptor
   }
 
-  /// Creates `EnumDescriptor` from `Google_Protobuf_EnumDescriptorProto`.
-  ///
-  /// - Deprecated: Use `fromProtobufEnumDescriptor(_:parent:)` where parent conforms to `DescriptorParent`.
-  @available(
-    *,
-    deprecated,
-    message: "Use fromProtobufEnumDescriptor(_:parent:) where parent conforms to DescriptorParent."
-  )
-  public func fromProtobufEnumDescriptor(
-    _ protobufDescriptor: Google_Protobuf_EnumDescriptorProto,
-    parent: Any?
-  ) throws -> EnumDescriptor {
-    return try fromProtobufEnumDescriptor(
-      protobufDescriptor,
-      parent: parent as? (any DescriptorParent)
-    )
-  }
-
   // MARK: - File Descriptor Conversion
 
-  /// Converts FileDescriptor to Google_Protobuf_FileDescriptorProto.
-  ///
-  /// - Parameter fileDescriptor: SwiftProtoReflect file descriptor.
-  /// - Returns: File descriptor in Swift Protobuf format.
-  /// - Throws: Error if conversion is impossible.
-  public func toProtobufFileDescriptor(
-    from fileDescriptor: FileDescriptor
+  func toProtobufFileDescriptor(
+    from fileDescriptor: _FileDescriptor
   ) throws -> Google_Protobuf_FileDescriptorProto {
     var proto = Google_Protobuf_FileDescriptorProto()
 
-    // Set basic properties
     proto.name = fileDescriptor.name
     if !fileDescriptor.package.isEmpty {
       proto.package = fileDescriptor.package
     }
     proto.syntax = fileDescriptor.syntax
 
-    // Convert messages
     proto.messageType = try Array(fileDescriptor.messages.values).map { message in
-      try toProtobufDescriptor(from: message)
+      try toSwiftProtobuf(from: message)
     }
 
-    // Convert enums
     proto.enumType = try Array(fileDescriptor.enums.values).map { enumDesc in
       try toProtobufEnumDescriptor(from: enumDesc)
     }
 
-    // Convert services
     proto.service = try Array(fileDescriptor.services.values).map { service in
       try toProtobufServiceDescriptor(from: service)
     }
 
-    // Set dependencies
     proto.dependency = fileDescriptor.dependencies
 
     return proto
   }
 
-  /// Creates FileDescriptor from Google_Protobuf_FileDescriptorProto.
-  ///
-  /// - Parameter protobufDescriptor: File descriptor in Swift Protobuf format.
-  /// - Returns: SwiftProtoReflect file descriptor.
-  /// - Throws: Error if conversion is impossible.
-  public func fromProtobufFileDescriptor(
+  func fromProtobufFileDescriptor(
     _ protobufDescriptor: Google_Protobuf_FileDescriptorProto
-  ) throws -> FileDescriptor {
+  ) throws -> _FileDescriptor {
     let syntax = protobufDescriptor.hasSyntax ? protobufDescriptor.syntax : ""
-    var fileDescriptor = FileDescriptor(
+    var fileDescriptor = _FileDescriptor(
       name: protobufDescriptor.name,
       package: protobufDescriptor.hasPackage ? protobufDescriptor.package : "",
       dependencies: protobufDescriptor.dependency,
       syntax: syntax
     )
 
-    // Convert messages — explicit cast ensures typed overload is used (avoids deprecated wrapper)
     for messageProto in protobufDescriptor.messageType {
       let message = try fromProtobufDescriptor(
         messageProto,
-        parent: fileDescriptor as (any DescriptorParent)?
+        parent: fileDescriptor as (any _DescriptorParent)?
       )
       fileDescriptor.addMessage(message)
     }
 
-    // Convert enums — same explicit cast
     for enumProto in protobufDescriptor.enumType {
       let enumDesc = try fromProtobufEnumDescriptor(
         enumProto,
-        parent: fileDescriptor as (any DescriptorParent)?
+        parent: fileDescriptor as (any _DescriptorParent)?
       )
       fileDescriptor.addEnum(enumDesc)
     }
 
-    // Convert services
     for serviceProto in protobufDescriptor.service {
       let service = try fromProtobufServiceDescriptor(serviceProto, parent: fileDescriptor)
       fileDescriptor.addService(service)
@@ -455,21 +306,14 @@ public struct DescriptorBridge {
 
   // MARK: - Service Descriptor Conversion
 
-  /// Converts ServiceDescriptor to Google_Protobuf_ServiceDescriptorProto.
-  ///
-  /// - Parameter serviceDescriptor: SwiftProtoReflect service descriptor.
-  /// - Returns: Service descriptor in Swift Protobuf format.
-  /// - Throws: Error if conversion is impossible.
-  public func toProtobufServiceDescriptor(
-    from serviceDescriptor: ServiceDescriptor
+  func toProtobufServiceDescriptor(
+    from serviceDescriptor: _ServiceDescriptor
   ) throws -> Google_Protobuf_ServiceDescriptorProto {
     var proto = Google_Protobuf_ServiceDescriptorProto()
 
-    // Set service name
     proto.name = serviceDescriptor.name
 
-    // Convert methods
-    proto.method = serviceDescriptor.allMethods().map { method in
+    proto.method = serviceDescriptor.methodsByName.values.map { method in
       var methodProto = Google_Protobuf_MethodDescriptorProto()
       methodProto.name = method.name
       methodProto.inputType = method.inputType
@@ -482,26 +326,20 @@ public struct DescriptorBridge {
     return proto
   }
 
-  /// Creates ServiceDescriptor from Google_Protobuf_ServiceDescriptorProto.
-  ///
-  /// - Parameters:
-  ///   - protobufDescriptor: Service descriptor in Swift Protobuf format.
-  ///   - parent: Parent file descriptor (optional).
-  /// - Returns: SwiftProtoReflect service descriptor.
-  /// - Throws: Error if conversion is impossible.
-  public func fromProtobufServiceDescriptor(
+  func fromProtobufServiceDescriptor(
     _ protobufDescriptor: Google_Protobuf_ServiceDescriptorProto,
-    parent: FileDescriptor? = nil
-  ) throws -> ServiceDescriptor {
-    var serviceDescriptor = ServiceDescriptor(
+    parent: _FileDescriptor? = nil
+  ) throws -> _ServiceDescriptor {
+    var serviceDescriptor = _ServiceDescriptor(
       name: protobufDescriptor.name,
-      parent: parent ?? FileDescriptor(name: "", package: "")
+      fullName: parent.map { p in
+        p.package.isEmpty ? protobufDescriptor.name : "\(p.package).\(protobufDescriptor.name)"
+      } ?? protobufDescriptor.name
     )
 
-    // Convert methods
     for methodProto in protobufDescriptor.method {
       serviceDescriptor.addMethod(
-        ServiceDescriptor.MethodDescriptor(
+        _ServiceDescriptor._MethodDescriptor(
           name: methodProto.name,
           inputType: methodProto.inputType,
           outputType: methodProto.outputType,
@@ -516,14 +354,10 @@ public struct DescriptorBridge {
 
   // MARK: - Proto2 Parsing Helpers
 
-  /// Parses default value from a protobuf field descriptor.
-  ///
-  /// The default value in protobuf descriptors is always a string representation.
-  /// This method converts it to the appropriate `DescriptorOption` type.
   private func parseDefaultValue(
     _ proto: Google_Protobuf_FieldDescriptorProto,
-    fieldType: FieldType
-  ) -> DescriptorOption? {
+    fieldType: _FieldType
+  ) -> _DescriptorOption? {
     guard proto.hasDefaultValue, !proto.defaultValue.isEmpty else {
       return nil
     }
@@ -561,9 +395,6 @@ public struct DescriptorBridge {
     }
   }
 
-  /// Extracts packed option from a protobuf field descriptor.
-  ///
-  /// Returns `nil` if the option is not explicitly set.
   private func parseIsPacked(_ proto: Google_Protobuf_FieldDescriptorProto) -> Bool? {
     guard proto.hasOptions, proto.options.hasPacked else {
       return nil
@@ -573,8 +404,9 @@ public struct DescriptorBridge {
 
   // MARK: - Helper Methods
 
-  /// Converts FieldType to Google_Protobuf_FieldDescriptorProto.TypeEnum.
-  private func toProtobufFieldType(from fieldType: FieldType) throws -> Google_Protobuf_FieldDescriptorProto.TypeEnum {
+  private func toProtobufFieldType(
+    from fieldType: _FieldType
+  ) throws -> Google_Protobuf_FieldDescriptorProto.TypeEnum {
     switch fieldType {
     case .double: return .double
     case .float: return .float
@@ -597,9 +429,9 @@ public struct DescriptorBridge {
     }
   }
 
-  /// Converts Google_Protobuf_FieldDescriptorProto.TypeEnum to FieldType.
-  private func fromProtobufFieldType(_ protobufType: Google_Protobuf_FieldDescriptorProto.TypeEnum) throws -> FieldType
-  {
+  private func fromProtobufFieldType(
+    _ protobufType: Google_Protobuf_FieldDescriptorProto.TypeEnum
+  ) throws -> _FieldType {
     switch protobufType {
     case .double: return .double
     case .float: return .float
@@ -620,62 +452,47 @@ public struct DescriptorBridge {
     case .sint32: return .sint32
     case .sint64: return .sint64
     @unknown default:
-      throw DescriptorBridgeError.unsupportedFieldType(-1)
+      throw _DescriptorBridgeError.unsupportedFieldType(-1)
     }
   }
 
-  /// Converts message options to Google_Protobuf_MessageOptions.
-  private func toProtobufMessageOptions(from options: [String: DescriptorOption]) throws
-    -> Google_Protobuf_MessageOptions
-  {
+  private func toProtobufMessageOptions(
+    from options: [String: _DescriptorOption]
+  ) throws -> Google_Protobuf_MessageOptions {
     return Google_Protobuf_MessageOptions()
   }
 
-  /// Converts Google_Protobuf_MessageOptions to options dictionary.
-  private func fromProtobufMessageOptions(_ options: Google_Protobuf_MessageOptions) throws -> [String:
-    DescriptorOption]
-  {
+  private func fromProtobufMessageOptions(
+    _ options: Google_Protobuf_MessageOptions
+  ) throws -> [String: _DescriptorOption] {
     return [:]
   }
 
-  /// Converts field options to Google_Protobuf_FieldOptions.
-  private func toProtobufFieldOptions(from options: [String: DescriptorOption]) throws -> Google_Protobuf_FieldOptions {
+  private func toProtobufFieldOptions(
+    from options: [String: _DescriptorOption]
+  ) throws -> Google_Protobuf_FieldOptions {
     return Google_Protobuf_FieldOptions()
   }
 
-  /// Converts Google_Protobuf_FieldOptions to options dictionary.
-  private func fromProtobufFieldOptions(_ options: Google_Protobuf_FieldOptions) throws -> [String: DescriptorOption] {
+  private func fromProtobufFieldOptions(
+    _ options: Google_Protobuf_FieldOptions
+  ) throws -> [String: _DescriptorOption] {
     return [:]
   }
 
   // MARK: - Map Field Detection
 
-  /// Detects if a field is a map and extracts map entry information.
-  ///
-  /// According to Protocol Buffers specification, map fields are represented as:
-  /// - Repeated message field with a specific entry message
-  /// - Entry message has `map_entry = true` option
-  /// - Entry message has exactly 2 fields: "key" (tag 1) and "value" (tag 2)
-  ///
-  /// - Parameters:
-  ///   - fieldDescriptor: Field descriptor to check.
-  ///   - messageDescriptor: Parent message descriptor containing nested types.
-  ///   - nestedMessages: Already converted nested messages.
-  /// - Returns: MapEntryInfo if field is a map, nil otherwise.
-  /// - Throws: Error if map entry structure is invalid.
   private func detectMapField(
     fieldDescriptor: Google_Protobuf_FieldDescriptorProto,
     messageDescriptor: Google_Protobuf_DescriptorProto?,
-    nestedMessages: [String: MessageDescriptor]
-  ) throws -> MapEntryInfo? {
+    nestedMessages: [String: _MessageDescriptor]
+  ) throws -> _MapEntryInfo? {
     guard let typeName = fieldDescriptor.hasTypeName ? fieldDescriptor.typeName : nil else {
       return nil
     }
 
-    // Extract the simple name from the type name (e.g., ".package.Message.EntryMessage" -> "EntryMessage")
     let entryMessageName = extractSimpleName(from: typeName)
 
-    // Try to find the entry message in nested messages
     guard
       let entryMessage = findMapEntryMessage(
         named: entryMessageName,
@@ -686,119 +503,86 @@ public struct DescriptorBridge {
       return nil
     }
 
-    // Check if this message has map_entry option
     guard isMapEntryMessage(entryMessage) else {
       return nil
     }
 
-    // Extract key and value fields
     guard let keyField = entryMessage.field.first(where: { $0.number == 1 }),
       let valueField = entryMessage.field.first(where: { $0.number == 2 })
     else {
-      throw DescriptorBridgeError.invalidDescriptorStructure(
+      throw _DescriptorBridgeError.invalidDescriptorStructure(
         "Map entry message '\(entryMessageName)' must have exactly 2 fields with numbers 1 (key) and 2 (value)"
       )
     }
 
-    // Validate key and value fields
     guard keyField.name == "key" && valueField.name == "value" else {
-      throw DescriptorBridgeError.invalidDescriptorStructure(
+      throw _DescriptorBridgeError.invalidDescriptorStructure(
         "Map entry message '\(entryMessageName)' fields must be named 'key' and 'value'"
       )
     }
 
-    // Convert key field type
     let keyType = try fromProtobufFieldType(keyField.type)
 
-    // Validate key type (only scalar types except float, double, bytes are allowed)
-    let validKeyTypes: [FieldType] = [
+    let validKeyTypes: [_FieldType] = [
       .int32, .int64, .uint32, .uint64, .sint32, .sint64,
       .fixed32, .fixed64, .sfixed32, .sfixed64, .bool, .string,
     ]
 
     guard validKeyTypes.contains(keyType) else {
-      throw DescriptorBridgeError.invalidDescriptorStructure(
+      throw _DescriptorBridgeError.invalidDescriptorStructure(
         "Invalid map key type '\(keyType)'. Only scalar types except float, double, and bytes are allowed"
       )
     }
 
-    // Convert value field type
     let valueType = try fromProtobufFieldType(valueField.type)
 
-    // Create key and value field info
-    let keyFieldInfo = KeyFieldInfo(
+    let keyFieldInfo = _KeyFieldInfo(
       name: keyField.name,
       number: Int(keyField.number),
       type: keyType
     )
 
-    let valueFieldInfo = ValueFieldInfo(
+    let valueFieldInfo = _ValueFieldInfo(
       name: valueField.name,
       number: Int(valueField.number),
       type: valueType,
       typeName: valueField.hasTypeName ? valueField.typeName : nil
     )
 
-    return MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
+    return _MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
   }
 
-  /// Extracts simple name from a fully qualified type name.
-  ///
-  /// Examples:
-  /// - ".package.Message.EntryMessage" -> "EntryMessage"
-  /// - "EntryMessage" -> "EntryMessage"
-  /// - ".Message" -> "Message"
-  ///
-  /// - Parameter typeName: Fully qualified type name.
-  /// - Returns: Simple name without package and parent message prefixes.
   private func extractSimpleName(from typeName: String) -> String {
     let components = typeName.split(separator: ".")
     return String(components.last ?? "")
   }
 
-  /// Finds a map entry message by name in the parent message's nested types.
-  ///
-  /// - Parameters:
-  ///   - name: Simple name of the entry message.
-  ///   - messageDescriptor: Parent message descriptor.
-  ///   - nestedMessages: Already converted nested messages.
-  /// - Returns: Map entry message descriptor if found, nil otherwise.
   private func findMapEntryMessage(
     named name: String,
     in messageDescriptor: Google_Protobuf_DescriptorProto?,
-    nestedMessages: [String: MessageDescriptor]
+    nestedMessages: [String: _MessageDescriptor]
   ) -> Google_Protobuf_DescriptorProto? {
     guard let messageDescriptor = messageDescriptor else {
       return nil
     }
-
-    // Search in nested types
     return messageDescriptor.nestedType.first { $0.name == name }
   }
 
-  /// Checks if a message descriptor is a map entry message.
-  ///
-  /// A message is a map entry if it has the `map_entry = true` option set.
-  ///
-  /// - Parameter messageDescriptor: Message descriptor to check.
-  /// - Returns: true if message is a map entry, false otherwise.
   private func isMapEntryMessage(_ messageDescriptor: Google_Protobuf_DescriptorProto) -> Bool {
     guard messageDescriptor.hasOptions else {
       return false
     }
-
     return messageDescriptor.options.mapEntry
   }
 }
 
-/// Errors that occur when working with DescriptorBridge.
-public enum DescriptorBridgeError: Error, LocalizedError {
+internal enum _DescriptorBridgeError: Error, LocalizedError {
   case unsupportedFieldType(Int)
   case conversionFailed(String)
   case missingRequiredField(String)
   case invalidDescriptorStructure(String)
 
-  public var errorDescription: String? {
+  var errorDescription: String? {
     switch self {
     case .unsupportedFieldType(let value):
       return "Unsupported field type: \(value)"

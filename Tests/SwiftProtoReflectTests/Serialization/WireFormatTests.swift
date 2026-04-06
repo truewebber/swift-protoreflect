@@ -73,34 +73,34 @@ final class WireFormatTests: XCTestCase {
   // MARK: - ZigZag encoding
 
   func test_zigzag_encoding_positive() {
-    XCTAssertEqual(BinarySerializer.zigzagEncode32(1), 2)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode32(1), 2)
   }
 
   func test_zigzag_encoding_negative() {
-    XCTAssertEqual(BinarySerializer.zigzagEncode32(-1), 1)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode32(-1), 1)
   }
 
   func test_zigzag_encoding_zero() {
-    XCTAssertEqual(BinarySerializer.zigzagEncode32(0), 0)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode32(0), 0)
   }
 
   func test_zigzag_encoding_minInt32() {
-    let encoded = BinarySerializer.zigzagEncode32(Int32.min)
+    let encoded = _BinarySerializer.zigzagEncode32(Int32.min)
     XCTAssertEqual(encoded, UInt32.max)
   }
 
   func test_zigzag_roundtrip() {
     for val: Int32 in [0, 1, -1, 42, -42, .min, .max] {
-      let encoded = BinarySerializer.zigzagEncode32(val)
-      let decoded = BinaryDeserializer.zigzagDecode32(encoded)
+      let encoded = _BinarySerializer.zigzagEncode32(val)
+      let decoded = _BinaryDeserializer.zigzagDecode32(encoded)
       XCTAssertEqual(decoded, val, "Round-trip failed for \(val)")
     }
   }
 
   func test_zigzag64_roundtrip() {
     for val: Int64 in [0, 1, -1, 42, -42, .min, .max] {
-      let encoded = BinarySerializer.zigzagEncode64(val)
-      let decoded = BinaryDeserializer.zigzagDecode64(encoded)
+      let encoded = _BinarySerializer.zigzagEncode64(val)
+      let decoded = _BinaryDeserializer.zigzagDecode64(encoded)
       XCTAssertEqual(decoded, val, "Round-trip failed for \(val)")
     }
   }

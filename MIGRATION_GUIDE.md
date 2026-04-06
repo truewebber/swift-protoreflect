@@ -268,6 +268,18 @@ let msg = try await binaryDeserializer.deserialize(binData, using: desc)
 
 `MessageFactory` has no stored state. In v6 it conforms to `Sendable` directly (without `@unchecked`). No call-site changes required.
 
+### Removed: JSONSerializationOptions No-Argument Initializer
+
+The `JSONSerializationOptions()` no-argument initializer (which defaulted to an empty `TypeRegistry`) is removed. Pass an explicit `TypeRegistry`.
+
+```swift
+// v5 (removed)
+let opts = JSONSerializationOptions()
+
+// v6
+let opts = JSONSerializationOptions(typeRegistry: TypeRegistry())
+```
+
 ### Summary of All Removed APIs
 
 | Removed API | Replacement |

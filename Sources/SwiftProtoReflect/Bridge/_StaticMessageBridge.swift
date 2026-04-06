@@ -1,5 +1,5 @@
 //
-// StaticMessageBridge.swift
+// _StaticMessageBridge.swift
 // SwiftProtoReflect
 //
 // Created: 2025-05-25
@@ -8,184 +8,91 @@
 import Foundation
 import SwiftProtobuf
 
-/// StaticMessageBridge provides conversion between static Swift Protobuf messages
-/// and dynamic DynamicMessage objects.
-///
-/// This component allows:
-/// - Converting static messages to dynamic for reflection.
-/// - Creating static messages from dynamic for integration with existing code.
-/// - Ensuring compatibility between static and dynamic approaches.
-public struct StaticMessageBridge {
-
-  // MARK: - Initialization
-
-  /// Creates new StaticMessageBridge instance.
-  public init() {}
+internal struct _StaticMessageBridge {
 
   // MARK: - Static to Dynamic Conversion
 
-  /// Converts static Swift Protobuf message to dynamic DynamicMessage.
-  ///
-  /// - Parameters:
-  ///   - staticMessage: Static message to convert.
-  ///   - descriptor: Descriptor for creating dynamic message.
-  /// - Returns: Dynamic message with data from static.
-  /// - Throws: Error if conversion is impossible.
-  public func toDynamicMessage<T: SwiftProtobuf.Message>(
+  func toDynamicMessage<T: SwiftProtobuf.Message>(
     from staticMessage: T,
-    using descriptor: MessageDescriptor
-  ) throws -> DynamicMessage {
-    // Serialize static message to binary format
+    using descriptor: _MessageDescriptor
+  ) throws -> _DynamicMessage {
     let binaryData = try staticMessage.serializedData()
-
-    // Deserialize to dynamic message
-    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
+    let deserializer = _BinaryDeserializer(options: .init(typeRegistry: _TypeRegistry()))
     return try deserializer.deserialize(binaryData, using: descriptor)
   }
 
-  /// Converts static Swift Protobuf message to dynamic DynamicMessage
-  /// with automatic descriptor creation.
-  ///
-  /// - Parameter staticMessage: Static message to convert.
-  /// - Returns: Dynamic message with data from static.
-  /// - Throws: Error if conversion is impossible or descriptor cannot be created.
-  public func toDynamicMessage<T: SwiftProtobuf.Message>(
+  func toDynamicMessage<T: SwiftProtobuf.Message>(
     from staticMessage: T
-  ) throws -> DynamicMessage {
-    // Create descriptor from static message
+  ) throws -> _DynamicMessage {
     let descriptor = try createDescriptor(from: staticMessage)
-
-    // Convert using created descriptor
     return try toDynamicMessage(from: staticMessage, using: descriptor)
   }
 
   // MARK: - Dynamic to Static Conversion
 
-  /// Converts dynamic DynamicMessage to static Swift Protobuf message.
-  ///
-  /// - Parameters:
-  ///   - dynamicMessage: Dynamic message to convert.
-  ///   - messageType: Static message type to create.
-  /// - Returns: Static message with data from dynamic.
-  /// - Throws: Error if conversion is impossible.
-  public func toStaticMessage<T: SwiftProtobuf.Message>(
-    from dynamicMessage: DynamicMessage,
+  func toStaticMessage<T: SwiftProtobuf.Message>(
+    from dynamicMessage: _DynamicMessage,
     as messageType: T.Type
   ) throws -> T {
-    // Serialize dynamic message to binary format
-    let serializer = BinarySerializer()
+    let serializer = _BinarySerializer()
     let binaryData = try serializer.serialize(dynamicMessage)
-
-    // Deserialize to static message
     return try T(serializedBytes: binaryData)
   }
 
-  // MARK: - Batch Conversion Methods
+  // MARK: - Batch Conversions
 
-  /// Converts array of static messages to array of dynamic messages.
-  ///
-  /// - Parameters:
-  ///   - staticMessages: Array of static messages.
-  ///   - descriptor: Descriptor for creating dynamic messages.
-  /// - Returns: Array of dynamic messages.
-  /// - Throws: Error if any conversion is impossible.
-  public func toDynamicMessages<T: SwiftProtobuf.Message>(
+  func toDynamicMessages<T: SwiftProtobuf.Message>(
     from staticMessages: [T],
-    using descriptor: MessageDescriptor
-  ) throws -> [DynamicMessage] {
-    return try staticMessages.map { staticMessage in
-      try toDynamicMessage(from: staticMessage, using: descriptor)
-    }
+    using descriptor: _MessageDescriptor
+  ) throws -> [_DynamicMessage] {
+    return try staticMessages.map { try toDynamicMessage(from: $0, using: descriptor) }
   }
 
-  /// Converts array of dynamic messages to array of static messages.
-  ///
-  /// - Parameters:
-  ///   - dynamicMessages: Array of dynamic messages.
-  ///   - messageType: Static message type to create.
-  /// - Returns: Array of static messages.
-  /// - Throws: Error if any conversion is impossible.
-  public func toStaticMessages<T: SwiftProtobuf.Message>(
-    from dynamicMessages: [DynamicMessage],
+  func toStaticMessages<T: SwiftProtobuf.Message>(
+    from dynamicMessages: [_DynamicMessage],
     as messageType: T.Type
   ) throws -> [T] {
-    return try dynamicMessages.map { dynamicMessage in
-      try toStaticMessage(from: dynamicMessage, as: messageType)
-    }
+    return try dynamicMessages.map { try toStaticMessage(from: $0, as: messageType) }
   }
 
-  // MARK: - Validation Methods
+  // MARK: - Compatibility Checks
 
-  /// Checks compatibility of static message with descriptor.
-  ///
-  /// - Parameters:
-  ///   - staticMessage: Static message to check.
-  ///   - descriptor: Descriptor for comparison.
-  /// - Returns: true if message is compatible with descriptor.
-  public func isCompatible<T: SwiftProtobuf.Message>(
+  func isCompatible<T: SwiftProtobuf.Message>(
     staticMessage: T,
-    with descriptor: MessageDescriptor
+    with descriptor: _MessageDescriptor
   ) -> Bool {
-    do {
-      // Try to convert and check that no errors occur
-      _ = try toDynamicMessage(from: staticMessage, using: descriptor)
-      return true
-    }
-    catch {
-      return false
-    }
+    guard let binaryData = try? staticMessage.serializedData() else { return false }
+    return
+      (try? _BinaryDeserializer(options: .init(typeRegistry: _TypeRegistry()))
+      .deserialize(binaryData, using: descriptor)) != nil
   }
 
-  /// Checks compatibility of dynamic message with static message type.
-  ///
-  /// - Parameters:
-  ///   - dynamicMessage: Dynamic message to check.
-  ///   - messageType: Static message type for comparison.
-  /// - Returns: true if message is compatible with type.
-  public func isCompatible<T: SwiftProtobuf.Message>(
-    dynamicMessage: DynamicMessage,
+  func isCompatible<T: SwiftProtobuf.Message>(
+    dynamicMessage: _DynamicMessage,
     with messageType: T.Type
   ) -> Bool {
-    do {
-      // Try to convert and check that no errors occur
-      _ = try toStaticMessage(from: dynamicMessage, as: messageType)
-      return true
-    }
-    catch {
-      return false
-    }
+    guard let binaryData = try? _BinarySerializer().serialize(dynamicMessage) else { return false }
+    return (try? T(serializedBytes: binaryData)) != nil
   }
 
   // MARK: - Helper Methods
 
-  /// Creates MessageDescriptor from a static SwiftProtobuf message by
-  /// traversing it with a `FieldExtractorVisitor` (for field numbers and
-  /// types) and correlating with JSON output (for field names).
-  ///
-  /// - Note: Only fields that have non-default values on the instance are
-  ///   extracted. Fields left at their default proto3 values will not
-  ///   appear in the descriptor — this is acceptable because proto3
-  ///   binary format omits default values anyway.
-  ///
-  /// - Parameter staticMessage: Static message.
-  /// - Returns: Message descriptor.
-  /// - Throws: Error if descriptor cannot be created.
   private func createDescriptor<T: SwiftProtobuf.Message>(
     from staticMessage: T
-  ) throws -> MessageDescriptor {
+  ) throws -> _MessageDescriptor {
     let messageName = T.protoMessageName
 
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try staticMessage.traverse(visitor: &visitor)
     let fields = visitor.extractedFields
 
     let jsonNames = extractOrderedJSONKeys(from: staticMessage)
 
-    var descriptor = MessageDescriptor(name: messageName, fullName: messageName)
+    var descriptor = _MessageDescriptor(name: messageName, fullName: messageName)
     for (index, field) in fields.enumerated() {
       let name = index < jsonNames.count ? jsonNames[index] : "field_\(field.number)"
       descriptor.addField(
-        FieldDescriptor(
+        _FieldDescriptor(
           name: name,
           number: field.number,
           type: field.type,
@@ -198,9 +105,6 @@ public struct StaticMessageBridge {
     return descriptor
   }
 
-  /// Parses ordered JSON keys from the raw JSON output of a SwiftProtobuf message.
-  ///
-  /// SwiftProtobuf's JSON encoder emits keys in field number order.
   private func extractOrderedJSONKeys<T: SwiftProtobuf.Message>(from message: T) -> [String] {
     guard let jsonData = try? message.jsonUTF8Data(),
       let raw = String(data: jsonData, encoding: .utf8)
@@ -242,27 +146,26 @@ public struct StaticMessageBridge {
 
 // MARK: - FieldExtractorVisitor
 
-/// Visits a SwiftProtobuf message to extract field metadata.
-struct FieldExtractorVisitor: SwiftProtobuf.Visitor {
+internal struct _FieldExtractorVisitor: SwiftProtobuf.Visitor {
 
-  struct FieldInfo {
+  struct _FieldInfo {
     let number: Int
-    let type: FieldType
+    let type: _FieldType
     let isRepeated: Bool
     let typeName: String?
   }
 
-  private(set) var extractedFields: [FieldInfo] = []
+  private(set) var extractedFields: [_FieldInfo] = []
 
   private mutating func record(
     _ number: Int,
-    _ type: FieldType,
+    _ type: _FieldType,
     repeated: Bool = false,
     typeName: String? = nil
   ) {
     if !extractedFields.contains(where: { $0.number == number }) {
       extractedFields.append(
-        FieldInfo(number: number, type: type, isRepeated: repeated, typeName: typeName)
+        _FieldInfo(number: number, type: type, isRepeated: repeated, typeName: typeName)
       )
     }
   }
@@ -328,7 +231,6 @@ struct FieldExtractorVisitor: SwiftProtobuf.Visitor {
     record(fieldNumber, .group, typeName: G.protoMessageName)
   }
 
-  // Repeated fields
   mutating func visitRepeatedDoubleField(value: [Double], fieldNumber: Int) throws {
     record(fieldNumber, .double, repeated: true)
   }
@@ -393,7 +295,6 @@ struct FieldExtractorVisitor: SwiftProtobuf.Visitor {
     record(fieldNumber, .group, repeated: true, typeName: G.protoMessageName)
   }
 
-  // Map fields
   mutating func visitMapField<KeyType, ValueType: MapValueType>(
     fieldType: _ProtobufMap<KeyType, ValueType>.Type,
     value: _ProtobufMap<KeyType, ValueType>.BaseType,
@@ -419,15 +320,14 @@ struct FieldExtractorVisitor: SwiftProtobuf.Visitor {
   mutating func visitUnknown(bytes: Data) throws {}
 }
 
-/// Errors that occur when working with StaticMessageBridge.
-public enum StaticMessageBridgeError: Error, LocalizedError {
+internal enum _StaticMessageBridgeError: Error, LocalizedError {
   case incompatibleTypes(staticType: String, descriptorType: String)
   case serializationFailed(underlying: Error)
   case deserializationFailed(underlying: Error)
   case descriptorCreationFailed(messageType: String)
   case unsupportedMessageType(String)
 
-  public var errorDescription: String? {
+  var errorDescription: String? {
     switch self {
     case .incompatibleTypes(let staticType, let descriptorType):
       return "Incompatible types: static type '\(staticType)' does not match descriptor '\(descriptorType)'"
@@ -440,45 +340,5 @@ public enum StaticMessageBridgeError: Error, LocalizedError {
     case .unsupportedMessageType(let messageType):
       return "Unsupported message type: '\(messageType)'"
     }
-  }
-}
-
-// MARK: - Extensions
-
-/// Extension for DynamicMessage for convenient conversion to static messages.
-extension DynamicMessage {
-
-  /// Converts this dynamic message to static Swift Protobuf message.
-  ///
-  /// - Parameter messageType: Static message type to create.
-  /// - Returns: Static message with data from this dynamic.
-  /// - Throws: Error if conversion is impossible.
-  public func toStaticMessage<T: SwiftProtobuf.Message>(as messageType: T.Type) throws -> T {
-    let bridge = StaticMessageBridge()
-    return try bridge.toStaticMessage(from: self, as: messageType)
-  }
-}
-
-/// Extension for Swift Protobuf Message for convenient conversion to dynamic messages.
-extension SwiftProtobuf.Message {
-
-  /// Converts this static message to dynamic DynamicMessage.
-  ///
-  /// - Parameter descriptor: Descriptor for creating dynamic message.
-  /// - Returns: Dynamic message with data from this static.
-  /// - Throws: Error if conversion is impossible.
-  public func toDynamicMessage(using descriptor: MessageDescriptor) throws -> DynamicMessage {
-    let bridge = StaticMessageBridge()
-    return try bridge.toDynamicMessage(from: self, using: descriptor)
-  }
-
-  /// Converts this static message to dynamic DynamicMessage
-  /// with automatic descriptor creation.
-  ///
-  /// - Returns: Dynamic message with data from this static.
-  /// - Throws: Error if conversion is impossible or descriptor cannot be created.
-  public func toDynamicMessage() throws -> DynamicMessage {
-    let bridge = StaticMessageBridge()
-    return try bridge.toDynamicMessage(from: self)
   }
 }

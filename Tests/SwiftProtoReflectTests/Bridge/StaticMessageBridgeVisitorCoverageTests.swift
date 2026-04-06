@@ -77,7 +77,7 @@ final class StaticMessageBridgeVisitorCoverageTests: XCTestCase {
     var msg = Google_Protobuf_FieldDescriptorProto()
     msg.name = "test"
     msg.options = Google_Protobuf_FieldOptions()
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try msg.traverse(visitor: &visitor)
     let messageFields = visitor.extractedFields.filter { $0.type == .message }
     XCTAssertFalse(messageFields.isEmpty)
@@ -113,7 +113,7 @@ final class StaticMessageBridgeVisitorCoverageTests: XCTestCase {
     var nested = Google_Protobuf_DescriptorProto()
     nested.name = "Nested"
     msg.messageType = [nested]
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try msg.traverse(visitor: &visitor)
     let repeatedMsgFields = visitor.extractedFields.filter { $0.type == .message && $0.isRepeated }
     XCTAssertFalse(repeatedMsgFields.isEmpty)
@@ -124,7 +124,7 @@ final class StaticMessageBridgeVisitorCoverageTests: XCTestCase {
   func test_visitor_mapField_viaStructTraverse_recorded() throws {
     var msg = Google_Protobuf_Struct()
     msg.fields["key1"] = Google_Protobuf_Value(stringValue: "hello")
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try msg.traverse(visitor: &visitor)
     XCTAssertFalse(visitor.extractedFields.isEmpty)
   }
@@ -132,7 +132,7 @@ final class StaticMessageBridgeVisitorCoverageTests: XCTestCase {
   // MARK: - Direct FieldExtractorVisitor Tests (Singular)
 
   func test_visitor_singularSInt32_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitSingularSInt32Field(value: -10, fieldNumber: 1)
     XCTAssertEqual(visitor.extractedFields.count, 1)
     XCTAssertEqual(visitor.extractedFields[0].type, .sint32)
@@ -140,86 +140,86 @@ final class StaticMessageBridgeVisitorCoverageTests: XCTestCase {
   }
 
   func test_visitor_singularSInt64_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitSingularSInt64Field(value: -100, fieldNumber: 1)
     XCTAssertEqual(visitor.extractedFields[0].type, .sint64)
   }
 
   func test_visitor_singularFixed32_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitSingularFixed32Field(value: 42, fieldNumber: 1)
     XCTAssertEqual(visitor.extractedFields[0].type, .fixed32)
   }
 
   func test_visitor_singularFixed64_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitSingularFixed64Field(value: 42, fieldNumber: 1)
     XCTAssertEqual(visitor.extractedFields[0].type, .fixed64)
   }
 
   func test_visitor_singularSFixed32_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitSingularSFixed32Field(value: -42, fieldNumber: 1)
     XCTAssertEqual(visitor.extractedFields[0].type, .sfixed32)
   }
 
   func test_visitor_singularSFixed64_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitSingularSFixed64Field(value: -42, fieldNumber: 1)
     XCTAssertEqual(visitor.extractedFields[0].type, .sfixed64)
   }
 
   func test_visitor_singularDouble_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitSingularDoubleField(value: 3.14, fieldNumber: 1)
     XCTAssertEqual(visitor.extractedFields[0].type, .double)
   }
 
   func test_visitor_singularInt64_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitSingularInt64Field(value: 42, fieldNumber: 1)
     XCTAssertEqual(visitor.extractedFields[0].type, .int64)
   }
 
   func test_visitor_singularUInt64_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitSingularUInt64Field(value: 42, fieldNumber: 1)
     XCTAssertEqual(visitor.extractedFields[0].type, .uint64)
   }
 
   func test_visitor_singularBool_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitSingularBoolField(value: true, fieldNumber: 1)
     XCTAssertEqual(visitor.extractedFields[0].type, .bool)
   }
 
   func test_visitor_singularBytes_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitSingularBytesField(value: Data([0x01]), fieldNumber: 1)
     XCTAssertEqual(visitor.extractedFields[0].type, .bytes)
   }
 
   func test_visitor_singularFloat_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitSingularFloatField(value: 1.5, fieldNumber: 1)
     XCTAssertEqual(visitor.extractedFields[0].type, .float)
   }
 
   func test_visitor_singularUInt32_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitSingularUInt32Field(value: 42, fieldNumber: 1)
     XCTAssertEqual(visitor.extractedFields[0].type, .uint32)
   }
 
   func test_visitor_singularMessage_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitSingularMessageField(value: Google_Protobuf_Empty(), fieldNumber: 1)
     XCTAssertEqual(visitor.extractedFields[0].type, .message)
     XCTAssertEqual(visitor.extractedFields[0].typeName, "google.protobuf.Empty")
   }
 
   func test_visitor_singularGroup_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitSingularGroupField(value: Google_Protobuf_Empty(), fieldNumber: 1)
     XCTAssertEqual(visitor.extractedFields[0].type, .group)
     XCTAssertEqual(visitor.extractedFields[0].typeName, "google.protobuf.Empty")
@@ -228,7 +228,7 @@ final class StaticMessageBridgeVisitorCoverageTests: XCTestCase {
   // MARK: - Direct FieldExtractorVisitor Tests (Repeated)
 
   func test_visitor_repeatedScalarFields_allTypesRecorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitRepeatedDoubleField(value: [1.0], fieldNumber: 1)
     try visitor.visitRepeatedInt64Field(value: [1], fieldNumber: 2)
     try visitor.visitRepeatedUInt64Field(value: [1], fieldNumber: 3)
@@ -246,7 +246,7 @@ final class StaticMessageBridgeVisitorCoverageTests: XCTestCase {
     try visitor.visitRepeatedSFixed64Field(value: [-1], fieldNumber: 15)
 
     XCTAssertEqual(visitor.extractedFields.count, 15)
-    let expectedTypes: [SwiftProtoReflect.FieldType] = [
+    let expectedTypes: [_FieldType] = [
       .double, .int64, .uint64, .bool, .string, .bytes, .float,
       .int32, .uint32, .sint32, .sint64, .fixed32, .fixed64, .sfixed32, .sfixed64,
     ]
@@ -257,7 +257,7 @@ final class StaticMessageBridgeVisitorCoverageTests: XCTestCase {
   }
 
   func test_visitor_repeatedEnum_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitRepeatedEnumField(
       value: [Google_Protobuf_NullValue.nullValue],
       fieldNumber: 1
@@ -267,7 +267,7 @@ final class StaticMessageBridgeVisitorCoverageTests: XCTestCase {
   }
 
   func test_visitor_repeatedMessage_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitRepeatedMessageField(
       value: [Google_Protobuf_Empty()],
       fieldNumber: 1
@@ -278,7 +278,7 @@ final class StaticMessageBridgeVisitorCoverageTests: XCTestCase {
   }
 
   func test_visitor_repeatedGroup_recorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitRepeatedGroupField(
       value: [Google_Protobuf_Empty()],
       fieldNumber: 1
@@ -290,13 +290,13 @@ final class StaticMessageBridgeVisitorCoverageTests: XCTestCase {
   // MARK: - visitUnknown and Deduplication
 
   func test_visitor_visitUnknown_doesNotRecordFields() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitUnknown(bytes: Data([0x01, 0x02]))
     XCTAssertEqual(visitor.extractedFields.count, 0)
   }
 
   func test_visitor_duplicateFieldNumber_onlyFirstRecorded() throws {
-    var visitor = FieldExtractorVisitor()
+    var visitor = _FieldExtractorVisitor()
     try visitor.visitSingularInt32Field(value: 1, fieldNumber: 1)
     try visitor.visitSingularStringField(value: "x", fieldNumber: 1)
     XCTAssertEqual(visitor.extractedFields.count, 1)
