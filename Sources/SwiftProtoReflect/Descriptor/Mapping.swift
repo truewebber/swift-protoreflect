@@ -442,3 +442,130 @@ extension DynamicMessage {
     self.init(impl: impl)
   }
 }
+
+// MARK: - WKT Value Type Converters
+
+// TODO(Strangler migration / OPE-300): These converters are dead-code scaffolding — they
+// are unused until the internal _Xxx WKT layer starts producing _Xxx value types.
+// Remove each converter pair when the corresponding _XxxHandler is fully migrated to an
+// actor and all internal call sites use _Xxx types end-to-end.
+
+// MARK: - _WellKnownSupportPhase ↔ WellKnownSupportPhase
+
+extension _WellKnownSupportPhase {
+  init(from pub: WellKnownSupportPhase) {
+    switch pub {
+    case .critical: self = .critical
+    case .important: self = .important
+    case .advanced: self = .advanced
+    }
+  }
+}
+
+extension WellKnownSupportPhase {
+  init(from impl: _WellKnownSupportPhase) {
+    switch impl {
+    case .critical: self = .critical
+    case .important: self = .important
+    case .advanced: self = .advanced
+    }
+  }
+}
+
+// MARK: - _TimestampHandler._TimestampValue ↔ TimestampHandler.TimestampValue
+
+extension _TimestampHandler._TimestampValue {
+  init(from pub: TimestampHandler.TimestampValue) {
+    self.init(seconds: pub.seconds, nanos: pub.nanos)
+  }
+}
+
+extension TimestampHandler.TimestampValue {
+  init(from impl: _TimestampHandler._TimestampValue) throws {
+    try self.init(seconds: impl.seconds, nanos: impl.nanos)
+  }
+}
+
+// MARK: - _DurationHandler._DurationValue ↔ DurationHandler.DurationValue
+
+extension _DurationHandler._DurationValue {
+  init(from pub: DurationHandler.DurationValue) {
+    self.init(seconds: pub.seconds, nanos: pub.nanos)
+  }
+}
+
+extension DurationHandler.DurationValue {
+  init(from impl: _DurationHandler._DurationValue) throws {
+    try self.init(seconds: impl.seconds, nanos: impl.nanos)
+  }
+}
+
+// MARK: - _EmptyHandler._EmptyValue ↔ EmptyHandler.EmptyValue
+
+extension _EmptyHandler._EmptyValue {
+  init(from _: EmptyHandler.EmptyValue) {
+    self.init()
+  }
+}
+
+extension EmptyHandler.EmptyValue {
+  init(from _: _EmptyHandler._EmptyValue) {
+    self.init()
+  }
+}
+
+// MARK: - _FieldMaskHandler._FieldMaskValue ↔ FieldMaskHandler.FieldMaskValue
+
+extension _FieldMaskHandler._FieldMaskValue {
+  init(from pub: FieldMaskHandler.FieldMaskValue) {
+    self.init(paths: pub.paths)
+  }
+}
+
+extension FieldMaskHandler.FieldMaskValue {
+  init(from impl: _FieldMaskHandler._FieldMaskValue) throws {
+    try self.init(paths: impl.paths)
+  }
+}
+
+// MARK: - _StructHandler._StructValue ↔ StructHandler.StructValue
+
+extension _StructHandler._StructValue {
+  init(from pub: StructHandler.StructValue) {
+    self.init(pub)
+  }
+}
+
+extension StructHandler.StructValue {
+  init(from impl: _StructHandler._StructValue) {
+    self = impl.pub
+  }
+}
+
+// MARK: - _StructHandler._ValueValue ↔ StructHandler.ValueValue
+
+extension _StructHandler._ValueValue {
+  init(from pub: StructHandler.ValueValue) {
+    self.init(pub)
+  }
+}
+
+extension StructHandler.ValueValue {
+  init(from impl: _StructHandler._ValueValue) {
+    self = impl.pub
+  }
+}
+
+// MARK: - _AnyHandler._AnyValue ↔ AnyHandler.AnyValue
+
+extension _AnyHandler._AnyValue {
+  init(from pub: AnyHandler.AnyValue) {
+    self.init(typeUrl: pub.typeUrl, value: pub.value)
+  }
+}
+
+extension AnyHandler.AnyValue {
+  init(from impl: _AnyHandler._AnyValue) throws {
+    try self.init(typeUrl: impl.typeUrl, value: impl.value)
+  }
+}

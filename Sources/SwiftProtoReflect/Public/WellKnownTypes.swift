@@ -1,10 +1,7 @@
-/**
- * WellKnownTypes.swift
- * SwiftProtoReflect
- *
- * Specialized support for standard Protocol Buffers types (google.protobuf.*)
- * Provides optimized work with frequently used types.
- */
+//
+// WellKnownTypes.swift (public API)
+// SwiftProtoReflect
+//
 
 import Foundation
 import SwiftProtobuf
@@ -261,7 +258,6 @@ public final class WellKnownTypesRegistry: @unchecked Sendable {
   private let handlersMutex = NSLock()
 
   private init() {
-    // Register basic handlers
     registerDefaultHandlers()
   }
 
@@ -343,7 +339,6 @@ public final class WellKnownTypesRegistry: @unchecked Sendable {
 
   // MARK: - Private Methods
 
-  /// Registers default handlers (called during init).
   private func registerDefaultHandlers() {
     populateDefaultHandlers()
   }

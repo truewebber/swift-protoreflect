@@ -1,5 +1,5 @@
 //
-// StructProtoHelpers.swift
+// _StructProtoHelpers.swift
 // SwiftProtoReflect
 //
 // Internal helpers for bi-directional conversion between StructHandler.ValueValue
