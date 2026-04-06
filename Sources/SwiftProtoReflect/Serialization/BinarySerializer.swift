@@ -125,6 +125,10 @@ public struct BinarySerializer: Sendable {
         let tag = UInt32((UInt32(field.number) << 3) | wireType(for: field.type).rawValue)
         encoder.writeVarint(UInt64(tag))
         try encodeValue(value, type: field.type, typeName: field.typeName, to: &encoder)
+        if case .group = field.type {
+          let endTag = UInt32((UInt32(field.number) << 3) | WireType.endGroup.rawValue)
+          encoder.writeVarint(UInt64(endTag))
+        }
       }
     }
   }

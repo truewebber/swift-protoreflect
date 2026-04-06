@@ -156,6 +156,66 @@ final class Proto2BinarySerializationTests: XCTestCase {
     XCTAssertEqual(ext, "extended")
   }
 
+  // MARK: - Repeated group wire format
+
+  func test_group_repeated_serialize_startEndGroupTagsPerElement() throws {
+    var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg", syntax: "proto2")
+    desc.addField(
+      FieldDescriptor(name: "items", number: 2, type: .group, typeName: "test.Item", isRepeated: true)
+    )
+    var itemDesc = MessageDescriptor(name: "Item", fullName: "test.Item", syntax: "proto2")
+    itemDesc.addField(FieldDescriptor(name: "value", number: 1, type: .int32))
+    desc.addNestedMessage(itemDesc)
+
+    var item1 = DynamicMessage(descriptor: itemDesc)
+    try item1.set(Int32(5), forField: "value")
+    var item2 = DynamicMessage(descriptor: itemDesc)
+    try item2.set(Int32(7), forField: "value")
+
+    var msg = DynamicMessage(descriptor: desc)
+    try msg.set([item1, item2] as [Any], forField: "items")
+
+    let serializer = BinarySerializer()
+    let data = try serializer.serialize(msg)
+    let bytes = [UInt8](data)
+
+    // Field 2 SGROUP tag = (2 << 3) | 3 = 0x13; EGROUP tag = (2 << 3) | 4 = 0x14
+    let sgroupTag: UInt8 = 0x13
+    let egroupTag: UInt8 = 0x14
+
+    var sgroupCount = 0
+    var egroupCount = 0
+    for byte in bytes {
+      if byte == sgroupTag { sgroupCount += 1 }
+      if byte == egroupTag { egroupCount += 1 }
+    }
+    XCTAssertEqual(sgroupCount, 2, "Two repeated group elements need two SGROUP tags")
+    XCTAssertEqual(egroupCount, 2, "Two repeated group elements need two EGROUP tags")
+
+    // Also verify that each EGROUP immediately follows its group body (no interleaving)
+    var firstEgroupPos: Int? = nil
+    var secondSgroupPos: Int? = nil
+    var pos = 0
+    while pos < bytes.count {
+      if bytes[pos] == egroupTag && firstEgroupPos == nil {
+        firstEgroupPos = pos
+      }
+      else if bytes[pos] == sgroupTag && firstEgroupPos != nil && secondSgroupPos == nil {
+        secondSgroupPos = pos
+      }
+      pos += 1
+    }
+    if let epos = firstEgroupPos, let spos = secondSgroupPos {
+      XCTAssertLessThan(epos, spos, "First EGROUP must precede second SGROUP")
+    }
+
+    // Round-trip: deserialize and confirm both elements are present
+    let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
+    let decoded = try deserializer.deserialize(data, using: desc)
+    let items = try decoded.get(forField: "items") as? [Any]
+    XCTAssertEqual(items?.count, 2)
+  }
+
   // MARK: - Deserializer accepts both packed and unpacked
 
   func test_deserializer_acceptsPackedForUnpackedField() throws {
