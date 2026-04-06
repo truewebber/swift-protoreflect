@@ -27,86 +27,16 @@ import XCTest
 final class BinaryCompatScalarsTests: XCTestCase {
 
   private var registry: TypeRegistry!
-  private let serializer = BinarySerializer()
-  private var deserializer: BinaryDeserializer!
+  private let serializer = BinaryCompatHelpers.makeSerializer()
 
   override func setUp() {
     super.setUp()
     registry = try? CompatDescriptors.fullRegistry()
-    deserializer = BinaryDeserializer(
-      options: DeserializationOptions(
-        preserveUnknownFields: true,
-        strictUTF8Validation: true,
-        typeRegistry: registry
-      )
-    )
   }
 
   override func tearDown() {
-    deserializer = nil
     registry = nil
     super.tearDown()
-  }
-
-  // MARK: - Helpers
-
-  /// Direction A: serializes a swift-protobuf message to binary, deserializes via our
-  /// BinaryDeserializer, and hands the DynamicMessage to `validate`.
-  @discardableResult
-  private func assertOracleToUs<P: SwiftProtobuf.Message>(
-    proto: P,
-    descriptor: MessageDescriptor,
-    file: StaticString = #file,
-    line: UInt = #line,
-    validate: (DynamicMessage) throws -> Void
-  ) throws -> DynamicMessage {
-    let referenceData = try proto.serializedData()
-    let dynamic = try deserializer.deserialize(referenceData, using: descriptor)
-    try validate(dynamic)
-    return dynamic
-  }
-
-  /// Direction B: serializes a DynamicMessage via our BinarySerializer, parses the bytes
-  /// via the swift-protobuf generated type, and hands it to `validate`.
-  @discardableResult
-  private func assertUsToOracle<P: SwiftProtobuf.Message>(
-    dynamic: DynamicMessage,
-    protoType: P.Type,
-    file: StaticString = #file,
-    line: UInt = #line,
-    validate: (P) throws -> Void
-  ) throws -> P {
-    let ourData = try serializer.serialize(dynamic)
-    let decoded = try P(serializedBytes: ourData)
-    try validate(decoded)
-    return decoded
-  }
-
-  /// Bidirectional helper: runs both directions in one call.
-  private func assertBidirectional<P: SwiftProtobuf.Message>(
-    proto: P,
-    descriptor: MessageDescriptor,
-    file: StaticString = #file,
-    line: UInt = #line,
-    validateDynamic: (DynamicMessage) throws -> Void,
-    buildDynamic: () throws -> DynamicMessage,
-    validateProto: (P) throws -> Void
-  ) throws {
-    try assertOracleToUs(
-      proto: proto,
-      descriptor: descriptor,
-      file: file,
-      line: line,
-      validate: validateDynamic
-    )
-    let dynamic = try buildDynamic()
-    try assertUsToOracle(
-      dynamic: dynamic,
-      protoType: P.self,
-      file: file,
-      line: line,
-      validate: validateProto
-    )
   }
 
   // MARK: - All 15 scalar types set to non-zero values
@@ -131,9 +61,10 @@ final class BinaryCompatScalarsTests: XCTestCase {
     proto.stringField = "hello"
     proto.bytesField = Data([0x01, 0x02, 0x03])
 
-    try assertBidirectional(
+    try BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
+      registry: registry,
       validateDynamic: { dynamic in
         XCTAssertEqual(try dynamic.get(forField: 1) as? Double, 1.5)
         XCTAssertEqual(try dynamic.get(forField: 2) as? Float, 2.5)
@@ -224,9 +155,10 @@ final class BinaryCompatScalarsTests: XCTestCase {
     var proto = Testcompat_ScalarMessage()
     proto.int32Field = Int32.max
 
-    try assertBidirectional(
+    try BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
+      registry: registry,
       validateDynamic: { XCTAssertEqual(try $0.get(forField: 3) as? Int32, Int32.max) },
       buildDynamic: {
         var d = DynamicMessage(descriptor: desc)
@@ -242,9 +174,10 @@ final class BinaryCompatScalarsTests: XCTestCase {
     var proto = Testcompat_ScalarMessage()
     proto.int32Field = Int32.min
 
-    try assertBidirectional(
+    try BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
+      registry: registry,
       validateDynamic: { XCTAssertEqual(try $0.get(forField: 3) as? Int32, Int32.min) },
       buildDynamic: {
         var d = DynamicMessage(descriptor: desc)
@@ -260,9 +193,10 @@ final class BinaryCompatScalarsTests: XCTestCase {
     var proto = Testcompat_ScalarMessage()
     proto.uint64Field = UInt64.max
 
-    try assertBidirectional(
+    try BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
+      registry: registry,
       validateDynamic: { XCTAssertEqual(try $0.get(forField: 6) as? UInt64, UInt64.max) },
       buildDynamic: {
         var d = DynamicMessage(descriptor: desc)
@@ -303,9 +237,10 @@ final class BinaryCompatScalarsTests: XCTestCase {
     var proto = Testcompat_ScalarMessage()
     proto.sint64Field = Int64.min
 
-    try assertBidirectional(
+    try BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
+      registry: registry,
       validateDynamic: { XCTAssertEqual(try $0.get(forField: 8) as? Int64, Int64.min) },
       buildDynamic: {
         var d = DynamicMessage(descriptor: desc)
@@ -353,9 +288,10 @@ final class BinaryCompatScalarsTests: XCTestCase {
     var proto = Testcompat_ScalarMessage()
     proto.stringField = "Привет 🌍"
 
-    try assertBidirectional(
+    try BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
+      registry: registry,
       validateDynamic: { XCTAssertEqual(try $0.get(forField: 14) as? String, "Привет 🌍") },
       buildDynamic: {
         var d = DynamicMessage(descriptor: desc)
@@ -434,9 +370,10 @@ final class BinaryCompatScalarsTests: XCTestCase {
     var proto = Testcompat_ScalarMessage()
     proto.bytesField = allBytes
 
-    try assertBidirectional(
+    try BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
+      registry: registry,
       validateDynamic: { XCTAssertEqual(try $0.get(forField: 15) as? Data, allBytes) },
       buildDynamic: {
         var d = DynamicMessage(descriptor: desc)
@@ -454,9 +391,10 @@ final class BinaryCompatScalarsTests: XCTestCase {
     var proto = Testcompat_ScalarMessage()
     proto.doubleField = Double.infinity
 
-    try assertBidirectional(
+    try BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
+      registry: registry,
       validateDynamic: { XCTAssertEqual(try $0.get(forField: 1) as? Double, Double.infinity) },
       buildDynamic: {
         var d = DynamicMessage(descriptor: desc)
@@ -472,9 +410,10 @@ final class BinaryCompatScalarsTests: XCTestCase {
     var proto = Testcompat_ScalarMessage()
     proto.floatField = Float.nan
 
-    try assertBidirectional(
+    try BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
+      registry: registry,
       validateDynamic: { dynamic in
         let v = try XCTUnwrap(try dynamic.get(forField: 2) as? Float)
         XCTAssertTrue(v.isNaN)
@@ -498,9 +437,10 @@ final class BinaryCompatScalarsTests: XCTestCase {
     proto.optBool = false
     // plainInt32 left at default (0) — must NOT appear in wire format
 
-    try assertBidirectional(
+    try BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
+      registry: registry,
       validateDynamic: { dynamic in
         XCTAssertTrue(
           try dynamic.hasValue(forField: 3),
