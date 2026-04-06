@@ -15,11 +15,17 @@ import Foundation
 /// Replaces `Any` in `[String: Any]` options, enabling `Sendable` conformance
 /// across all descriptor types without unsafe workarounds.
 public enum DescriptorOption: Equatable, Sendable {
+  /// A boolean option value.
   case bool(Bool)
+  /// An integer option value.
   case int(Int)
+  /// A string option value.
   case string(String)
+  /// A single-precision float option value.
   case float(Float)
+  /// A double-precision float option value.
   case double(Double)
+  /// A raw bytes option value.
   case bytes(Data)
 
   /// Returns the underlying value as `Any`, for interoperability with APIs that require `Any`.
@@ -74,24 +80,42 @@ public protocol DescriptorParent: Sendable {
 
 /// Protocol Buffers field type.
 public enum FieldType: Equatable, Sendable {
+  /// Double-precision floating-point (wire type: fixed64).
   case double
+  /// Single-precision floating-point (wire type: fixed32).
   case float
+  /// Signed 32-bit integer (wire type: varint).
   case int32
+  /// Signed 64-bit integer (wire type: varint).
   case int64
+  /// Unsigned 32-bit integer (wire type: varint).
   case uint32
+  /// Unsigned 64-bit integer (wire type: varint).
   case uint64
+  /// Signed 32-bit integer with ZigZag encoding (wire type: varint).
   case sint32
+  /// Signed 64-bit integer with ZigZag encoding (wire type: varint).
   case sint64
+  /// 32-bit integer stored as exactly 4 bytes (wire type: fixed32).
   case fixed32
+  /// 64-bit integer stored as exactly 8 bytes (wire type: fixed64).
   case fixed64
+  /// Signed 32-bit integer stored as exactly 4 bytes (wire type: fixed32).
   case sfixed32
+  /// Signed 64-bit integer stored as exactly 8 bytes (wire type: fixed64).
   case sfixed64
+  /// Boolean (wire type: varint).
   case bool
+  /// UTF-8 string (wire type: length-delimited).
   case string
+  /// Arbitrary raw bytes (wire type: length-delimited).
   case bytes
+  /// Embedded message (wire type: length-delimited).
   case message
+  /// Enumerated type (wire type: varint).
   case `enum`
-  case group  // Deprecated, for proto2 compatibility
+  /// Group — deprecated proto2 wire format (wire type: start/end group).
+  case group
 }
 
 // MARK: - MapEntryInfo
@@ -125,6 +149,7 @@ public final class MapEntryInfo: Equatable, Sendable {
     self.valueFieldInfo = valueFieldInfo
   }
 
+  /// Returns `true` if both instances have equal key and value field info.
   public static func == (lhs: MapEntryInfo, rhs: MapEntryInfo) -> Bool {
     return lhs.keyFieldInfo == rhs.keyFieldInfo && lhs.valueFieldInfo == rhs.valueFieldInfo
   }
@@ -134,10 +159,19 @@ public final class MapEntryInfo: Equatable, Sendable {
 
 /// Key field information in a map.
 public struct KeyFieldInfo: Equatable, Sendable {
+  /// Field name (e.g., "key").
   public let name: String
+  /// Field number in the generated map-entry message.
   public let number: Int
+  /// Key field type (must be a scalar integral or string type).
   public let type: FieldType
 
+  /// Creates a new `KeyFieldInfo`.
+  ///
+  /// - Parameters:
+  ///   - name: Field name.
+  ///   - number: Field number.
+  ///   - type: Key type; must be a valid map-key type.
   public init(name: String, number: Int, type: FieldType) {
     self.name = name
     self.number = number
@@ -149,11 +183,22 @@ public struct KeyFieldInfo: Equatable, Sendable {
 
 /// Value field information in a map.
 public struct ValueFieldInfo: Equatable, Sendable {
+  /// Field name (e.g., "value").
   public let name: String
+  /// Field number in the generated map-entry message.
   public let number: Int
+  /// Value field type.
   public let type: FieldType
+  /// Fully-qualified type name for `.message` and `.enum` value types; `nil` for scalars.
   public let typeName: String?
 
+  /// Creates a new `ValueFieldInfo`.
+  ///
+  /// - Parameters:
+  ///   - name: Field name.
+  ///   - number: Field number.
+  ///   - type: Value field type.
+  ///   - typeName: Fully-qualified type name for message/enum types.
   public init(name: String, number: Int, type: FieldType, typeName: String? = nil) {
     self.name = name
     self.number = number
@@ -351,6 +396,7 @@ public struct FieldDescriptor: Equatable, Sendable {
 
   // MARK: - Equatable
 
+  /// Returns `true` if all properties of both descriptors are equal.
   public static func == (lhs: FieldDescriptor, rhs: FieldDescriptor) -> Bool {
     return lhs.name == rhs.name && lhs.jsonName == rhs.jsonName && lhs.number == rhs.number && lhs.type == rhs.type
       && lhs.typeName == rhs.typeName && lhs.isRepeated == rhs.isRepeated && lhs.isOptional == rhs.isOptional
@@ -743,6 +789,7 @@ public struct EnumDescriptor: Equatable, Sendable {
 
     // MARK: - Equatable
 
+    /// Returns `true` if both enum values share the same name, number, and options.
     public static func == (lhs: EnumValue, rhs: EnumValue) -> Bool {
       return lhs.name == rhs.name && lhs.number == rhs.number && lhs.options == rhs.options
     }
@@ -904,6 +951,7 @@ public struct EnumDescriptor: Equatable, Sendable {
 
   // MARK: - Equatable
 
+  /// Returns `true` if both descriptors have the same identity and values.
   public static func == (lhs: EnumDescriptor, rhs: EnumDescriptor) -> Bool {
     guard
       lhs.name == rhs.name && lhs.fullName == rhs.fullName && lhs.fileDescriptorPath == rhs.fileDescriptorPath
@@ -985,6 +1033,7 @@ public struct ServiceDescriptor: Equatable, Sendable {
 
     // MARK: - Equatable
 
+    /// Returns `true` if both method descriptors have the same properties.
     public static func == (lhs: MethodDescriptor, rhs: MethodDescriptor) -> Bool {
       return lhs.name == rhs.name && lhs.inputType == rhs.inputType && lhs.outputType == rhs.outputType
         && lhs.clientStreaming == rhs.clientStreaming && lhs.serverStreaming == rhs.serverStreaming
@@ -1083,6 +1132,7 @@ public struct ServiceDescriptor: Equatable, Sendable {
 
   // MARK: - Equatable
 
+  /// Returns `true` if both descriptors have the same identity and methods.
   public static func == (lhs: ServiceDescriptor, rhs: ServiceDescriptor) -> Bool {
     guard
       lhs.name == rhs.name && lhs.fullName == rhs.fullName && lhs.fileDescriptorPath == rhs.fileDescriptorPath

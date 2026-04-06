@@ -13,11 +13,17 @@ import Foundation
 
 /// Wire type for Protocol Buffers encoding.
 public enum WireType: UInt32, Equatable, Sendable {
+  /// Variable-length integer (int32, int64, uint32, uint64, sint32, sint64, bool, enum).
   case varint = 0
+  /// 64-bit fixed-width (fixed64, sfixed64, double).
   case fixed64 = 1
+  /// Length-delimited (string, bytes, embedded messages, packed repeated fields).
   case lengthDelimited = 2
+  /// Start of a deprecated group (proto2 only).
   case startGroup = 3
+  /// End of a deprecated group (proto2 only).
   case endGroup = 4
+  /// 32-bit fixed-width (fixed32, sfixed32, float).
   case fixed32 = 5
 }
 
@@ -70,12 +76,18 @@ extension _SerializationOptions {
 
 /// Serialization errors.
 public enum SerializationError: Error, Equatable, Sendable {
+  /// The runtime value type does not match the field's declared type.
   case invalidFieldType(fieldName: String, expectedType: String, actualType: String)
+  /// A value's Swift type does not match the expected protobuf type.
   case valueTypeMismatch(expected: String, actual: String)
+  /// A map field is missing its `MapEntryInfo` metadata.
   case missingMapEntryInfo(fieldName: String)
+  /// A required field has no value at serialization time.
   case missingFieldValue(fieldName: String)
+  /// The field's wire type is not supported by the serializer.
   case unsupportedFieldType(type: String)
 
+  /// Human-readable description of the serialization error.
   public var description: String {
     switch self {
     case .invalidFieldType(let fieldName, let expectedType, let actualType):
@@ -185,18 +197,30 @@ public struct DeserializationOptions: Sendable {
 
 /// Deserialization errors.
 public enum DeserializationError: Error, Equatable {
+  /// The binary data ends mid-varint.
   case truncatedVarint
+  /// The binary data ends before the message is complete.
   case truncatedMessage
+  /// The tag's wire type is not recognised.
   case invalidWireType(tag: UInt32)
+  /// The wire type in the data does not match the field's declared type.
   case wireTypeMismatch(fieldName: String, expected: WireType, actual: WireType)
+  /// A string field contains invalid UTF-8 bytes.
   case invalidUTF8String
+  /// A packed repeated field has malformed wire data.
   case malformedPackedField(fieldName: String)
+  /// A map entry has malformed wire data.
   case malformedMapEntry(fieldName: String)
+  /// A map field is missing its `MapEntryInfo` metadata.
   case missingMapEntryInfo(fieldName: String)
+  /// A message or enum field is missing its fully-qualified type name.
   case missingTypeName(fieldType: String)
+  /// The type name of a nested message could not be resolved.
   case unsupportedNestedMessage(typeName: String)
+  /// The field's wire type is not supported by the deserializer.
   case unsupportedFieldType(type: String)
 
+  /// Human-readable description of the deserialization error.
   public var description: String {
     switch self {
     case .truncatedVarint:
@@ -348,16 +372,24 @@ public struct JSONSerializationOptions: Sendable {
 
 /// JSON serialization errors.
 public enum JSONSerializationError: Error, Equatable {
+  /// The runtime value type does not match the field's declared type.
   case invalidFieldType(fieldName: String, expectedType: String, actualType: String)
+  /// A value's Swift type does not match the expected JSON type.
   case valueTypeMismatch(expected: String, actual: String)
+  /// A map field is missing its `MapEntryInfo` metadata.
   case missingMapEntryInfo(fieldName: String)
+  /// A required field has no value at serialization time.
   case missingFieldValue(fieldName: String)
+  /// The field's type is not supported by the JSON serializer.
   case unsupportedFieldType(type: String)
+  /// The map key type cannot be represented as a JSON object key.
   case invalidMapKeyType(keyType: String)
+  /// `JSONSerialization` failed to write the JSON output.
   case jsonWriteError(underlyingError: Error)
   /// Canonical JSON encoding for a well-known type is not yet implemented.
   case unsupportedWellKnownTypeEncoding(typeName: String)
 
+  /// Human-readable description of the JSON serialization error.
   public var description: String {
     switch self {
     case .invalidFieldType(let fieldName, let expectedType, let actualType):
@@ -379,6 +411,7 @@ public enum JSONSerializationError: Error, Equatable {
     }
   }
 
+  /// Returns `true` if both errors represent the same failure.
   public static func == (lhs: JSONSerializationError, rhs: JSONSerializationError) -> Bool {
     switch (lhs, rhs) {
     case (
@@ -541,28 +574,48 @@ public struct JSONDeserializationOptions: Sendable {
 
 /// JSON deserialization errors.
 public enum JSONDeserializationError: Error, Equatable {
+  /// The input data is not valid JSON.
   case invalidJSON(underlyingError: Error)
+  /// The JSON value has a different structure than expected.
   case invalidJSONStructure(expected: String, actual: String)
+  /// A JSON key does not correspond to any field in the descriptor.
   case unknownField(fieldName: String, messageName: String)
+  /// The JSON value type does not match the field's declared type.
   case invalidFieldType(fieldName: String, expectedType: String, actualType: String)
+  /// A value's Swift type does not match the expected protobuf type.
   case valueTypeMismatch(fieldName: String, expected: String, actual: String)
+  /// A numeric string value cannot be parsed.
   case invalidNumberFormat(fieldName: String, value: String)
+  /// A numeric value is outside the valid range for the field's type.
   case numberOutOfRange(fieldName: String, value: Int64, expectedRange: String)
+  /// A bytes field value is not valid Base64.
   case invalidBase64(fieldName: String, value: String)
+  /// An enum string value is not a known enum name or number.
   case invalidEnumValue(fieldName: String, value: String)
+  /// A map key string cannot be parsed as the key's scalar type.
   case invalidMapKeyFormat(fieldName: String, keyType: String, value: String)
+  /// The map key type is not a valid protobuf map key type.
   case invalidMapKeyType(fieldName: String, keyType: String)
+  /// A map key value is invalid.
   case invalidMapKey(fieldName: String, key: String)
+  /// An element of a repeated field failed deserialization.
   case invalidArrayElement(fieldName: String, index: Int, underlyingError: Error)
+  /// A map field is missing its `MapEntryInfo` metadata.
   case missingMapEntryInfo(fieldName: String)
+  /// A message or enum field is missing its fully-qualified type name.
   case missingTypeName(fieldName: String)
+  /// The type name of a nested message could not be resolved.
   case unsupportedNestedMessage(fieldName: String, typeName: String)
+  /// The descriptor for a nested message type was not found in the registry.
   case nestedMessageDescriptorNotFound(fieldName: String, typeName: String)
+  /// The JSON input exceeds the maximum allowed nesting depth.
   case nestingDepthExceeded(maxDepth: Int)
+  /// The field's type is not supported by the JSON deserializer.
   case unsupportedFieldType(type: String)
   /// Canonical JSON decoding for a well-known type is not yet implemented.
   case unsupportedWellKnownTypeDecoding(typeName: String)
 
+  /// Human-readable description of the JSON deserialization error.
   public var description: String {
     switch self {
     case .invalidJSON(let underlyingError):
@@ -609,6 +662,7 @@ public enum JSONDeserializationError: Error, Equatable {
     }
   }
 
+  /// Returns `true` if both errors represent the same failure.
   public static func == (lhs: JSONDeserializationError, rhs: JSONDeserializationError) -> Bool {
     switch (lhs, rhs) {
     case (.invalidJSON(_), .invalidJSON(_)):

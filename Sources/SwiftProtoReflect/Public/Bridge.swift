@@ -15,11 +15,16 @@ import SwiftProtobuf
 
 /// Errors that occur during descriptor conversion between SwiftProtobuf and SwiftProtoReflect.
 public enum DescriptorBridgeError: Error, LocalizedError {
+  /// The integer field type code has no SwiftProtoReflect equivalent.
   case unsupportedFieldType(Int)
+  /// Conversion could not be completed for the given reason.
   case conversionFailed(String)
+  /// A required proto field is absent in the source descriptor.
   case missingRequiredField(String)
+  /// The descriptor has an unexpected structural problem.
   case invalidDescriptorStructure(String)
 
+  /// Human-readable description of the bridge error.
   public var errorDescription: String? {
     switch self {
     case .unsupportedFieldType(let value):
@@ -265,12 +270,18 @@ public struct DescriptorBridge {
 
 /// Errors that occur during static↔dynamic message conversion.
 public enum StaticMessageBridgeError: Error, LocalizedError {
+  /// The static message type and the descriptor refer to different message types.
   case incompatibleTypes(staticType: String, descriptorType: String)
+  /// Binary serialization of the static message failed.
   case serializationFailed(underlying: Error)
+  /// Binary deserialization into the dynamic message failed.
   case deserializationFailed(underlying: Error)
+  /// Automatic descriptor creation for the static message type failed.
   case descriptorCreationFailed(messageType: String)
+  /// The static message type is not supported by the bridge.
   case unsupportedMessageType(String)
 
+  /// Human-readable description of the bridge error.
   public var errorDescription: String? {
     switch self {
     case .incompatibleTypes(let staticType, let descriptorType):

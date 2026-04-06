@@ -188,7 +188,9 @@ public enum StructProtoDescriptors {
 /// Handler for google.protobuf.Timestamp.
 public struct TimestampHandler: WellKnownTypeHandler {
 
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.timestamp
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .critical
 
   // MARK: - Timestamp Representation
@@ -247,6 +249,7 @@ public struct TimestampHandler: WellKnownTypeHandler {
       return TimestampValue(from: Date())
     }
 
+    /// ISO 8601 string representation of the timestamp.
     public var description: String {
       let date = toDate()
 
@@ -278,6 +281,7 @@ public struct TimestampHandler: WellKnownTypeHandler {
 
   // MARK: - Handler Implementation
 
+  /// Creates a `TimestampValue` from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     guard message.descriptor.fullName == handledTypeName else {
       throw WellKnownTypeError.invalidData(
@@ -325,6 +329,7 @@ public struct TimestampHandler: WellKnownTypeHandler {
     return try TimestampValue(seconds: secondsValue, nanos: nanosValue)
   }
 
+  /// Creates a `DynamicMessage` from a `TimestampValue`.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     guard let timestampValue = specialized as? TimestampValue else {
       throw WellKnownTypeError.conversionFailed(
@@ -344,6 +349,7 @@ public struct TimestampHandler: WellKnownTypeHandler {
     return message
   }
 
+  /// Returns `true` if the specialized value is a valid `TimestampValue`.
   public static func validate(_ specialized: Any) -> Bool {
     guard let timestampValue = specialized as? TimestampValue else {
       return false
@@ -422,7 +428,9 @@ extension DynamicMessage {
 /// Handler for google.protobuf.Duration.
 public struct DurationHandler: WellKnownTypeHandler {
 
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.duration
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .critical
 
   // MARK: - Duration Representation
@@ -499,6 +507,7 @@ public struct DurationHandler: WellKnownTypeHandler {
       return try! DurationValue(seconds: -seconds, nanos: -nanos)
     }
 
+    /// Human-readable representation of the duration (e.g., "1.500s", "300ms", "42ns").
     public var description: String {
       let totalSeconds = toTimeInterval()
       if totalSeconds == 0 {
@@ -534,6 +543,7 @@ public struct DurationHandler: WellKnownTypeHandler {
 
   // MARK: - Handler Implementation
 
+  /// Creates a `DurationValue` from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     guard message.descriptor.fullName == handledTypeName else {
       throw WellKnownTypeError.invalidData(
@@ -581,6 +591,7 @@ public struct DurationHandler: WellKnownTypeHandler {
     return try DurationValue(seconds: secondsValue, nanos: nanosValue)
   }
 
+  /// Creates a `DynamicMessage` from a `DurationValue`.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     guard let durationValue = specialized as? DurationValue else {
       throw WellKnownTypeError.conversionFailed(
@@ -600,6 +611,7 @@ public struct DurationHandler: WellKnownTypeHandler {
     return message
   }
 
+  /// Returns `true` if the specialized value is a valid `DurationValue`.
   public static func validate(_ specialized: Any) -> Bool {
     guard let durationValue = specialized as? DurationValue else {
       return false
@@ -678,7 +690,9 @@ extension DynamicMessage {
 /// Handler for google.protobuf.Empty.
 public struct EmptyHandler: WellKnownTypeHandler {
 
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.empty
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .critical
 
   // MARK: - Empty Representation
@@ -694,6 +708,7 @@ public struct EmptyHandler: WellKnownTypeHandler {
     /// The single instance of Empty (singleton pattern).
     public static let instance = EmptyValue()
 
+    /// Returns `"Empty"`.
     public var description: String {
       return "Empty"
     }
@@ -701,6 +716,7 @@ public struct EmptyHandler: WellKnownTypeHandler {
 
   // MARK: - Handler Implementation
 
+  /// Creates an `EmptyValue` from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     guard message.descriptor.fullName == handledTypeName else {
       throw WellKnownTypeError.invalidData(
@@ -712,6 +728,7 @@ public struct EmptyHandler: WellKnownTypeHandler {
     return EmptyValue.instance
   }
 
+  /// Creates a `DynamicMessage` from an `EmptyValue`.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     guard specialized is EmptyValue else {
       throw WellKnownTypeError.conversionFailed(
@@ -728,6 +745,7 @@ public struct EmptyHandler: WellKnownTypeHandler {
     return message
   }
 
+  /// Returns `true` if the specialized value is an `EmptyValue`.
   public static func validate(_ specialized: Any) -> Bool {
     return specialized is EmptyValue
   }
@@ -803,7 +821,9 @@ extension EmptyHandler.EmptyValue {
 /// Handler for google.protobuf.FieldMask.
 public struct FieldMaskHandler: WellKnownTypeHandler {
 
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.fieldMask
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .important
 
   // MARK: - FieldMask Representation
@@ -909,6 +929,7 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
       return try FieldMaskValue(paths: paths)
     }
 
+    /// Human-readable representation of the field mask.
     public var description: String {
       if paths.isEmpty {
         return "FieldMask(empty)"
@@ -929,6 +950,7 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
 
   // MARK: - Handler Implementation
 
+  /// Creates a `FieldMaskValue` from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     guard message.descriptor.fullName == handledTypeName else {
       throw WellKnownTypeError.invalidData(
@@ -963,6 +985,7 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
     return try FieldMaskValue(paths: pathsValue)
   }
 
+  /// Creates a `DynamicMessage` from a `FieldMaskValue`.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     guard let fieldMaskValue = specialized as? FieldMaskValue else {
       throw WellKnownTypeError.conversionFailed(
@@ -981,6 +1004,7 @@ public struct FieldMaskHandler: WellKnownTypeHandler {
     return message
   }
 
+  /// Returns `true` if all paths in the `FieldMaskValue` are valid.
   public static func validate(_ specialized: Any) -> Bool {
     guard let fieldMaskValue = specialized as? FieldMaskValue else {
       return false
@@ -1054,7 +1078,9 @@ extension DynamicMessage {
 /// Handler for google.protobuf.Struct.
 public struct StructHandler: WellKnownTypeHandler {
 
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.structType
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .important
 
   // MARK: - Struct Representation
@@ -1131,6 +1157,7 @@ public struct StructHandler: WellKnownTypeHandler {
       return result
     }
 
+    /// Human-readable representation of the struct value.
     public var description: String {
       if fields.isEmpty {
         return "Struct(empty)"
@@ -1145,11 +1172,17 @@ public struct StructHandler: WellKnownTypeHandler {
 
   /// Specialized representation for google.protobuf.Value.
   public enum ValueValue: Equatable, CustomStringConvertible {
+    /// The null value.
     case nullValue
+    /// A numeric (double) value.
     case numberValue(Double)
+    /// A string value.
     case stringValue(String)
+    /// A boolean value.
     case boolValue(Bool)
+    /// A nested struct value.
     case structValue(StructValue)
+    /// A list of values.
     case listValue([ValueValue])
 
     /// Initialization from arbitrary Swift value.
@@ -1228,6 +1261,7 @@ public struct StructHandler: WellKnownTypeHandler {
       }
     }
 
+    /// Human-readable representation of the value.
     public var description: String {
       switch self {
       case .nullValue:
@@ -1249,6 +1283,7 @@ public struct StructHandler: WellKnownTypeHandler {
 
   // MARK: - Handler Implementation
 
+  /// Creates a `StructValue` from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     guard message.descriptor.fullName == handledTypeName else {
       throw WellKnownTypeError.invalidData(
@@ -1260,6 +1295,7 @@ public struct StructHandler: WellKnownTypeHandler {
     return try _dynamicMessageToStructValue(message)
   }
 
+  /// Creates a `DynamicMessage` from a `StructValue`.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     guard let structValue = specialized as? StructValue else {
       throw WellKnownTypeError.conversionFailed(
@@ -1272,6 +1308,7 @@ public struct StructHandler: WellKnownTypeHandler {
     return try _structValueToDynamicMessage(structValue)
   }
 
+  /// Returns `true` if the specialized value is a `StructValue`.
   public static func validate(_ specialized: Any) -> Bool {
     return specialized is StructValue
   }
@@ -1321,7 +1358,9 @@ extension DynamicMessage {
 /// Handler for google.protobuf.Value.
 public struct ValueHandler: WellKnownTypeHandler {
 
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.value
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .important
 
   /// Reuse ValueValue from StructHandler for compatibility.
@@ -1329,6 +1368,7 @@ public struct ValueHandler: WellKnownTypeHandler {
 
   // MARK: - Handler Implementation
 
+  /// Creates a `ValueValue` from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     guard message.descriptor.fullName == handledTypeName else {
       throw WellKnownTypeError.invalidData(
@@ -1340,6 +1380,7 @@ public struct ValueHandler: WellKnownTypeHandler {
     return try dynamicMessageToValueValue(message)
   }
 
+  /// Creates a `DynamicMessage` from a `ValueValue`.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     guard let valueValue = specialized as? ValueValue else {
       throw WellKnownTypeError.conversionFailed(
@@ -1352,6 +1393,7 @@ public struct ValueHandler: WellKnownTypeHandler {
     return try valueValueToDynamicMessage(valueValue)
   }
 
+  /// Returns `true` if the specialized value is a `ValueValue`.
   public static func validate(_ specialized: Any) -> Bool {
     return specialized is ValueValue
   }
@@ -1391,11 +1433,14 @@ extension DynamicMessage {
 /// Handler for google.protobuf.ListValue.
 public struct ListValueHandler: WellKnownTypeHandler {
 
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.listValue
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .advanced
 
   // MARK: - Handler Implementation
 
+  /// Creates a `[ValueValue]` from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     guard message.descriptor.fullName == handledTypeName else {
       throw WellKnownTypeError.invalidData(
@@ -1407,6 +1452,7 @@ public struct ListValueHandler: WellKnownTypeHandler {
     return try _dynamicMessageToListValue(message)
   }
 
+  /// Creates a `DynamicMessage` from a `[ValueValue]`.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     guard let values = specialized as? [StructHandler.ValueValue] else {
       throw WellKnownTypeError.conversionFailed(
@@ -1419,6 +1465,7 @@ public struct ListValueHandler: WellKnownTypeHandler {
     return try _listValueToDynamicMessage(values)
   }
 
+  /// Returns `true` if the specialized value is a `[ValueValue]`.
   public static func validate(_ specialized: Any) -> Bool {
     return specialized is [StructHandler.ValueValue]
   }
@@ -1436,7 +1483,9 @@ public struct ListValueHandler: WellKnownTypeHandler {
 /// Handler for google.protobuf.Any.
 public struct AnyHandler: WellKnownTypeHandler {
 
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.any
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .advanced
 
   // MARK: - Any Representation
@@ -1547,6 +1596,7 @@ public struct AnyHandler: WellKnownTypeHandler {
 
     // MARK: - Equatable
 
+    /// Returns `true` if both `AnyValue` instances have the same type URL and value data.
     public static func == (lhs: AnyValue, rhs: AnyValue) -> Bool {
       return lhs.typeUrl == rhs.typeUrl && lhs.value == rhs.value
     }
@@ -1560,6 +1610,7 @@ public struct AnyHandler: WellKnownTypeHandler {
 
   // MARK: - Handler Implementation
 
+  /// Creates an `AnyValue` from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     guard message.descriptor.fullName == handledTypeName else {
       throw WellKnownTypeError.invalidData(
@@ -1585,6 +1636,7 @@ public struct AnyHandler: WellKnownTypeHandler {
     return try AnyValue(typeUrl: typeUrl, value: valueData)
   }
 
+  /// Creates a `DynamicMessage` from an `AnyValue`.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     guard let anyValue = specialized as? AnyValue else {
       throw WellKnownTypeError.conversionFailed(
@@ -1604,6 +1656,7 @@ public struct AnyHandler: WellKnownTypeHandler {
     return message
   }
 
+  /// Returns `true` if the type URL inside the `AnyValue` is valid.
   public static func validate(_ specialized: Any) -> Bool {
     guard let anyValue = specialized as? AnyValue else { return false }
     return AnyValue.isValidTypeUrl(anyValue.typeUrl)
@@ -1715,13 +1768,17 @@ extension AnyHandler.AnyValue {
 
 /// Handler for google.protobuf.StringValue.
 public struct StringValueHandler: WellKnownTypeHandler {
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.stringValue
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .advanced
 
+  /// Creates a `String` from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     try _wrapperCreateSpecialized(from: message, typeName: handledTypeName, as: String.self)
   }
 
+  /// Creates a `DynamicMessage` from a `String`.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     try _wrapperCreateDynamic(
       from: specialized,
@@ -1732,6 +1789,7 @@ public struct StringValueHandler: WellKnownTypeHandler {
     )
   }
 
+  /// Returns `true` if the specialized value is a `String`.
   public static func validate(_ specialized: Any) -> Bool { specialized is String }
 }
 
@@ -1739,13 +1797,17 @@ public struct StringValueHandler: WellKnownTypeHandler {
 
 /// Handler for google.protobuf.Int32Value.
 public struct Int32ValueHandler: WellKnownTypeHandler {
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.int32Value
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .advanced
 
+  /// Creates an `Int32` from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     try _wrapperCreateSpecialized(from: message, typeName: handledTypeName, as: Int32.self)
   }
 
+  /// Creates a `DynamicMessage` from an `Int32`.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     try _wrapperCreateDynamic(
       from: specialized,
@@ -1756,6 +1818,7 @@ public struct Int32ValueHandler: WellKnownTypeHandler {
     )
   }
 
+  /// Returns `true` if the specialized value is an `Int32`.
   public static func validate(_ specialized: Any) -> Bool { specialized is Int32 }
 }
 
@@ -1763,13 +1826,17 @@ public struct Int32ValueHandler: WellKnownTypeHandler {
 
 /// Handler for google.protobuf.Int64Value.
 public struct Int64ValueHandler: WellKnownTypeHandler {
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.int64Value
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .advanced
 
+  /// Creates an `Int64` from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     try _wrapperCreateSpecialized(from: message, typeName: handledTypeName, as: Int64.self)
   }
 
+  /// Creates a `DynamicMessage` from an `Int64`.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     try _wrapperCreateDynamic(
       from: specialized,
@@ -1780,6 +1847,7 @@ public struct Int64ValueHandler: WellKnownTypeHandler {
     )
   }
 
+  /// Returns `true` if the specialized value is an `Int64`.
   public static func validate(_ specialized: Any) -> Bool { specialized is Int64 }
 }
 
@@ -1787,13 +1855,17 @@ public struct Int64ValueHandler: WellKnownTypeHandler {
 
 /// Handler for google.protobuf.UInt32Value.
 public struct UInt32ValueHandler: WellKnownTypeHandler {
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.uint32Value
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .advanced
 
+  /// Creates a `UInt32` from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     try _wrapperCreateSpecialized(from: message, typeName: handledTypeName, as: UInt32.self)
   }
 
+  /// Creates a `DynamicMessage` from a `UInt32`.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     try _wrapperCreateDynamic(
       from: specialized,
@@ -1804,6 +1876,7 @@ public struct UInt32ValueHandler: WellKnownTypeHandler {
     )
   }
 
+  /// Returns `true` if the specialized value is a `UInt32`.
   public static func validate(_ specialized: Any) -> Bool { specialized is UInt32 }
 }
 
@@ -1811,13 +1884,17 @@ public struct UInt32ValueHandler: WellKnownTypeHandler {
 
 /// Handler for google.protobuf.UInt64Value.
 public struct UInt64ValueHandler: WellKnownTypeHandler {
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.uint64Value
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .advanced
 
+  /// Creates a `UInt64` from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     try _wrapperCreateSpecialized(from: message, typeName: handledTypeName, as: UInt64.self)
   }
 
+  /// Creates a `DynamicMessage` from a `UInt64`.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     try _wrapperCreateDynamic(
       from: specialized,
@@ -1828,6 +1905,7 @@ public struct UInt64ValueHandler: WellKnownTypeHandler {
     )
   }
 
+  /// Returns `true` if the specialized value is a `UInt64`.
   public static func validate(_ specialized: Any) -> Bool { specialized is UInt64 }
 }
 
@@ -1835,13 +1913,17 @@ public struct UInt64ValueHandler: WellKnownTypeHandler {
 
 /// Handler for google.protobuf.BoolValue.
 public struct BoolValueHandler: WellKnownTypeHandler {
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.boolValue
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .advanced
 
+  /// Creates a `Bool` from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     try _wrapperCreateSpecialized(from: message, typeName: handledTypeName, as: Bool.self)
   }
 
+  /// Creates a `DynamicMessage` from a `Bool`.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     try _wrapperCreateDynamic(
       from: specialized,
@@ -1852,6 +1934,7 @@ public struct BoolValueHandler: WellKnownTypeHandler {
     )
   }
 
+  /// Returns `true` if the specialized value is a `Bool`.
   public static func validate(_ specialized: Any) -> Bool { specialized is Bool }
 }
 
@@ -1859,13 +1942,17 @@ public struct BoolValueHandler: WellKnownTypeHandler {
 
 /// Handler for google.protobuf.FloatValue.
 public struct FloatValueHandler: WellKnownTypeHandler {
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.floatValue
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .advanced
 
+  /// Creates a `Float` from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     try _wrapperCreateSpecialized(from: message, typeName: handledTypeName, as: Float.self)
   }
 
+  /// Creates a `DynamicMessage` from a `Float`.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     try _wrapperCreateDynamic(
       from: specialized,
@@ -1876,6 +1963,7 @@ public struct FloatValueHandler: WellKnownTypeHandler {
     )
   }
 
+  /// Returns `true` if the specialized value is a `Float`.
   public static func validate(_ specialized: Any) -> Bool { specialized is Float }
 }
 
@@ -1883,13 +1971,17 @@ public struct FloatValueHandler: WellKnownTypeHandler {
 
 /// Handler for google.protobuf.DoubleValue.
 public struct DoubleValueHandler: WellKnownTypeHandler {
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.doubleValue
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .advanced
 
+  /// Creates a `Double` from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     try _wrapperCreateSpecialized(from: message, typeName: handledTypeName, as: Double.self)
   }
 
+  /// Creates a `DynamicMessage` from a `Double`.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     try _wrapperCreateDynamic(
       from: specialized,
@@ -1900,6 +1992,7 @@ public struct DoubleValueHandler: WellKnownTypeHandler {
     )
   }
 
+  /// Returns `true` if the specialized value is a `Double`.
   public static func validate(_ specialized: Any) -> Bool { specialized is Double }
 }
 
@@ -1907,13 +2000,17 @@ public struct DoubleValueHandler: WellKnownTypeHandler {
 
 /// Handler for google.protobuf.BytesValue.
 public struct BytesValueHandler: WellKnownTypeHandler {
+  /// The fully-qualified protobuf type name handled by this handler.
   public static let handledTypeName = WellKnownTypeNames.bytesValue
+  /// Support phase for this well-known type.
   public static let supportPhase: WellKnownSupportPhase = .advanced
 
+  /// Creates a `Data` value from a `DynamicMessage`.
   public static func createSpecialized(from message: DynamicMessage) throws -> Any {
     try _wrapperCreateSpecialized(from: message, typeName: handledTypeName, as: Data.self)
   }
 
+  /// Creates a `DynamicMessage` from a `Data` value.
   public static func createDynamic(from specialized: Any) throws -> DynamicMessage {
     try _wrapperCreateDynamic(
       from: specialized,
@@ -1924,6 +2021,7 @@ public struct BytesValueHandler: WellKnownTypeHandler {
     )
   }
 
+  /// Returns `true` if the specialized value is `Data`.
   public static func validate(_ specialized: Any) -> Bool { specialized is Data }
 }
 

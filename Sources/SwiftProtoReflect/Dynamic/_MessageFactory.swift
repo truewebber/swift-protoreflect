@@ -86,11 +86,6 @@ internal struct _MessageFactory {
     performValidation(message, syntax: message.descriptor.syntax)
   }
 
-  @available(*, deprecated, message: "Use validate(_:) instead; syntax is now read from descriptor.syntax")
-  func validate(_ message: _DynamicMessage, syntax: String) -> ValidationResult {
-    performValidation(message, syntax: syntax)
-  }
-
   private func performValidation(_ message: _DynamicMessage, syntax: String) -> ValidationResult {
     var errors: [ValidationError] = []
 

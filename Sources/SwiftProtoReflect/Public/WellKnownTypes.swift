@@ -149,9 +149,12 @@ public struct WellKnownTypeDetector {
 
 /// Well-known types support phases.
 public enum WellKnownSupportPhase: Int, CaseIterable, Sendable {
-  case critical = 1  // Timestamp, Duration, Empty
-  case important = 2  // FieldMask, Struct, Value
-  case advanced = 3  // Any, ListValue, NullValue
+  /// Phase 1 — critical types: Timestamp, Duration, Empty.
+  case critical = 1
+  /// Phase 2 — important types: FieldMask, Struct, Value.
+  case important = 2
+  /// Phase 3 — advanced types: Any, ListValue, NullValue.
+  case advanced = 3
 
   /// Human-readable phase description.
   public var description: String {
