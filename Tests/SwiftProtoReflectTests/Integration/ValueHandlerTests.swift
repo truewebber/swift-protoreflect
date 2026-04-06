@@ -178,14 +178,13 @@ final class ValueHandlerTests: XCTestCase {
 
   func testRegistryIntegration() async throws {
     let registry = WellKnownTypesRegistry.shared
-    let handler = registry.getHandler(for: WellKnownTypeNames.value)
+    let handler = await registry.getHandler(for: WellKnownTypeNames.value)
     XCTAssertNotNil(handler)
     XCTAssertTrue(handler is ValueHandler.Type)
 
-    // Test through registry
     let valueValue = ValueHandler.ValueValue.numberValue(42.5)
-    let message = try registry.createDynamic(from: valueValue, typeName: WellKnownTypeNames.value)
-    let roundTripValue = try registry.createSpecialized(from: message, typeName: WellKnownTypeNames.value)
+    let message = try await registry.createDynamic(from: valueValue, typeName: WellKnownTypeNames.value)
+    let roundTripValue = try await registry.createSpecialized(from: message, typeName: WellKnownTypeNames.value)
 
     guard let roundTripValueValue = roundTripValue as? ValueHandler.ValueValue else {
       XCTFail("Expected ValueValue")

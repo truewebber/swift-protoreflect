@@ -357,17 +357,18 @@ final class StructHandlerTests: XCTestCase {
   func testRegistryIntegration() async throws {
     let registry = WellKnownTypesRegistry.shared
 
-    // Verify StructHandler is registered
-    let registeredTypes = registry.getRegisteredTypes()
+    let registeredTypes = await registry.getRegisteredTypes()
     XCTAssertTrue(registeredTypes.contains(WellKnownTypeNames.structType))
 
-    let handler = registry.getHandler(for: WellKnownTypeNames.structType)
+    let handler = await registry.getHandler(for: WellKnownTypeNames.structType)
     XCTAssertNotNil(handler)
 
-    // Test registry operations
     let structValue = try StructHandler.StructValue(from: ["test": "value"])
-    let dynamicMessage = try registry.createDynamic(from: structValue, typeName: WellKnownTypeNames.structType)
-    let specialized = try registry.createSpecialized(from: dynamicMessage, typeName: WellKnownTypeNames.structType)
+    let dynamicMessage = try await registry.createDynamic(from: structValue, typeName: WellKnownTypeNames.structType)
+    let specialized = try await registry.createSpecialized(
+      from: dynamicMessage,
+      typeName: WellKnownTypeNames.structType
+    )
 
     guard let resultStruct = specialized as? StructHandler.StructValue else {
       XCTFail("Expected StructValue")

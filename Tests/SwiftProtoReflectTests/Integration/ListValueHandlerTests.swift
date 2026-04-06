@@ -14,7 +14,8 @@ final class ListValueHandlerTests: XCTestCase {
 
   func test_listValue_registered() async throws {
     let registry = WellKnownTypesRegistry.shared
-    XCTAssertNotNil(registry.getHandler(for: WellKnownTypeNames.listValue))
+    let handler = await registry.getHandler(for: WellKnownTypeNames.listValue)
+    XCTAssertNotNil(handler)
   }
 
   // MARK: - createSpecialized

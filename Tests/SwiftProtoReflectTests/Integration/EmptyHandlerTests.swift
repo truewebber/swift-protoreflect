@@ -220,13 +220,11 @@ final class EmptyHandlerTests: XCTestCase {
   func testRegistryIntegration() async throws {
     let registry = WellKnownTypesRegistry.shared
 
-    // Check that EmptyHandler is registered
-    let handler = registry.getHandler(for: WellKnownTypeNames.empty)
+    let handler = await registry.getHandler(for: WellKnownTypeNames.empty)
     XCTAssertNotNil(handler)
     XCTAssertTrue(handler is EmptyHandler.Type)
 
-    // Check that registered types include Empty
-    let registeredTypes = registry.getRegisteredTypes()
+    let registeredTypes = await registry.getRegisteredTypes()
     XCTAssertTrue(registeredTypes.contains(WellKnownTypeNames.empty))
   }
 
@@ -234,7 +232,7 @@ final class EmptyHandlerTests: XCTestCase {
     let registry = WellKnownTypesRegistry.shared
     let emptyMessage = try createEmptyMessage()
 
-    let specialized = try registry.createSpecialized(
+    let specialized = try await registry.createSpecialized(
       from: emptyMessage,
       typeName: WellKnownTypeNames.empty
     )
@@ -251,7 +249,7 @@ final class EmptyHandlerTests: XCTestCase {
     let registry = WellKnownTypesRegistry.shared
     let empty = EmptyHandler.EmptyValue.instance
 
-    let dynamicMessage = try registry.createDynamic(
+    let dynamicMessage = try await registry.createDynamic(
       from: empty,
       typeName: WellKnownTypeNames.empty
     )
@@ -307,22 +305,15 @@ final class EmptyHandlerTests: XCTestCase {
     let registry = WellKnownTypesRegistry.shared
     let emptyMessage = try createEmptyMessage()
 
-    measure {
-      for _ in 0..<1000 {
-        do {
-          let specialized = try registry.createSpecialized(
-            from: emptyMessage,
-            typeName: WellKnownTypeNames.empty
-          )
-          _ = try registry.createDynamic(
-            from: specialized,
-            typeName: WellKnownTypeNames.empty
-          )
-        }
-        catch {
-          XCTFail("Registry performance test failed: \(error)")
-        }
-      }
+    for _ in 0..<1000 {
+      let specialized = try await registry.createSpecialized(
+        from: emptyMessage,
+        typeName: WellKnownTypeNames.empty
+      )
+      _ = try await registry.createDynamic(
+        from: specialized,
+        typeName: WellKnownTypeNames.empty
+      )
     }
   }
 

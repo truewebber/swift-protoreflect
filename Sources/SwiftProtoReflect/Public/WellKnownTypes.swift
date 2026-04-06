@@ -246,38 +246,39 @@ public enum WellKnownTypeError: Error, Equatable, CustomStringConvertible {
 // MARK: - Well-Known Types Registry
 
 /// Registry of well-known type handlers.
-public final class WellKnownTypesRegistry: @unchecked Sendable {
+///
+/// `WellKnownTypesRegistry` is an actor — all its methods are `async` when called
+/// from outside the actor. Use `await` at the call site:
+///
+/// ```swift
+/// let handler = await WellKnownTypesRegistry.shared.getHandler(for: "google.protobuf.Timestamp")
+/// ```
+public actor WellKnownTypesRegistry {
 
   /// Singleton instance.
   public static let shared = WellKnownTypesRegistry()
 
-  /// Registered handlers.
-  private var handlers: [String: WellKnownTypeHandler.Type] = [:]
+  private var storage: _WellKnownTypesRegistryStorage
 
-  /// Mutex for thread-safety.
-  private let handlersMutex = NSLock()
-
-  private init() {
-    registerDefaultHandlers()
+  /// Creates a new registry pre-populated with all built-in handlers.
+  ///
+  /// Use `WellKnownTypesRegistry.shared` for the process-wide singleton.
+  /// Create a separate instance when you need an isolated registry (e.g. in tests).
+  public init() {
+    storage = _WellKnownTypesRegistryStorage(handlers: Self.builtInHandlers)
   }
 
   /// Registers handler for type.
   /// - Parameter handlerType: Handler type.
   public func register<T: WellKnownTypeHandler>(_ handlerType: T.Type) {
-    handlersMutex.lock()
-    defer { handlersMutex.unlock() }
-
-    handlers[handlerType.handledTypeName] = handlerType
+    storage.handlers[handlerType.handledTypeName] = handlerType
   }
 
   /// Gets handler for type.
   /// - Parameter typeName: Type name.
   /// - Returns: Handler or nil if not found.
   public func getHandler(for typeName: String) -> WellKnownTypeHandler.Type? {
-    handlersMutex.lock()
-    defer { handlersMutex.unlock() }
-
-    return handlers[typeName]
+    return storage.handlers[typeName]
   }
 
   /// Creates specialized object from DynamicMessage.
@@ -287,10 +288,9 @@ public final class WellKnownTypesRegistry: @unchecked Sendable {
   /// - Returns: Specialized object.
   /// - Throws: WellKnownTypeError.
   public func createSpecialized(from message: DynamicMessage, typeName: String) throws -> Any {
-    guard let handler = getHandler(for: typeName) else {
+    guard let handler = storage.handlers[typeName] else {
       throw WellKnownTypeError.handlerNotFound(typeName)
     }
-
     return try handler.createSpecialized(from: message)
   }
 
@@ -301,28 +301,21 @@ public final class WellKnownTypesRegistry: @unchecked Sendable {
   /// - Returns: Dynamic message.
   /// - Throws: WellKnownTypeError.
   public func createDynamic(from specialized: Any, typeName: String) throws -> DynamicMessage {
-    guard let handler = getHandler(for: typeName) else {
+    guard let handler = storage.handlers[typeName] else {
       throw WellKnownTypeError.handlerNotFound(typeName)
     }
-
     return try handler.createDynamic(from: specialized)
   }
 
   /// Gets all registered types.
   /// - Returns: Set of type names.
   public func getRegisteredTypes() -> Set<String> {
-    handlersMutex.lock()
-    defer { handlersMutex.unlock() }
-
-    return Set(handlers.keys)
+    return Set(storage.handlers.keys)
   }
 
   /// Clears all registered handlers.
   public func clear() {
-    handlersMutex.lock()
-    defer { handlersMutex.unlock() }
-
-    handlers.removeAll()
+    storage.handlers.removeAll()
   }
 
   /// Resets registry to the built-in default handlers.
@@ -330,37 +323,30 @@ public final class WellKnownTypesRegistry: @unchecked Sendable {
   /// Use in tests that call `clear()` to restore the shared registry
   /// state so subsequent tests are not affected.
   public func resetToDefaults() {
-    handlersMutex.lock()
-    defer { handlersMutex.unlock() }
-
-    handlers.removeAll()
-    populateDefaultHandlers()
+    storage.handlers = Self.builtInHandlers
   }
 
-  // MARK: - Private Methods
+  // MARK: - Private
 
-  private func registerDefaultHandlers() {
-    populateDefaultHandlers()
-  }
-
-  /// Populates handlers dictionary with all built-in handlers (must be called under lock or during init).
-  private func populateDefaultHandlers() {
-    handlers[TimestampHandler.handledTypeName] = TimestampHandler.self
-    handlers[DurationHandler.handledTypeName] = DurationHandler.self
-    handlers[EmptyHandler.handledTypeName] = EmptyHandler.self
-    handlers[FieldMaskHandler.handledTypeName] = FieldMaskHandler.self
-    handlers[StructHandler.handledTypeName] = StructHandler.self
-    handlers[ValueHandler.handledTypeName] = ValueHandler.self
-    handlers[AnyHandler.handledTypeName] = AnyHandler.self
-    handlers[ListValueHandler.handledTypeName] = ListValueHandler.self
-    handlers[DoubleValueHandler.handledTypeName] = DoubleValueHandler.self
-    handlers[FloatValueHandler.handledTypeName] = FloatValueHandler.self
-    handlers[Int64ValueHandler.handledTypeName] = Int64ValueHandler.self
-    handlers[UInt64ValueHandler.handledTypeName] = UInt64ValueHandler.self
-    handlers[Int32ValueHandler.handledTypeName] = Int32ValueHandler.self
-    handlers[UInt32ValueHandler.handledTypeName] = UInt32ValueHandler.self
-    handlers[BoolValueHandler.handledTypeName] = BoolValueHandler.self
-    handlers[StringValueHandler.handledTypeName] = StringValueHandler.self
-    handlers[BytesValueHandler.handledTypeName] = BytesValueHandler.self
-  }
+  private static let builtInHandlers: [String: WellKnownTypeHandler.Type] = {
+    var h: [String: WellKnownTypeHandler.Type] = [:]
+    h[TimestampHandler.handledTypeName] = TimestampHandler.self
+    h[DurationHandler.handledTypeName] = DurationHandler.self
+    h[EmptyHandler.handledTypeName] = EmptyHandler.self
+    h[FieldMaskHandler.handledTypeName] = FieldMaskHandler.self
+    h[StructHandler.handledTypeName] = StructHandler.self
+    h[ValueHandler.handledTypeName] = ValueHandler.self
+    h[AnyHandler.handledTypeName] = AnyHandler.self
+    h[ListValueHandler.handledTypeName] = ListValueHandler.self
+    h[DoubleValueHandler.handledTypeName] = DoubleValueHandler.self
+    h[FloatValueHandler.handledTypeName] = FloatValueHandler.self
+    h[Int64ValueHandler.handledTypeName] = Int64ValueHandler.self
+    h[UInt64ValueHandler.handledTypeName] = UInt64ValueHandler.self
+    h[Int32ValueHandler.handledTypeName] = Int32ValueHandler.self
+    h[UInt32ValueHandler.handledTypeName] = UInt32ValueHandler.self
+    h[BoolValueHandler.handledTypeName] = BoolValueHandler.self
+    h[StringValueHandler.handledTypeName] = StringValueHandler.self
+    h[BytesValueHandler.handledTypeName] = BytesValueHandler.self
+    return h
+  }()
 }

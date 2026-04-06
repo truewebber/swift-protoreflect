@@ -207,7 +207,8 @@ final class WrapperTypeTests: XCTestCase {
       WellKnownTypeNames.bytesValue,
     ]
     for typeName in wrapperTypes {
-      XCTAssertNotNil(registry.getHandler(for: typeName), "Missing handler for \(typeName)")
+      let handler = await registry.getHandler(for: typeName)
+      XCTAssertNotNil(handler, "Missing handler for \(typeName)")
     }
   }
 }

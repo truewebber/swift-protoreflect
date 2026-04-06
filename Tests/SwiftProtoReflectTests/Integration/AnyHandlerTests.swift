@@ -367,8 +367,7 @@ final class AnyHandlerTests: XCTestCase {
   func testRegistryIntegration() async throws {
     let registry = WellKnownTypesRegistry.shared
 
-    // Check that AnyHandler is registered
-    let handler = registry.getHandler(for: WellKnownTypeNames.any)
+    let handler = await registry.getHandler(for: WellKnownTypeNames.any)
     XCTAssertNotNil(handler)
     XCTAssertTrue(handler is AnyHandler.Type)
   }
@@ -376,15 +375,13 @@ final class AnyHandlerTests: XCTestCase {
   func testRegistryCreateSpecialized() async throws {
     let registry = WellKnownTypesRegistry.shared
 
-    // Create Any message
     let anyDescriptor = try createAnyDescriptor()
     let factory = MessageFactory()
     var anyMessage = factory.createMessage(from: anyDescriptor)
     try anyMessage.set("type.googleapis.com/test.Message", forField: "type_url")
     try anyMessage.set(Data([0x08, 0x96, 0x01]), forField: "value")
 
-    // Create through registry
-    let specialized = try registry.createSpecialized(
+    let specialized = try await registry.createSpecialized(
       from: anyMessage,
       typeName: WellKnownTypeNames.any
     )
@@ -400,7 +397,7 @@ final class AnyHandlerTests: XCTestCase {
       value: Data([0x08, 0x96, 0x01])
     )
 
-    let dynamicMessage = try registry.createDynamic(
+    let dynamicMessage = try await registry.createDynamic(
       from: anyValue,
       typeName: WellKnownTypeNames.any
     )

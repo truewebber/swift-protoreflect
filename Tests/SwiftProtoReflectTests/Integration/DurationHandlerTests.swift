@@ -573,16 +573,14 @@ final class DurationHandlerTests: XCTestCase {
   func testRegistryIntegration() async throws {
     let registry = WellKnownTypesRegistry.shared
 
-    // Check that DurationHandler is registered
-    let handler = registry.getHandler(for: WellKnownTypeNames.duration)
+    let handler = await registry.getHandler(for: WellKnownTypeNames.duration)
     XCTAssertNotNil(handler)
     XCTAssertTrue(handler is DurationHandler.Type)
 
-    // Test through registry
     let duration = try DurationHandler.DurationValue(seconds: 5, nanos: 123_456_789)
     let dynamicMessage = try DurationHandler.createDynamic(from: duration)
 
-    let specializedFromRegistry = try registry.createSpecialized(
+    let specializedFromRegistry = try await registry.createSpecialized(
       from: dynamicMessage,
       typeName: WellKnownTypeNames.duration
     )
