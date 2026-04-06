@@ -1,5 +1,9 @@
 // Mapping.swift
 // Bidirectional converters between the Public/Descriptor types and internal _Xxx types.
+//
+// TODO(Strangler migration / OPE-301): Remove or replace these descriptor converters when
+// all in-package call sites use `_Xxx` descriptors end-to-end and the public layer is the
+// only conversion edge (or public descriptors are dropped from internal code paths).
 
 import Foundation
 
@@ -418,5 +422,23 @@ extension FileDescriptor {
       pub.addService(ServiceDescriptor(from: svc))
     }
     self = pub
+  }
+}
+
+// MARK: - DynamicMessage
+
+// TODO(Strangler migration / OPE-302): Remove this section when `DynamicMessage(impl:)`
+// (or another single boundary) is the only converter and nothing relies on Mapping-based
+// `init(from:)` for dynamic messages.
+
+extension _DynamicMessage {
+  init(from pub: DynamicMessage) {
+    self = pub.impl
+  }
+}
+
+extension DynamicMessage {
+  init(from impl: _DynamicMessage) {
+    self.init(impl: impl)
   }
 }
