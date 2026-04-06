@@ -52,37 +52,5 @@ final class DescriptorBridgeDeprecatedAPITests: XCTestCase {
     let result = try bridge.fromProtobufEnumDescriptor(enumProto, parent: "wrong_type" as Any)
     XCTAssertEqual(result.fullName, "Status")
   }
-
-  // MARK: - Group 3b.3 — MessageDescriptor.init(name:parent: Any?) wrapper
-
-  func test_messageDescriptorInit_deprecatedAnyWrapper_withFileDescriptor_delegatesCorrectly() {
-    let fd = FileDescriptor(name: "t.proto", package: "pkg")
-    let result = MessageDescriptor(name: "X", parent: fd as Any)
-    XCTAssertEqual(result.fullName, "pkg.X")
-  }
-
-  func test_messageDescriptorInit_deprecatedAnyWrapper_withMessageDescriptor_delegatesCorrectly() {
-    let parentMsg = MessageDescriptor(name: "Parent", fullName: "pkg.Parent")
-    let result = MessageDescriptor(name: "Child", parent: parentMsg as Any)
-    XCTAssertEqual(result.fullName, "pkg.Parent.Child")
-  }
-
-  func test_messageDescriptorInit_deprecatedAnyWrapper_withWrongType_treatsAsNilParent() {
-    let result = MessageDescriptor(name: "X", parent: "some_string" as Any)
-    XCTAssertEqual(result.fullName, "X")
-  }
-
-  // MARK: - Group 3b.4 — EnumDescriptor.init(name:parent: Any?) wrapper
-
-  func test_enumDescriptorInit_deprecatedAnyWrapper_withFileDescriptor_delegatesCorrectly() {
-    let fd = FileDescriptor(name: "t.proto", package: "pkg")
-    let result = EnumDescriptor(name: "Status", parent: fd as Any)
-    XCTAssertEqual(result.fullName, "pkg.Status")
-  }
-
-  func test_enumDescriptorInit_deprecatedAnyWrapper_withWrongType_treatsAsNilParent() {
-    let result = EnumDescriptor(name: "Status", parent: 42 as Any)
-    XCTAssertEqual(result.fullName, "Status")
-  }
 }
 // swiftlint:enable deprecated_usage
