@@ -43,7 +43,13 @@ final class WireFormatTests: XCTestCase {
   }
 
   func test_varint_encoding_zero() throws {
-    let data = try serializeField(name: "x", number: 1, type: .int32, value: Int32(0))
+    // Use proto2 to verify the wire encoding of zero (proto3 omits default values).
+    var desc = MessageDescriptor(name: "M", fullName: "test.M", syntax: "proto2")
+    desc.addField(FieldDescriptor(name: "x", number: 1, type: .int32))
+    let factory = MessageFactory()
+    var msg = factory.createMessage(from: desc)
+    try msg.set(Int32(0), forField: "x")
+    let data = try BinarySerializer().serialize(msg)
     // tag = 0x08, varint 0 = [0x00]
     XCTAssertEqual(data, Data([0x08, 0x00]))
   }
@@ -126,7 +132,13 @@ final class WireFormatTests: XCTestCase {
   // MARK: - Tag encoding
 
   func test_tag_encoding_fieldNumber1Varint() throws {
-    let data = try serializeField(name: "x", number: 1, type: .int32, value: Int32(0))
+    // Use proto2 so that zero is serialized (proto3 omits default values).
+    var desc = MessageDescriptor(name: "M", fullName: "test.M", syntax: "proto2")
+    desc.addField(FieldDescriptor(name: "x", number: 1, type: .int32))
+    let factory = MessageFactory()
+    var msg = factory.createMessage(from: desc)
+    try msg.set(Int32(0), forField: "x")
+    let data = try BinarySerializer().serialize(msg)
     XCTAssertEqual(data[0], 0x08, "Field 1, varint → tag 0x08")
   }
 
@@ -137,7 +149,13 @@ final class WireFormatTests: XCTestCase {
   }
 
   func test_tag_encoding_fieldNumber16Varint() throws {
-    let data = try serializeField(name: "x", number: 16, type: .int32, value: Int32(0))
+    // Use proto2 so that zero is serialized (proto3 omits default values).
+    var desc = MessageDescriptor(name: "M", fullName: "test.M", syntax: "proto2")
+    desc.addField(FieldDescriptor(name: "x", number: 16, type: .int32))
+    let factory = MessageFactory()
+    var msg = factory.createMessage(from: desc)
+    try msg.set(Int32(0), forField: "x")
+    let data = try BinarySerializer().serialize(msg)
     // (16 << 3) | 0 = 128 → varint [0x80, 0x01]
     XCTAssertEqual(data[0], 0x80)
     XCTAssertEqual(data[1], 0x01)
@@ -145,12 +163,8 @@ final class WireFormatTests: XCTestCase {
 
   func test_tag_encoding_maxFieldNumber() throws {
     let maxField = (1 << 29) - 1
-    let data = try serializeField(
-      name: "x",
-      number: maxField,
-      type: .int32,
-      value: Int32(0)
-    )
+    // Use a non-zero value (proto3 default-omission would suppress 0).
+    let data = try serializeField(name: "x", number: maxField, type: .int32, value: Int32(1))
     // Tag = (maxField << 3) | 0, which is a 5-byte varint
     XCTAssertTrue(data.count >= 5, "Max field number tag should be at least 5 bytes")
 
@@ -162,19 +176,31 @@ final class WireFormatTests: XCTestCase {
         return d
       }()
     )
-    XCTAssertEqual(try deserialized.get(forField: "x") as? Int32, 0)
+    XCTAssertEqual(try deserialized.get(forField: "x") as? Int32, 1)
   }
 
   // MARK: - Length-delimited edge cases
 
   func test_lengthDelimited_emptyString() throws {
-    let data = try serializeField(name: "x", number: 1, type: .string, value: "")
+    // Use proto2 to verify the wire encoding of an empty string (proto3 omits default values).
+    var desc = MessageDescriptor(name: "M", fullName: "test.M", syntax: "proto2")
+    desc.addField(FieldDescriptor(name: "x", number: 1, type: .string))
+    let factory = MessageFactory()
+    var msg = factory.createMessage(from: desc)
+    try msg.set("", forField: "x")
+    let data = try BinarySerializer().serialize(msg)
     // tag = 0x0A (field 1, wire type 2), length = 0x00
     XCTAssertEqual(data, Data([0x0A, 0x00]))
   }
 
   func test_lengthDelimited_emptyBytes() throws {
-    let data = try serializeField(name: "x", number: 1, type: .bytes, value: Data())
+    // Use proto2 to verify the wire encoding of empty bytes (proto3 omits default values).
+    var desc = MessageDescriptor(name: "M", fullName: "test.M", syntax: "proto2")
+    desc.addField(FieldDescriptor(name: "x", number: 1, type: .bytes))
+    let factory = MessageFactory()
+    var msg = factory.createMessage(from: desc)
+    try msg.set(Data(), forField: "x")
+    let data = try BinarySerializer().serialize(msg)
     // tag = 0x0A (field 1, wire type 2), length = 0x00
     XCTAssertEqual(data, Data([0x0A, 0x00]))
   }

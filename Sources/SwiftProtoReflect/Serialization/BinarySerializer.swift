@@ -54,6 +54,12 @@ public struct BinarySerializer: Sendable {
     let sortedFields = allFields.sorted { $0.number < $1.number }
 
     for field in sortedFields where fieldAccess.hasValue(field.number) {
+      if descriptor.syntax == "proto3"
+        && isProto3ImplicitPresenceScalar(field)
+        && isProto3ScalarDefault(fieldAccess.getValue(field.number, as: Any.self), type: field.type)
+      {
+        continue
+      }
       try encodeField(field, from: message, to: &encoder)
     }
 
@@ -373,6 +379,43 @@ public struct BinarySerializer: Sendable {
       return true
     case .string, .bytes, .message, .group:
       return false
+    }
+  }
+
+  // MARK: - ZigZag Encoding
+
+  // MARK: - Proto3 Implicit Presence
+
+  /// Returns `true` when the field obeys proto3 implicit-presence rules for scalars.
+  ///
+  /// Such fields must be omitted from the wire when their value equals the proto3 default,
+  /// mirroring the same logic already in `JSONSerializer`.
+  private func isProto3ImplicitPresenceScalar(_ field: FieldDescriptor) -> Bool {
+    guard !field.proto3Optional, !field.isRequired, !field.isOptional,
+      !field.isRepeated, !field.isMap,
+      field.oneofIndex == nil
+    else { return false }
+    switch field.type {
+    case .message, .group, .enum: return false
+    default: return true
+    }
+  }
+
+  /// Returns `true` when `value` equals the proto3 scalar default for the given type.
+  private func isProto3ScalarDefault(_ value: Any?, type: FieldType) -> Bool {
+    guard let value else { return true }
+    switch type {
+    case .double: return (value as? Double) == 0.0
+    case .float: return (value as? Float) == 0.0
+    case .int32, .sint32, .sfixed32: return (value as? Int32) == 0
+    case .int64, .sint64, .sfixed64: return (value as? Int64) == 0
+    case .uint32, .fixed32: return (value as? UInt32) == 0
+    case .uint64, .fixed64: return (value as? UInt64) == 0
+    case .bool: return (value as? Bool) == false
+    case .string: return (value as? String) == ""
+    case .bytes: return (value as? Data)?.isEmpty == true
+    case .enum: return (value as? Int32) == 0
+    case .message, .group: return false
     }
   }
 

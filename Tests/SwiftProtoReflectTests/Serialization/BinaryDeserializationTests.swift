@@ -126,11 +126,13 @@ final class BinaryDeserializationTests: XCTestCase {
     let deserializedTrue = try deserializer.deserialize(trueData, using: message)
     XCTAssertEqual(try deserializedTrue.get(forField: "value") as? Bool, true)
 
-    // Test false
+    // Test false: proto3 implicit-presence — false is the default and is omitted from wire,
+    // so after round-trip the field is absent (hasValue returns false).
     let falseMessage = try messageFactory.createMessage(from: message, with: ["value": false])
     let falseData = try serializer.serialize(falseMessage)
+    XCTAssertEqual(falseData.count, 0)
     let deserializedFalse = try deserializer.deserialize(falseData, using: message)
-    XCTAssertEqual(try deserializedFalse.get(forField: "value") as? Bool, false)
+    XCTAssertFalse(try deserializedFalse.hasValue(forField: "value"))
   }
 
   func testRoundTripStringValues() throws {
@@ -139,12 +141,12 @@ final class BinaryDeserializationTests: XCTestCase {
     fileDescriptor.addMessage(message)
 
     // Test various strings
+    // proto3 implicit-presence: empty string is the default and omitted from wire.
     let testStrings = [
       "Hello World",
       "Hello, world!",
       "你好世界",
       "🌍🚀✨",
-      "",
       "Multiple\nLine\nString",
     ]
 
@@ -161,8 +163,8 @@ final class BinaryDeserializationTests: XCTestCase {
     message.addField(FieldDescriptor(name: "value", number: 1, type: .bytes))
     fileDescriptor.addMessage(message)
 
+    // proto3 implicit-presence: empty Data() is the default and omitted from wire.
     let testBytes = [
-      Data(),  // Empty data
       Data([0x01]),  // One byte
       Data([0x01, 0x02, 0x03, 0xFF, 0xAB]),  // Several bytes
       Data(repeating: 0xAA, count: 1000),  // Large array
