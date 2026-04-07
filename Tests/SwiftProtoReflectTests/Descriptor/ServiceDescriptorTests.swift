@@ -556,4 +556,46 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertEqual(service1, service2)
     XCTAssertNotEqual(service1, service3)
   }
+
+  // MARK: - == false-branches: fullName, fileDescriptorPath, same-named method content
+
+  func test_serviceDescriptorEquality_whenFullNameDiffers_isNotEqual() async throws {
+    // Same name but different fullName
+    let service1 = ServiceDescriptor(name: serviceName, fullName: "pkgA.UserService")
+    let service2 = ServiceDescriptor(name: serviceName, fullName: "pkgB.UserService")
+
+    XCTAssertNotEqual(service1, service2)
+  }
+
+  func test_serviceDescriptorEquality_whenFileDescriptorPathDiffers_isNotEqual() async throws {
+    // Same name and fullName (same package), different file path
+    let file1 = FileDescriptor(name: "service_v1.proto", package: "example")
+    let file2 = FileDescriptor(name: "service_v2.proto", package: "example")
+    let service1 = ServiceDescriptor(name: serviceName, parent: file1)
+    let service2 = ServiceDescriptor(name: serviceName, parent: file2)
+
+    // Both share "example.UserService" fullName but differ in fileDescriptorPath
+    XCTAssertEqual(service1.fullName, service2.fullName)
+    XCTAssertNotEqual(service1.fileDescriptorPath, service2.fileDescriptorPath)
+    XCTAssertNotEqual(service1, service2)
+  }
+
+  func test_serviceDescriptorEquality_whenSameMethodNameDiffersInContent_isNotEqual() async throws {
+    // Same method name but different inputType — key found in rhs but method != lhsMethod
+    var service1 = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
+    var service2 = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
+
+    service1.addMethod(
+      ServiceDescriptor.MethodDescriptor(name: methodName, inputType: inputType, outputType: outputType)
+    )
+    service2.addMethod(
+      ServiceDescriptor.MethodDescriptor(
+        name: methodName,
+        inputType: "example.DifferentRequest",
+        outputType: outputType
+      )
+    )
+
+    XCTAssertNotEqual(service1, service2)
+  }
 }

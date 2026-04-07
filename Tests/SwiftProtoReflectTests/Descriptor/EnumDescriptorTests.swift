@@ -369,4 +369,25 @@ final class EnumDescriptorTests: XCTestCase {
 
     XCTAssertNotEqual(enum1, enum2)
   }
+
+  // MARK: - == false-branches: fullName and value-content mismatch
+
+  func test_enumDescriptorEquality_whenFullNameDiffers_isNotEqual() async throws {
+    // Same name but different fullName (different package)
+    let enum1 = EnumDescriptor(name: "Status", fullName: "pkgA.Status")
+    let enum2 = EnumDescriptor(name: "Status", fullName: "pkgB.Status")
+
+    XCTAssertNotEqual(enum1, enum2)
+  }
+
+  func test_enumDescriptorEquality_whenSameNameValueDiffersInNumber_isNotEqual() async throws {
+    // Same value name but different number — key found in rhs but value != lhsValue
+    var enum1 = EnumDescriptor(name: "Status", fullName: "test.Status")
+    var enum2 = EnumDescriptor(name: "Status", fullName: "test.Status")
+
+    enum1.addValue(EnumDescriptor.EnumValue(name: "ACTIVE", number: 1))
+    enum2.addValue(EnumDescriptor.EnumValue(name: "ACTIVE", number: 2))
+
+    XCTAssertNotEqual(enum1, enum2)
+  }
 }

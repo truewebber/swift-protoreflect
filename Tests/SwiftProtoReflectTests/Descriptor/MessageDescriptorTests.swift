@@ -685,5 +685,30 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertEqual(other.oneof(at: 0)?.name, "g")
   }
 
+  // MARK: - _MessageDescriptor.isExtensionNumber (internal)
+
+  func test_internalMessageDescriptor_isExtensionNumber_trueWhenInRange() throws {
+    var desc = _MessageDescriptor(name: "M", fullName: "M")
+    desc.addExtensionRange(_ExtensionRange(start: 100, end: 200))
+
+    XCTAssertTrue(desc.isExtensionNumber(100))
+    XCTAssertTrue(desc.isExtensionNumber(150))
+    XCTAssertTrue(desc.isExtensionNumber(199))
+  }
+
+  func test_internalMessageDescriptor_isExtensionNumber_falseWhenOutsideRange() throws {
+    var desc = _MessageDescriptor(name: "M", fullName: "M")
+    desc.addExtensionRange(_ExtensionRange(start: 100, end: 200))
+
+    XCTAssertFalse(desc.isExtensionNumber(99))
+    XCTAssertFalse(desc.isExtensionNumber(200))
+    XCTAssertFalse(desc.isExtensionNumber(50))
+  }
+
+  func test_internalMessageDescriptor_isExtensionNumber_falseWhenNoRanges() throws {
+    let desc = _MessageDescriptor(name: "M", fullName: "M")
+    XCTAssertFalse(desc.isExtensionNumber(100))
+  }
+
   // MARK: - Helpers
 }
