@@ -13,6 +13,10 @@ import XCTest
 
 @testable import SwiftProtoReflect
 
+/// Prevents the compiler from optimising away unused return values in benchmarks.
+@inline(never)
+private func _blackhole<T>(_ value: T) {}
+
 /// Performance benchmarks for type registry system.
 final class RegistryBenchmarks: XCTestCase {
 
@@ -347,52 +351,116 @@ final class RegistryBenchmarks: XCTestCase {
 
   // MARK: - Comparative Tests
 
-  /// Comparison between different lookup strategies.
+  /// Comparison between TypeRegistry (actor-isolated) and a plain Dictionary baseline
+  /// at a fixed size of 100 types, 1 000 measured iterations each (like Go b.N).
+  ///
+  /// The plain Dictionary represents the minimum possible overhead for a name → descriptor
+  /// lookup — essentially what a compiled protobuf runtime does. The gap between the two
+  /// shows the cost of actor isolation in TypeRegistry.
   func testLookupStrategyComparison() async throws {
-    // Register types
-    for message in testMessages.prefix(100) {
-      try await typeRegistry.registerMessage(message)
+    try await runLookupComparison(size: 100, overheadLimit: 50.0)
+  }
+
+  /// Scalability comparison: TypeRegistry vs plain Dictionary across registry sizes
+  /// 100, 1 000, 10 000 and 100 000.
+  ///
+  /// Each size is measured with 1 000 individual lookup iterations so per-op latency
+  /// is accurate. A rising ratio across sizes signals a structural regression.
+  func testLookupScalabilityComparison() async throws {
+    let sizes: [(size: Int, label: String)] = [
+      (100, "100"),
+      (1_000, "1k"),
+      (10_000, "10k"),
+      (100_000, "100k"),
+    ]
+
+    print("\n--- Lookup scalability: TypeRegistry vs plain Dictionary (1 000 iterations each) ---")
+    print(String(format: "%-8@ %14@ %14@ %10@", "Size", "Actor (ns/op)", "Dict (ns/op)", "Ratio"))
+    print(String(repeating: "-", count: 52))
+
+    for (size, label) in sizes {
+      let (actorNs, dictNs, ratio) = try await runLookupComparison(
+        size: size,
+        overheadLimit: 500.0,
+        namespace: "scalability.\(label)"
+      )
+      print(String(format: "%-8@ %14.1f %14.1f %9.1fx", label, actorNs, dictNs, ratio))
     }
+  }
 
-    var directLookupTimes: [TimeInterval] = []
-    var iterativeLookupTimes: [TimeInterval] = []
+  // MARK: - Helpers
 
-    // Direct lookup through registry
-    for _ in 0..<10 {
-      let startTime = Date()
-      for i in 0..<100 {
-        let typeName = "performance.test.TestMessage\(i)"
-        let _ = await typeRegistry.findMessage(named: typeName)
+  /// Builds `size` MessageDescriptors grouped into files of `msgsPerFile` each, registers
+  /// them in a new TypeRegistry and a plain Dictionary, warms both up, then measures
+  /// exactly `iterations` individual lookups — like Go's `b.N` pattern.
+  ///
+  /// Grouping reduces the number of FileDescriptor objects in memory, preventing crashes
+  /// at large sizes (e.g. 100k).
+  ///
+  /// - Returns: (actorNsPerOp, dictNsPerOp, ratio) — nanoseconds per single lookup.
+  @discardableResult
+  private func runLookupComparison(
+    size: Int,
+    iterations: Int = 1_000,
+    warmup: Int = 100,
+    overheadLimit: Double,
+    namespace: String = "comparison",
+    msgsPerFile: Int = 100
+  ) async throws -> (actorNsPerOp: Double, dictNsPerOp: Double, ratio: Double) {
+    var fileDescriptors: [FileDescriptor] = []
+    var baseline: [String: MessageDescriptor] = [:]
+    let package = "perf.\(namespace)"
+
+    let numFiles = (size + msgsPerFile - 1) / msgsPerFile
+    for f in 0..<numFiles {
+      var file = FileDescriptor(name: "\(namespace)_\(f).proto", package: package)
+      for m in 0..<msgsPerFile {
+        let i = f * msgsPerFile + m
+        guard i < size else { break }
+        var msg = MessageDescriptor(name: "Msg\(i)", parent: file)
+        msg.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
+        baseline["\(package).Msg\(i)"] = msg
+        file.addMessage(msg)
       }
-      directLookupTimes.append(Date().timeIntervalSince(startTime))
+      fileDescriptors.append(file)
     }
 
-    // Iterative lookup through getAllMessages
-    for _ in 0..<10 {
-      let startTime = Date()
-      for i in 0..<100 {
-        let typeName = "performance.test.TestMessage\(i)"
-        // Simulate iterative search (simplified)
-        let _ = testMessages.first { $0.fullName == typeName }
-      }
-      iterativeLookupTimes.append(Date().timeIntervalSince(startTime))
+    let registry = try await TypeRegistry(fileDescriptors: fileDescriptors)
+
+    // Pre-build lookup keys so String allocation is NOT included in measurement
+    let keys = (0..<iterations).map { "\(package).Msg\($0 % size)" }
+    let warmupKeys = (0..<warmup).map { "\(package).Msg\($0 % size)" }
+
+    // Warmup — not measured, ensures caches and actor executor are primed
+    for key in warmupKeys {
+      _blackhole(await registry.findMessage(named: key))
+      _blackhole(baseline[key])
     }
 
-    let avgDirectTime = directLookupTimes.reduce(0, +) / Double(directLookupTimes.count)
-    let avgIterativeTime = iterativeLookupTimes.reduce(0, +) / Double(iterativeLookupTimes.count)
+    // Measure actor: total wall time for `iterations` sequential lookups
+    let actorStart = Date()
+    for key in keys {
+      _blackhole(await registry.findMessage(named: key))
+    }
+    let actorTotal = Date().timeIntervalSince(actorStart)
 
-    print("Direct lookup average time: \(avgDirectTime * 1000) ms")
-    print("Iterative lookup average time: \(avgIterativeTime * 1000) ms")
-    print("Performance ratio (Iterative/Direct): \(avgIterativeTime / avgDirectTime)")
+    // Measure plain Dictionary: total wall time for the same `iterations` lookups
+    let dictStart = Date()
+    for key in keys {
+      _blackhole(baseline[key])
+    }
+    let dictTotal = Date().timeIntervalSince(dictStart)
 
-    // Direct lookup should be significantly faster
-    XCTAssertLessThan(avgDirectTime, avgIterativeTime, "Direct lookup should be much faster than iterative")
+    let actorNsPerOp = actorTotal / Double(iterations) * 1_000_000_000
+    let dictNsPerOp = dictTotal / Double(iterations) * 1_000_000_000
+    let ratio = actorNsPerOp / max(dictNsPerOp, 1e-6)
 
-    // Check that iterative search is measurably slower than direct (at least 1.2x)
-    XCTAssertGreaterThan(
-      avgIterativeTime / avgDirectTime,
-      1.2,
-      "Iterative lookup should be at least 1.2x slower than direct lookup"
+    XCTAssertLessThan(
+      ratio,
+      overheadLimit,
+      "TypeRegistry overhead vs plain Dictionary should be <\(overheadLimit)x at size \(size)"
     )
+
+    return (actorNsPerOp, dictNsPerOp, ratio)
   }
 }
