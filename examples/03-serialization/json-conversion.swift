@@ -60,7 +60,7 @@ struct JsonConversionExample {
     person.prettyPrint()
 
     // JSON serialization
-    let (jsonData, serializeTime) = try await ExampleUtils.measureTime {
+    let (jsonData, serializeTime) = try await ExampleUtils.measureTimeAsync {
       let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
       return try await serializer.serialize(person)
     }
@@ -74,7 +74,7 @@ struct JsonConversionExample {
     print("    \(jsonString)")
 
     // JSON deserialization
-    let (deserializedPerson, deserializeTime) = try await ExampleUtils.measureTime {
+    let (deserializedPerson, deserializeTime) = try await ExampleUtils.measureTimeAsync {
       let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
       return try await deserializer.deserialize(jsonData, using: person.descriptor)
     }
@@ -106,7 +106,7 @@ struct JsonConversionExample {
     company.prettyPrint()
 
     // JSON serialization of complex structure
-    let (complexJsonData, complexSerializeTime) = try await ExampleUtils.measureTime {
+    let (complexJsonData, complexSerializeTime) = try await ExampleUtils.measureTimeAsync {
       let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
       return try await serializer.serialize(company)
     }
@@ -133,7 +133,7 @@ struct JsonConversionExample {
     }
 
     // Deserialization and check
-    let (deserializedCompany, complexDeserializeTime) = try await ExampleUtils.measureTime {
+    let (deserializedCompany, complexDeserializeTime) = try await ExampleUtils.measureTimeAsync {
       let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
       return try await deserializer.deserialize(complexJsonData, using: company.descriptor)
     }
@@ -458,7 +458,7 @@ struct JsonConversionExample {
     }
 
     // Benchmark JSON serialization
-    let (allJsonData, serializeTime) = try await ExampleUtils.measureTime {
+    let (allJsonData, serializeTime) = try await ExampleUtils.measureTimeAsync {
       var combinedSize = 0
       for message in messages {
         let messageData = try await jsonSerializer.serialize(message)

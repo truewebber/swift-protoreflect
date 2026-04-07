@@ -78,7 +78,9 @@ public enum ExampleUtils {
   }
 
   /// Measures async operation execution time and returns result with time.
-  public static func measureTime<T>(_ operation: () async throws -> T) async rethrows -> (result: T, time: TimeInterval) {
+  public static func measureTimeAsync<T>(
+    _ operation: () async throws -> T
+  ) async rethrows -> (result: T, time: TimeInterval) {
     #if canImport(CoreFoundation) && !os(Linux)
       let startTime = CFAbsoluteTimeGetCurrent()
       let result = try await operation()

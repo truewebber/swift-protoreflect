@@ -169,7 +169,7 @@ struct StreamingExample {
 
     print("  📖 Reading and processing streaming data...")
 
-    let (_, processingTime) = try await ExampleUtils.measureTime {
+    let (_, processingTime) = try await ExampleUtils.measureTimeAsync {
       var currentBatch: [DynamicMessage] = []
 
       while inputStream.hasBytesAvailable {

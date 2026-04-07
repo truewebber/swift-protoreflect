@@ -137,7 +137,7 @@ struct BatchOperationsExample {
     let jsonSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     var jsonData: [Data] = []
 
-    let jsonTime = try await ExampleUtils.measureTime {
+    let jsonTime = try await ExampleUtils.measureTimeAsync {
       var result: [Data] = []
       for record in records {
         result.append(try await jsonSerializer.serialize(record))

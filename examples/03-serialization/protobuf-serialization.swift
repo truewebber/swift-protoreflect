@@ -71,7 +71,7 @@ struct ProtobufSerializationExample {
     print("  🔢 Hex preview: \(ExampleUtils.formatDataPreview(binaryData))")
 
     // Deserialize back
-    let (deserializedPerson, deserializeTime) = try await ExampleUtils.measureTime {
+    let (deserializedPerson, deserializeTime) = try await ExampleUtils.measureTimeAsync {
       let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
       return try await deserializer.deserialize(binaryData, using: person.descriptor)
     }
@@ -113,7 +113,7 @@ struct ProtobufSerializationExample {
     print("  🔢 Hex preview: \(ExampleUtils.formatDataPreview(complexBinaryData, maxBytes: 30))")
 
     // Deserialization
-    let (deserializedCompany, complexDeserializeTime) = try await ExampleUtils.measureTime {
+    let (deserializedCompany, complexDeserializeTime) = try await ExampleUtils.measureTimeAsync {
       let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
       return try await deserializer.deserialize(complexBinaryData, using: company.descriptor)
     }
@@ -150,7 +150,7 @@ struct ProtobufSerializationExample {
       totalSerializeTime += serializeTime
 
       // Deserialization
-      let (newMessage, deserializeTime) = try await ExampleUtils.measureTime {
+      let (newMessage, deserializeTime) = try await ExampleUtils.measureTimeAsync {
         let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
         return try await deserializer.deserialize(binaryData, using: currentMessage.descriptor)
       }
@@ -390,7 +390,7 @@ struct ProtobufSerializationExample {
     // Benchmark deserialization (simplified - deserialize first message)
     if let firstMessage = messages.first {
       let firstMessageData = try serializer.serialize(firstMessage)
-      let (_, deserializeTime) = try await ExampleUtils.measureTime {
+      let (_, deserializeTime) = try await ExampleUtils.measureTimeAsync {
         let _ = try await deserializer.deserialize(firstMessageData, using: firstMessage.descriptor)
       }
 

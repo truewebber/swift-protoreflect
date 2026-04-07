@@ -61,7 +61,8 @@ struct SchemaEvolutionExample {
     v2.addField(FieldDescriptor(name: "name", number: 2, type: .string))
     v2.addField(FieldDescriptor(name: "email", number: 3, type: .string))
 
-    let decoded = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(data, using: v2)
+    let decoded = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
+      .deserialize(data, using: v2)
     print("  v2 reads:  id=\(try decoded.get(forField: "id") as? Int32 ?? 0)")
     print("             name=\"\(try decoded.get(forField: "name") as? String ?? "")\"")
     print("             email=\(try decoded.get(forField: "email").map { "\"\($0)\"" } ?? "nil (absent)")")
@@ -97,7 +98,8 @@ struct SchemaEvolutionExample {
     print("  Unknown: \(decoded.unknownFields.count) bytes preserved (was debug_mode)")
 
     let reencoded = try BinarySerializer().serialize(decoded)
-    let restored = try await BinaryDeserializer(options: .init(typeRegistry: registry)).deserialize(reencoded, using: old)
+    let restored = try await BinaryDeserializer(options: .init(typeRegistry: registry))
+      .deserialize(reencoded, using: old)
     print("  Restored debug_mode: \(try restored.get(forField: "debug_mode") as? Bool ?? false)")
 
     ExampleUtils.printInfo("Removed fields survive as unknown fields through intermediaries")
@@ -118,7 +120,8 @@ struct SchemaEvolutionExample {
     var reader = MessageDescriptor(name: "Item", fullName: "example.Item")
     reader.addField(FieldDescriptor(name: "display_name", number: 1, type: .string))
 
-    let decoded = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(data, using: reader)
+    let decoded = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
+      .deserialize(data, using: reader)
     let value = try decoded.get(forField: "display_name") as? String ?? ""
     print("  Writer field: \"user_name\" = \"Alice\"")
     print("  Reader field: \"display_name\" = \"\(value)\"")

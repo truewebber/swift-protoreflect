@@ -333,7 +333,7 @@ struct WellKnownRegistryExample {
       WellKnownTypeNames.value,
     ]
 
-    let (_, lookupTime) = await ExampleUtils.measureTime {
+    let (_, lookupTime) = await ExampleUtils.measureTimeAsync {
       for _ in 0..<lookupIterations {
         for typeName in typesToLookup {
           _ = await registry.getHandler(for: typeName)
@@ -349,7 +349,7 @@ struct WellKnownRegistryExample {
     let testMessage = try TimestampHandler.createDynamic(from: TimestampHandler.TimestampValue(from: Date()))
     let specializationIterations = 1000
 
-    let (_, specializationTime) = await ExampleUtils.measureTime {
+    let (_, specializationTime) = await ExampleUtils.measureTimeAsync {
       for _ in 0..<specializationIterations {
         _ = try? await registry.createSpecialized(from: testMessage, typeName: WellKnownTypeNames.timestamp)
       }
@@ -366,14 +366,14 @@ struct WellKnownRegistryExample {
     }
 
     // Individual processing
-    let (_, individualTime) = await ExampleUtils.measureTime {
+    let (_, individualTime) = await ExampleUtils.measureTimeAsync {
       for message in testItems {
         _ = try? await registry.createSpecialized(from: message, typeName: WellKnownTypeNames.timestamp)
       }
     }
 
     // Simulated batch processing (same operations but measured together)
-    let (_, batchTime) = await ExampleUtils.measureTime {
+    let (_, batchTime) = await ExampleUtils.measureTimeAsync {
       var results: [Any] = []
       for message in testItems {
         if let r = try? await registry.createSpecialized(from: message, typeName: WellKnownTypeNames.timestamp) {

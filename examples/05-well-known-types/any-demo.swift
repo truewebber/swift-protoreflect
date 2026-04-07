@@ -541,7 +541,7 @@ struct AnyDemo {
     // Benchmark unpacking
     let anyValue = try AnyHandler.AnyValue.pack(testMessage)
     for _ in 0..<iterations {
-      let (_, time) = await ExampleUtils.measureTime {
+      let (_, time) = await ExampleUtils.measureTimeAsync {
         do {
           let _ = try await anyValue.unpack(to: testMessage.descriptor)
         }
