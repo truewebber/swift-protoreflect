@@ -523,4 +523,336 @@ final class JSONSerializerProtocComplianceTests: XCTestCase {
     XCTAssertEqual(try result.get(forField: "name") as? String, "Bob")
     XCTAssertEqual(try result.get(forField: "active") as? Bool, true)
   }
+
+  // MARK: - _JSONSerializationError description
+
+  // [PUBLIC-MIRROR] JSONSerializerProtocComplianceTests — public JSONSerializationError has same strings
+  // Oracle: each internal error case produces a non-empty description
+  func test_internalSerializationError_description_allCases() {
+    struct TestError: Error {
+      var localizedDescription: String { "underlying error" }
+    }
+
+    XCTAssertFalse(
+      _JSONSerializationError.invalidFieldType(
+        fieldName: "scores",
+        expectedType: "Array",
+        actualType: "String"
+      ).description.isEmpty
+    )
+    XCTAssertFalse(
+      _JSONSerializationError.valueTypeMismatch(expected: "Double", actual: "String").description.isEmpty
+    )
+    XCTAssertFalse(
+      _JSONSerializationError.missingMapEntryInfo(fieldName: "labels").description.isEmpty
+    )
+    XCTAssertFalse(
+      _JSONSerializationError.missingFieldValue(fieldName: "name").description.isEmpty
+    )
+    XCTAssertFalse(
+      _JSONSerializationError.unsupportedFieldType(type: "group").description.isEmpty
+    )
+    XCTAssertFalse(
+      _JSONSerializationError.invalidMapKeyType(keyType: "bytes").description.isEmpty
+    )
+    XCTAssertFalse(
+      _JSONSerializationError.jsonWriteError(underlyingError: TestError()).description.isEmpty
+    )
+    XCTAssertFalse(
+      _JSONSerializationError.unsupportedWellKnownTypeEncoding(
+        typeName: "google.protobuf.NullValue"
+      ).description.isEmpty
+    )
+  }
+
+  // MARK: - _JSONSerializationError equality
+
+  // [PUBLIC-MIRROR] JSONSerializerProtocComplianceTests — internal error equality mirrors public
+  // Oracle: same case with same associated values → equal
+  func test_internalSerializationError_equality_sameCase_equal() {
+    struct TestError: Error {}
+
+    XCTAssertEqual(
+      _JSONSerializationError.invalidFieldType(fieldName: "f", expectedType: "Array", actualType: "String"),
+      _JSONSerializationError.invalidFieldType(fieldName: "f", expectedType: "Array", actualType: "String")
+    )
+    XCTAssertEqual(
+      _JSONSerializationError.valueTypeMismatch(expected: "Double", actual: "String"),
+      _JSONSerializationError.valueTypeMismatch(expected: "Double", actual: "String")
+    )
+    XCTAssertEqual(
+      _JSONSerializationError.missingMapEntryInfo(fieldName: "labels"),
+      _JSONSerializationError.missingMapEntryInfo(fieldName: "labels")
+    )
+    XCTAssertEqual(
+      _JSONSerializationError.missingFieldValue(fieldName: "name"),
+      _JSONSerializationError.missingFieldValue(fieldName: "name")
+    )
+    XCTAssertEqual(
+      _JSONSerializationError.unsupportedFieldType(type: "group"),
+      _JSONSerializationError.unsupportedFieldType(type: "group")
+    )
+    XCTAssertEqual(
+      _JSONSerializationError.invalidMapKeyType(keyType: "bytes"),
+      _JSONSerializationError.invalidMapKeyType(keyType: "bytes")
+    )
+    XCTAssertEqual(
+      _JSONSerializationError.jsonWriteError(underlyingError: TestError()),
+      _JSONSerializationError.jsonWriteError(underlyingError: TestError())
+    )
+    XCTAssertEqual(
+      _JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: "google.protobuf.Value"),
+      _JSONSerializationError.unsupportedWellKnownTypeEncoding(typeName: "google.protobuf.Value")
+    )
+  }
+
+  // [PUBLIC-MIRROR] JSONSerializerEdgeCasesTests — cross-type inequality
+  // Oracle: different error cases are not equal (hits default: return false branch)
+  func test_internalSerializationError_equality_differentCases_notEqual() {
+    XCTAssertNotEqual(
+      _JSONSerializationError.missingFieldValue(fieldName: "f"),
+      _JSONSerializationError.missingMapEntryInfo(fieldName: "f")
+    )
+    XCTAssertNotEqual(
+      _JSONSerializationError.valueTypeMismatch(expected: "Double", actual: "String"),
+      _JSONSerializationError.unsupportedFieldType(type: "group")
+    )
+  }
+
+  // MARK: - encodeValueMessage: wrong-type field values trigger error paths
+
+  // [PROTOC-BASH]
+  // protoc rejects non-number JSON for google.protobuf.Value number_value field.
+  // Oracle: when field 2 is set with a non-Double value, encodeValueMessage throws unsupportedWellKnownTypeEncoding
+  func test_encodeValueMessage_numberValueNotDouble_throwsError() throws {
+    var desc = _MessageDescriptor(name: "Value", fullName: "google.protobuf.Value")
+    desc.addField(_FieldDescriptor(name: "number_value", number: 2, type: .string))
+    var msg = _DynamicMessage(descriptor: desc)
+    try msg.set("notADouble", forField: 2)
+
+    let serializer = _JSONSerializer(
+      options: _JSONSerializationOptions(useCanonicalWellKnownTypeEncoding: true, typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(try serializer.serialize(msg)) { error in
+      if case _JSONSerializationError.unsupportedWellKnownTypeEncoding = error {
+      }
+      else {
+        XCTFail("Expected unsupportedWellKnownTypeEncoding, got: \(error)")
+      }
+    }
+  }
+
+  // [PROTOC-BASH]
+  // protoc rejects non-string JSON for google.protobuf.Value string_value field.
+  // Oracle: when field 3 is set with a non-String value, encodeValueMessage throws unsupportedWellKnownTypeEncoding
+  func test_encodeValueMessage_stringValueNotString_throwsError() throws {
+    var desc = _MessageDescriptor(name: "Value", fullName: "google.protobuf.Value")
+    desc.addField(_FieldDescriptor(name: "string_value", number: 3, type: .int32))
+    var msg = _DynamicMessage(descriptor: desc)
+    try msg.set(Int32(42), forField: 3)
+
+    let serializer = _JSONSerializer(
+      options: _JSONSerializationOptions(useCanonicalWellKnownTypeEncoding: true, typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(try serializer.serialize(msg)) { error in
+      if case _JSONSerializationError.unsupportedWellKnownTypeEncoding = error {
+      }
+      else {
+        XCTFail("Expected unsupportedWellKnownTypeEncoding, got: \(error)")
+      }
+    }
+  }
+
+  // [PROTOC-BASH]
+  // protoc rejects non-boolean JSON for google.protobuf.Value bool_value field.
+  // Oracle: when field 4 is set with a non-Bool value, encodeValueMessage throws unsupportedWellKnownTypeEncoding
+  func test_encodeValueMessage_boolValueNotBool_throwsError() throws {
+    var desc = _MessageDescriptor(name: "Value", fullName: "google.protobuf.Value")
+    desc.addField(_FieldDescriptor(name: "bool_value", number: 4, type: .int32))
+    var msg = _DynamicMessage(descriptor: desc)
+    try msg.set(Int32(1), forField: 4)
+
+    let serializer = _JSONSerializer(
+      options: _JSONSerializationOptions(useCanonicalWellKnownTypeEncoding: true, typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(try serializer.serialize(msg)) { error in
+      if case _JSONSerializationError.unsupportedWellKnownTypeEncoding = error {
+      }
+      else {
+        XCTFail("Expected unsupportedWellKnownTypeEncoding, got: \(error)")
+      }
+    }
+  }
+
+  // [PROTOC-BASH]
+  // protoc requires an object for google.protobuf.Value struct_value field.
+  // Oracle: when field 5 is set with a scalar value (not a DynamicMessage), encodeValueMessage throws
+  func test_encodeValueMessage_structValueNotMessage_throwsError() throws {
+    var desc = _MessageDescriptor(name: "Value", fullName: "google.protobuf.Value")
+    desc.addField(_FieldDescriptor(name: "struct_value", number: 5, type: .string))
+    var msg = _DynamicMessage(descriptor: desc)
+    try msg.set("notAStruct", forField: 5)
+
+    let serializer = _JSONSerializer(
+      options: _JSONSerializationOptions(useCanonicalWellKnownTypeEncoding: true, typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(try serializer.serialize(msg)) { error in
+      if case _JSONSerializationError.unsupportedWellKnownTypeEncoding = error {
+      }
+      else {
+        XCTFail("Expected unsupportedWellKnownTypeEncoding, got: \(error)")
+      }
+    }
+  }
+
+  // [PROTOC-BASH]
+  // protoc requires an array for google.protobuf.Value list_value field.
+  // Oracle: when field 6 is set with a scalar value (not a DynamicMessage), encodeValueMessage throws
+  func test_encodeValueMessage_listValueNotMessage_throwsError() throws {
+    var desc = _MessageDescriptor(name: "Value", fullName: "google.protobuf.Value")
+    desc.addField(_FieldDescriptor(name: "list_value", number: 6, type: .string))
+    var msg = _DynamicMessage(descriptor: desc)
+    try msg.set("notAList", forField: 6)
+
+    let serializer = _JSONSerializer(
+      options: _JSONSerializationOptions(useCanonicalWellKnownTypeEncoding: true, typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(try serializer.serialize(msg)) { error in
+      if case _JSONSerializationError.unsupportedWellKnownTypeEncoding = error {
+      }
+      else {
+        XCTFail("Expected unsupportedWellKnownTypeEncoding, got: \(error)")
+      }
+    }
+  }
+
+  // MARK: - encodeStructMessage: non-DynamicMessage map value continues
+
+  // [PROTOC-BASH]
+  // protoc only accepts Value-typed map values in Struct.
+  // Oracle: when Struct fields map contains a scalar value, encodeStructMessage skips it (continue)
+  func test_encodeStructMessage_nonMessageMapValue_isSkipped() throws {
+    var desc = _MessageDescriptor(name: "Struct", fullName: "google.protobuf.Struct")
+    let keyInfo = _KeyFieldInfo(name: "key", number: 1, type: .string)
+    let valueInfo = _ValueFieldInfo(name: "value", number: 2, type: .string)
+    let mapInfo = _MapEntryInfo(keyFieldInfo: keyInfo, valueFieldInfo: valueInfo)
+    let mapField = _FieldDescriptor(
+      name: "fields",
+      number: 1,
+      type: .string,
+      isRepeated: true,
+      isMap: true,
+      mapEntryInfo: mapInfo
+    )
+    desc.addField(mapField)
+
+    var msg = _DynamicMessage(descriptor: desc)
+    try msg.set(["key1": "scalar_value"], forField: 1)
+
+    let serializer = _JSONSerializer(
+      options: _JSONSerializationOptions(useCanonicalWellKnownTypeEncoding: true, typeRegistry: _TypeRegistry())
+    )
+
+    let result = try serializer.serialize(msg)
+    let json = try XCTUnwrap(JSONSerialization.jsonObject(with: result) as? [String: Any])
+    XCTAssertTrue(json.isEmpty, "Struct with scalar map values should produce empty JSON object")
+  }
+
+  // MARK: - encodeListValueMessage: non-DynamicMessage item throws
+
+  // [PROTOC-BASH]
+  // protoc only accepts Value-typed items in ListValue.
+  // Oracle: when ListValue values field contains a scalar item, encodeListValueMessage throws
+  func test_encodeListValueMessage_nonMessageItem_throwsError() throws {
+    var desc = _MessageDescriptor(name: "ListValue", fullName: "google.protobuf.ListValue")
+    desc.addField(_FieldDescriptor(name: "values", number: 1, type: .string, isRepeated: true))
+
+    var msg = _DynamicMessage(descriptor: desc)
+    try msg.set(["hello", "world"], forField: 1)
+
+    let serializer = _JSONSerializer(
+      options: _JSONSerializationOptions(useCanonicalWellKnownTypeEncoding: true, typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(try serializer.serialize(msg)) { error in
+      if case _JSONSerializationError.unsupportedWellKnownTypeEncoding = error {
+      }
+      else {
+        XCTFail("Expected unsupportedWellKnownTypeEncoding, got: \(error)")
+      }
+    }
+  }
+
+  // MARK: - encodeValueMessage NSNull fallback (no oneof set)
+
+  // [PROTOC-BASH]
+  // echo 'syntax="proto3"; import "google/protobuf/struct.proto"; message M { google.protobuf.Value v = 1; }' > /tmp/v.proto
+  // echo '' | protoc --encode=google.protobuf.Value /tmp/v.proto  → empty / null representation
+  // Oracle: a google.protobuf.Value message with no oneof field set serializes as null
+  func test_serialize_googleProtobufValue_noFieldSet_producesNull() async throws {
+    let valueDesc = _MessageDescriptor(from: StructProtoDescriptors.valueDescriptor)
+    let emptyValue = _DynamicMessage(descriptor: valueDesc)
+
+    let serializer = _JSONSerializer(
+      options: _JSONSerializationOptions(useCanonicalWellKnownTypeEncoding: true, typeRegistry: _TypeRegistry())
+    )
+
+    let result = try serializer.serialize(emptyValue)
+    let jsonStr = String(data: result, encoding: .utf8)
+
+    XCTAssertEqual(jsonStr, "null")
+  }
+
+  // MARK: - convertValueToJSON: message field via _DynamicMessage directly
+
+  // [PUBLIC-MIRROR] JSONSerializerTypeMismatchTests — message serialization tests
+  // Oracle: _DynamicMessage value for .message type serializes as JSON object
+  func test_convertValueToJSON_messageField_internalDynamicMessage_succeeds() throws {
+    let serializer = _JSONSerializer(options: _JSONSerializationOptions(typeRegistry: _TypeRegistry()))
+
+    let innerDesc = _MessageDescriptor(name: "Inner", fullName: "Inner")
+    let innerMsg = _DynamicMessage(descriptor: innerDesc)
+
+    let result = try serializer.testConvertValueToJSON(innerMsg, type: .message, typeName: "Inner")
+
+    XCTAssertNotNil(result)
+  }
+
+  // MARK: - convertValueToJSON: group field via _DynamicMessage directly
+
+  // [PUBLIC-MIRROR] Proto2JSONSerializationTests — group serialization
+  // Oracle: _DynamicMessage value for .group type serializes as JSON object
+  func test_convertValueToJSON_groupField_internalDynamicMessage_succeeds() throws {
+    let serializer = _JSONSerializer(options: _JSONSerializationOptions(typeRegistry: _TypeRegistry()))
+
+    let groupDesc = _MessageDescriptor(name: "Group1", fullName: "Group1")
+    let groupMsg = _DynamicMessage(descriptor: groupDesc)
+
+    let result = try serializer.testConvertValueToJSON(groupMsg, type: .group, typeName: "Group1")
+
+    XCTAssertNotNil(result)
+  }
+
+  // [PUBLIC-MIRROR] JSONSerializerTypeMismatchTests.testConvertValueToJSON_messageField_stringValue
+  // Oracle: non-message value for .group type throws valueTypeMismatch
+  func test_convertValueToJSON_groupField_wrongType_throwsValueTypeMismatch() throws {
+    let serializer = _JSONSerializer(options: _JSONSerializationOptions(typeRegistry: _TypeRegistry()))
+
+    XCTAssertThrowsError(
+      try serializer.testConvertValueToJSON("not a group", type: .group, typeName: "Group1")
+    ) { error in
+      guard let jsonError = error as? _JSONSerializationError,
+        case .valueTypeMismatch(let expected, _) = jsonError
+      else {
+        XCTFail("Expected _JSONSerializationError.valueTypeMismatch, got: \(error)")
+        return
+      }
+      XCTAssertTrue(expected.contains("DynamicMessage"))
+    }
+  }
 }

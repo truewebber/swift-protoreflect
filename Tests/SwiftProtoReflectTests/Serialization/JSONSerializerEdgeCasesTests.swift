@@ -325,6 +325,45 @@ final class JSONSerializerEdgeCasesTests: XCTestCase {
     XCTAssertEqual(json["status"] as? String, "STATUS_ACTIVE")
   }
 
+  // MARK: - serializeMapField legacy enum fallback
+
+  // [PUBLIC-MIRROR] test_resolveEnumDescriptor_legacyFallback_findsNestedEnum
+  // Oracle: when map value type is an enum not in the registry but nested in the message,
+  // serializeMapField finds it through the closure's legacy structural nesting fallback.
+  func test_serializeMapField_legacyEnumFallback_findsNestedEnum() async throws {
+    var file = FileDescriptor(name: "test.proto", package: "test")
+    var desc = MessageDescriptor(name: "Msg", parent: file)
+    var innerEnum = EnumDescriptor(name: "Status", fullName: "test.Msg.Status")
+    innerEnum.addValue(EnumDescriptor.EnumValue(name: "STATUS_UNKNOWN", number: 0))
+    innerEnum.addValue(EnumDescriptor.EnumValue(name: "STATUS_ACTIVE", number: 1))
+    desc.addNestedEnum(innerEnum)
+    desc.addField(
+      FieldDescriptor(
+        name: "status_map",
+        number: 1,
+        type: .message,
+        typeName: "test.Msg.StatusMapEntry",
+        isMap: true,
+        mapEntryInfo: MapEntryInfo(
+          keyFieldInfo: KeyFieldInfo(name: "key", number: 1, type: .string),
+          valueFieldInfo: ValueFieldInfo(name: "value", number: 2, type: .enum, typeName: "test.Msg.Status")
+        )
+      )
+    )
+    file.addMessage(desc)
+    let msgDesc = file.messages["Msg"]!
+
+    var msg = DynamicMessage(descriptor: msgDesc)
+    try msg.set(["key1": Int32(1)], forField: "status_map")
+
+    let serializer = JSONSerializer(options: JSONSerializationOptions(typeRegistry: TypeRegistry()))
+    let data = try await serializer.serialize(msg)
+    let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+
+    let statusMap = try XCTUnwrap(json["status_map"] as? [String: Any])
+    XCTAssertEqual(statusMap["key1"] as? String, "STATUS_ACTIVE")
+  }
+
   // MARK: - isProto3ScalarDefault dead code coverage via binary zero-value suppression
 
   // [PROTOC-BASH]

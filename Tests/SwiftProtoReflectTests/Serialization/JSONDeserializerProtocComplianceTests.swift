@@ -477,4 +477,748 @@ final class JSONDeserializerProtocComplianceTests: XCTestCase {
       }
     }
   }
+
+  // MARK: - _JSONDeserializationError == remaining cases
+
+  // [PUBLIC-MIRROR] JSONDeserializationTests — internal error equality
+  // Oracle: each remaining case in _JSONDeserializationError.== is exercised
+  func test_internalDeserializationError_equality_remainingCases() {
+    struct TestError: Error {}
+
+    // invalidJSON — line 1172
+    XCTAssertEqual(
+      _JSONDeserializationError.invalidJSON(underlyingError: TestError()),
+      _JSONDeserializationError.invalidJSON(underlyingError: TestError())
+    )
+
+    // invalidFieldType — lines 1183-1187
+    XCTAssertEqual(
+      _JSONDeserializationError.invalidFieldType(fieldName: "f", expectedType: "E", actualType: "A"),
+      _JSONDeserializationError.invalidFieldType(fieldName: "f", expectedType: "E", actualType: "A")
+    )
+    XCTAssertNotEqual(
+      _JSONDeserializationError.invalidFieldType(fieldName: "f", expectedType: "E", actualType: "A"),
+      _JSONDeserializationError.invalidFieldType(fieldName: "g", expectedType: "E", actualType: "A")
+    )
+
+    // valueTypeMismatch — lines 1188-1192
+    XCTAssertEqual(
+      _JSONDeserializationError.valueTypeMismatch(fieldName: "f", expected: "E", actual: "A"),
+      _JSONDeserializationError.valueTypeMismatch(fieldName: "f", expected: "E", actual: "A")
+    )
+    XCTAssertNotEqual(
+      _JSONDeserializationError.valueTypeMismatch(fieldName: "f", expected: "E", actual: "A"),
+      _JSONDeserializationError.valueTypeMismatch(fieldName: "f", expected: "X", actual: "A")
+    )
+
+    // invalidNumberFormat — lines 1193-1197
+    XCTAssertEqual(
+      _JSONDeserializationError.invalidNumberFormat(fieldName: "f", value: "abc"),
+      _JSONDeserializationError.invalidNumberFormat(fieldName: "f", value: "abc")
+    )
+    XCTAssertNotEqual(
+      _JSONDeserializationError.invalidNumberFormat(fieldName: "f", value: "abc"),
+      _JSONDeserializationError.invalidNumberFormat(fieldName: "f", value: "xyz")
+    )
+
+    // numberOutOfRange — lines 1198-1202
+    XCTAssertEqual(
+      _JSONDeserializationError.numberOutOfRange(fieldName: "f", value: 999, expectedRange: "R"),
+      _JSONDeserializationError.numberOutOfRange(fieldName: "f", value: 999, expectedRange: "R")
+    )
+    XCTAssertNotEqual(
+      _JSONDeserializationError.numberOutOfRange(fieldName: "f", value: 999, expectedRange: "R"),
+      _JSONDeserializationError.numberOutOfRange(fieldName: "f", value: 0, expectedRange: "R")
+    )
+
+    // invalidBase64 — lines 1203-1207
+    XCTAssertEqual(
+      _JSONDeserializationError.invalidBase64(fieldName: "f", value: "!!!"),
+      _JSONDeserializationError.invalidBase64(fieldName: "f", value: "!!!")
+    )
+    XCTAssertNotEqual(
+      _JSONDeserializationError.invalidBase64(fieldName: "f", value: "!!!"),
+      _JSONDeserializationError.invalidBase64(fieldName: "f", value: "???")
+    )
+
+    // invalidEnumValue — lines 1208-1212
+    XCTAssertEqual(
+      _JSONDeserializationError.invalidEnumValue(fieldName: "f", value: "BAD"),
+      _JSONDeserializationError.invalidEnumValue(fieldName: "f", value: "BAD")
+    )
+    XCTAssertNotEqual(
+      _JSONDeserializationError.invalidEnumValue(fieldName: "f", value: "BAD"),
+      _JSONDeserializationError.invalidEnumValue(fieldName: "f", value: "GOOD")
+    )
+
+    // invalidMapKeyFormat — lines 1213-1217
+    XCTAssertEqual(
+      _JSONDeserializationError.invalidMapKeyFormat(fieldName: "f", keyType: "int32", value: "x"),
+      _JSONDeserializationError.invalidMapKeyFormat(fieldName: "f", keyType: "int32", value: "x")
+    )
+    XCTAssertNotEqual(
+      _JSONDeserializationError.invalidMapKeyFormat(fieldName: "f", keyType: "int32", value: "x"),
+      _JSONDeserializationError.invalidMapKeyFormat(fieldName: "f", keyType: "int32", value: "y")
+    )
+
+    // invalidMapKeyType — lines 1218-1222
+    XCTAssertEqual(
+      _JSONDeserializationError.invalidMapKeyType(fieldName: "f", keyType: "bytes"),
+      _JSONDeserializationError.invalidMapKeyType(fieldName: "f", keyType: "bytes")
+    )
+    XCTAssertNotEqual(
+      _JSONDeserializationError.invalidMapKeyType(fieldName: "f", keyType: "bytes"),
+      _JSONDeserializationError.invalidMapKeyType(fieldName: "f", keyType: "float")
+    )
+
+    // invalidMapKey — lines 1223-1227
+    XCTAssertEqual(
+      _JSONDeserializationError.invalidMapKey(fieldName: "f", key: "bad"),
+      _JSONDeserializationError.invalidMapKey(fieldName: "f", key: "bad")
+    )
+    XCTAssertNotEqual(
+      _JSONDeserializationError.invalidMapKey(fieldName: "f", key: "bad"),
+      _JSONDeserializationError.invalidMapKey(fieldName: "f", key: "worse")
+    )
+
+    // invalidArrayElement — lines 1228-1232
+    XCTAssertEqual(
+      _JSONDeserializationError.invalidArrayElement(fieldName: "f", index: 0, underlyingError: TestError()),
+      _JSONDeserializationError.invalidArrayElement(fieldName: "f", index: 0, underlyingError: TestError())
+    )
+    XCTAssertNotEqual(
+      _JSONDeserializationError.invalidArrayElement(fieldName: "f", index: 0, underlyingError: TestError()),
+      _JSONDeserializationError.invalidArrayElement(fieldName: "f", index: 1, underlyingError: TestError())
+    )
+
+    // unsupportedNestedMessage — lines 1237-1241
+    XCTAssertEqual(
+      _JSONDeserializationError.unsupportedNestedMessage(fieldName: "f", typeName: "T"),
+      _JSONDeserializationError.unsupportedNestedMessage(fieldName: "f", typeName: "T")
+    )
+    XCTAssertNotEqual(
+      _JSONDeserializationError.unsupportedNestedMessage(fieldName: "f", typeName: "T"),
+      _JSONDeserializationError.unsupportedNestedMessage(fieldName: "f", typeName: "X")
+    )
+
+    // nestedMessageDescriptorNotFound — lines 1242-1246
+    XCTAssertEqual(
+      _JSONDeserializationError.nestedMessageDescriptorNotFound(fieldName: "f", typeName: "T"),
+      _JSONDeserializationError.nestedMessageDescriptorNotFound(fieldName: "f", typeName: "T")
+    )
+    XCTAssertNotEqual(
+      _JSONDeserializationError.nestedMessageDescriptorNotFound(fieldName: "f", typeName: "T"),
+      _JSONDeserializationError.nestedMessageDescriptorNotFound(fieldName: "f", typeName: "X")
+    )
+
+    // unsupportedFieldType — lines 1249-1250
+    XCTAssertEqual(
+      _JSONDeserializationError.unsupportedFieldType(type: "group"),
+      _JSONDeserializationError.unsupportedFieldType(type: "group")
+    )
+    XCTAssertNotEqual(
+      _JSONDeserializationError.unsupportedFieldType(type: "group"),
+      _JSONDeserializationError.unsupportedFieldType(type: "fixed32")
+    )
+
+    // default: return false — lines 1256-1258
+    XCTAssertNotEqual(
+      _JSONDeserializationError.invalidJSON(underlyingError: TestError()),
+      _JSONDeserializationError.invalidFieldType(fieldName: "f", expectedType: "E", actualType: "A")
+    )
+    XCTAssertNotEqual(
+      _JSONDeserializationError.missingTypeName(fieldName: "f"),
+      _JSONDeserializationError.invalidEnumValue(fieldName: "f", value: "BAD")
+    )
+  }
+
+  // MARK: - WKT wrong-type errors
+
+  // [PROTOC-BASH]
+  // protoc rejects non-object JSON for google.protobuf.Empty
+  // Oracle: deserializing a JSON string as Empty throws invalidJSONStructure
+  func test_deserialize_googleProtobufEmpty_fromNonObject_throwsError() throws {
+    let emptyDesc = _MessageDescriptor(name: "Empty", fullName: "google.protobuf.Empty")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("\"hello\"".data(using: .utf8)!, using: emptyDesc)
+    ) { error in
+      if let jsonError = error as? _JSONDeserializationError,
+        case .invalidJSONStructure = jsonError
+      {
+        // Expected
+      }
+      else {
+        XCTFail("Expected invalidJSONStructure, got: \(error)")
+      }
+    }
+  }
+
+  // [PROTOC-BASH]
+  // protoc rejects non-object JSON for google.protobuf.Struct
+  // Oracle: deserializing a JSON string as Struct throws invalidJSONStructure
+  func test_deserialize_googleProtobufStruct_fromNonObject_throwsError() throws {
+    let structDesc = _MessageDescriptor(name: "Struct", fullName: "google.protobuf.Struct")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("\"not_an_object\"".data(using: .utf8)!, using: structDesc)
+    ) { error in
+      if let jsonError = error as? _JSONDeserializationError,
+        case .invalidJSONStructure = jsonError
+      {
+        // Expected
+      }
+      else {
+        XCTFail("Expected invalidJSONStructure, got: \(error)")
+      }
+    }
+  }
+
+  // [PROTOC-BASH]
+  // protoc rejects non-array JSON for google.protobuf.ListValue
+  // Oracle: deserializing a JSON object as ListValue throws invalidJSONStructure
+  func test_deserialize_googleProtobufListValue_fromNonArray_throwsError() throws {
+    let lvDesc = _MessageDescriptor(name: "ListValue", fullName: "google.protobuf.ListValue")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("{\"key\": \"value\"}".data(using: .utf8)!, using: lvDesc)
+    ) { error in
+      if let jsonError = error as? _JSONDeserializationError,
+        case .invalidJSONStructure = jsonError
+      {
+        // Expected
+      }
+      else {
+        XCTFail("Expected invalidJSONStructure, got: \(error)")
+      }
+    }
+  }
+
+  // MARK: - decodeAnyFromAny error paths
+
+  // [PROTOC-BASH]
+  // protoc rejects non-object JSON for google.protobuf.Any
+  func test_deserialize_googleProtobufAny_fromNonObject_throwsError() throws {
+    let anyDesc = _MessageDescriptor(name: "Any", fullName: "google.protobuf.Any")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("\"hello\"".data(using: .utf8)!, using: anyDesc)
+    )
+  }
+
+  // [PROTOC-BASH]
+  // protoc rejects Any object without @type key
+  func test_deserialize_googleProtobufAny_withoutAtType_throwsError() throws {
+    let anyDesc = _MessageDescriptor(name: "Any", fullName: "google.protobuf.Any")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("{\"value\": \"hello\"}".data(using: .utf8)!, using: anyDesc)
+    )
+  }
+
+  // [PROTOC-BASH]
+  // protoc rejects Any with typeUrl without slash
+  func test_deserialize_googleProtobufAny_typeUrlWithoutSlash_throwsError() throws {
+    let anyDesc = _MessageDescriptor(name: "Any", fullName: "google.protobuf.Any")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("{\"@type\": \"notavalidurl\"}".data(using: .utf8)!, using: anyDesc)
+    )
+  }
+
+  // [PROTOC-BASH]
+  // protoc rejects Any with unregistered type
+  func test_deserialize_googleProtobufAny_unregisteredType_throwsError() throws {
+    let anyDesc = _MessageDescriptor(name: "Any", fullName: "google.protobuf.Any")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize(
+        "{\"@type\": \"type.googleapis.com/unregistered.Type\"}".data(using: .utf8)!,
+        using: anyDesc
+      )
+    )
+  }
+
+  // MARK: - Wrapper type wrong-type errors
+
+  // [PROTOC-BASH]
+  // protoc rejects string JSON for google.protobuf.DoubleValue (expects number)
+  func test_deserialize_doubleValue_fromString_throwsError() throws {
+    let desc = _MessageDescriptor(name: "DoubleValue", fullName: "google.protobuf.DoubleValue")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("\"not_a_number\"".data(using: .utf8)!, using: desc)
+    )
+  }
+
+  // [PROTOC-BASH]
+  // protoc rejects string JSON for google.protobuf.FloatValue (expects number)
+  func test_deserialize_floatValue_fromString_throwsError() throws {
+    let desc = _MessageDescriptor(name: "FloatValue", fullName: "google.protobuf.FloatValue")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("\"not_a_number\"".data(using: .utf8)!, using: desc)
+    )
+  }
+
+  // [PROTOC-BASH]
+  // protoc rejects string JSON for google.protobuf.Int32Value (expects number)
+  func test_deserialize_int32Value_fromString_throwsError() throws {
+    let desc = _MessageDescriptor(name: "Int32Value", fullName: "google.protobuf.Int32Value")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("\"not_a_number\"".data(using: .utf8)!, using: desc)
+    )
+  }
+
+  // [PROTOC-BASH]
+  // protoc rejects string JSON for google.protobuf.UInt32Value (expects number)
+  func test_deserialize_uint32Value_fromString_throwsError() throws {
+    let desc = _MessageDescriptor(name: "UInt32Value", fullName: "google.protobuf.UInt32Value")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("\"not_a_number\"".data(using: .utf8)!, using: desc)
+    )
+  }
+
+  // [PROTOC-BASH]
+  // protoc requires string for google.protobuf.Int64Value (not JSON number)
+  func test_deserialize_int64Value_fromNumber_throwsError() throws {
+    let desc = _MessageDescriptor(name: "Int64Value", fullName: "google.protobuf.Int64Value")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("42".data(using: .utf8)!, using: desc)
+    )
+  }
+
+  // [PROTOC-BASH]
+  // protoc requires string for google.protobuf.UInt64Value (not JSON number)
+  func test_deserialize_uint64Value_fromNumber_throwsError() throws {
+    let desc = _MessageDescriptor(name: "UInt64Value", fullName: "google.protobuf.UInt64Value")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("42".data(using: .utf8)!, using: desc)
+    )
+  }
+
+  // [PROTOC-BASH]
+  // protoc requires boolean for google.protobuf.BoolValue (not JSON number 1)
+  func test_deserialize_boolValue_fromNumber_throwsError() throws {
+    let desc = _MessageDescriptor(name: "BoolValue", fullName: "google.protobuf.BoolValue")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("1".data(using: .utf8)!, using: desc)
+    )
+  }
+
+  // [PROTOC-BASH]
+  // protoc requires string for google.protobuf.StringValue (not JSON number)
+  func test_deserialize_stringValue_fromNumber_throwsError() throws {
+    let desc = _MessageDescriptor(name: "StringValue", fullName: "google.protobuf.StringValue")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("42".data(using: .utf8)!, using: desc)
+    )
+  }
+
+  // [PROTOC-BASH]
+  // protoc requires base64 string for google.protobuf.BytesValue (not JSON number)
+  func test_deserialize_bytesValue_fromNumber_throwsError() throws {
+    let desc = _MessageDescriptor(name: "BytesValue", fullName: "google.protobuf.BytesValue")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("42".data(using: .utf8)!, using: desc)
+    )
+  }
+
+  // MARK: - Timestamp parse paths
+
+  // [PROTOC-BASH]
+  // protoc accepts RFC 3339 timestamps; fractional seconds without tz suffix are treated as UTC
+  // Oracle: timestamp "2023-01-15T10:30:00.123" (no Z) hits no-tz-indicator path and parses OK
+  func test_deserialize_timestamp_noTzIndicator_parsesSuccessfully() throws {
+    var tsDesc = _MessageDescriptor(name: "Timestamp", fullName: "google.protobuf.Timestamp")
+    tsDesc.addField(_FieldDescriptor(name: "seconds", number: 1, type: .int64))
+    tsDesc.addField(_FieldDescriptor(name: "nanos", number: 2, type: .int32))
+
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    let json = "\"2023-01-15T10:30:00.123\"".data(using: .utf8)!
+    let result = try deserializer.deserialize(json, using: tsDesc)
+
+    XCTAssertNotNil(result)
+  }
+
+  // [PROTOC-BASH]
+  // protoc rejects malformed RFC 3339 timestamp strings
+  // Oracle: "not-a-date" as timestamp throws invalidJSONStructure
+  func test_deserialize_timestamp_invalidDateString_throwsError() throws {
+    let tsDesc = _MessageDescriptor(name: "Timestamp", fullName: "google.protobuf.Timestamp")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("\"not-a-date\"".data(using: .utf8)!, using: tsDesc)
+    )
+  }
+
+  // [PROTOC-BASH]
+  // protoc rejects timestamps with non-numeric fractional seconds
+  // Oracle: "2023-01-15T10:30:00.abcZ" throws invalidJSONStructure
+  func test_deserialize_timestamp_invalidFractionalSeconds_throwsError() throws {
+    let tsDesc = _MessageDescriptor(name: "Timestamp", fullName: "google.protobuf.Timestamp")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("\"2023-01-15T10:30:00.abcZ\"".data(using: .utf8)!, using: tsDesc)
+    )
+  }
+
+  // MARK: - Duration parse errors
+
+  // [PROTOC-BASH]
+  // protoc rejects duration strings with empty seconds component
+  // Oracle: ".5s" (empty seconds before dot) throws invalidJSONStructure
+  func test_deserialize_duration_emptySecondsComponent_throwsError() throws {
+    let durDesc = _MessageDescriptor(name: "Duration", fullName: "google.protobuf.Duration")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("\".5s\"".data(using: .utf8)!, using: durDesc)
+    )
+  }
+
+  // [PROTOC-BASH]
+  // protoc rejects duration strings with non-numeric fractional part
+  // Oracle: "10.ABCs" (non-numeric frac) throws invalidJSONStructure
+  func test_deserialize_duration_nonNumericFractional_throwsError() throws {
+    let durDesc = _MessageDescriptor(name: "Duration", fullName: "google.protobuf.Duration")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("\"10.ABCs\"".data(using: .utf8)!, using: durDesc)
+    )
+  }
+
+  // MARK: - Nesting depth exceeded for WKT internals
+
+  // [PUBLIC-MIRROR] JSONDeserializerProtocComplianceTests.test_deserialize_nestingDepthExceeded_whenMaxDepthTooLow
+  // Oracle: maxNestingDepth:-1 with google.protobuf.Value triggers nestingDepthExceeded in decodeValueFromAny
+  func test_deserialize_googleProtobufValue_maxDepthExceeded_throwsError() throws {
+    let desc = _MessageDescriptor(name: "Value", fullName: "google.protobuf.Value")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry(), maxNestingDepth: -1)
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("null".data(using: .utf8)!, using: desc)
+    ) { error in
+      if let jsonError = error as? _JSONDeserializationError,
+        case .nestingDepthExceeded = jsonError
+      {
+        // Expected
+      }
+      else {
+        XCTFail("Expected nestingDepthExceeded, got: \(error)")
+      }
+    }
+  }
+
+  // [PUBLIC-MIRROR] same
+  // Oracle: maxNestingDepth:-1 with google.protobuf.Struct triggers nestingDepthExceeded in decodeStructFromObject
+  func test_deserialize_googleProtobufStruct_maxDepthExceeded_throwsError() throws {
+    let desc = _MessageDescriptor(name: "Struct", fullName: "google.protobuf.Struct")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry(), maxNestingDepth: -1)
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("{}".data(using: .utf8)!, using: desc)
+    ) { error in
+      if let jsonError = error as? _JSONDeserializationError,
+        case .nestingDepthExceeded = jsonError
+      {
+        // Expected
+      }
+      else {
+        XCTFail("Expected nestingDepthExceeded, got: \(error)")
+      }
+    }
+  }
+
+  // [PUBLIC-MIRROR] same
+  // Oracle: maxNestingDepth:-1 with google.protobuf.ListValue triggers nestingDepthExceeded
+  func test_deserialize_googleProtobufListValue_maxDepthExceeded_throwsError() throws {
+    let desc = _MessageDescriptor(name: "ListValue", fullName: "google.protobuf.ListValue")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry(), maxNestingDepth: -1)
+    )
+
+    XCTAssertThrowsError(
+      try deserializer.deserialize("[]".data(using: .utf8)!, using: desc)
+    ) { error in
+      if let jsonError = error as? _JSONDeserializationError,
+        case .nestingDepthExceeded = jsonError
+      {
+        // Expected
+      }
+      else {
+        XCTFail("Expected nestingDepthExceeded, got: \(error)")
+      }
+    }
+  }
+
+  // MARK: - Int64 / UInt64 from JSON number (NSNumber)
+
+  // [PROTOC-BASH]
+  // protoc also accepts JSON number for int64 (not just string)
+  // Oracle: JSON number 42 for int64 field deserializes to Int64(42)
+  func test_deserialize_int64Field_fromJSONNumber_succeeds() async throws {
+    var desc = MessageDescriptor(name: "M", fullName: "M")
+    desc.addField(FieldDescriptor(name: "count", number: 1, type: .int64))
+
+    let deserializer = JSONDeserializer(
+      options: JSONDeserializationOptions(typeRegistry: TypeRegistry())
+    )
+    let json = "{\"count\": 42}".data(using: .utf8)!
+    let result = try await deserializer.deserialize(json, using: desc)
+
+    let value = try result.get(forField: "count")
+    XCTAssertNotNil(value)
+  }
+
+  // [PROTOC-BASH]
+  // protoc also accepts JSON number for uint64 (not just string)
+  // Oracle: JSON number 42 for uint64 field deserializes to UInt64(42)
+  func test_deserialize_uint64Field_fromJSONNumber_succeeds() async throws {
+    var desc = MessageDescriptor(name: "M", fullName: "M")
+    desc.addField(FieldDescriptor(name: "count", number: 1, type: .uint64))
+
+    let deserializer = JSONDeserializer(
+      options: JSONDeserializationOptions(typeRegistry: TypeRegistry())
+    )
+    let json = "{\"count\": 42}".data(using: .utf8)!
+    let result = try await deserializer.deserialize(json, using: desc)
+
+    let value = try result.get(forField: "count")
+    XCTAssertNotNil(value)
+  }
+
+  // MARK: - Float field type mismatch
+
+  // [PROTOC-BASH]
+  // protoc rejects non-number, non-string values for float fields
+  // Oracle: JSON array for float field throws valueTypeMismatch
+  func test_deserialize_floatField_fromArray_throwsValueTypeMismatch() async throws {
+    var desc = MessageDescriptor(name: "M", fullName: "M")
+    desc.addField(FieldDescriptor(name: "f", number: 1, type: .float))
+
+    let deserializer = JSONDeserializer(
+      options: JSONDeserializationOptions(typeRegistry: TypeRegistry())
+    )
+    let json = "{\"f\": [1, 2]}".data(using: .utf8)!
+
+    do {
+      _ = try await deserializer.deserialize(json, using: desc)
+      XCTFail("Expected error")
+    }
+    catch let error as JSONDeserializationError {
+      if case .valueTypeMismatch = error {
+        // Expected
+      }
+      else {
+        XCTFail("Expected valueTypeMismatch, got: \(error)")
+      }
+    }
+  }
+
+  // MARK: - Enum type mismatch
+
+  // [PROTOC-BASH]
+  // protoc rejects non-number, non-string values for enum fields
+  // Oracle: JSON array for enum field throws valueTypeMismatch
+  func test_deserialize_enumField_fromArray_throwsValueTypeMismatch() async throws {
+    var desc = MessageDescriptor(name: "M", fullName: "M")
+    desc.addField(FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "Status"))
+
+    let deserializer = JSONDeserializer(
+      options: JSONDeserializationOptions(typeRegistry: TypeRegistry())
+    )
+    let json = "{\"status\": [\"A\", \"B\"]}".data(using: .utf8)!
+
+    do {
+      _ = try await deserializer.deserialize(json, using: desc)
+      XCTFail("Expected error")
+    }
+    catch let error as JSONDeserializationError {
+      if case .valueTypeMismatch = error {
+        // Expected
+      }
+      else {
+        XCTFail("Expected valueTypeMismatch, got: \(error)")
+      }
+    }
+  }
+
+  // MARK: - Extension field found by jsonName
+
+  // [PUBLIC-MIRROR] JSONDeserializationTests — extension fields are deserialized by JSON name
+  // Oracle: extension field with different name and jsonName is found by jsonName in JSON
+  func test_deserialize_extensionField_foundByJsonName_succeeds() throws {
+    var msgDesc = _MessageDescriptor(name: "M", fullName: "M")
+    let extField = _FieldDescriptor(name: "ext_field", number: 100, type: .string, jsonName: "extField")
+    msgDesc.addExtension(extField)
+
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+    let jsonObj: [String: Any] = ["extField": "hello"]
+    let result = try deserializer.deserializeFromJSONObject(jsonObj, using: msgDesc)
+
+    let value = try result.get(forField: 100)
+    XCTAssertEqual(value as? String, "hello")
+  }
+
+  // MARK: - Map missingMapEntryInfo error
+
+  // [PUBLIC-MIRROR] JSONDeserializationTests — map field without mapEntryInfo throws
+  // Oracle: map field descriptor with isMap:true and no mapEntryInfo → missingMapEntryInfo error
+  func test_deserialize_mapField_missingMapEntryInfo_throwsError() throws {
+    var msgDesc = _MessageDescriptor(name: "M", fullName: "M")
+    let mapField = _FieldDescriptor(
+      name: "labels",
+      number: 1,
+      type: .message,
+      isRepeated: true,
+      isMap: true,
+      mapEntryInfo: nil
+    )
+    msgDesc.addField(mapField)
+
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+    let jsonObj: [String: Any] = ["labels": ["key": "value"]]
+
+    XCTAssertThrowsError(
+      try deserializer.deserializeFromJSONObject(jsonObj, using: msgDesc)
+    ) { error in
+      if let jsonError = error as? _JSONDeserializationError,
+        case .missingMapEntryInfo = jsonError
+      {
+        // Expected
+      }
+      else {
+        XCTFail("Expected missingMapEntryInfo, got: \(error)")
+      }
+    }
+  }
+
+  // MARK: - Value fallback (else branch in decodeValueFromAny)
+
+  // [PROTOC-BASH]
+  // protoc treats unknown JSON types as null in google.protobuf.Value
+  // Oracle: non-JSON-primitive passed to decodeValueFromAny falls back to null_value
+  func test_deserialize_googleProtobufValue_unknownType_fallsBackToNull() throws {
+    let valueDesc = _MessageDescriptor(name: "Value", fullName: "google.protobuf.Value")
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+
+    let date = Date()
+    let result = try deserializer.deserializeWKTFromAny(date, using: valueDesc, depth: 0)
+
+    XCTAssertNotNil(result)
+  }
+
+  // MARK: - Legacy enum fallback in map deserialization
+
+  // [PUBLIC-MIRROR] resolveEnumDescriptor tests — legacy structural nesting fallback
+  // Oracle: map value enum not in registry but found in descriptor.nestedEnums → used via legacy path
+  func test_deserialize_mapField_legacyEnumFallback_succeeds() throws {
+    var msgDesc = _MessageDescriptor(name: "M", fullName: "M")
+
+    var enumDesc = _EnumDescriptor(name: "Status", fullName: "M.Status")
+    enumDesc.addValue(_EnumDescriptor._EnumValue(name: "UNKNOWN", number: 0))
+    enumDesc.addValue(_EnumDescriptor._EnumValue(name: "ACTIVE", number: 1))
+    msgDesc.addNestedEnum(enumDesc)
+
+    let keyInfo = _KeyFieldInfo(name: "key", number: 1, type: .string)
+    let valueInfo = _ValueFieldInfo(name: "value", number: 2, type: .enum, typeName: ".M.Status")
+    let mapEntryInfo = _MapEntryInfo(keyFieldInfo: keyInfo, valueFieldInfo: valueInfo)
+    let mapField = _FieldDescriptor(
+      name: "labels",
+      number: 1,
+      type: .message,
+      isRepeated: true,
+      isMap: true,
+      mapEntryInfo: mapEntryInfo
+    )
+    msgDesc.addField(mapField)
+
+    let deserializer = _JSONDeserializer(
+      options: _JSONDeserializationOptions(typeRegistry: _TypeRegistry())
+    )
+    let jsonObj: [String: Any] = ["labels": ["key1": "ACTIVE"]]
+    let result = try deserializer.deserializeFromJSONObject(jsonObj, using: msgDesc)
+
+    XCTAssertNotNil(result)
+  }
 }

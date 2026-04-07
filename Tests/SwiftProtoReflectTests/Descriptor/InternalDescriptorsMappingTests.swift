@@ -777,4 +777,86 @@ final class InternalDescriptorsMappingTests: XCTestCase {
       XCTAssertEqual(back, option, "DescriptorOption \(option) did not survive Mapping round-trip")
     }
   }
+
+  // MARK: - _FileDescriptor coverage
+
+  // [PUBLIC-MIRROR] FileDescriptorTests.testAddMessage
+  // Oracle: _FileDescriptor.addMessage sets fileDescriptorPath on message when it has none
+  func test_fileDescriptor_addMessage_setsFileDescriptorPath_whenMessageHasNone() {
+    var fileDesc = _FileDescriptor(name: "my.proto", package: "example")
+    let msgDesc = _MessageDescriptor(name: "MyMessage", fullName: "example.MyMessage")
+
+    XCTAssertNil(msgDesc.fileDescriptorPath)
+    XCTAssertNil(msgDesc.parentMessageFullName)
+
+    fileDesc.addMessage(msgDesc)
+
+    XCTAssertEqual(fileDesc.messages["MyMessage"]?.fileDescriptorPath, "my.proto")
+  }
+
+  // [PUBLIC-MIRROR] FileDescriptorTests.testGetFullName
+  // Oracle: _FileDescriptor.getFullName with non-empty package returns "package.TypeName"
+  func test_fileDescriptor_getFullName_withNonEmptyPackage_returnsPrefixed() {
+    let fileDesc = _FileDescriptor(name: "my.proto", package: "example")
+
+    XCTAssertEqual(fileDesc.getFullName(for: "MyMessage"), "example.MyMessage")
+    XCTAssertEqual(fileDesc.getFullName(for: "OtherType"), "example.OtherType")
+  }
+
+  // [PUBLIC-MIRROR] FileDescriptorTests.testGetFullName
+  // Oracle: _FileDescriptor.getFullName with empty package returns just the type name
+  func test_fileDescriptor_getFullName_withEmptyPackage_returnsTypeName() {
+    let fileDesc = _FileDescriptor(name: "my.proto", package: "")
+
+    XCTAssertEqual(fileDesc.getFullName(for: "MyMessage"), "MyMessage")
+  }
+
+  // MARK: - _EnumDescriptor._EnumValue equality
+
+  // [PUBLIC-MIRROR] EnumDescriptorTests.testEnumDescriptorEquality
+  // Oracle: two _EnumValue instances with same name/number/options are equal
+  func test_enumValue_impl_equality_identical_returnsTrue() {
+    let v1 = _EnumDescriptor._EnumValue(name: "ACTIVE", number: 1, options: ["deprecated": .bool(false)])
+    let v2 = _EnumDescriptor._EnumValue(name: "ACTIVE", number: 1, options: ["deprecated": .bool(false)])
+
+    XCTAssertEqual(v1, v2)
+  }
+
+  // [PUBLIC-MIRROR] EnumDescriptorTests.testEnumValueWithOptions
+  // Oracle: two _EnumValue instances with different options are not equal
+  func test_enumValue_impl_equality_differentOptions_returnsFalse() {
+    let v1 = _EnumDescriptor._EnumValue(name: "ACTIVE", number: 1, options: ["deprecated": .bool(true)])
+    let v2 = _EnumDescriptor._EnumValue(name: "ACTIVE", number: 1, options: ["deprecated": .bool(false)])
+
+    XCTAssertNotEqual(v1, v2)
+  }
+
+  // MARK: - _EnumDescriptor equality complete paths
+
+  // [PUBLIC-MIRROR] EnumDescriptorTests.testEnumDescriptorEquality
+  // Oracle: two identical _EnumDescriptor instances (same values) are equal
+  func test_enumDescriptor_impl_equality_identical_returnsTrue() {
+    var impl1 = _EnumDescriptor(name: "Status", fullName: "test.Status")
+    impl1.addValue(_EnumDescriptor._EnumValue(name: "UNKNOWN", number: 0))
+    impl1.addValue(_EnumDescriptor._EnumValue(name: "ACTIVE", number: 1))
+
+    var impl2 = _EnumDescriptor(name: "Status", fullName: "test.Status")
+    impl2.addValue(_EnumDescriptor._EnumValue(name: "UNKNOWN", number: 0))
+    impl2.addValue(_EnumDescriptor._EnumValue(name: "ACTIVE", number: 1))
+
+    XCTAssertEqual(impl1, impl2)
+  }
+
+  // [PUBLIC-MIRROR] EnumDescriptorTests.testEnumDescriptorEquality
+  // Oracle: _EnumDescriptor with same metadata but different value count → not equal
+  func test_enumDescriptor_impl_equality_differentValueCount_returnsFalse() {
+    var impl1 = _EnumDescriptor(name: "Status", fullName: "test.Status")
+    impl1.addValue(_EnumDescriptor._EnumValue(name: "A", number: 0))
+    impl1.addValue(_EnumDescriptor._EnumValue(name: "B", number: 1))
+
+    var impl2 = _EnumDescriptor(name: "Status", fullName: "test.Status")
+    impl2.addValue(_EnumDescriptor._EnumValue(name: "A", number: 0))
+
+    XCTAssertNotEqual(impl1, impl2)
+  }
 }
