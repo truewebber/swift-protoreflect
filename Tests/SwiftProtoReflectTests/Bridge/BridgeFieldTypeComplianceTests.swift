@@ -392,6 +392,7 @@ final class BridgeFieldTypeComplianceTests: XCTestCase {
   }
 
   /// Extracts the raw bytes for a specific field number from serialized proto bytes.
+  ///
   /// Handles both varint and fixed-width wire types.
   private func extractFieldBytes(number: Int, from data: Data) -> Data? {
     var index = data.startIndex
