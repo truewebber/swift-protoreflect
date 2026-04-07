@@ -12,19 +12,19 @@ final class DescriptorBridgeIntegrationTests: XCTestCase {
 
   private var bridge: DescriptorBridge!
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     bridge = DescriptorBridge()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     bridge = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - T-INT-01: User oneof contact
 
-  func test_INT01_userMessage_manualDescriptor_roundTrip_allFieldsResolveOneofName() throws {
+  func test_INT01_userMessage_manualDescriptor_roundTrip_allFieldsResolveOneofName() async throws {
     var msg = MessageDescriptor(name: "User", fullName: "example.User")
     msg.addField(FieldDescriptor(name: "id", number: 1, type: .string))
     msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
@@ -43,7 +43,7 @@ final class DescriptorBridgeIntegrationTests: XCTestCase {
 
   // MARK: - T-INT-02: Payment two oneofs
 
-  func test_INT02_paymentMessage_twoOneofs_roundTrip_indicesAndNames() throws {
+  func test_INT02_paymentMessage_twoOneofs_roundTrip_indicesAndNames() async throws {
     var msg = MessageDescriptor(name: "Payment", fullName: "example.Payment")
     msg.addField(FieldDescriptor(name: "id", number: 1, type: .string))
     msg.addField(FieldDescriptor(name: "card", number: 2, type: .string, oneofIndex: 0))
@@ -69,7 +69,7 @@ final class DescriptorBridgeIntegrationTests: XCTestCase {
 
   // MARK: - T-INT-03: Outer / Inner nested oneofs
 
-  func test_INT03_outerInnerNestedOneofs_roundTrip_staySeparate() throws {
+  func test_INT03_outerInnerNestedOneofs_roundTrip_staySeparate() async throws {
     var inner = MessageDescriptor(name: "Inner", fullName: "example.Outer.Inner")
     inner.addField(FieldDescriptor(name: "x", number: 1, type: .string, oneofIndex: 0))
     inner.addField(FieldDescriptor(name: "y", number: 2, type: .string, oneofIndex: 0))
@@ -95,7 +95,7 @@ final class DescriptorBridgeIntegrationTests: XCTestCase {
 
   // MARK: - T-INT-04: Nested enum + nested message + oneof (regression)
 
-  func test_INT04_nestedEnumNestedMessageAndOneof_composed_roundTrip() throws {
+  func test_INT04_nestedEnumNestedMessageAndOneof_composed_roundTrip() async throws {
     var file = FileDescriptor(name: "mix.proto", package: "example")
 
     var nestedMsg = MessageDescriptor(name: "Payload", parent: file)
@@ -126,7 +126,7 @@ final class DescriptorBridgeIntegrationTests: XCTestCase {
 
   // MARK: - T-INT-05: DynamicMessage binary + JSON with oneof metadata
 
-  func test_INT05_dynamicMessage_withOneofDecls_binaryAndJsonRoundTrip() throws {
+  func test_INT05_dynamicMessage_withOneofDecls_binaryAndJsonRoundTrip() async throws {
     var msg = MessageDescriptor(name: "User", fullName: "example.User")
     msg.addField(FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0))
     msg.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
@@ -137,13 +137,13 @@ final class DescriptorBridgeIntegrationTests: XCTestCase {
     let binarySerializer = BinarySerializer()
     let binaryDeserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let binData = try binarySerializer.serialize(dynamic)
-    let fromBinary = try binaryDeserializer.deserialize(binData, using: msg)
+    let fromBinary = try await binaryDeserializer.deserialize(binData, using: msg)
     XCTAssertEqual(try fromBinary.get(forField: "email") as? String, "a@b.c")
 
     let jsonSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let jsonDeserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let jsonData = try jsonSerializer.serialize(dynamic)
-    let fromJSON = try jsonDeserializer.deserialize(jsonData, using: msg)
+    let jsonData = try await jsonSerializer.serialize(dynamic)
+    let fromJSON = try await jsonDeserializer.deserialize(jsonData, using: msg)
     XCTAssertEqual(try fromJSON.get(forField: "email") as? String, "a@b.c")
   }
 }

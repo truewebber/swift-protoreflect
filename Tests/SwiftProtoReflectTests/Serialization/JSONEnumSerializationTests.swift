@@ -31,37 +31,37 @@ final class JSONEnumSerializationTests: XCTestCase {
 
   // MARK: - Serialization
 
-  func test_serialize_knownEnumValue_emitsName() throws {
+  func test_serialize_knownEnumValue_emitsName() async throws {
     let (desc, _) = makeDescriptorWithEnum()
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(Int32(1), forField: 1)
 
     let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-    let json = try jsonDict(serializer.serialize(msg))
+    let json = try await jsonDict(serializer.serialize(msg))
     XCTAssertEqual(json["status"] as? String, "ACTIVE")
   }
 
-  func test_serialize_zeroEnumValue_emitsZeroName() throws {
+  func test_serialize_zeroEnumValue_emitsZeroName() async throws {
     let (desc, _) = makeDescriptorWithEnum()
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(Int32(0), forField: 1)
 
     let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-    let json = try jsonDict(serializer.serialize(msg))
+    let json = try await jsonDict(serializer.serialize(msg))
     XCTAssertEqual(json["status"] as? String, "UNKNOWN")
   }
 
-  func test_serialize_unknownEnumValue_emitsNumber() throws {
+  func test_serialize_unknownEnumValue_emitsNumber() async throws {
     let (desc, _) = makeDescriptorWithEnum()
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(Int32(999), forField: 1)
 
     let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-    let json = try jsonDict(serializer.serialize(msg))
+    let json = try await jsonDict(serializer.serialize(msg))
     XCTAssertEqual(json["status"] as? Int, 999)
   }
 
-  func test_serialize_repeatedEnum_emitsNameArray() throws {
+  func test_serialize_repeatedEnum_emitsNameArray() async throws {
     let (_, enumDesc) = makeDescriptorWithEnum()
     var msgDesc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     msgDesc.addField(
@@ -80,14 +80,14 @@ final class JSONEnumSerializationTests: XCTestCase {
     try msg.set([Int32(0), Int32(1), Int32(2)], forField: 1)
 
     let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-    let json = try jsonDict(serializer.serialize(msg))
+    let json = try await jsonDict(serializer.serialize(msg))
     let arr = json["statuses"] as? [Any]
     XCTAssertEqual(arr?[0] as? String, "UNKNOWN")
     XCTAssertEqual(arr?[1] as? String, "ACTIVE")
     XCTAssertEqual(arr?[2] as? String, "INACTIVE")
   }
 
-  func test_serialize_enumWithoutDescriptor_fallbackToNumber() throws {
+  func test_serialize_enumWithoutDescriptor_fallbackToNumber() async throws {
     var msgDesc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     msgDesc.addField(
       FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "test.UnknownEnum", jsonName: "status")
@@ -97,72 +97,78 @@ final class JSONEnumSerializationTests: XCTestCase {
     try msg.set(Int32(42), forField: 1)
 
     let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-    let json = try jsonDict(serializer.serialize(msg))
+    let json = try await jsonDict(serializer.serialize(msg))
     XCTAssertEqual(json["status"] as? Int, 42)
   }
 
   // MARK: - Deserialization
 
-  func test_deserialize_enumByName_returnsNumber() throws {
+  func test_deserialize_enumByName_returnsNumber() async throws {
     let (desc, _) = makeDescriptorWithEnum()
     let jsonData = try JSONSerialization.data(withJSONObject: ["status": "ACTIVE"])
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let msg = try deserializer.deserialize(jsonData, using: desc)
+    let msg = try await deserializer.deserialize(jsonData, using: desc)
     let value = try msg.get(forField: 1) as? Int32
     XCTAssertEqual(value, 1)
   }
 
-  func test_deserialize_enumByNumber_returnsNumber() throws {
+  func test_deserialize_enumByNumber_returnsNumber() async throws {
     let (desc, _) = makeDescriptorWithEnum()
     let jsonData = try JSONSerialization.data(withJSONObject: ["status": 1])
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let msg = try deserializer.deserialize(jsonData, using: desc)
+    let msg = try await deserializer.deserialize(jsonData, using: desc)
     let value = try msg.get(forField: 1) as? Int32
     XCTAssertEqual(value, 1)
   }
 
-  func test_deserialize_enumByStringNumber_returnsNumber() throws {
+  func test_deserialize_enumByStringNumber_returnsNumber() async throws {
     let (desc, _) = makeDescriptorWithEnum()
     let jsonData = try JSONSerialization.data(withJSONObject: ["status": "1"])
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let msg = try deserializer.deserialize(jsonData, using: desc)
+    let msg = try await deserializer.deserialize(jsonData, using: desc)
     let value = try msg.get(forField: 1) as? Int32
     XCTAssertEqual(value, 1)
   }
 
-  func test_deserialize_unknownEnumName_throwsError() throws {
+  func test_deserialize_unknownEnumName_throwsError() async throws {
     let (desc, _) = makeDescriptorWithEnum()
     let jsonData = try JSONSerialization.data(withJSONObject: ["status": "NONEXISTENT"])
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: desc))
+    do {
+      _ = try await deserializer.deserialize(jsonData, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
   // MARK: - Round-trip
 
-  func test_roundTrip_knownEnumValue_preserved() throws {
+  func test_roundTrip_knownEnumValue_preserved() async throws {
     let (desc, _) = makeDescriptorWithEnum()
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(Int32(1), forField: 1)
 
     let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-    let json = try serializer.serialize(msg)
+    let json = try await serializer.serialize(msg)
 
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let restored = try deserializer.deserialize(json, using: desc)
+    let restored = try await deserializer.deserialize(json, using: desc)
     let value = try restored.get(forField: 1) as? Int32
     XCTAssertEqual(value, 1)
   }
 
-  func test_roundTrip_zeroEnumValue_preserved() throws {
+  func test_roundTrip_zeroEnumValue_preserved() async throws {
     let (desc, _) = makeDescriptorWithEnum()
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(Int32(0), forField: 1)
 
     let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-    let json = try serializer.serialize(msg)
+    let json = try await serializer.serialize(msg)
 
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let restored = try deserializer.deserialize(json, using: desc)
+    let restored = try await deserializer.deserialize(json, using: desc)
     let value = try restored.get(forField: 1) as? Int32
     XCTAssertEqual(value, 0)
   }

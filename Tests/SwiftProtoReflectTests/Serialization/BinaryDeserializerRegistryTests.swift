@@ -19,10 +19,10 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
   private let factory = MessageFactory()
   private let serializer = BinarySerializer()
 
-  private func makeRegistry(_ descriptors: MessageDescriptor...) throws -> TypeRegistry {
+  private func makeRegistry(_ descriptors: MessageDescriptor...) async throws -> TypeRegistry {
     let registry = TypeRegistry()
     for descriptor in descriptors {
-      try registry.registerMessage(descriptor)
+      try await registry.registerMessage(descriptor)
     }
     return registry
   }
@@ -42,7 +42,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
   /// Serialises a B message containing A.value = `aValue`.
   ///
   /// Uses addNestedMessage only for the serialisation step so binary data is correctly formed.
-  private func serialiseBContainingA(descA: MessageDescriptor, aValue: String) throws -> Data {
+  private func serialiseBContainingA(descA: MessageDescriptor, aValue: String) async throws -> Data {
     let innerDesc = descA
     var innerMsg = factory.createMessage(from: innerDesc)
     try innerMsg.set(aValue, forField: "value")
@@ -58,20 +58,20 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
 
   // MARK: - B. Positive: sibling message resolution via registry
 
-  func test_deserialize_siblingMessageField_withRegistry_succeeds() throws {
+  func test_deserialize_siblingMessageField_withRegistry_succeeds() async throws {
     let descA = makeSiblingA()
     let descB = makeSiblingB()
-    let data = try serialiseBContainingA(descA: descA, aValue: "hello")
+    let data = try await serialiseBContainingA(descA: descA, aValue: "hello")
 
-    let registry = try makeRegistry(descA)
+    let registry = try await makeRegistry(descA)
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: descB)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: descB)
 
     let decodedA = try XCTUnwrap(decoded.get(forField: "a") as? DynamicMessage)
     XCTAssertEqual(try decodedA.get(forField: "value") as? String, "hello")
   }
 
-  func test_deserialize_chainOfSiblingMessages_withRegistry_succeeds() throws {
+  func test_deserialize_chainOfSiblingMessages_withRegistry_succeeds() async throws {
     var descC = MessageDescriptor(name: "C", fullName: "pkg.C")
     descC.addField(FieldDescriptor(name: "n", number: 1, type: .int32))
 
@@ -96,16 +96,16 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     let data = try serializer.serialize(msgA)
 
     // Deserialise with registry (no nesting lies).
-    let registry = try makeRegistry(descA, descB, descC)
+    let registry = try await makeRegistry(descA, descB, descC)
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: descA)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: descA)
 
     let decodedB = try XCTUnwrap(decoded.get(forField: "b") as? DynamicMessage)
     let decodedC = try XCTUnwrap(decodedB.get(forField: "c") as? DynamicMessage)
     XCTAssertEqual(try decodedC.get(forField: "n") as? Int32, 42)
   }
 
-  func test_deserialize_selfReferentialMessage_withRegistry_succeeds() throws {
+  func test_deserialize_selfReferentialMessage_withRegistry_succeeds() async throws {
     // Node { string label = 1; Node child = 2; }  — 3 levels deep.
     var nodeDesc = MessageDescriptor(name: "Node", fullName: "pkg.Node")
     nodeDesc.addField(FieldDescriptor(name: "label", number: 1, type: .string))
@@ -129,9 +129,9 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     let data = try serializer.serialize(level1)
 
     // Deserialise with registry.
-    let registry = try makeRegistry(nodeDesc)
+    let registry = try await makeRegistry(nodeDesc)
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: nodeDesc)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: nodeDesc)
 
     XCTAssertEqual(try decoded.get(forField: "label") as? String, "root")
     let child1 = try XCTUnwrap(decoded.get(forField: "child") as? DynamicMessage)
@@ -140,7 +140,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     XCTAssertEqual(try child2.get(forField: "label") as? String, "leaf")
   }
 
-  func test_deserialize_mutuallyRecursiveMessages_withRegistry_succeeds() throws {
+  func test_deserialize_mutuallyRecursiveMessages_withRegistry_succeeds() async throws {
     // Mirrors google.protobuf.Value / ListValue sibling pattern.
     var valueDesc = MessageDescriptor(name: "Value", fullName: "pkg.Value")
     valueDesc.addField(FieldDescriptor(name: "string_value", number: 3, type: .string))
@@ -170,9 +170,9 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     let data = try serializer.serialize(listMsg)
 
     // Deserialise with registry (no lie).
-    let registry = try makeRegistry(valueDesc, listValueDesc)
+    let registry = try await makeRegistry(valueDesc, listValueDesc)
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: listValueDesc)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: listValueDesc)
 
     let items = try XCTUnwrap(decoded.get(forField: "values") as? [Any])
     XCTAssertEqual(items.count, 2)
@@ -180,7 +180,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     XCTAssertEqual(try first.get(forField: "string_value") as? String, "item1")
   }
 
-  func test_deserialize_mapValueSiblingMessage_withRegistry_succeeds() throws {
+  func test_deserialize_mapValueSiblingMessage_withRegistry_succeeds() async throws {
     var itemDesc = MessageDescriptor(name: "Item", fullName: "pkg.Item")
     itemDesc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
 
@@ -213,16 +213,16 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     let data = try serializer.serialize(containerMsg)
 
     // Deserialise with registry.
-    let registry = try makeRegistry(itemDesc, containerDesc)
+    let registry = try await makeRegistry(itemDesc, containerDesc)
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: containerDesc)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: containerDesc)
 
     let map = try XCTUnwrap(decoded.get(forField: "items") as? [AnyHashable: Any])
     let decodedItem = try XCTUnwrap(map["key1"] as? DynamicMessage)
     XCTAssertEqual(try decodedItem.get(forField: "name") as? String, "widget")
   }
 
-  func test_deserialize_oneofSiblingMessageField_withRegistry_succeeds() throws {
+  func test_deserialize_oneofSiblingMessageField_withRegistry_succeeds() async throws {
     var payloadDesc = MessageDescriptor(name: "Payload", fullName: "pkg.Payload")
     payloadDesc.addField(FieldDescriptor(name: "data", number: 1, type: .string))
 
@@ -249,15 +249,15 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     let data = try serializer.serialize(wrapperMsg)
 
     // Deserialise with registry.
-    let registry = try makeRegistry(payloadDesc, wrapperDesc)
+    let registry = try await makeRegistry(payloadDesc, wrapperDesc)
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: wrapperDesc)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: wrapperDesc)
 
     let decodedPayload = try XCTUnwrap(decoded.get(forField: "payload") as? DynamicMessage)
     XCTAssertEqual(try decodedPayload.get(forField: "data") as? String, "secret")
   }
 
-  func test_deserialize_siblingEnum_withRegistry_succeeds() throws {
+  func test_deserialize_siblingEnum_withRegistry_succeeds() async throws {
     // Note: enum fields are decoded as varints — no name resolution needed.
     // This test verifies that enum fields work correctly when a registry is present.
     var statusEnum = EnumDescriptor(name: "Status", fullName: "pkg.Status")
@@ -276,12 +276,12 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     let data = try serializer.serialize(docMsg)
 
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: docDesc)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: docDesc)
 
     XCTAssertEqual(try decoded.get(forField: "status") as? Int32, 1)
   }
 
-  func test_deserialize_typeNameWithLeadingDot_withRegistry_succeeds() throws {
+  func test_deserialize_typeNameWithLeadingDot_withRegistry_succeeds() async throws {
     // Some protoc outputs use ".pkg.A" (leading dot) instead of "pkg.A".
     let descA = makeSiblingA()
 
@@ -290,17 +290,17 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
       FieldDescriptor(name: "a", number: 1, type: .message, typeName: ".pkg.A")
     )
 
-    let data = try serialiseBContainingA(descA: descA, aValue: "dotted")
+    let data = try await serialiseBContainingA(descA: descA, aValue: "dotted")
 
-    let registry = try makeRegistry(descA)
+    let registry = try await makeRegistry(descA)
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: descB)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: descB)
 
     let decodedA = try XCTUnwrap(decoded.get(forField: "a") as? DynamicMessage)
     XCTAssertEqual(try decodedA.get(forField: "value") as? String, "dotted")
   }
 
-  func test_deserialize_multiFileRegistry_withRegistry_succeeds() throws {
+  func test_deserialize_multiFileRegistry_withRegistry_succeeds() async throws {
     // Types from two separate FileDescriptors registered in the same registry.
     var descA = MessageDescriptor(name: "A", fullName: "svc.A")
     descA.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
@@ -315,8 +315,8 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     fileB.addMessage(descB)
 
     let registry = TypeRegistry()
-    try registry.registerFile(fileA)
-    try registry.registerFile(fileB)
+    try await registry.registerFile(fileA)
+    try await registry.registerFile(fileB)
 
     // Serialise B containing A.
     var innerMsg = factory.createMessage(from: descA)
@@ -326,13 +326,13 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     let data = try serializer.serialize(outerMsg)
 
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: descB)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: descB)
 
     let decodedA = try XCTUnwrap(decoded.get(forField: "a") as? DynamicMessage)
     XCTAssertEqual(try decodedA.get(forField: "id") as? Int32, 99)
   }
 
-  func test_deserialize_structurallyNestedType_withRegistry_preferNested() throws {
+  func test_deserialize_structurallyNestedType_withRegistry_preferNested() async throws {
     // Truly nested Inner: fullName = "pkg.Outer.Inner".
     // Registry also has a sibling "pkg.Sibling" — must not be chosen.
     var innerDesc = MessageDescriptor(name: "Inner", fullName: "pkg.Outer.Inner")
@@ -347,7 +347,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     var siblingDesc = MessageDescriptor(name: "Sibling", fullName: "pkg.Sibling")
     siblingDesc.addField(FieldDescriptor(name: "y", number: 1, type: .int32))
 
-    let registry = try makeRegistry(siblingDesc)
+    let registry = try await makeRegistry(siblingDesc)
 
     var innerMsg = factory.createMessage(from: innerDesc)
     try innerMsg.set(Int32(7), forField: "x")
@@ -356,13 +356,13 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     let data = try serializer.serialize(outerMsg)
 
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: outerDesc)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: outerDesc)
 
     let decodedInner = try XCTUnwrap(decoded.get(forField: "inner") as? DynamicMessage)
     XCTAssertEqual(try decodedInner.get(forField: "x") as? Int32, 7)
   }
 
-  func test_deserialize_proto2GroupFieldSibling_withRegistry_succeeds() throws {
+  func test_deserialize_proto2GroupFieldSibling_withRegistry_succeeds() async throws {
     var groupDesc = MessageDescriptor(name: "MyGroup", fullName: "test.MyGroup", syntax: "proto2")
     groupDesc.addField(FieldDescriptor(name: "a", number: 1, type: .int32))
 
@@ -380,9 +380,9 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     try msg.set(groupMsg, forField: "my_group")
     let data = try serializer.serialize(msg)
 
-    let registry = try makeRegistry(groupDesc)
+    let registry = try await makeRegistry(groupDesc)
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: msgDesc)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: msgDesc)
 
     XCTAssertEqual(try decoded.get(forField: "id") as? Int32, 1)
     let decodedGroup = try XCTUnwrap(decoded.get(forField: "my_group") as? DynamicMessage)
@@ -391,14 +391,16 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
 
   // MARK: - C. Negative: error paths
 
-  func test_deserialize_siblingMessage_withoutRegistry_throwsError() throws {
+  func test_deserialize_siblingMessage_withoutRegistry_throwsError() async throws {
     let descA = makeSiblingA()
     let descB = makeSiblingB()
-    let data = try serialiseBContainingA(descA: descA, aValue: "test")
+    let data = try await serialiseBContainingA(descA: descA, aValue: "test")
 
-    XCTAssertThrowsError(
-      try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(data, using: descB)
-    ) { error in
+    do {
+      _ = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(data, using: descB)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       guard case .unsupportedNestedMessage(let typeName) = error as? DeserializationError else {
         XCTFail("Expected unsupportedNestedMessage, got \(error)")
         return
@@ -407,50 +409,60 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     }
   }
 
-  func test_deserialize_unknownTypeInRegistry_throwsError() throws {
+  func test_deserialize_unknownTypeInRegistry_throwsError() async throws {
     let descA = makeSiblingA()
     let descB = makeSiblingB()
-    let data = try serialiseBContainingA(descA: descA, aValue: "test")
+    let data = try await serialiseBContainingA(descA: descA, aValue: "test")
 
     // Registry has a different type — pkg.A is NOT registered.
     var otherDesc = MessageDescriptor(name: "Other", fullName: "pkg.Other")
     otherDesc.addField(FieldDescriptor(name: "v", number: 1, type: .string))
-    let registry = try makeRegistry(otherDesc)
+    let registry = try await makeRegistry(otherDesc)
 
     let opts = DeserializationOptions(typeRegistry: registry)
-    XCTAssertThrowsError(try BinaryDeserializer(options: opts).deserialize(data, using: descB)) { error in
+    do {
+      _ = try await BinaryDeserializer(options: opts).deserialize(data, using: descB)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       XCTAssertTrue(error is DeserializationError)
     }
   }
 
-  func test_deserialize_emptyRegistry_throwsError() throws {
+  func test_deserialize_emptyRegistry_throwsError() async throws {
     let descA = makeSiblingA()
     let descB = makeSiblingB()
-    let data = try serialiseBContainingA(descA: descA, aValue: "test")
+    let data = try await serialiseBContainingA(descA: descA, aValue: "test")
 
     let registry = TypeRegistry()  // empty
     let opts = DeserializationOptions(typeRegistry: registry)
-    XCTAssertThrowsError(try BinaryDeserializer(options: opts).deserialize(data, using: descB)) { error in
+    do {
+      _ = try await BinaryDeserializer(options: opts).deserialize(data, using: descB)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       XCTAssertTrue(error is DeserializationError)
     }
   }
 
-  func test_deserialize_nilRegistry_siblingMessage_throwsError() throws {
+  func test_deserialize_nilRegistry_siblingMessage_throwsError() async throws {
     let descA = makeSiblingA()
     let descB = makeSiblingB()
-    let data = try serialiseBContainingA(descA: descA, aValue: "test")
+    let data = try await serialiseBContainingA(descA: descA, aValue: "test")
 
     let opts = DeserializationOptions(typeRegistry: TypeRegistry())
-    XCTAssertThrowsError(
-      try BinaryDeserializer(options: opts).deserialize(data, using: descB)
-    ) { error in
+    do {
+      _ = try await BinaryDeserializer(options: opts).deserialize(data, using: descB)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       XCTAssertTrue(error is DeserializationError)
     }
   }
 
   // MARK: - D. Corner cases
 
-  func test_deserialize_deeplyNestedChain_5levels_withRegistry_succeeds() throws {
+  func test_deserialize_deeplyNestedChain_5levels_withRegistry_succeeds() async throws {
     // E → D → C → B → A → (leaf int32)
     var descA = MessageDescriptor(name: "A", fullName: "chain.A")
     descA.addField(FieldDescriptor(name: "val", number: 1, type: .int32))
@@ -490,9 +502,9 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     let data = try serializer.serialize(msgE)
 
     // Deserialise with clean registry.
-    let registry = try makeRegistry(descA, descB, descC, descD, descE)
+    let registry = try await makeRegistry(descA, descB, descC, descD, descE)
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: descE)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: descE)
 
     let dD = try XCTUnwrap(decoded.get(forField: "d") as? DynamicMessage)
     let dC = try XCTUnwrap(dD.get(forField: "c") as? DynamicMessage)
@@ -501,7 +513,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     XCTAssertEqual(try dA.get(forField: "val") as? Int32, 5)
   }
 
-  func test_deserialize_typeNameWithLeadingDotStripped_withRegistry_succeeds() throws {
+  func test_deserialize_typeNameWithLeadingDotStripped_withRegistry_succeeds() async throws {
     // Multi-component leading-dot type name: ".com.example.Widget".
     var widgetDesc = MessageDescriptor(name: "Widget", fullName: "com.example.Widget")
     widgetDesc.addField(FieldDescriptor(name: "label", number: 1, type: .string))
@@ -518,15 +530,15 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     try boxMsg.set(widgetMsg, forField: "widget")
     let data = try serializer.serialize(boxMsg)
 
-    let registry = try makeRegistry(widgetDesc)
+    let registry = try await makeRegistry(widgetDesc)
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: boxDesc)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: boxDesc)
 
     let decodedWidget = try XCTUnwrap(decoded.get(forField: "widget") as? DynamicMessage)
     XCTAssertEqual(try decodedWidget.get(forField: "label") as? String, "blue")
   }
 
-  func test_deserialize_registryWithMultipleSiblingTypes_allResolved() throws {
+  func test_deserialize_registryWithMultipleSiblingTypes_allResolved() async throws {
     // Container has two fields, each pointing to a different sibling.
     var typeX = MessageDescriptor(name: "X", fullName: "multi.X")
     typeX.addField(FieldDescriptor(name: "x_val", number: 1, type: .int32))
@@ -557,9 +569,9 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     let data = try serializer.serialize(containerMsg)
 
     // Deserialise with clean registry.
-    let registry = try makeRegistry(typeX, typeY, containerDesc)
+    let registry = try await makeRegistry(typeX, typeY, containerDesc)
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: containerDesc)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: containerDesc)
 
     let dX = try XCTUnwrap(decoded.get(forField: "x") as? DynamicMessage)
     XCTAssertEqual(try dX.get(forField: "x_val") as? Int32, 11)
@@ -567,7 +579,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     XCTAssertEqual(try dY.get(forField: "y_val") as? String, "hello")
   }
 
-  func test_deserialize_emptyMessageBody_withRegistry_succeeds() throws {
+  func test_deserialize_emptyMessageBody_withRegistry_succeeds() async throws {
     // Inner message is set but has no fields — serialised as a 0-length LV.
     let descA = makeSiblingA()
     let descB = makeSiblingB()
@@ -577,46 +589,48 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     try outerMsg.set(emptyInner, forField: "a")
     let data = try serializer.serialize(outerMsg)
 
-    let registry = try makeRegistry(descA)
+    let registry = try await makeRegistry(descA)
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: descB)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: descB)
 
     let decodedA = try XCTUnwrap(decoded.get(forField: "a") as? DynamicMessage)
     XCTAssertNil(try decodedA.get(forField: "value"))
   }
 
-  func test_deserialize_largeMessage_withRegistry_succeeds() throws {
+  func test_deserialize_largeMessage_withRegistry_succeeds() async throws {
     // Inner message with a large string value to stress-test registry lookup.
     let descA = makeSiblingA()
     let descB = makeSiblingB()
 
     let largeString = String(repeating: "X", count: 10_000)
-    let data = try serialiseBContainingA(descA: descA, aValue: largeString)
+    let data = try await serialiseBContainingA(descA: descA, aValue: largeString)
 
-    let registry = try makeRegistry(descA)
+    let registry = try await makeRegistry(descA)
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(data, using: descB)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: descB)
 
     let decodedA = try XCTUnwrap(decoded.get(forField: "a") as? DynamicMessage)
     XCTAssertEqual(try decodedA.get(forField: "value") as? String, largeString)
   }
 
-  func test_deserialize_partialDataForMessageField_throwsTruncated() throws {
+  func test_deserialize_partialDataForMessageField_throwsTruncated() async throws {
     // Truncated binary data for a message field — must throw a binary error
     // regardless of registry presence (data is read before type resolution).
     let descA = makeSiblingA()
     let descB = makeSiblingB()
-    let fullData = try serialiseBContainingA(descA: descA, aValue: "complete")
+    let fullData = try await serialiseBContainingA(descA: descA, aValue: "complete")
 
     // Keep only the first 3 bytes: enough for the outer tag/length varint but
     // not the full inner message bytes.
     let truncated = fullData.prefix(3)
 
-    let registry = try makeRegistry(descA)
+    let registry = try await makeRegistry(descA)
     let opts = DeserializationOptions(typeRegistry: registry)
-    XCTAssertThrowsError(
-      try BinaryDeserializer(options: opts).deserialize(Data(truncated), using: descB)
-    ) { error in
+    do {
+      _ = try await BinaryDeserializer(options: opts).deserialize(Data(truncated), using: descB)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       XCTAssertTrue(error is DeserializationError)
     }
   }

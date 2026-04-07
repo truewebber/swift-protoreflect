@@ -24,14 +24,14 @@ import SwiftProtoReflect
 
 @main
 struct JsonConversionExample {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("Protocol Buffers JSON Conversion")
 
-    try step1UbasicJsonSerialization()
-    try step2UcomplexJsonStructures()
-    try step3UjsonVsBinaryComparison()
-    try step4UcrossFormatCompatibility()
-    try step5UjsonReadabilityDemo()
+    try await step1UbasicJsonSerialization()
+    try await step2UcomplexJsonStructures()
+    try await step3UjsonVsBinaryComparison()
+    try await step4UcrossFormatCompatibility()
+    try await step5UjsonReadabilityDemo()
 
     ExampleUtils.printSuccess("JSON conversion successfully learned!")
 
@@ -44,7 +44,7 @@ struct JsonConversionExample {
 
   // MARK: - Implementation Steps
 
-  private static func step1UbasicJsonSerialization() throws {
+  private static func step1UbasicJsonSerialization() async throws {
     ExampleUtils.printStep(1, "Basic JSON serialization")
 
     // Create test message
@@ -60,9 +60,9 @@ struct JsonConversionExample {
     person.prettyPrint()
 
     // JSON serialization
-    let (jsonData, serializeTime) = try ExampleUtils.measureTime {
+    let (jsonData, serializeTime) = try await ExampleUtils.measureTimeAsync {
       let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-      return try serializer.serialize(person)
+      return try await serializer.serialize(person)
     }
 
     ExampleUtils.printTiming("JSON serialization", time: serializeTime)
@@ -74,9 +74,9 @@ struct JsonConversionExample {
     print("    \(jsonString)")
 
     // JSON deserialization
-    let (deserializedPerson, deserializeTime) = try ExampleUtils.measureTime {
+    let (deserializedPerson, deserializeTime) = try await ExampleUtils.measureTimeAsync {
       let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
-      return try deserializer.deserialize(jsonData, using: person.descriptor)
+      return try await deserializer.deserialize(jsonData, using: person.descriptor)
     }
 
     ExampleUtils.printTiming("JSON deserialization", time: deserializeTime)
@@ -88,7 +88,7 @@ struct JsonConversionExample {
     try verifyJsonRoundTrip(original: person, deserialized: deserializedPerson)
   }
 
-  private static func step2UcomplexJsonStructures() throws {
+  private static func step2UcomplexJsonStructures() async throws {
     ExampleUtils.printStep(2, "Complex JSON structures")
 
     // Create complex message with nested objects
@@ -106,9 +106,9 @@ struct JsonConversionExample {
     company.prettyPrint()
 
     // JSON serialization of complex structure
-    let (complexJsonData, complexSerializeTime) = try ExampleUtils.measureTime {
+    let (complexJsonData, complexSerializeTime) = try await ExampleUtils.measureTimeAsync {
       let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-      return try serializer.serialize(company)
+      return try await serializer.serialize(company)
     }
 
     ExampleUtils.printTiming("Complex JSON serialization", time: complexSerializeTime)
@@ -133,9 +133,9 @@ struct JsonConversionExample {
     }
 
     // Deserialization and check
-    let (deserializedCompany, complexDeserializeTime) = try ExampleUtils.measureTime {
+    let (deserializedCompany, complexDeserializeTime) = try await ExampleUtils.measureTimeAsync {
       let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
-      return try deserializer.deserialize(complexJsonData, using: company.descriptor)
+      return try await deserializer.deserialize(complexJsonData, using: company.descriptor)
     }
 
     ExampleUtils.printTiming("Complex JSON deserialization", time: complexDeserializeTime)
@@ -144,7 +144,7 @@ struct JsonConversionExample {
     try verifyJsonArrays(original: company, deserialized: deserializedCompany)
   }
 
-  private static func step3UjsonVsBinaryComparison() throws {
+  private static func step3UjsonVsBinaryComparison() async throws {
     ExampleUtils.printStep(3, "JSON vs Binary format comparison")
 
     print("  📊 Comparative analysis...")
@@ -161,7 +161,7 @@ struct JsonConversionExample {
 
     for (label, messageCount) in testCases {
       // JSON metrics
-      let (jsonSize, jsonTime) = try benchmarkJsonSerialization(messageCount: messageCount)
+      let (jsonSize, jsonTime) = try await benchmarkJsonSerialization(messageCount: messageCount)
 
       // Binary metrics
       let (binarySize, binaryTime) = try benchmarkBinarySerialization(messageCount: messageCount)
@@ -193,7 +193,7 @@ struct JsonConversionExample {
     )
   }
 
-  private static func step4UcrossFormatCompatibility() throws {
+  private static func step4UcrossFormatCompatibility() async throws {
     ExampleUtils.printStep(4, "Cross-format compatibility")
 
     print("  🔄 Testing JSON ↔ Binary compatibility...")
@@ -215,19 +215,19 @@ struct JsonConversionExample {
     let jsonDeserializer = JSONDeserializer(options: .init(typeRegistry: registry))
     let binaryDeserializer = BinaryDeserializer(options: .init(typeRegistry: registry))
 
-    let jsonData = try jsonSerializer.serialize(originalMessage)
-    let jsonMessage = try jsonDeserializer.deserialize(jsonData, using: originalMessage.descriptor)
+    let jsonData = try await jsonSerializer.serialize(originalMessage)
+    let jsonMessage = try await jsonDeserializer.deserialize(jsonData, using: originalMessage.descriptor)
     let binaryData = try binarySerializer.serialize(jsonMessage)
-    let finalMessage1 = try binaryDeserializer.deserialize(binaryData, using: originalMessage.descriptor)
+    let finalMessage1 = try await binaryDeserializer.deserialize(binaryData, using: originalMessage.descriptor)
 
     print("  🔄 Path 1: Original → JSON → Binary → Final")
     finalMessage1.prettyPrint()
 
     // Path 2: Original → Binary → JSON → Message
     let binaryData2 = try binarySerializer.serialize(originalMessage)
-    let binaryMessage = try binaryDeserializer.deserialize(binaryData2, using: originalMessage.descriptor)
-    let jsonData2 = try jsonSerializer.serialize(binaryMessage)
-    let finalMessage2 = try jsonDeserializer.deserialize(jsonData2, using: originalMessage.descriptor)
+    let binaryMessage = try await binaryDeserializer.deserialize(binaryData2, using: originalMessage.descriptor)
+    let jsonData2 = try await jsonSerializer.serialize(binaryMessage)
+    let finalMessage2 = try await jsonDeserializer.deserialize(jsonData2, using: originalMessage.descriptor)
 
     print("  🔄 Path 2: Original → Binary → JSON → Final")
     finalMessage2.prettyPrint()
@@ -247,7 +247,7 @@ struct JsonConversionExample {
     }
   }
 
-  private static func step5UjsonReadabilityDemo() throws {
+  private static func step5UjsonReadabilityDemo() async throws {
     ExampleUtils.printStep(5, "JSON readability and debugging")
 
     // Create message to demonstrate readability
@@ -265,7 +265,7 @@ struct JsonConversionExample {
 
     // JSON serialization for debugging
     let jsonSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-    let debugJsonData = try jsonSerializer.serialize(debugMessage)
+    let debugJsonData = try await jsonSerializer.serialize(debugMessage)
 
     if let prettyJsonData = try? JSONSerialization.jsonObject(with: debugJsonData),
       let formattedData = try? JSONSerialization.data(
@@ -303,7 +303,7 @@ struct JsonConversionExample {
 
     if let invalidJsonData = invalidJsonString.data(using: .utf8) {
       do {
-        let _ = try JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+        let _ = try await JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
           invalidJsonData,
           using: debugMessage.descriptor
         )
@@ -443,7 +443,7 @@ struct JsonConversionExample {
     }
   }
 
-  private static func benchmarkJsonSerialization(messageCount: Int) throws -> (Int, TimeInterval) {
+  private static func benchmarkJsonSerialization(messageCount: Int) async throws -> (Int, TimeInterval) {
     let jsonSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
 
     // Create test messages
@@ -458,10 +458,10 @@ struct JsonConversionExample {
     }
 
     // Benchmark JSON serialization
-    let (allJsonData, serializeTime) = try ExampleUtils.measureTime {
+    let (allJsonData, serializeTime) = try await ExampleUtils.measureTimeAsync {
       var combinedSize = 0
       for message in messages {
-        let messageData = try jsonSerializer.serialize(message)
+        let messageData = try await jsonSerializer.serialize(message)
         combinedSize += messageData.count
       }
       return combinedSize

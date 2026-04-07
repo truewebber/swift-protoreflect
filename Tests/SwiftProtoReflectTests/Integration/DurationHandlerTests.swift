@@ -14,7 +14,7 @@ final class DurationHandlerTests: XCTestCase {
 
   // MARK: - DurationValue Tests
 
-  func testDurationValueInitialization() {
+  func testDurationValueInitialization() async throws {
     // Valid initialization
     XCTAssertNoThrow(try DurationHandler.DurationValue(seconds: 1_234_567_890, nanos: 123_456_789))
     XCTAssertNoThrow(try DurationHandler.DurationValue(seconds: 0, nanos: 0))
@@ -61,7 +61,7 @@ final class DurationHandlerTests: XCTestCase {
     }
   }
 
-  func testDurationValueFromTimeInterval() {
+  func testDurationValueFromTimeInterval() async throws {
     // Positive interval
     let positiveInterval: TimeInterval = 123.456789
     let positiveDuration = DurationHandler.DurationValue(from: positiveInterval)
@@ -86,7 +86,7 @@ final class DurationHandlerTests: XCTestCase {
     XCTAssertTrue(abs(fractionalDuration.nanos - 123_000_000) < 1000)
   }
 
-  func testDurationValueToTimeInterval() {
+  func testDurationValueToTimeInterval() async throws {
     do {
       // Positive duration
       let positiveDuration = try DurationHandler.DurationValue(seconds: 123, nanos: 456_789_000)
@@ -111,7 +111,7 @@ final class DurationHandlerTests: XCTestCase {
     }
   }
 
-  func testDurationValueRoundTrip() {
+  func testDurationValueRoundTrip() async throws {
     let testIntervals: [TimeInterval] = [
       0.0,
       0.123456,
@@ -138,14 +138,14 @@ final class DurationHandlerTests: XCTestCase {
     }
   }
 
-  func testDurationValueZero() {
+  func testDurationValueZero() async throws {
     let zero = DurationHandler.DurationValue.zero()
     XCTAssertEqual(zero.seconds, 0)
     XCTAssertEqual(zero.nanos, 0)
     XCTAssertEqual(zero.toTimeInterval(), 0.0)
   }
 
-  func testDurationValueAbs() {
+  func testDurationValueAbs() async throws {
     do {
       // Positive duration stays positive
       let positive = try DurationHandler.DurationValue(seconds: 5, nanos: 123_456_789)
@@ -176,7 +176,7 @@ final class DurationHandlerTests: XCTestCase {
     }
   }
 
-  func testDurationValueNegated() {
+  func testDurationValueNegated() async throws {
     do {
       // Positive becomes negative
       let positive = try DurationHandler.DurationValue(seconds: 5, nanos: 123_456_789)
@@ -200,7 +200,7 @@ final class DurationHandlerTests: XCTestCase {
     }
   }
 
-  func testDurationValueDescription() {
+  func testDurationValueDescription() async throws {
     do {
       // Zero duration
       let zero = DurationHandler.DurationValue.zero()
@@ -227,7 +227,7 @@ final class DurationHandlerTests: XCTestCase {
     }
   }
 
-  func testDurationValueEquality() {
+  func testDurationValueEquality() async throws {
     do {
       let duration1 = try DurationHandler.DurationValue(seconds: 5, nanos: 123_456_789)
       let duration2 = try DurationHandler.DurationValue(seconds: 5, nanos: 123_456_789)
@@ -245,12 +245,12 @@ final class DurationHandlerTests: XCTestCase {
 
   // MARK: - Handler Implementation Tests
 
-  func testHandlerBasicProperties() {
+  func testHandlerBasicProperties() async throws {
     XCTAssertEqual(DurationHandler.handledTypeName, "google.protobuf.Duration")
     XCTAssertEqual(DurationHandler.supportPhase, .critical)
   }
 
-  func testCreateSpecializedFromMessage() throws {
+  func testCreateSpecializedFromMessage() async throws {
     // Create duration message
     let durationMessage = try createDurationMessage(seconds: 5, nanos: 123_456_789)
 
@@ -266,7 +266,7 @@ final class DurationHandlerTests: XCTestCase {
     XCTAssertEqual(duration.nanos, 123_456_789)
   }
 
-  func testCreateSpecializedFromMessageWithMissingFields() throws {
+  func testCreateSpecializedFromMessageWithMissingFields() async throws {
     // Create message with only seconds
     let durationMessage = try createDurationMessage(seconds: 5, nanos: nil)
 
@@ -281,7 +281,7 @@ final class DurationHandlerTests: XCTestCase {
     XCTAssertEqual(duration.nanos, 0)  // Should have default value
   }
 
-  func testCreateSpecializedFromMessageWithNegativeValues() throws {
+  func testCreateSpecializedFromMessageWithNegativeValues() async throws {
     // Create negative message
     let negativeDurationMessage = try createDurationMessage(seconds: -5, nanos: -123_456_789)
 
@@ -296,7 +296,7 @@ final class DurationHandlerTests: XCTestCase {
     XCTAssertEqual(duration.nanos, -123_456_789)
   }
 
-  func testCreateSpecializedFromInvalidMessage() throws {
+  func testCreateSpecializedFromInvalidMessage() async throws {
     // Create message of wrong type
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "NotDuration", parent: fileDescriptor)
@@ -314,7 +314,7 @@ final class DurationHandlerTests: XCTestCase {
     }
   }
 
-  func testCreateDynamicFromSpecialized() throws {
+  func testCreateDynamicFromSpecialized() async throws {
     let duration = try DurationHandler.DurationValue(seconds: 5, nanos: 123_456_789)
 
     let dynamicMessage = try DurationHandler.createDynamic(from: duration)
@@ -328,7 +328,7 @@ final class DurationHandlerTests: XCTestCase {
     XCTAssertEqual(nanos, 123_456_789)
   }
 
-  func testCreateDynamicFromNegativeSpecialized() throws {
+  func testCreateDynamicFromNegativeSpecialized() async throws {
     let negativeDuration = try DurationHandler.DurationValue(seconds: -5, nanos: -123_456_789)
 
     let dynamicMessage = try DurationHandler.createDynamic(from: negativeDuration)
@@ -340,7 +340,7 @@ final class DurationHandlerTests: XCTestCase {
     XCTAssertEqual(nanos, -123_456_789)
   }
 
-  func testCreateDynamicFromInvalidSpecialized() throws {
+  func testCreateDynamicFromInvalidSpecialized() async throws {
     let wrongSpecialized = "not a duration"
 
     XCTAssertThrowsError(try DurationHandler.createDynamic(from: wrongSpecialized)) { error in
@@ -353,7 +353,7 @@ final class DurationHandlerTests: XCTestCase {
     }
   }
 
-  func testValidate() throws {
+  func testValidate() async throws {
     // Valid values
     let validDuration = try DurationHandler.DurationValue(seconds: 5, nanos: 123_456_789)
     XCTAssertTrue(DurationHandler.validate(validDuration))
@@ -371,7 +371,7 @@ final class DurationHandlerTests: XCTestCase {
     XCTAssertFalse(DurationHandler.validate(5.0))
   }
 
-  func testRoundTripConversion() throws {
+  func testRoundTripConversion() async throws {
     let testCases = [
       try DurationHandler.DurationValue(seconds: 5, nanos: 123_456_789),
       try DurationHandler.DurationValue(seconds: -5, nanos: -123_456_789),
@@ -400,7 +400,7 @@ final class DurationHandlerTests: XCTestCase {
 
   // MARK: - Convenience Extensions Tests
 
-  func testTimeIntervalExtensions() {
+  func testTimeIntervalExtensions() async throws {
     let testIntervals: [TimeInterval] = [0.0, 123.456, -123.456, 0.001, -0.001]
 
     for originalInterval in testIntervals {
@@ -416,7 +416,7 @@ final class DurationHandlerTests: XCTestCase {
     }
   }
 
-  func testDynamicMessageDurationExtension() throws {
+  func testDynamicMessageDurationExtension() async throws {
     let testIntervals: [TimeInterval] = [0.0, 123.456, -123.456, 3600.0, -3600.0]
 
     for interval in testIntervals {
@@ -433,7 +433,7 @@ final class DurationHandlerTests: XCTestCase {
     }
   }
 
-  func testDynamicMessageToTimeIntervalWithInvalidMessage() throws {
+  func testDynamicMessageToTimeIntervalWithInvalidMessage() async throws {
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "NotDuration", parent: fileDescriptor)
     fileDescriptor.addMessage(messageDescriptor)
@@ -451,7 +451,7 @@ final class DurationHandlerTests: XCTestCase {
 
   // MARK: - Edge Cases Tests
 
-  func testExtremeDurations() throws {
+  func testExtremeDurations() async throws {
     // Very large positive duration
     let largeDuration = try DurationHandler.DurationValue(seconds: Int64.max / 2, nanos: 999_999_999)
     XCTAssertTrue(largeDuration.toTimeInterval() > 0)
@@ -469,7 +469,7 @@ final class DurationHandlerTests: XCTestCase {
     XCTAssertEqual(minNanos.nanos, -999_999_999)
   }
 
-  func testBoundaryNanos() throws {
+  func testBoundaryNanos() async throws {
     // Test boundary nanoseconds values
     let boundaries: [Int32] = [
       -999_999_999, -500_000_000, -1, 0, 1, 500_000_000, 999_999_999,
@@ -493,7 +493,7 @@ final class DurationHandlerTests: XCTestCase {
     }
   }
 
-  func testMixedSignValidation() throws {
+  func testMixedSignValidation() async throws {
     // Valid combinations (same signs or one zero)
     let validCombinations: [(Int64, Int32)] = [
       (0, 0),
@@ -530,7 +530,7 @@ final class DurationHandlerTests: XCTestCase {
 
   // MARK: - Performance Tests
 
-  func testConversionPerformance() {
+  func testConversionPerformance() async throws {
     let interval: TimeInterval = 123.456789
 
     measure {
@@ -541,7 +541,7 @@ final class DurationHandlerTests: XCTestCase {
     }
   }
 
-  func testHandlerPerformance() throws {
+  func testHandlerPerformance() async throws {
     let durationMessage = try createDurationMessage(seconds: 5, nanos: 123_456_789)
 
     measure {
@@ -557,7 +557,7 @@ final class DurationHandlerTests: XCTestCase {
     }
   }
 
-  func testAbsAndNegatedPerformance() throws {
+  func testAbsAndNegatedPerformance() async throws {
     let duration = try DurationHandler.DurationValue(seconds: -5, nanos: -123_456_789)
 
     measure {
@@ -570,19 +570,17 @@ final class DurationHandlerTests: XCTestCase {
 
   // MARK: - Registry Integration Tests
 
-  func testRegistryIntegration() throws {
+  func testRegistryIntegration() async throws {
     let registry = WellKnownTypesRegistry.shared
 
-    // Check that DurationHandler is registered
-    let handler = registry.getHandler(for: WellKnownTypeNames.duration)
+    let handler = await registry.getHandler(for: WellKnownTypeNames.duration)
     XCTAssertNotNil(handler)
     XCTAssertTrue(handler is DurationHandler.Type)
 
-    // Test through registry
     let duration = try DurationHandler.DurationValue(seconds: 5, nanos: 123_456_789)
     let dynamicMessage = try DurationHandler.createDynamic(from: duration)
 
-    let specializedFromRegistry = try registry.createSpecialized(
+    let specializedFromRegistry = try await registry.createSpecialized(
       from: dynamicMessage,
       typeName: WellKnownTypeNames.duration
     )

@@ -25,14 +25,14 @@ import Foundation
 import SwiftProtoReflect
 
 struct TypeRegistryGuide {
-  static func run() throws {
+  static func run() async throws {
     ExampleUtils.printHeader("TypeRegistry — Complete Guide")
 
-    try step1BuildRegistryPatterns()
-    try step2LookupOperations()
-    try step3BinaryDeserializationWithRegistry()
-    try step4JSONSerializationWithRegistry()
-    try step5RegistryLifecycle()
+    try await step1BuildRegistryPatterns()
+    try await step2LookupOperations()
+    try await step3BinaryDeserializationWithRegistry()
+    try await step4JSONSerializationWithRegistry()
+    try await step5RegistryLifecycle()
 
     ExampleUtils.printSuccess("TypeRegistry complete guide finished!")
 
@@ -99,23 +99,23 @@ struct TypeRegistryGuide {
 
   // MARK: - Step 1: Building a Registry
 
-  private static func step1BuildRegistryPatterns() throws {
+  private static func step1BuildRegistryPatterns() async throws {
     ExampleUtils.printStep(1, "Building a TypeRegistry — all patterns")
 
     let addrFile = makeAddressFile()
     let productFile = makeProductFile()
 
     // Pattern A: recommended — one call, all files registered atomically
-    let registryA = try TypeRegistry(fileDescriptors: [addrFile, productFile])
+    let registryA = try await TypeRegistry(fileDescriptors: [addrFile, productFile])
     print("  Pattern A — TypeRegistry(fileDescriptors:)")
-    print("    messages: \(registryA.allMessages().count), files: \(registryA.allFiles().count)")
+    print("    messages: \(await registryA.allMessages().count), files: \(await registryA.allFiles().count)")
 
     // Pattern B: start empty, add files one by one
     let registryB = TypeRegistry()
-    try registryB.registerFile(addrFile)
-    try registryB.registerFile(productFile)
+    try await registryB.registerFile(addrFile)
+    try await registryB.registerFile(productFile)
     print("  Pattern B — TypeRegistry() + registerFile(_:)")
-    print("    messages: \(registryB.allMessages().count), files: \(registryB.allFiles().count)")
+    print("    messages: \(await registryB.allMessages().count), files: \(await registryB.allFiles().count)")
 
     // Pattern C: register individual descriptors (no FileDescriptor needed).
     // registerMessage automatically registers nested enums — no separate registerEnum needed.
@@ -123,15 +123,15 @@ struct TypeRegistryGuide {
     let productDesc = makeProductFile().messages.values.first!
 
     let registryC = TypeRegistry()
-    try registryC.registerMessage(addrDesc)
-    try registryC.registerMessage(productDesc)
+    try await registryC.registerMessage(addrDesc)
+    try await registryC.registerMessage(productDesc)
     print("  Pattern C — registerMessage(_:)")
-    print("    messages: \(registryC.allMessages().count), enums: \(registryC.allEnums().count)")
+    print("    messages: \(await registryC.allMessages().count), enums: \(await registryC.allEnums().count)")
 
     // Duplicate registration is rejected
     print("  Duplicate file registration:")
     do {
-      try registryA.registerFile(addrFile)
+      try await registryA.registerFile(addrFile)
       print("    ❌ Should have thrown duplicateFile")
     }
     catch {
@@ -141,52 +141,52 @@ struct TypeRegistryGuide {
 
   // MARK: - Step 2: Lookup Operations
 
-  private static func step2LookupOperations() throws {
+  private static func step2LookupOperations() async throws {
     ExampleUtils.printStep(2, "Lookup operations")
 
-    let registry = try TypeRegistry(fileDescriptors: [makeAddressFile(), makeProductFile()])
+    let registry = try await TypeRegistry(fileDescriptors: [makeAddressFile(), makeProductFile()])
 
     // findMessage — full qualified name
     print("  findMessage(named:)")
-    let addrDesc = registry.findMessage(named: "com.shop.Address")
+    let addrDesc = await registry.findMessage(named: "com.shop.Address")
     print("    com.shop.Address  → \(addrDesc.map { "\($0.fields.count) fields" } ?? "nil")")
-    let productDesc = registry.findMessage(named: "com.shop.Product")
+    let productDesc = await registry.findMessage(named: "com.shop.Product")
     print("    com.shop.Product  → \(productDesc.map { "\($0.fields.count) fields" } ?? "nil")")
-    print("    com.shop.Unknown  → \(registry.findMessage(named: "com.shop.Unknown") == nil ? "nil" : "found")")
+    print("    com.shop.Unknown  → \(await registry.findMessage(named: "com.shop.Unknown") == nil ? "nil" : "found")")
 
     // findEnum — nested enum full name
     print("  findEnum(named:)")
-    let status = registry.findEnum(named: "com.shop.Product.Status")
+    let status = await registry.findEnum(named: "com.shop.Product.Status")
     print(
       "    com.shop.Product.Status → \(status.map { "\($0.valuesByName.count) values: \($0.valuesByName.keys.sorted().joined(separator: ", "))" } ?? "nil")"
     )
 
     // hasMessage / hasEnum / hasFile
     print("  Boolean checks")
-    print("    hasMessage(com.shop.Address):        \(registry.hasMessage(named: "com.shop.Address"))")
-    print("    hasMessage(com.shop.Gone):           \(registry.hasMessage(named: "com.shop.Gone"))")
-    print("    hasEnum(com.shop.Product.Status):    \(registry.hasEnum(named: "com.shop.Product.Status"))")
-    print("    hasFile(address.proto):              \(registry.hasFile(named: "address.proto"))")
+    print("    hasMessage(com.shop.Address):        \(await registry.hasMessage(named: "com.shop.Address"))")
+    print("    hasMessage(com.shop.Gone):           \(await registry.hasMessage(named: "com.shop.Gone"))")
+    print("    hasEnum(com.shop.Product.Status):    \(await registry.hasEnum(named: "com.shop.Product.Status"))")
+    print("    hasFile(address.proto):              \(await registry.hasFile(named: "address.proto"))")
 
     // Enumerate all
-    print("  allMessages(): \(registry.allMessages().map { $0.fullName }.sorted().joined(separator: ", "))")
-    print("  allFiles():    \(registry.allFiles().map { $0.name }.sorted().joined(separator: ", "))")
-    print("  allEnums():    \(registry.allEnums().map { $0.fullName }.sorted().joined(separator: ", "))")
+    print("  allMessages(): \(await registry.allMessages().map { $0.fullName }.sorted().joined(separator: ", "))")
+    print("  allFiles():    \(await registry.allFiles().map { $0.name }.sorted().joined(separator: ", "))")
+    print("  allEnums():    \(await registry.allEnums().map { $0.fullName }.sorted().joined(separator: ", "))")
 
     // findFile
-    if let f = registry.findFile(named: "product.proto") {
+    if let f = await registry.findFile(named: "product.proto") {
       print("  findFile(\"product.proto\"): \(f.messages.count) message(s)")
     }
   }
 
   // MARK: - Step 3: Binary Deserialization with Registry
 
-  private static func step3BinaryDeserializationWithRegistry() throws {
+  private static func step3BinaryDeserializationWithRegistry() async throws {
     ExampleUtils.printStep(3, "Binary deserialization — cross-file nested type")
 
-    let registry = try TypeRegistry(fileDescriptors: [makeAddressFile(), makeProductFile()])
-    let addrDesc = registry.findMessage(named: "com.shop.Address")!
-    let productDesc = registry.findMessage(named: "com.shop.Product")!
+    let registry = try await TypeRegistry(fileDescriptors: [makeAddressFile(), makeProductFile()])
+    let addrDesc = await registry.findMessage(named: "com.shop.Address")!
+    let productDesc = await registry.findMessage(named: "com.shop.Product")!
 
     // Build a Product with a nested Address (cross-file reference)
     var address = DynamicMessage(descriptor: addrDesc)
@@ -209,7 +209,7 @@ struct TypeRegistryGuide {
     // WITHOUT registry: resolver fails on the cross-file warehouse_address field
     print("  Deserialization WITHOUT registry:")
     do {
-      _ = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
+      _ = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
         .deserialize(binaryData, using: productDesc)
       print("    ❌ Should have thrown — Address type unknown")
     }
@@ -219,7 +219,7 @@ struct TypeRegistryGuide {
 
     // WITH registry: cross-file type resolved from the registry
     print("  Deserialization WITH registry:")
-    let decoded = try BinaryDeserializer(options: .init(typeRegistry: registry))
+    let decoded = try await BinaryDeserializer(options: .init(typeRegistry: registry))
       .deserialize(binaryData, using: productDesc)
 
     let name = try decoded.get(forField: "name") as? String ?? ""
@@ -238,12 +238,12 @@ struct TypeRegistryGuide {
 
   // MARK: - Step 4: JSON Serialization with Registry
 
-  private static func step4JSONSerializationWithRegistry() throws {
+  private static func step4JSONSerializationWithRegistry() async throws {
     ExampleUtils.printStep(4, "JSON serialization — enums and nested messages")
 
-    let registry = try TypeRegistry(fileDescriptors: [makeAddressFile(), makeProductFile()])
-    let addrDesc = registry.findMessage(named: "com.shop.Address")!
-    let productDesc = registry.findMessage(named: "com.shop.Product")!
+    let registry = try await TypeRegistry(fileDescriptors: [makeAddressFile(), makeProductFile()])
+    let addrDesc = await registry.findMessage(named: "com.shop.Address")!
+    let productDesc = await registry.findMessage(named: "com.shop.Product")!
 
     var address = DynamicMessage(descriptor: addrDesc)
     try address.set("456 Oak Ave", forField: "street")
@@ -261,7 +261,7 @@ struct TypeRegistryGuide {
     // JSONSerializer:
     //   - Enum field: structural lookup in productDesc.nestedEnums → "ACTIVE" (no registry needed)
     //   - Nested message field: encodes from the DynamicMessage value (no registry needed)
-    let jsonData = try JSONSerializer(options: .init(typeRegistry: registry)).serialize(product)
+    let jsonData = try await JSONSerializer(options: .init(typeRegistry: registry)).serialize(product)
     let jsonString = String(data: jsonData, encoding: .utf8) ?? ""
     print("  JSON output:")
     if let obj = try? JSONSerialization.jsonObject(with: jsonData, options: []),
@@ -280,7 +280,7 @@ struct TypeRegistryGuide {
     //   - Fails immediately on warehouseAddress — no registry to resolve com.shop.Address
     print("  Deserialization WITHOUT registry:")
     do {
-      _ = try JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
+      _ = try await JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
         .deserialize(jsonData, using: productDesc)
       print("    ❌ Should have thrown — Address not in registry")
     }
@@ -292,7 +292,7 @@ struct TypeRegistryGuide {
     //   - com.shop.Address resolved from registry
     //   - "ACTIVE" parsed back to Int32(1) via structural enum lookup
     print("  Deserialization WITH registry:")
-    let decoded = try JSONDeserializer(options: .init(typeRegistry: registry))
+    let decoded = try await JSONDeserializer(options: .init(typeRegistry: registry))
       .deserialize(jsonData, using: productDesc)
 
     let name = try decoded.get(forField: "name") as? String ?? ""
@@ -311,42 +311,41 @@ struct TypeRegistryGuide {
 
   // MARK: - Step 5: Registry Lifecycle
 
-  private static func step5RegistryLifecycle() throws {
+  private static func step5RegistryLifecycle() async throws {
     ExampleUtils.printStep(5, "Registry lifecycle — inspect, remove, clear")
 
-    let registry = try TypeRegistry(fileDescriptors: [makeAddressFile(), makeProductFile()])
+    let registry = try await TypeRegistry(fileDescriptors: [makeAddressFile(), makeProductFile()])
 
     print("  Initial state:")
-    print("    files:    \(registry.allFiles().count)")
-    print("    messages: \(registry.allMessages().count)")
-    print("    enums:    \(registry.allEnums().count)")
+    print("    files:    \(await registry.allFiles().count)")
+    print("    messages: \(await registry.allMessages().count)")
+    print("    enums:    \(await registry.allEnums().count)")
 
     // Remove a single file — unregisters Address
-    let removed = registry.removeFile(named: "address.proto")
+    let removed = await registry.removeFile(named: "address.proto")
     print("  After removeFile(\"address.proto\") → \(removed):")
-    print("    hasFile(\"address.proto\"):         \(registry.hasFile(named: "address.proto"))")
-    print("    hasMessage(\"com.shop.Address\"):   \(registry.hasMessage(named: "com.shop.Address"))")
-    print("    hasMessage(\"com.shop.Product\"):  \(registry.hasMessage(named: "com.shop.Product"))")
-    print("    messages: \(registry.allMessages().count)")
+    print("    hasFile(\"address.proto\"):         \(await registry.hasFile(named: "address.proto"))")
+    print("    hasMessage(\"com.shop.Address\"):   \(await registry.hasMessage(named: "com.shop.Address"))")
+    print("    hasMessage(\"com.shop.Product\"):  \(await registry.hasMessage(named: "com.shop.Product"))")
+    print("    messages: \(await registry.allMessages().count)")
 
     // Clear everything
-    registry.clear()
+    await registry.clear()
     print("  After clear():")
-    print("    files: \(registry.allFiles().count), messages: \(registry.allMessages().count)")
+    print("    files: \(await registry.allFiles().count), messages: \(await registry.allMessages().count)")
 
     // Registry is reusable after clear
-    try registry.registerFile(makeAddressFile())
-    try registry.registerFile(makeProductFile())
+    try await registry.registerFile(makeAddressFile())
+    try await registry.registerFile(makeProductFile())
     print("  After re-registration:")
-    print("    files: \(registry.allFiles().count), messages: \(registry.allMessages().count)")
-    print("    com.shop.Address found: \(registry.hasMessage(named: "com.shop.Address"))")
+    print("    files: \(await registry.allFiles().count), messages: \(await registry.allMessages().count)")
+    print("    com.shop.Address found: \(await registry.hasMessage(named: "com.shop.Address"))")
   }
 }
 
-do {
-  try TypeRegistryGuide.run()
-}
-catch {
-  print("❌ Error: \(error)")
-  exit(1)
+@main
+struct TypeRegistryEntry {
+  static func main() async throws {
+    try await TypeRegistryGuide.run()
+  }
 }

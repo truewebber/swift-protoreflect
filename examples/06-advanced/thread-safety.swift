@@ -13,12 +13,12 @@ import Foundation
 
 @main
 struct ThreadSafetyExample {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("🧵 Thread Safety - Concurrent Access Patterns")
 
     try demonstrateReadWriteOperations()
     try demonstrateConcurrentMessageCreation()
-    try demonstrateThreadSafeRegistry()
+    try await demonstrateThreadSafeRegistry()
     try demonstrateLockingStrategies()
     try demonstrateAtomicOperations()
     try demonstrateRaceConditionPrevention()
@@ -270,142 +270,66 @@ struct ThreadSafetyExample {
 
   // MARK: - Thread-Safe Registry
 
-  private static func demonstrateThreadSafeRegistry() throws {
+  private static func demonstrateThreadSafeRegistry() async throws {
     ExampleUtils.printStep(3, "Thread-Safe Type Registry")
 
     print("  🗂  Testing concurrent registry operations...")
 
-    // Thread-safe type registry wrapper
-    final class ConcurrentTypeRegistry: @unchecked Sendable {
-      private let registry = TypeRegistry()
-      private let readerWriterQueue = DispatchQueue(label: "registry.queue", attributes: .concurrent)
-
-      func registerFile(_ file: FileDescriptor) throws {
-        try readerWriterQueue.sync(flags: .barrier) {
-          try registry.registerFile(file)
-          registeredFiles.append(file)
-        }
-      }
-
-      func findMessage(named name: String) -> MessageDescriptor? {
-        return readerWriterQueue.sync {
-          return registry.findMessage(named: name)
-        }
-      }
-
-      private var registeredFiles: [FileDescriptor] = []
-
-      func getAllRegisteredFiles() -> [FileDescriptor] {
-        return readerWriterQueue.sync {
-          return registeredFiles
-        }
-      }
-
-      var messageCount: Int {
-        return readerWriterQueue.sync {
-          return registeredFiles.reduce(0) { $0 + $1.messages.count }
-        }
-      }
-    }
-
-    let concurrentRegistry = ConcurrentTypeRegistry()
+    // TypeRegistry is an actor — inherently thread-safe, no manual locking needed
+    let registry = TypeRegistry()
     let fileCount = 20
-    let threadCount = 4
+    let taskCount = 4
 
-    print("  📊 Registering \(fileCount) files across \(threadCount) threads...")
+    print("  📊 Registering \(fileCount) files across \(taskCount) concurrent tasks...")
 
-    let registrationTime = ExampleUtils.measureTime {
-      let group = DispatchGroup()
-      let concurrentQueue = DispatchQueue(label: "registry.concurrent", attributes: .concurrent)
-
-      // Register files
-      for threadId in 0..<threadCount {
-        group.enter()
-        concurrentQueue.async {
-          for i in 0..<(fileCount / threadCount) {
-            let fileName = "thread\(threadId)_file\(i).proto"
-            var file = FileDescriptor(name: fileName, package: "com.thread\(threadId)")
-
-            var message = MessageDescriptor(name: "Message\(threadId)\(i)", parent: file)
+    let registrationStart = Date()
+    try await withThrowingTaskGroup(of: Void.self) { group in
+      for taskId in 0..<taskCount {
+        group.addTask {
+          for i in 0..<(fileCount / taskCount) {
+            let fileName = "task\(taskId)_file\(i).proto"
+            var file = FileDescriptor(name: fileName, package: "com.task\(taskId)")
+            var message = MessageDescriptor(name: "Message\(taskId)\(i)", parent: file)
             message.addField(FieldDescriptor(name: "id", number: 1, type: .string))
-            message.addField(FieldDescriptor(name: "thread_id", number: 2, type: .int32))
-
+            message.addField(FieldDescriptor(name: "task_id", number: 2, type: .int32))
             file.addMessage(message)
-
-            do {
-              try concurrentRegistry.registerFile(file)
-            }
-            catch {
-              print("    ❌ Registration error: \(error)")
-            }
+            try await registry.registerFile(file)
           }
-          group.leave()
         }
       }
-
-      group.wait()
+      try await group.waitForAll()
     }
+    let registrationTime = Date().timeIntervalSince(registrationStart)
+    ExampleUtils.printTiming("Concurrent registry operations", time: registrationTime)
 
-    ExampleUtils.printTiming("Concurrent registry operations", time: registrationTime.time)
-
-    // Testing concurrent reading
+    // Testing concurrent reads
     print("\n  🔍 Testing concurrent lookups...")
 
     let lookupCount = 1000
-
-    // Create thread-safe counter for successful lookups
-    final class LookupCounter: @unchecked Sendable {
-      private var successfulLookups = 0
-      private let lookupLock = NSLock()
-
-      func addSuccesses(_ count: Int) {
-        lookupLock.lock()
-        successfulLookups += count
-        lookupLock.unlock()
-      }
-
-      var count: Int {
-        lookupLock.lock()
-        defer { lookupLock.unlock() }
-        return successfulLookups
-      }
-    }
-
-    let lookupCounter = LookupCounter()
-
-    let lookupTime = ExampleUtils.measureTime {
-      let group = DispatchGroup()
-      let concurrentQueue = DispatchQueue(label: "lookup.concurrent", attributes: .concurrent)
-
-      for threadId in 0..<threadCount {
-        group.enter()
-        concurrentQueue.async {
-          var threadSuccesses = 0
-
-          for i in 0..<(lookupCount / threadCount) {
-            let messageNumber = i % (fileCount / threadCount)
-            let messageName = "com.thread\(threadId).Message\(threadId)\(messageNumber)"
-
-            if concurrentRegistry.findMessage(named: messageName) != nil {
-              threadSuccesses += 1
+    let lookupStart = Date()
+    let successfulLookups = try await withThrowingTaskGroup(of: Int.self) { group in
+      for taskId in 0..<taskCount {
+        group.addTask {
+          var successes = 0
+          for i in 0..<(lookupCount / taskCount) {
+            let messageNumber = i % (fileCount / taskCount)
+            let messageName = "com.task\(taskId).Message\(taskId)\(messageNumber)"
+            if await registry.findMessage(named: messageName) != nil {
+              successes += 1
             }
           }
-
-          lookupCounter.addSuccesses(threadSuccesses)
-
-          group.leave()
+          return successes
         }
       }
-
-      group.wait()
+      var total = 0
+      for try await count in group { total += count }
+      return total
     }
+    let lookupTime = Date().timeIntervalSince(lookupStart)
 
-    let successfulLookups = lookupCounter.count
+    ExampleUtils.printTiming("Concurrent lookups (\(lookupCount) operations)", time: lookupTime)
 
-    ExampleUtils.printTiming("Concurrent lookups (\(lookupCount) operations)", time: lookupTime.time)
-
-    // Results
-    let registeredMessages = concurrentRegistry.messageCount
+    let registeredMessages = await registry.allMessages().count
     let lookupSuccessRate = Double(successfulLookups) / Double(lookupCount) * 100
 
     print("\n  📊 Registry Thread Safety Results:")
@@ -422,7 +346,7 @@ struct ThreadSafetyExample {
     )
 
     print("\n  🎯 Registry Benefits:")
-    print("    • Thread-safe registration operations ✅")
+    print("    • Actor-based thread safety — no manual locking needed ✅")
     print("    • Concurrent read performance ✅")
     print("    • Data consistency guaranteed ✅")
     print("    • No reader-writer conflicts ✅")

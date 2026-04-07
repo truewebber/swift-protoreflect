@@ -13,7 +13,7 @@ final class StructProtoDescriptorsTests: XCTestCase {
 
   // MARK: - Struct Descriptor Tests
 
-  func test_structDescriptor_hasCorrectMapField() {
+  func test_structDescriptor_hasCorrectMapField() async throws {
     let descriptor = StructProtoDescriptors.structDescriptor
 
     XCTAssertEqual(descriptor.fullName, "google.protobuf.Struct")
@@ -31,7 +31,7 @@ final class StructProtoDescriptorsTests: XCTestCase {
     XCTAssertEqual(mapEntryInfo?.valueFieldInfo.typeName, "google.protobuf.Value")
   }
 
-  func test_structDescriptor_fieldsField_hasCorrectTypeName() {
+  func test_structDescriptor_fieldsField_hasCorrectTypeName() async throws {
     let descriptor = StructProtoDescriptors.structDescriptor
     let fieldsField = descriptor.field(number: 1)
 
@@ -42,7 +42,7 @@ final class StructProtoDescriptorsTests: XCTestCase {
     XCTAssertEqual(fieldsField?.mapEntryInfo?.valueFieldInfo.number, 2)
   }
 
-  func test_structDescriptor_hasFieldsEntryNestedMessage() {
+  func test_structDescriptor_hasFieldsEntryNestedMessage() async throws {
     let descriptor = StructProtoDescriptors.structDescriptor
 
     let fieldsEntry = descriptor.nestedMessage(named: "FieldsEntry")
@@ -63,7 +63,7 @@ final class StructProtoDescriptorsTests: XCTestCase {
 
   // MARK: - Value Descriptor Tests
 
-  func test_valueDescriptor_hasOneof_withSixFields() {
+  func test_valueDescriptor_hasOneof_withSixFields() async throws {
     let descriptor = StructProtoDescriptors.valueDescriptor
 
     XCTAssertEqual(descriptor.fullName, "google.protobuf.Value")
@@ -110,7 +110,7 @@ final class StructProtoDescriptorsTests: XCTestCase {
 
   // MARK: - ListValue Descriptor Tests
 
-  func test_listValueDescriptor_hasRepeatedValueField() {
+  func test_listValueDescriptor_hasRepeatedValueField() async throws {
     let descriptor = StructProtoDescriptors.listValueDescriptor
 
     XCTAssertEqual(descriptor.fullName, "google.protobuf.ListValue")
@@ -126,7 +126,7 @@ final class StructProtoDescriptorsTests: XCTestCase {
 
   // MARK: - NullValue Enum Tests
 
-  func test_nullValueEnum_hasNullValueZero() {
+  func test_nullValueEnum_hasNullValueZero() async throws {
     let enumDescriptor = StructProtoDescriptors.nullValueEnum
 
     XCTAssertEqual(enumDescriptor.fullName, "google.protobuf.NullValue")
@@ -142,7 +142,7 @@ final class StructProtoDescriptorsTests: XCTestCase {
 
   // MARK: - Shared FileDescriptor Tests
 
-  func test_allDescriptors_shareTheSameFileDescriptor() {
+  func test_allDescriptors_shareTheSameFileDescriptor() async throws {
     let structDesc = StructProtoDescriptors.structDescriptor
     let valueDesc = StructProtoDescriptors.valueDescriptor
     let listValueDesc = StructProtoDescriptors.listValueDescriptor
@@ -155,7 +155,7 @@ final class StructProtoDescriptorsTests: XCTestCase {
     XCTAssertEqual(nullValueEnum.fileDescriptorPath, expectedFile)
   }
 
-  func test_fileDescriptor_containsAllFourTypes() {
+  func test_fileDescriptor_containsAllFourTypes() async throws {
     let file = StructProtoDescriptors.fileDescriptor
 
     XCTAssertEqual(file.name, "google/protobuf/struct.proto")

@@ -20,24 +20,24 @@ final class BinarySerializationTests: XCTestCase {
   var messageFactory: MessageFactory!
   var serializer: BinarySerializer!
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     fileDescriptor = FileDescriptor(name: "test_serialization.proto", package: "test.serialization")
     messageFactory = MessageFactory()
     serializer = BinarySerializer()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     fileDescriptor = nil
     messageFactory = nil
     serializer = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Scalar Types Tests (Test-BIN-001)
 
-  func testSerializeAllScalarTypes() throws {
+  func testSerializeAllScalarTypes() async throws {
     // Create message with all scalar types
     var scalarMessage = MessageDescriptor(name: "ScalarMessage", parent: fileDescriptor)
 
@@ -102,7 +102,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertTrue(dataArray.contains(104))
   }
 
-  func testSerializeDoubleValue() throws {
+  func testSerializeDoubleValue() async throws {
     var message = MessageDescriptor(name: "DoubleMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "value", number: 1, type: .double))
     fileDescriptor.addMessage(message)
@@ -115,7 +115,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(data[0], 9)  // Tag: (1 << 3) | 1 = 9
   }
 
-  func testSerializeFloatValue() throws {
+  func testSerializeFloatValue() async throws {
     var message = MessageDescriptor(name: "FloatMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "value", number: 1, type: .float))
     fileDescriptor.addMessage(message)
@@ -128,7 +128,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(data[0], 13)  // Tag: (1 << 3) | 5 = 13
   }
 
-  func testSerializeBoolValue() throws {
+  func testSerializeBoolValue() async throws {
     var message = MessageDescriptor(name: "BoolMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "value", number: 1, type: .bool))
     fileDescriptor.addMessage(message)
@@ -149,7 +149,7 @@ final class BinarySerializationTests: XCTestCase {
 
   // MARK: - String and Bytes Tests (Test-BIN-002)
 
-  func testSerializeStringValue() throws {
+  func testSerializeStringValue() async throws {
     var message = MessageDescriptor(name: "StringMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "value", number: 1, type: .string))
     fileDescriptor.addMessage(message)
@@ -171,7 +171,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(Data(stringContent), utf8Data)
   }
 
-  func testSerializeBytesValue() throws {
+  func testSerializeBytesValue() async throws {
     var message = MessageDescriptor(name: "BytesMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "value", number: 1, type: .bytes))
     fileDescriptor.addMessage(message)
@@ -190,7 +190,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(Data(bytesContent), testBytes)
   }
 
-  func testSerializeEmptyString() throws {
+  func testSerializeEmptyString() async throws {
     var message = MessageDescriptor(name: "EmptyStringMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "value", number: 1, type: .string))
     fileDescriptor.addMessage(message)
@@ -204,7 +204,7 @@ final class BinarySerializationTests: XCTestCase {
 
   // MARK: - Nested Messages Tests (Test-BIN-003)
 
-  func testSerializeNestedMessage() throws {
+  func testSerializeNestedMessage() async throws {
     // Create nested message
     var nestedMessage = MessageDescriptor(name: "NestedMessage", parent: fileDescriptor)
     nestedMessage.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
@@ -255,7 +255,7 @@ final class BinarySerializationTests: XCTestCase {
 
   // MARK: - Repeated Fields Tests (Test-BIN-004)
 
-  func testSerializeRepeatedFieldNonPacked() throws {
+  func testSerializeRepeatedFieldNonPacked() async throws {
     var message = MessageDescriptor(name: "RepeatedMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "values", number: 1, type: .string, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -277,7 +277,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(tagCount, 3)  // Three elements = three tags
   }
 
-  func testSerializeRepeatedFieldPacked() throws {
+  func testSerializeRepeatedFieldPacked() async throws {
     var message = MessageDescriptor(name: "PackedMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "values", number: 1, type: .int32, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -298,7 +298,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(tagCount, 1)  // Only one tag for packed field
   }
 
-  func testSerializeEmptyRepeatedField() throws {
+  func testSerializeEmptyRepeatedField() async throws {
     var message = MessageDescriptor(name: "EmptyRepeatedMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "values", number: 1, type: .int32, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -314,7 +314,7 @@ final class BinarySerializationTests: XCTestCase {
 
   // MARK: - Map Fields Tests (Test-BIN-005)
 
-  func testSerializeMapField() throws {
+  func testSerializeMapField() async throws {
     // Create map field: map<string, int32>
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
@@ -361,7 +361,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertTrue(dataArray.contains(16))  // Tag for value field
   }
 
-  func testSerializeEmptyMapField() throws {
+  func testSerializeEmptyMapField() async throws {
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -390,7 +390,7 @@ final class BinarySerializationTests: XCTestCase {
 
   // MARK: - Enum Tests
 
-  func testSerializeEnumField() throws {
+  func testSerializeEnumField() async throws {
     // Create enum
     var enumDescriptor = EnumDescriptor(name: "Status", parent: fileDescriptor)
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0))
@@ -425,23 +425,23 @@ final class BinarySerializationTests: XCTestCase {
 
   // MARK: - ZigZag Encoding Tests
 
-  func testZigZagEncoding() {
+  func testZigZagEncoding() async throws {
     // Test ZigZag encoding for sint32
-    XCTAssertEqual(BinarySerializer.zigzagEncode32(0), 0)
-    XCTAssertEqual(BinarySerializer.zigzagEncode32(-1), 1)
-    XCTAssertEqual(BinarySerializer.zigzagEncode32(1), 2)
-    XCTAssertEqual(BinarySerializer.zigzagEncode32(-2), 3)
-    XCTAssertEqual(BinarySerializer.zigzagEncode32(2_147_483_647), 4_294_967_294)
-    XCTAssertEqual(BinarySerializer.zigzagEncode32(-2_147_483_648), 4_294_967_295)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode32(0), 0)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode32(-1), 1)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode32(1), 2)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode32(-2), 3)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode32(2_147_483_647), 4_294_967_294)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode32(-2_147_483_648), 4_294_967_295)
 
     // Test ZigZag encoding for sint64
-    XCTAssertEqual(BinarySerializer.zigzagEncode64(0), 0)
-    XCTAssertEqual(BinarySerializer.zigzagEncode64(-1), 1)
-    XCTAssertEqual(BinarySerializer.zigzagEncode64(1), 2)
-    XCTAssertEqual(BinarySerializer.zigzagEncode64(-2), 3)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode64(0), 0)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode64(-1), 1)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode64(1), 2)
+    XCTAssertEqual(_BinarySerializer.zigzagEncode64(-2), 3)
   }
 
-  func testSerializeSint32Value() throws {
+  func testSerializeSint32Value() async throws {
     var message = MessageDescriptor(name: "Sint32Message", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "value", number: 1, type: .sint32))
     fileDescriptor.addMessage(message)
@@ -456,7 +456,7 @@ final class BinarySerializationTests: XCTestCase {
 
   // MARK: - Error Handling Tests
 
-  func testSerializationErrors() throws {
+  func testSerializationErrors() async throws {
     var message = MessageDescriptor(name: "ErrorMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "value", number: 1, type: .string))
     fileDescriptor.addMessage(message)
@@ -469,7 +469,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(data.count, 0)  // Empty fields are not serialized in proto3
   }
 
-  func testSerializeGroupFieldRoundTrip() throws {
+  func testSerializeGroupFieldRoundTrip() async throws {
     var groupDesc = MessageDescriptor(name: "InnerGroup", fullName: "test.InnerGroup")
     groupDesc.addField(FieldDescriptor(name: "val", number: 1, type: .int32))
 
@@ -488,14 +488,17 @@ final class BinarySerializationTests: XCTestCase {
     let data = try serializer.serialize(dynamicMessage)
     XCTAssertFalse(data.isEmpty)
 
-    let decoded = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(data, using: message)
+    let decoded = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      data,
+      using: message
+    )
     let decodedGroup = try decoded.get(forField: 1) as? DynamicMessage
     XCTAssertNotNil(decodedGroup)
     let val = try decodedGroup?.get(forField: "val") as? Int32
     XCTAssertEqual(val, 7)
   }
 
-  func testSerializationErrorDescriptions() {
+  func testSerializationErrorDescriptions() async throws {
     let error1 = SerializationError.invalidFieldType(fieldName: "test", expectedType: "String", actualType: "Int")
     XCTAssertEqual(error1.description, "Invalid field type for field 'test': expected String, got Int")
 
@@ -512,7 +515,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(error5.description, "Unsupported field type: group")
   }
 
-  func testSerializationErrorEquality() {
+  func testSerializationErrorEquality() async throws {
     let error1 = SerializationError.invalidFieldType(fieldName: "test", expectedType: "String", actualType: "Int")
     let error2 = SerializationError.invalidFieldType(fieldName: "test", expectedType: "String", actualType: "Int")
     let error3 = SerializationError.invalidFieldType(fieldName: "other", expectedType: "String", actualType: "Int")
@@ -523,17 +526,17 @@ final class BinarySerializationTests: XCTestCase {
 
   // MARK: - Serialization Options Tests
 
-  func testSerializationOptionsDefault() {
+  func testSerializationOptionsDefault() async throws {
     let options = SerializationOptions()
     XCTAssertTrue(options.usePackedRepeated)
   }
 
-  func testSerializationOptionsCustom() {
+  func testSerializationOptionsCustom() async throws {
     let options = SerializationOptions(usePackedRepeated: false)
     XCTAssertFalse(options.usePackedRepeated)
   }
 
-  func testBinarySerializerWithOptions() {
+  func testBinarySerializerWithOptions() async throws {
     let options = SerializationOptions(usePackedRepeated: false)
     let serializer = BinarySerializer(options: options)
     XCTAssertFalse(serializer.options.usePackedRepeated)
@@ -541,7 +544,7 @@ final class BinarySerializationTests: XCTestCase {
 
   // MARK: - Edge Cases Tests
 
-  func testSerializeMessageWithNoFields() throws {
+  func testSerializeMessageWithNoFields() async throws {
     let message = MessageDescriptor(name: "EmptyMessage", parent: fileDescriptor)
     fileDescriptor.addMessage(message)
 
@@ -552,7 +555,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(data.count, 0)
   }
 
-  func testSerializeFieldWithMaxNumber() throws {
+  func testSerializeFieldWithMaxNumber() async throws {
     var message = MessageDescriptor(name: "MaxFieldMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "max_field", number: 536_870_911, type: .int32))  // Maximum field number
     fileDescriptor.addMessage(message)
@@ -570,7 +573,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertGreaterThan(data.count, 0)
   }
 
-  func testSerializeLargeVarint() throws {
+  func testSerializeLargeVarint() async throws {
     var message = MessageDescriptor(name: "LargeMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "large_value", number: 1, type: .uint64))
     fileDescriptor.addMessage(message)
@@ -590,7 +593,7 @@ final class BinarySerializationTests: XCTestCase {
 
   // MARK: - Enum Field with String Value
 
-  func testSerialize_enumField_withStringValue_throwsValueTypeMismatch() throws {
+  func testSerialize_enumField_withStringValue_throwsValueTypeMismatch() async throws {
     // DynamicMessage accepts both Int32 and String for enum fields,
     // but BinarySerializer only accepts Int32.
     // This test covers the guard let enumValue = value as? Int32 path in encodeValue.
@@ -603,7 +606,11 @@ final class BinarySerializationTests: XCTestCase {
     var msg = messageFactory.createMessage(from: message)
     try msg.set("ACTIVE", forField: "status")  // DynamicMessage accepts String for enum
 
-    XCTAssertThrowsError(try serializer.serialize(msg)) { error in
+    do {
+      _ = try serializer.serialize(msg)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let serializationError = error as? SerializationError,
         case .valueTypeMismatch(let expected, let actual) = serializationError
       {
@@ -618,7 +625,7 @@ final class BinarySerializationTests: XCTestCase {
 
   // MARK: - Repeated Fields: Packed Encoding for More Types
 
-  func testSerializePackedRepeatedBoolField() throws {
+  func testSerializePackedRepeatedBoolField() async throws {
     var message = MessageDescriptor(name: "PackedBoolMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "flags", number: 1, type: .bool, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -635,7 +642,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(tagCount, 1)
 
     // Round-trip
-    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+    let deserialized = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
       data,
       using: message
     )
@@ -643,7 +650,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(flags, [true, false, true])
   }
 
-  func testSerializePackedRepeatedUInt32Field() throws {
+  func testSerializePackedRepeatedUInt32Field() async throws {
     var message = MessageDescriptor(name: "PackedUInt32Message", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "values", number: 1, type: .uint32, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -655,7 +662,7 @@ final class BinarySerializationTests: XCTestCase {
     let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
-    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+    let deserialized = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
       data,
       using: message
     )
@@ -663,7 +670,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(values, [UInt32(100), UInt32(200), UInt32(300)])
   }
 
-  func testSerializePackedRepeatedSint32Field() throws {
+  func testSerializePackedRepeatedSint32Field() async throws {
     var message = MessageDescriptor(name: "PackedSint32Message", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "values", number: 1, type: .sint32, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -675,7 +682,7 @@ final class BinarySerializationTests: XCTestCase {
     let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
-    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+    let deserialized = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
       data,
       using: message
     )
@@ -683,7 +690,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(values, [Int32(-1), Int32(-2), Int32(3)])
   }
 
-  func testSerializePackedRepeatedFixed32Field() throws {
+  func testSerializePackedRepeatedFixed32Field() async throws {
     var message = MessageDescriptor(name: "PackedFixed32Message", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "values", number: 1, type: .fixed32, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -695,7 +702,7 @@ final class BinarySerializationTests: XCTestCase {
     let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
-    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+    let deserialized = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
       data,
       using: message
     )
@@ -703,7 +710,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(values, [UInt32(10), UInt32(20), UInt32(30)])
   }
 
-  func testSerializePackedRepeatedFixed64Field() throws {
+  func testSerializePackedRepeatedFixed64Field() async throws {
     var message = MessageDescriptor(name: "PackedFixed64Message", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "values", number: 1, type: .fixed64, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -715,7 +722,7 @@ final class BinarySerializationTests: XCTestCase {
     let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
-    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+    let deserialized = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
       data,
       using: message
     )
@@ -723,7 +730,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(values, [UInt64(1_000_000), UInt64(2_000_000)])
   }
 
-  func testSerializePackedRepeatedSfixed32Field() throws {
+  func testSerializePackedRepeatedSfixed32Field() async throws {
     var message = MessageDescriptor(name: "PackedSfixed32Message", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "values", number: 1, type: .sfixed32, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -735,7 +742,7 @@ final class BinarySerializationTests: XCTestCase {
     let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
-    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+    let deserialized = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
       data,
       using: message
     )
@@ -743,7 +750,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(values, [Int32(-100), Int32(0), Int32(100)])
   }
 
-  func testSerializePackedRepeatedSfixed64Field() throws {
+  func testSerializePackedRepeatedSfixed64Field() async throws {
     var message = MessageDescriptor(name: "PackedSfixed64Message", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "values", number: 1, type: .sfixed64, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -755,7 +762,7 @@ final class BinarySerializationTests: XCTestCase {
     let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
-    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+    let deserialized = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
       data,
       using: message
     )
@@ -763,7 +770,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertEqual(values, [Int64(-1_000_000), Int64(1_000_000)])
   }
 
-  func testSerializePackedRepeatedUInt64Field() throws {
+  func testSerializePackedRepeatedUInt64Field() async throws {
     var message = MessageDescriptor(name: "PackedUInt64Message", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "values", number: 1, type: .uint64, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -776,7 +783,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertGreaterThan(data.count, 0)
   }
 
-  func testSerializePackedRepeatedSint64Field() throws {
+  func testSerializePackedRepeatedSint64Field() async throws {
     var message = MessageDescriptor(name: "PackedSint64Message", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "values", number: 1, type: .sint64, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -789,7 +796,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertGreaterThan(data.count, 0)
   }
 
-  func testSerializePackedRepeatedDoubleField() throws {
+  func testSerializePackedRepeatedDoubleField() async throws {
     var message = MessageDescriptor(name: "PackedDoubleMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "values", number: 1, type: .double, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -802,7 +809,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertGreaterThan(data.count, 0)
   }
 
-  func testSerializePackedRepeatedFloatField() throws {
+  func testSerializePackedRepeatedFloatField() async throws {
     var message = MessageDescriptor(name: "PackedFloatMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "values", number: 1, type: .float, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -815,7 +822,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertGreaterThan(data.count, 0)
   }
 
-  func testSerializePackedRepeatedEnumField() throws {
+  func testSerializePackedRepeatedEnumField() async throws {
     var message = MessageDescriptor(name: "PackedEnumMessage", parent: fileDescriptor)
     message.addField(
       FieldDescriptor(name: "statuses", number: 1, type: .enum, typeName: "test.Status", isRepeated: true)
@@ -832,7 +839,7 @@ final class BinarySerializationTests: XCTestCase {
 
   // MARK: - Repeated Bytes Field (Non-Packable)
 
-  func testSerializeRepeatedBytesField() throws {
+  func testSerializeRepeatedBytesField() async throws {
     var message = MessageDescriptor(name: "RepeatedBytesMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "blobs", number: 1, type: .bytes, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -849,7 +856,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertGreaterThan(data.count, 0)
 
     // Deserialize and verify
-    let deserialized = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+    let deserialized = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
       data,
       using: message
     )
@@ -861,7 +868,7 @@ final class BinarySerializationTests: XCTestCase {
 
   // MARK: - Map Fields with Various Key Types
 
-  func testSerializeMapFieldWithIntKey() throws {
+  func testSerializeMapFieldWithIntKey() async throws {
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .int32)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -889,7 +896,7 @@ final class BinarySerializationTests: XCTestCase {
     XCTAssertGreaterThan(data.count, 0)
   }
 
-  func testSerialize_proto3ScalarField_explicitDefault_producesEmptyData() throws {
+  func testSerialize_proto3ScalarField_explicitDefault_producesEmptyData() async throws {
     let cases: [(FieldType, Any)] = [
       (.double, Double(0.0)),
       (.float, Float(0.0)),
@@ -920,7 +927,7 @@ final class BinarySerializationTests: XCTestCase {
     }
   }
 
-  func testSerializeMapFieldWithBoolKey() throws {
+  func testSerializeMapFieldWithBoolKey() async throws {
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .bool)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -950,7 +957,7 @@ final class BinarySerializationTests: XCTestCase {
 
   // MARK: - Performance Tests
 
-  func testSerializationPerformance() throws {
+  func testSerializationPerformance() async throws {
     // Create message with many fields for performance testing
     var message = MessageDescriptor(name: "PerformanceMessage", parent: fileDescriptor)
 
@@ -967,13 +974,11 @@ final class BinarySerializationTests: XCTestCase {
 
     let dynamicMessage = try messageFactory.createMessage(from: message, with: values)
 
-    measure {
-      do {
-        _ = try serializer.serialize(dynamicMessage)
-      }
-      catch {
-        XCTFail("Serialization failed: \(error)")
-      }
+    do {
+      _ = try serializer.serialize(dynamicMessage)
+    }
+    catch {
+      XCTFail("Serialization failed: \(error)")
     }
   }
 }

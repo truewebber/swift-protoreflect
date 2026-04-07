@@ -15,25 +15,25 @@ final class JSONCompatProto2Tests: XCTestCase {
 
   private var registry: TypeRegistry!
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Proto2 required fields: present in JSON
 
-  func test_proto2_required_present_bidirectional() throws {
+  func test_proto2_required_present_bidirectional() async throws {
     var proto = Testcompat2_Proto2Basic()
     proto.requiredString = "req_str"
     proto.requiredInt32 = 100
 
     let desc = CompatDescriptors.proto2Basic()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? String, "req_str")
       XCTAssertEqual(try msg.get(forField: 2) as? Int32, 100)
     }
@@ -41,7 +41,11 @@ final class JSONCompatProto2Tests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("req_str", forField: 1)
     try dynamic.set(Int32(100), forField: 2)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat2_Proto2Basic.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat2_Proto2Basic.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.requiredString, "req_str")
       XCTAssertEqual(decoded.requiredInt32, 100)
@@ -50,7 +54,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
   // MARK: - Proto2 optional fields: unset → omitted
 
-  func test_proto2_optional_unset_omitted() throws {
+  func test_proto2_optional_unset_omitted() async throws {
     var proto = Testcompat2_Proto2Basic()
     proto.requiredString = "str"
     proto.requiredInt32 = 1
@@ -63,7 +67,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
   // MARK: - Proto2 optional fields: set → present
 
-  func test_proto2_optional_set_bidirectional() throws {
+  func test_proto2_optional_set_bidirectional() async throws {
     var proto = Testcompat2_Proto2Basic()
     proto.requiredString = "req"
     proto.requiredInt32 = 0
@@ -73,7 +77,7 @@ final class JSONCompatProto2Tests: XCTestCase {
     proto.optDouble = 1.5
 
     let desc = CompatDescriptors.proto2Basic()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 3) as? String, "opt_val")
       XCTAssertEqual(try msg.get(forField: 4) as? Int32, -5)
       XCTAssertEqual(try msg.get(forField: 5) as? Bool, false)
@@ -87,7 +91,11 @@ final class JSONCompatProto2Tests: XCTestCase {
     try dynamic.set(Int32(-5), forField: 4)
     try dynamic.set(false, forField: 5)
     try dynamic.set(Double(1.5), forField: 7)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat2_Proto2Basic.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat2_Proto2Basic.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.optString, "opt_val")
       XCTAssertEqual(decoded.optInt32, -5)
@@ -98,7 +106,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
   // MARK: - Proto2 optional explicit zero (vs not set)
 
-  func test_proto2_optional_explicitZero_present() throws {
+  func test_proto2_optional_explicitZero_present() async throws {
     var proto = Testcompat2_Proto2Basic()
     proto.requiredString = "r"
     proto.requiredInt32 = 0
@@ -114,7 +122,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
   // MARK: - Proto2 defaults: defaults appear in JSON when not overridden?
 
-  func test_proto2_defaults_showInJSON_bidirectional() throws {
+  func test_proto2_defaults_showInJSON_bidirectional() async throws {
     // Proto2 with defaults: fields that have explicit default values
     // In JSON, absent field == default, so unset → omitted
     let proto = Testcompat2_Proto2Defaults()
@@ -130,7 +138,7 @@ final class JSONCompatProto2Tests: XCTestCase {
     XCTAssertTrue(setJson.contains("label"), "Set label should appear: \(setJson)")
 
     let desc = CompatDescriptors.proto2Defaults()
-    try CompatHelpers.assertProtocToUs(proto: set, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: set, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? Int32, 99)
       XCTAssertEqual(try msg.get(forField: 2) as? String, "custom")
     }
@@ -138,8 +146,11 @@ final class JSONCompatProto2Tests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(99), forField: 1)
     try dynamic.set("custom", forField: 2)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat2_Proto2Defaults.self)
-    { decoded in
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat2_Proto2Defaults.self
+    ) { decoded in
       XCTAssertEqual(decoded.count, 99)
       XCTAssertEqual(decoded.label, "custom")
     }
@@ -147,18 +158,22 @@ final class JSONCompatProto2Tests: XCTestCase {
 
   // MARK: - Proto2 oneof bidirectional
 
-  func test_proto2_oneof_strVariant_bidirectional() throws {
+  func test_proto2_oneof_strVariant_bidirectional() async throws {
     var proto = Testcompat2_Proto2Oneof()
     proto.strVal = "hello"
 
     let desc = CompatDescriptors.proto2Oneof()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? String, "hello")
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("hello", forField: 1)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat2_Proto2Oneof.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat2_Proto2Oneof.self
+    ) {
       decoded in
       if case .strVal(let v) = decoded.choice {
         XCTAssertEqual(v, "hello")
@@ -169,7 +184,7 @@ final class JSONCompatProto2Tests: XCTestCase {
     }
   }
 
-  func test_proto2_oneof_msgVariant_bidirectional() throws {
+  func test_proto2_oneof_msgVariant_bidirectional() async throws {
     var inner = Testcompat2_Proto2Basic()
     inner.requiredString = "inner"
     inner.requiredInt32 = 77
@@ -180,7 +195,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
     let desc = CompatDescriptors.proto2Oneof()
     let innerDesc = CompatDescriptors.proto2Basic()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let innerDyn = try XCTUnwrap(try msg.get(forField: 4) as? DynamicMessage)
       XCTAssertEqual(try innerDyn.get(forField: 1) as? String, "inner")
       XCTAssertEqual(try innerDyn.get(forField: 2) as? Int32, 77)
@@ -194,7 +209,11 @@ final class JSONCompatProto2Tests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(innerDyn, forField: 4)
     try dynamic.set("outer", forField: 10)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat2_Proto2Oneof.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat2_Proto2Oneof.self
+    ) {
       decoded in
       if case .msgVal(let m) = decoded.choice {
         XCTAssertEqual(m.requiredString, "inner")
@@ -209,7 +228,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
   // MARK: - Proto2 group field (group serialized as nested object in JSON)
 
-  func test_proto2_group_basic_bidirectional() throws {
+  func test_proto2_group_basic_bidirectional() async throws {
     var proto = Testcompat2_Proto2WithGroup()
     proto.id = 1
     proto.myGroup.name = "grp"
@@ -223,7 +242,7 @@ final class JSONCompatProto2Tests: XCTestCase {
     )
 
     let desc = CompatDescriptors.proto2WithGroup()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? Int32, 1)
       // Group appears as a nested message in our representation
       let grp = try XCTUnwrap(try msg.get(forField: 2) as? DynamicMessage)
@@ -239,7 +258,7 @@ final class JSONCompatProto2Tests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(1), forField: 1)
     try dynamic.set(grpDyn, forField: 2)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat2_Proto2WithGroup.self
@@ -252,7 +271,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
   // MARK: - Proto2 multiple groups in one message (AnotherGroup)
 
-  func test_proto2_multipleGroups_bidirectional() throws {
+  func test_proto2_multipleGroups_bidirectional() async throws {
     var proto = Testcompat2_Proto2WithGroup()
     proto.id = 3
     proto.myGroup.name = "g1"
@@ -261,7 +280,7 @@ final class JSONCompatProto2Tests: XCTestCase {
     proto.anotherGroup.detail = "detail_val"
 
     let desc = CompatDescriptors.proto2WithGroup()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? Int32, 3)
       let g1 = try XCTUnwrap(try msg.get(forField: 2) as? DynamicMessage)
       XCTAssertEqual(try g1.get(forField: 1) as? String, "g1")
@@ -284,7 +303,7 @@ final class JSONCompatProto2Tests: XCTestCase {
     try dynamic.set(Int32(3), forField: 1)
     try dynamic.set(myGrp, forField: 2)
     try dynamic.set(anotherGrp, forField: 3)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat2_Proto2WithGroup.self
@@ -298,7 +317,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
   // MARK: - Proto2 group with enum inside (Proto2Complex.Item)
 
-  func test_proto2_groupWithEnum_bidirectional() throws {
+  func test_proto2_groupWithEnum_bidirectional() async throws {
     var proto = Testcompat2_Proto2Complex()
     proto.title = "complex"
     var item = Testcompat2_Proto2Complex.Item()
@@ -308,7 +327,7 @@ final class JSONCompatProto2Tests: XCTestCase {
     proto.item = [item]
 
     let desc = CompatDescriptors.proto2Complex()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? String, "complex")
       let items = try XCTUnwrap(try msg.get(forField: 4) as? [DynamicMessage])
       XCTAssertEqual(items.count, 1)
@@ -325,8 +344,11 @@ final class JSONCompatProto2Tests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("complex", forField: 1)
     try dynamic.set([itemDyn] as [DynamicMessage], forField: 4)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat2_Proto2Complex.self)
-    {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat2_Proto2Complex.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.title, "complex")
       XCTAssertEqual(decoded.item.count, 1)
@@ -336,7 +358,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
   // MARK: - Proto2 repeated group (Item) - multiple items
 
-  func test_proto2_repeatedGroup_bidirectional() throws {
+  func test_proto2_repeatedGroup_bidirectional() async throws {
     var proto = Testcompat2_Proto2Complex()
     proto.title = "multi"
     var i1 = Testcompat2_Proto2Complex.Item()
@@ -348,7 +370,7 @@ final class JSONCompatProto2Tests: XCTestCase {
     proto.item = [i1, i2]
 
     let desc = CompatDescriptors.proto2Complex()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let items = try XCTUnwrap(try msg.get(forField: 4) as? [DynamicMessage])
       XCTAssertEqual(items.count, 2)
       XCTAssertEqual(try items[0].get(forField: 1) as? Int32, 10)
@@ -366,8 +388,11 @@ final class JSONCompatProto2Tests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("multi", forField: 1)
     try dynamic.set([d1, d2] as [DynamicMessage], forField: 4)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat2_Proto2Complex.self)
-    {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat2_Proto2Complex.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.item.count, 2)
       XCTAssertEqual(decoded.item[0].id, 10)
@@ -377,7 +402,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
   // MARK: - Proto2 extension: scalar (ext_name, ext_count, ext_flag)
 
-  func test_proto2_extension_scalar_bidirectional() throws {
+  func test_proto2_extension_scalar_bidirectional() async throws {
     // Extensions in JSON are represented as regular fields by SwiftProtobuf
     var proto = Testcompat2_Proto2Extendable()
     proto.baseField = "base"
@@ -394,7 +419,7 @@ final class JSONCompatProto2Tests: XCTestCase {
     )
 
     let desc = CompatDescriptors.proto2Extendable()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? String, "base")
       XCTAssertEqual(try msg.get(forField: 2) as? Int32, 5)
     }
@@ -402,7 +427,7 @@ final class JSONCompatProto2Tests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("base", forField: 1)
     try dynamic.set(Int32(5), forField: 2)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat2_Proto2Extendable.self
@@ -414,7 +439,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
   // MARK: - Proto2 extension: message extension (ext_msg)
 
-  func test_proto2_extension_message_bidirectional() throws {
+  func test_proto2_extension_message_bidirectional() async throws {
     var inner = Testcompat2_Proto2Basic()
     inner.requiredString = "ext_inner"
     inner.requiredInt32 = 7
@@ -428,7 +453,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
     let desc = CompatDescriptors.proto2Extendable()
     let innerDesc = CompatDescriptors.proto2Basic()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? String, "base2")
     }
 
@@ -438,7 +463,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("base2", forField: 1)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat2_Proto2Extendable.self
@@ -449,7 +474,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
   // MARK: - Proto2 extension: repeated extension (ext_tags, ext_ids)
 
-  func test_proto2_extension_repeated_bidirectional() throws {
+  func test_proto2_extension_repeated_bidirectional() async throws {
     var proto = Testcompat2_Proto2Extendable()
     proto.baseField = "tags_test"
     proto.Testcompat2_extTags = ["tag1", "tag2", "tag3"]
@@ -459,13 +484,13 @@ final class JSONCompatProto2Tests: XCTestCase {
     XCTAssertTrue(jsonStr.contains("baseField"), "baseField: \(jsonStr)")
 
     let desc = CompatDescriptors.proto2Extendable()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? String, "tags_test")
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("tags_test", forField: 1)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat2_Proto2Extendable.self
@@ -476,7 +501,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
   // MARK: - Proto2 Complex: fully populated
 
-  func test_proto2_complex_fullPopulated_bidirectional() throws {
+  func test_proto2_complex_fullPopulated_bidirectional() async throws {
     var proto = Testcompat2_Proto2Complex()
     proto.title = "full"
     proto.version = 3
@@ -490,7 +515,7 @@ final class JSONCompatProto2Tests: XCTestCase {
     proto.meta = ["k": "v"]
 
     let desc = CompatDescriptors.proto2Complex()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? String, "full")
       XCTAssertEqual(try msg.get(forField: 2) as? Int32, 3)
       let header = try XCTUnwrap(try msg.get(forField: 3) as? DynamicMessage)
@@ -516,8 +541,11 @@ final class JSONCompatProto2Tests: XCTestCase {
     try dynamic.set(basicDyn, forField: 5)
     try dynamic.set([basicDyn] as [DynamicMessage], forField: 6)
     try dynamic.setMapEntry("v", forKey: "k", inField: 7)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat2_Proto2Complex.self)
-    {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat2_Proto2Complex.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.title, "full")
       XCTAssertEqual(decoded.version, 3)
@@ -530,7 +558,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
   // MARK: - Proto2 defaults: individual field default tests
 
-  func test_proto2_defaultEnum_notSerialized_bidirectional() throws {
+  func test_proto2_defaultEnum_notSerialized_bidirectional() async throws {
     // Proto2Defaults with only `kind` field set (override default)
     var proto = Testcompat2_Proto2Defaults()
     proto.kind = .p2Alpha  // overrides default P2_BETA
@@ -539,21 +567,24 @@ final class JSONCompatProto2Tests: XCTestCase {
     XCTAssertTrue(jsonStr.contains("kind"), "Overridden enum field should appear: \(jsonStr)")
 
     let desc = CompatDescriptors.proto2Defaults()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 7) as? Int32, 1)
     }
 
     // Direction B: build DynamicMessage with kind=P2_ALPHA (raw Int32 1) → SwiftProtobuf
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(1), forField: 7)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat2_Proto2Defaults.self)
-    {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat2_Proto2Defaults.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.kind, .p2Alpha)
     }
   }
 
-  func test_proto2_defaultBool_notSerialized_bidirectional() throws {
+  func test_proto2_defaultBool_notSerialized_bidirectional() async throws {
     // Proto2Defaults: active has default = true (field 3)
     // When set to the default value (true), it should appear in JSON (proto2 serializes set optional fields)
     // When not set, it should be absent
@@ -564,14 +595,17 @@ final class JSONCompatProto2Tests: XCTestCase {
     XCTAssertTrue(jsonStr.contains("active"), "Explicitly set bool field should appear: \(jsonStr)")
 
     let desc = CompatDescriptors.proto2Defaults()
-    try CompatHelpers.assertProtocToUs(proto: protoSet, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: protoSet, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 3) as? Bool, false)
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(false, forField: 3)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat2_Proto2Defaults.self)
-    {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat2_Proto2Defaults.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.active, false)
     }
@@ -582,7 +616,7 @@ final class JSONCompatProto2Tests: XCTestCase {
     XCTAssertFalse(jsonUnset.contains("active"), "Unset proto2 optional should be absent: \(jsonUnset)")
   }
 
-  func test_proto2_defaultFloat_notSerialized_bidirectional() throws {
+  func test_proto2_defaultFloat_notSerialized_bidirectional() async throws {
     // Proto2Defaults: ratio has default = 0.5 (field 5)
     // Explicitly set to non-default value
     var protoSet = Testcompat2_Proto2Defaults()
@@ -592,15 +626,18 @@ final class JSONCompatProto2Tests: XCTestCase {
     XCTAssertTrue(jsonStr.contains("ratio"), "Explicitly set float field should appear: \(jsonStr)")
 
     let desc = CompatDescriptors.proto2Defaults()
-    try CompatHelpers.assertProtocToUs(proto: protoSet, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: protoSet, descriptor: desc, registry: registry) { msg in
       let val = try XCTUnwrap(try msg.get(forField: 5) as? Float)
       XCTAssertEqual(val, 1.5, accuracy: 0.001)
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Float(1.5), forField: 5)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat2_Proto2Defaults.self)
-    {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat2_Proto2Defaults.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.ratio, 1.5, accuracy: 0.001)
     }
@@ -611,20 +648,23 @@ final class JSONCompatProto2Tests: XCTestCase {
     XCTAssertFalse(jsonUnset.contains("ratio"), "Unset proto2 optional should be absent: \(jsonUnset)")
   }
 
-  func test_proto2_magic_bytes_bidirectional() throws {
+  func test_proto2_magic_bytes_bidirectional() async throws {
     // Proto2Defaults: magic field has default \x00\x01\x02
     var proto = Testcompat2_Proto2Defaults()
     proto.magic = Data([0xDE, 0xAD, 0xBE, 0xEF])
 
     let desc = CompatDescriptors.proto2Defaults()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 6) as? Data, Data([0xDE, 0xAD, 0xBE, 0xEF]))
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Data([0xDE, 0xAD, 0xBE, 0xEF]), forField: 6)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat2_Proto2Defaults.self)
-    {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat2_Proto2Defaults.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.magic, Data([0xDE, 0xAD, 0xBE, 0xEF]))
     }
@@ -632,7 +672,7 @@ final class JSONCompatProto2Tests: XCTestCase {
 
   // MARK: - Proto2 Kitchen Sink
 
-  func test_proto2_kitchenSink_basic_bidirectional() throws {
+  func test_proto2_kitchenSink_basic_bidirectional() async throws {
     var proto = Testcompat2_Proto2KitchenSink()
     proto.name = "kitchen"
     proto.id = 99
@@ -641,7 +681,7 @@ final class JSONCompatProto2Tests: XCTestCase {
     proto.scores = ["a": 1, "b": 2]
 
     let desc = CompatDescriptors.proto2KitchenSink()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? String, "kitchen")
       XCTAssertEqual(try msg.get(forField: 2) as? Int32, 99)
       XCTAssertEqual(try msg.get(forField: 3) as? Int32, 1)
@@ -655,7 +695,7 @@ final class JSONCompatProto2Tests: XCTestCase {
     try dynamic.set(["tag1", "tag2"] as [String], forField: 4)
     try dynamic.setMapEntry(Int32(1), forKey: "a", inField: 5)
     try dynamic.setMapEntry(Int32(2), forKey: "b", inField: 5)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat2_Proto2KitchenSink.self

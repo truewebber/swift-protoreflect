@@ -14,25 +14,25 @@ final class JSONCompatNestedTests: XCTestCase {
 
   private var registry: TypeRegistry!
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - 1 level nesting (Nested1 → Nested2)
 
-  func test_nested_1level_bidirectional() throws {
+  func test_nested_1level_bidirectional() async throws {
     var proto = Testcompat_Nested1()
     proto.name = "level1"
     proto.child.count = 10
 
     let desc = CompatDescriptors.nested1()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 2) as? String, "level1")
       let child = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       XCTAssertEqual(try child.get(forField: 2) as? Int32, 10)
@@ -44,7 +44,7 @@ final class JSONCompatNestedTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("level1", forField: 2)
     try dynamic.set(n2, forField: 1)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Nested1.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Nested1.self) {
       decoded in
       XCTAssertEqual(decoded.name, "level1")
       XCTAssertEqual(decoded.child.count, 10)
@@ -53,7 +53,7 @@ final class JSONCompatNestedTests: XCTestCase {
 
   // MARK: - 2 level nesting (Nested1 → Nested2 → Nested3)
 
-  func test_nested_2levels_bidirectional() throws {
+  func test_nested_2levels_bidirectional() async throws {
     var proto = Testcompat_Nested1()
     proto.name = "level1"
     proto.child.count = 5
@@ -61,7 +61,7 @@ final class JSONCompatNestedTests: XCTestCase {
     proto.child.child.props = ["key": 99]
 
     let desc = CompatDescriptors.nested1()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let n2 = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       XCTAssertEqual(try n2.get(forField: 2) as? Int32, 5)
       let n3 = try XCTUnwrap(try n2.get(forField: 1) as? DynamicMessage)
@@ -83,7 +83,7 @@ final class JSONCompatNestedTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("level1", forField: 2)
     try dynamic.set(n2, forField: 1)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Nested1.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Nested1.self) {
       decoded in
       XCTAssertEqual(decoded.child.count, 5)
       XCTAssertTrue(decoded.child.child.flag)
@@ -93,7 +93,7 @@ final class JSONCompatNestedTests: XCTestCase {
 
   // MARK: - 3 level nesting (Nested1 → Nested2 → Nested3 → Nested4)
 
-  func test_nested_3levels_bidirectional() throws {
+  func test_nested_3levels_bidirectional() async throws {
     var proto = Testcompat_Nested1()
     proto.name = "top"
     proto.child.count = 3
@@ -102,7 +102,7 @@ final class JSONCompatNestedTests: XCTestCase {
     proto.child.child.child.tags = ["a", "b"]
 
     let desc = CompatDescriptors.nested1()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let n2 = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       let n3 = try XCTUnwrap(try n2.get(forField: 1) as? DynamicMessage)
       let n4 = try XCTUnwrap(try n3.get(forField: 1) as? DynamicMessage)
@@ -128,7 +128,7 @@ final class JSONCompatNestedTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("top", forField: 2)
     try dynamic.set(n2, forField: 1)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Nested1.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Nested1.self) {
       decoded in
       XCTAssertEqual(decoded.child.child.child.value, 777)
       XCTAssertEqual(decoded.child.child.child.tags, ["a", "b"])
@@ -137,7 +137,7 @@ final class JSONCompatNestedTests: XCTestCase {
 
   // MARK: - Nested1 siblings (repeated Nested2)
 
-  func test_nested_siblings_bidirectional() throws {
+  func test_nested_siblings_bidirectional() async throws {
     var proto = Testcompat_Nested1()
     proto.name = "parent"
     var s1 = Testcompat_Nested2()
@@ -147,7 +147,7 @@ final class JSONCompatNestedTests: XCTestCase {
     proto.siblings = [s1, s2]
 
     let desc = CompatDescriptors.nested1()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let siblings = try XCTUnwrap(try msg.get(forField: 3) as? [DynamicMessage])
       XCTAssertEqual(siblings.count, 2)
       XCTAssertEqual(try siblings[0].get(forField: 2) as? Int32, 1)
@@ -163,7 +163,7 @@ final class JSONCompatNestedTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("parent", forField: 2)
     try dynamic.set([sib1, sib2] as [DynamicMessage], forField: 3)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Nested1.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Nested1.self) {
       decoded in
       XCTAssertEqual(decoded.siblings.count, 2)
       XCTAssertEqual(decoded.siblings[0].count, 1)
@@ -173,13 +173,13 @@ final class JSONCompatNestedTests: XCTestCase {
 
   // MARK: - Nested2 oneof variant (text)
 
-  func test_nested_nested2_oneofText_bidirectional() throws {
+  func test_nested_nested2_oneofText_bidirectional() async throws {
     var proto = Testcompat_Nested2()
     proto.count = 5
     proto.text = "chosen"
 
     let desc = CompatDescriptors.nested2()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 2) as? Int32, 5)
       XCTAssertEqual(try msg.get(forField: 3) as? String, "chosen")
     }
@@ -187,7 +187,7 @@ final class JSONCompatNestedTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(5), forField: 2)
     try dynamic.set("chosen", forField: 3)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Nested2.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Nested2.self) {
       decoded in
       XCTAssertEqual(decoded.count, 5)
       if case .text(let v) = decoded.variant {
@@ -201,7 +201,7 @@ final class JSONCompatNestedTests: XCTestCase {
 
   // MARK: - Recursive message
 
-  func test_nested_recursive_shallow_bidirectional() throws {
+  func test_nested_recursive_shallow_bidirectional() async throws {
     var proto = Testcompat_Recursive()
     proto.value = 1
     proto.label = "root"
@@ -209,7 +209,7 @@ final class JSONCompatNestedTests: XCTestCase {
     proto.child.label = "child"
 
     let desc = CompatDescriptors.recursive()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? Int32, 1)
       XCTAssertEqual(try msg.get(forField: 2) as? String, "root")
       let child = try XCTUnwrap(try msg.get(forField: 3) as? DynamicMessage)
@@ -225,7 +225,8 @@ final class JSONCompatNestedTests: XCTestCase {
     try dynamic.set(Int32(1), forField: 1)
     try dynamic.set("root", forField: 2)
     try dynamic.set(childDyn, forField: 3)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Recursive.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Recursive.self)
+    {
       decoded in
       XCTAssertEqual(decoded.value, 1)
       XCTAssertEqual(decoded.label, "root")
@@ -236,7 +237,7 @@ final class JSONCompatNestedTests: XCTestCase {
 
   // MARK: - Recursive with children list
 
-  func test_nested_recursive_withChildren_bidirectional() throws {
+  func test_nested_recursive_withChildren_bidirectional() async throws {
     var proto = Testcompat_Recursive()
     proto.value = 0
     var c1 = Testcompat_Recursive()
@@ -246,7 +247,7 @@ final class JSONCompatNestedTests: XCTestCase {
     proto.children = [c1, c2]
 
     let desc = CompatDescriptors.recursive()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let children = try XCTUnwrap(try msg.get(forField: 4) as? [DynamicMessage])
       XCTAssertEqual(children.count, 2)
       XCTAssertEqual(try children[0].get(forField: 1) as? Int32, 10)
@@ -261,7 +262,8 @@ final class JSONCompatNestedTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(0), forField: 1)
     try dynamic.set([ch1, ch2] as [DynamicMessage], forField: 4)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Recursive.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Recursive.self)
+    {
       decoded in
       XCTAssertEqual(decoded.children.count, 2)
       XCTAssertEqual(decoded.children[0].value, 10)
@@ -271,7 +273,7 @@ final class JSONCompatNestedTests: XCTestCase {
 
   // MARK: - 4-level fully populated
 
-  func test_nested_4level_fullyPopulated_bidirectional() throws {
+  func test_nested_4level_fullyPopulated_bidirectional() async throws {
     var proto = Testcompat_Nested1()
     proto.name = "root"
     proto.child.count = 3
@@ -286,7 +288,7 @@ final class JSONCompatNestedTests: XCTestCase {
     proto.siblings = [sib]
 
     let desc = CompatDescriptors.nested1()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 2) as? String, "root")
       let n2 = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       XCTAssertEqual(try n2.get(forField: 2) as? Int32, 3)
@@ -327,7 +329,7 @@ final class JSONCompatNestedTests: XCTestCase {
     try dynamic.set("root", forField: 2)
     try dynamic.set(n2, forField: 1)
     try dynamic.set([sib1] as [DynamicMessage], forField: 3)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Nested1.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Nested1.self) {
       decoded in
       XCTAssertEqual(decoded.name, "root")
       XCTAssertEqual(decoded.child.count, 3)
@@ -338,7 +340,7 @@ final class JSONCompatNestedTests: XCTestCase {
 
   // MARK: - OuterWithNestedDefs: map with InnerDef values (map<string, MiddleDef.InnerDef>)
 
-  func test_nested_nestedDefs_mapWithInnerDef_bidirectional() throws {
+  func test_nested_nestedDefs_mapWithInnerDef_bidirectional() async throws {
     var proto = Testcompat_OuterWithNestedDefs()
     proto.kind = .outerB
     var innerDef = Testcompat_OuterWithNestedDefs.MiddleDef.InnerDef()
@@ -347,7 +349,7 @@ final class JSONCompatNestedTests: XCTestCase {
     proto.errors = ["key1": innerDef]
 
     let desc = CompatDescriptors.outerWithNestedDefs()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 3) as? Int32, 2)
       let errors = try XCTUnwrap(try msg.get(forField: 4) as? [AnyHashable: Any])
       let innerDyn = try XCTUnwrap(errors["key1"] as? DynamicMessage)
@@ -366,7 +368,7 @@ final class JSONCompatNestedTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(2), forField: 3)
     try dynamic.setMapEntry(innerDyn, forKey: "key1", inField: 4)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_OuterWithNestedDefs.self
@@ -379,7 +381,7 @@ final class JSONCompatNestedTests: XCTestCase {
 
   // MARK: - OuterWithNestedDefs: repeated MiddleDef
 
-  func test_nested_nestedDefs_repeatedMiddleDef_bidirectional() throws {
+  func test_nested_nestedDefs_repeatedMiddleDef_bidirectional() async throws {
     var proto = Testcompat_OuterWithNestedDefs()
     var m1 = Testcompat_OuterWithNestedDefs.MiddleDef()
     m1.label = "sec1"
@@ -389,7 +391,7 @@ final class JSONCompatNestedTests: XCTestCase {
     proto.kind = .outerA
 
     let desc = CompatDescriptors.outerWithNestedDefs()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let sec = try XCTUnwrap(try msg.get(forField: 2) as? [DynamicMessage])
       XCTAssertEqual(sec.count, 2)
       XCTAssertEqual(try sec[0].get(forField: 2) as? String, "sec1")
@@ -406,7 +408,7 @@ final class JSONCompatNestedTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set([dyn1, dyn2] as [DynamicMessage], forField: 2)
     try dynamic.set(Int32(1), forField: 3)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_OuterWithNestedDefs.self
@@ -418,7 +420,7 @@ final class JSONCompatNestedTests: XCTestCase {
 
   // MARK: - Recursive 4 levels deep
 
-  func test_nested_recursive_4deep_bidirectional() throws {
+  func test_nested_recursive_4deep_bidirectional() async throws {
     var proto = Testcompat_Recursive()
     proto.value = 1
     proto.child.value = 2
@@ -426,7 +428,7 @@ final class JSONCompatNestedTests: XCTestCase {
     proto.child.child.child.value = 4
 
     let desc = CompatDescriptors.recursive()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let c1 = try XCTUnwrap(try msg.get(forField: 3) as? DynamicMessage)
       let c2 = try XCTUnwrap(try c1.get(forField: 3) as? DynamicMessage)
       let c3 = try XCTUnwrap(try c2.get(forField: 3) as? DynamicMessage)
@@ -444,7 +446,8 @@ final class JSONCompatNestedTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(1), forField: 1)
     try dynamic.set(c1, forField: 3)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Recursive.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Recursive.self)
+    {
       decoded in
       XCTAssertEqual(decoded.child.child.child.value, 4)
     }
@@ -452,7 +455,7 @@ final class JSONCompatNestedTests: XCTestCase {
 
   // MARK: - MixedNest: map of MixedNest2
 
-  func test_nested_mixedNest_mapOfNested_bidirectional() throws {
+  func test_nested_mixedNest_mapOfNested_bidirectional() async throws {
     var proto = Testcompat_MixedNest1()
     proto.name = "mix"
     var n2a = Testcompat_MixedNest1.MixedNest2()
@@ -462,7 +465,7 @@ final class JSONCompatNestedTests: XCTestCase {
     proto.branches = ["a": n2a, "b": n2b]
 
     let desc = CompatDescriptors.mixedNest1()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 2) as? String, "mix")
       let branches = try XCTUnwrap(try msg.get(forField: 3) as? [AnyHashable: Any])
       let dA = try XCTUnwrap(branches["a"] as? DynamicMessage)
@@ -482,7 +485,11 @@ final class JSONCompatNestedTests: XCTestCase {
     try dynamic.set("mix", forField: 2)
     try dynamic.setMapEntry(dynA, forKey: "a", inField: 3)
     try dynamic.setMapEntry(dynB, forKey: "b", inField: 3)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_MixedNest1.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_MixedNest1.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.branches["a"]?.s, "branch_a")
       XCTAssertEqual(decoded.branches["b"]?.n, 42)
@@ -491,7 +498,7 @@ final class JSONCompatNestedTests: XCTestCase {
 
   // MARK: - MixedNest: repeated MixedNest3
 
-  func test_nested_mixedNest_repeatedNested_bidirectional() throws {
+  func test_nested_mixedNest_repeatedNested_bidirectional() async throws {
     var proto = Testcompat_MixedNest1()
     var n3a = Testcompat_MixedNest1.MixedNest2.MixedNest3()
     n3a.val = 1
@@ -502,7 +509,7 @@ final class JSONCompatNestedTests: XCTestCase {
     proto.flags = [.active, .inactive]
 
     let desc = CompatDescriptors.mixedNest1()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let child = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       let list = try XCTUnwrap(try child.get(forField: 4) as? [DynamicMessage])
       XCTAssertEqual(list.count, 2)
@@ -526,7 +533,11 @@ final class JSONCompatNestedTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(dNest2, forField: 1)
     try dynamic.set([Int32(1), Int32(2)] as [Int32], forField: 4)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_MixedNest1.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_MixedNest1.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.child.list.count, 2)
       XCTAssertEqual(decoded.child.list[0].val, 1)
@@ -536,7 +547,7 @@ final class JSONCompatNestedTests: XCTestCase {
 
   // MARK: - Empty inner message
 
-  func test_nested_emptyInner_bidirectional() throws {
+  func test_nested_emptyInner_bidirectional() async throws {
     var proto = Testcompat_Nested1()
     proto.name = "parent"
     // child is present but empty (default values)
@@ -547,7 +558,7 @@ final class JSONCompatNestedTests: XCTestCase {
     // An empty nested message is serialized as {}
     XCTAssertTrue(jsonStr.contains("name"), "name should appear: \(jsonStr)")
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 2) as? String, "parent")
     }
 
@@ -558,7 +569,7 @@ final class JSONCompatNestedTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("parent", forField: 2)
     try dynamic.set(emptyChild, forField: 1)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Nested1.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Nested1.self) {
       decoded in
       XCTAssertEqual(decoded.name, "parent")
       XCTAssertEqual(decoded.child.count, 0)
@@ -567,7 +578,7 @@ final class JSONCompatNestedTests: XCTestCase {
 
   // MARK: - Absent inner → omitted
 
-  func test_nested_absentInner_omitted() throws {
+  func test_nested_absentInner_omitted() async throws {
     var proto = Testcompat_Nested1()
     proto.name = "only_name"
 
@@ -578,21 +589,21 @@ final class JSONCompatNestedTests: XCTestCase {
     XCTAssertFalse(jsonStr.contains("child"), "absent child should be omitted: \(jsonStr)")
 
     let dynamic = DynamicMessage(descriptor: desc)
-    let jsonData = try CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
+    let jsonData = try await CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
     let ourJson = try XCTUnwrap(String(data: jsonData, encoding: .utf8))
     XCTAssertFalse(ourJson.contains("child"), "absent child should be omitted in our JSON: \(ourJson)")
   }
 
   // MARK: - Enum at every level
 
-  func test_nested_enumAtEveryLevel_bidirectional() throws {
+  func test_nested_enumAtEveryLevel_bidirectional() async throws {
     var proto = Testcompat_Nested1()
     proto.child.child.child.status = .active
     proto.child.child.child.tags = ["t"]
     proto.child.child.props = ["p": 5]
 
     let desc = CompatDescriptors.nested1()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let n2 = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       let n3 = try XCTUnwrap(try n2.get(forField: 1) as? DynamicMessage)
       let n4 = try XCTUnwrap(try n3.get(forField: 1) as? DynamicMessage)
@@ -612,7 +623,7 @@ final class JSONCompatNestedTests: XCTestCase {
     try n2.set(n3, forField: 1)
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(n2, forField: 1)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Nested1.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_Nested1.self) {
       decoded in
       XCTAssertEqual(decoded.child.child.child.status, .active)
     }
@@ -620,13 +631,13 @@ final class JSONCompatNestedTests: XCTestCase {
 
   // MARK: - OuterWithNestedDefs
 
-  func test_nested_outerWithNestedDefs_bidirectional() throws {
+  func test_nested_outerWithNestedDefs_bidirectional() async throws {
     var proto = Testcompat_OuterWithNestedDefs()
     proto.kind = .outerA
     proto.primary.label = "primary_label"
 
     let desc = CompatDescriptors.outerWithNestedDefs()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 3) as? Int32, 1)
       let primary = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       XCTAssertEqual(try primary.get(forField: 2) as? String, "primary_label")
@@ -638,7 +649,7 @@ final class JSONCompatNestedTests: XCTestCase {
     // Direction B: also verify our JSON roundtrip
     let jsonStr = try proto.jsonString()
     guard let data = jsonStr.data(using: .utf8) else { throw CompatError.jsonEncodingFailed }
-    let deserialized = try CompatHelpers.makeDeserializer(registry: registry).deserialize(data, using: desc)
+    let deserialized = try await CompatHelpers.makeDeserializer(registry: registry).deserialize(data, using: desc)
     XCTAssertEqual(try deserialized.get(forField: 3) as? Int32, 1)
   }
 }

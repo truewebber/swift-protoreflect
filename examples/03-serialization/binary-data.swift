@@ -27,14 +27,14 @@ import SwiftProtoReflect
 
 @main
 struct BinaryDataExample {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("Advanced Binary Data Operations")
 
-    try step1BytesFieldsHandling()
-    try step2DataEncodingFormats()
-    try step3DataIntegrityChecks()
-    try step4CustomBinaryProtocols()
-    try step5DataCompressionTechniques()
+    try await step1BytesFieldsHandling()
+    try await step2DataEncodingFormats()
+    try await step3DataIntegrityChecks()
+    try await step4CustomBinaryProtocols()
+    try await step5DataCompressionTechniques()
 
     ExampleUtils.printSuccess("Binary data operations successfully explored!")
 
@@ -47,7 +47,7 @@ struct BinaryDataExample {
 
   // MARK: - Implementation Steps
 
-  private static func step1BytesFieldsHandling() throws {
+  private static func step1BytesFieldsHandling() async throws {
     ExampleUtils.printStep(1, "Working with bytes fields")
 
     // Create message with bytes fields
@@ -88,13 +88,13 @@ struct BinaryDataExample {
 
     // Check deserialization
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let restoredMessage = try deserializer.deserialize(binaryData, using: binaryMessage.descriptor)
+    let restoredMessage = try await deserializer.deserialize(binaryData, using: binaryMessage.descriptor)
 
     // Verify binary data integrity
     try verifyBinaryDataIntegrity(original: binaryMessage, restored: restoredMessage)
   }
 
-  private static func step2DataEncodingFormats() throws {
+  private static func step2DataEncodingFormats() async throws {
     ExampleUtils.printStep(2, "Data encoding formats")
 
     let originalData = "Binary encoding demonstration with special chars: ñáéíóú 🚀💻🔥".data(using: .utf8)!
@@ -150,7 +150,7 @@ struct BinaryDataExample {
     encodedMessage.prettyPrint()
   }
 
-  private static func step3DataIntegrityChecks() throws {
+  private static func step3DataIntegrityChecks() async throws {
     ExampleUtils.printStep(3, "Data integrity checks")
 
     let testData = generateRandomData(length: 1024)  // 1KB test data
@@ -200,7 +200,7 @@ struct BinaryDataExample {
 
     // Check restored data
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let restoredMessage = try deserializer.deserialize(serializedData, using: integrityMessage.descriptor)
+    let restoredMessage = try await deserializer.deserialize(serializedData, using: integrityMessage.descriptor)
 
     if let restoredData = try restoredMessage.get(forField: "data") as? Data,
       let restoredMD5 = try restoredMessage.get(forField: "md5_hash") as? String
@@ -211,7 +211,7 @@ struct BinaryDataExample {
     }
   }
 
-  private static func step4CustomBinaryProtocols() throws {
+  private static func step4CustomBinaryProtocols() async throws {
     ExampleUtils.printStep(4, "Custom binary protocols")
 
     print("  🔧 Building custom protocol over Protocol Buffers...")
@@ -252,7 +252,7 @@ struct BinaryDataExample {
     print("  🔍 Protocol parsing simulation:")
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let parsedMessage = try deserializer.deserialize(protocolData, using: protocolMessage.descriptor)
+    let parsedMessage = try await deserializer.deserialize(protocolData, using: protocolMessage.descriptor)
 
     if let parsedHeader = try parsedMessage.get(forField: "header") as? Data,
       let parsedPayload = try parsedMessage.get(forField: "payload") as? Data
@@ -268,7 +268,7 @@ struct BinaryDataExample {
     }
   }
 
-  private static func step5DataCompressionTechniques() throws {
+  private static func step5DataCompressionTechniques() async throws {
     ExampleUtils.printStep(5, "Data encoding and compression demonstration")
 
     // Create large dataset for demonstration

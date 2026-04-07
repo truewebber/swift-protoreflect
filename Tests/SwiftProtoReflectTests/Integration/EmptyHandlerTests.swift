@@ -14,7 +14,7 @@ final class EmptyHandlerTests: XCTestCase {
 
   // MARK: - EmptyValue Tests
 
-  func testEmptyValueInitialization() {
+  func testEmptyValueInitialization() async throws {
     // Basic initialization
     let empty1 = EmptyHandler.EmptyValue()
     let empty2 = EmptyHandler.EmptyValue()
@@ -23,7 +23,7 @@ final class EmptyHandlerTests: XCTestCase {
     XCTAssertEqual(empty1, empty2)
   }
 
-  func testEmptyValueSingleton() {
+  func testEmptyValueSingleton() async throws {
     let singleton = EmptyHandler.EmptyValue.instance
     let manual = EmptyHandler.EmptyValue()
 
@@ -31,14 +31,14 @@ final class EmptyHandlerTests: XCTestCase {
     XCTAssertEqual(singleton, manual)
   }
 
-  func testEmptyValueDescription() {
+  func testEmptyValueDescription() async throws {
     let empty = EmptyHandler.EmptyValue()
 
     // Check description
     XCTAssertEqual(empty.description, "Empty")
   }
 
-  func testEmptyValueEquality() {
+  func testEmptyValueEquality() async throws {
     let empty1 = EmptyHandler.EmptyValue()
     let empty2 = EmptyHandler.EmptyValue()
     let singleton = EmptyHandler.EmptyValue.instance
@@ -51,12 +51,12 @@ final class EmptyHandlerTests: XCTestCase {
 
   // MARK: - Handler Implementation Tests
 
-  func testHandlerBasicProperties() {
+  func testHandlerBasicProperties() async throws {
     XCTAssertEqual(EmptyHandler.handledTypeName, "google.protobuf.Empty")
     XCTAssertEqual(EmptyHandler.supportPhase, .critical)
   }
 
-  func testCreateSpecializedFromMessage() throws {
+  func testCreateSpecializedFromMessage() async throws {
     // Create empty message
     let emptyMessage = try createEmptyMessage()
 
@@ -72,7 +72,7 @@ final class EmptyHandlerTests: XCTestCase {
     XCTAssertEqual(empty, EmptyHandler.EmptyValue.instance)
   }
 
-  func testCreateSpecializedFromInvalidMessage() throws {
+  func testCreateSpecializedFromInvalidMessage() async throws {
     // Create message of wrong type
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "NotEmpty", parent: fileDescriptor)
@@ -90,7 +90,7 @@ final class EmptyHandlerTests: XCTestCase {
     }
   }
 
-  func testCreateDynamicFromSpecialized() throws {
+  func testCreateDynamicFromSpecialized() async throws {
     let empty = EmptyHandler.EmptyValue.instance
 
     let dynamicMessage = try EmptyHandler.createDynamic(from: empty)
@@ -103,7 +103,7 @@ final class EmptyHandlerTests: XCTestCase {
     XCTAssertEqual(dynamicMessage.descriptor.fields.count, 0)
   }
 
-  func testCreateDynamicFromInvalidSpecialized() throws {
+  func testCreateDynamicFromInvalidSpecialized() async throws {
     let wrongSpecialized = "not an empty"
 
     XCTAssertThrowsError(try EmptyHandler.createDynamic(from: wrongSpecialized)) { error in
@@ -116,7 +116,7 @@ final class EmptyHandlerTests: XCTestCase {
     }
   }
 
-  func testValidate() throws {
+  func testValidate() async throws {
     // Valid values
     let validEmpty = EmptyHandler.EmptyValue()
     let validSingleton = EmptyHandler.EmptyValue.instance
@@ -131,7 +131,7 @@ final class EmptyHandlerTests: XCTestCase {
     XCTAssertFalse(EmptyHandler.validate([]))
   }
 
-  func testRoundTripConversion() throws {
+  func testRoundTripConversion() async throws {
     let originalEmpty = EmptyHandler.EmptyValue.instance
 
     // Convert to dynamic message and back
@@ -148,7 +148,7 @@ final class EmptyHandlerTests: XCTestCase {
 
   // MARK: - Convenience Extensions Tests
 
-  func testDynamicMessageEmptyExtension() throws {
+  func testDynamicMessageEmptyExtension() async throws {
     // Create Empty message through convenience method
     let emptyMessage = try DynamicMessage.emptyMessage()
 
@@ -160,7 +160,7 @@ final class EmptyHandlerTests: XCTestCase {
     XCTAssertEqual(empty, EmptyHandler.EmptyValue.instance)
   }
 
-  func testDynamicMessageIsEmpty() throws {
+  func testDynamicMessageIsEmpty() async throws {
     // Empty message
     let emptyMessage = try DynamicMessage.emptyMessage()
     XCTAssertTrue(emptyMessage.isEmpty())
@@ -175,7 +175,7 @@ final class EmptyHandlerTests: XCTestCase {
     XCTAssertFalse(notEmptyMessage.isEmpty())
   }
 
-  func testDynamicMessageToEmptyWithInvalidMessage() throws {
+  func testDynamicMessageToEmptyWithInvalidMessage() async throws {
     var fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
     let messageDescriptor = MessageDescriptor(name: "NotEmpty", parent: fileDescriptor)
     fileDescriptor.addMessage(messageDescriptor)
@@ -193,7 +193,7 @@ final class EmptyHandlerTests: XCTestCase {
 
   // MARK: - Unit Type Integration Tests
 
-  func testVoidIntegration() {
+  func testVoidIntegration() async throws {
     // Create from Void
     let emptyFromVoid = EmptyHandler.EmptyValue.from(())
     XCTAssertEqual(emptyFromVoid, EmptyHandler.EmptyValue.instance)
@@ -206,7 +206,7 @@ final class EmptyHandlerTests: XCTestCase {
     XCTAssertTrue(true)  // If we reached this point, everything works
   }
 
-  func testVoidRoundTrip() {
+  func testVoidRoundTrip() async throws {
     let originalVoid: Void = ()
     let empty = EmptyHandler.EmptyValue.from(originalVoid)
     empty.toVoid()
@@ -217,24 +217,22 @@ final class EmptyHandlerTests: XCTestCase {
 
   // MARK: - Registry Integration Tests
 
-  func testRegistryIntegration() throws {
+  func testRegistryIntegration() async throws {
     let registry = WellKnownTypesRegistry.shared
 
-    // Check that EmptyHandler is registered
-    let handler = registry.getHandler(for: WellKnownTypeNames.empty)
+    let handler = await registry.getHandler(for: WellKnownTypeNames.empty)
     XCTAssertNotNil(handler)
     XCTAssertTrue(handler is EmptyHandler.Type)
 
-    // Check that registered types include Empty
-    let registeredTypes = registry.getRegisteredTypes()
+    let registeredTypes = await registry.getRegisteredTypes()
     XCTAssertTrue(registeredTypes.contains(WellKnownTypeNames.empty))
   }
 
-  func testRegistryCreateSpecialized() throws {
+  func testRegistryCreateSpecialized() async throws {
     let registry = WellKnownTypesRegistry.shared
     let emptyMessage = try createEmptyMessage()
 
-    let specialized = try registry.createSpecialized(
+    let specialized = try await registry.createSpecialized(
       from: emptyMessage,
       typeName: WellKnownTypeNames.empty
     )
@@ -247,11 +245,11 @@ final class EmptyHandlerTests: XCTestCase {
     XCTAssertEqual(empty, EmptyHandler.EmptyValue.instance)
   }
 
-  func testRegistryCreateDynamic() throws {
+  func testRegistryCreateDynamic() async throws {
     let registry = WellKnownTypesRegistry.shared
     let empty = EmptyHandler.EmptyValue.instance
 
-    let dynamicMessage = try registry.createDynamic(
+    let dynamicMessage = try await registry.createDynamic(
       from: empty,
       typeName: WellKnownTypeNames.empty
     )
@@ -262,7 +260,7 @@ final class EmptyHandlerTests: XCTestCase {
 
   // MARK: - Edge Cases Tests
 
-  func testMultipleEmptyMessagesAreEqual() throws {
+  func testMultipleEmptyMessagesAreEqual() async throws {
     let empty1 = try DynamicMessage.emptyMessage()
     let empty2 = try DynamicMessage.emptyMessage()
 
@@ -273,7 +271,7 @@ final class EmptyHandlerTests: XCTestCase {
     XCTAssertEqual(specialized1, specialized2)
   }
 
-  func testEmptyMessageFieldAccess() throws {
+  func testEmptyMessageFieldAccess() async throws {
     var emptyMessage = try DynamicMessage.emptyMessage()
 
     // Empty message should not have fields
@@ -287,7 +285,7 @@ final class EmptyHandlerTests: XCTestCase {
 
   // MARK: - Performance Tests
 
-  func testConversionPerformance() throws {
+  func testConversionPerformance() async throws {
     let empty = EmptyHandler.EmptyValue.instance
 
     measure {
@@ -303,37 +301,30 @@ final class EmptyHandlerTests: XCTestCase {
     }
   }
 
-  func testRegistryPerformance() throws {
+  func testRegistryPerformance() async throws {
     let registry = WellKnownTypesRegistry.shared
     let emptyMessage = try createEmptyMessage()
 
-    measure {
-      for _ in 0..<1000 {
-        do {
-          let specialized = try registry.createSpecialized(
-            from: emptyMessage,
-            typeName: WellKnownTypeNames.empty
-          )
-          _ = try registry.createDynamic(
-            from: specialized,
-            typeName: WellKnownTypeNames.empty
-          )
-        }
-        catch {
-          XCTFail("Registry performance test failed: \(error)")
-        }
-      }
+    for _ in 0..<1000 {
+      let specialized = try await registry.createSpecialized(
+        from: emptyMessage,
+        typeName: WellKnownTypeNames.empty
+      )
+      _ = try await registry.createDynamic(
+        from: specialized,
+        typeName: WellKnownTypeNames.empty
+      )
     }
   }
 
   // MARK: - Error Handling Tests
 
-  func testCreateSpecializedWithNilMessage() throws {
+  func testCreateSpecializedWithNilMessage() async throws {
     // This test checks edge cases, although such scenario should not happen in reality
     // since DynamicMessage cannot be nil in Swift's typed system
   }
 
-  func testValidateWithNil() {
+  func testValidateWithNil() async throws {
     // Check validation with nil (which should return false)
     let nilValue: Any? = nil
     if let value = nilValue {

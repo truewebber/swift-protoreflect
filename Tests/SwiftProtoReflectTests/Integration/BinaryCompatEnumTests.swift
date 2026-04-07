@@ -25,24 +25,24 @@ final class BinaryCompatEnumTests: XCTestCase {
   private var registry: TypeRegistry!
   private let serializer = BinaryCompatHelpers.makeSerializer()
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - 1. Enum field stored as varint (no name lookup)
 
-  func test_enum_topLevel_varintEncoding_bidirectional() throws {
+  func test_enum_topLevel_varintEncoding_bidirectional() async throws {
     var proto = Testcompat_WithNestedEnum()
     proto.kind = .innerAlpha  // raw value 1
 
     let desc = CompatDescriptors.withNestedEnum()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -62,7 +62,7 @@ final class BinaryCompatEnumTests: XCTestCase {
 
   // MARK: - 2. All IntentFlag enum values as varints (Direction B)
 
-  func test_enum_allStatusValues_bidirectional() throws {
+  func test_enum_allStatusValues_bidirectional() async throws {
     let desc = CompatDescriptors.intentHolder()
     // Non-zero IntentFlag values: 1=INFORMATIONAL, 2=NAVIGATIONAL, 4=TRANSACTIONAL, 8=COMMERCIAL
     let cases: [(Int32, Testcompat_IntentFlag)] = [
@@ -74,7 +74,7 @@ final class BinaryCompatEnumTests: XCTestCase {
     for (rawValue, expected) in cases {
       var d = DynamicMessage(descriptor: desc)
       try d.set(rawValue, forField: 1)
-      try BinaryCompatHelpers.assertUsToOracle(
+      try await BinaryCompatHelpers.assertUsToOracle(
         dynamic: d,
         protoType: Testcompat_IntentHolder.self
       ) { decoded in
@@ -85,12 +85,12 @@ final class BinaryCompatEnumTests: XCTestCase {
 
   // MARK: - 3. Aliased enum round-trip (INTENT_INFORMATIONAL = 1)
 
-  func test_enum_aliased_bidirectional() throws {
+  func test_enum_aliased_bidirectional() async throws {
     var proto = Testcompat_IntentHolder()
     proto.intent = .intentInformational  // raw value 1
 
     let desc = CompatDescriptors.intentHolder()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -110,13 +110,13 @@ final class BinaryCompatEnumTests: XCTestCase {
 
   // MARK: - 4. Negative enum values as 10-byte 2's-complement varints (not zigzag)
 
-  func test_enum_negativeValues_bidirectional() throws {
+  func test_enum_negativeValues_bidirectional() async throws {
     let desc = CompatDescriptors.directionHolder()
 
     // DOWN = -1
     var protoDown = Testcompat_DirectionHolder()
     protoDown.dir = .down
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: protoDown,
       descriptor: desc,
       registry: registry,
@@ -136,7 +136,7 @@ final class BinaryCompatEnumTests: XCTestCase {
     // LEFT = -2
     var protoLeft = Testcompat_DirectionHolder()
     protoLeft.dir = .left
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: protoLeft,
       descriptor: desc,
       registry: registry,
@@ -156,12 +156,12 @@ final class BinaryCompatEnumTests: XCTestCase {
 
   // MARK: - 5. Repeated enum packed as varints
 
-  func test_enum_repeated_bidirectional() throws {
+  func test_enum_repeated_bidirectional() async throws {
     var proto = Testcompat_IntentHolder()
     proto.allIntents = [.intentInformational, .intentNavigational, .intentTransactional, .intentCommercial]
 
     let desc = CompatDescriptors.intentHolder()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -185,12 +185,12 @@ final class BinaryCompatEnumTests: XCTestCase {
 
   // MARK: - 6. Map with enum value (non-deterministic order — compare values, not bytes)
 
-  func test_enum_mapValue_bidirectional() throws {
+  func test_enum_mapValue_bidirectional() async throws {
     var proto = Testcompat_IntentHolder()
     proto.byName = ["search": .intentNavigational, "buy": .intentTransactional]
 
     let desc = CompatDescriptors.intentHolder()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -214,7 +214,7 @@ final class BinaryCompatEnumTests: XCTestCase {
 
   // MARK: - 7. Zero enum value (proto3 default) produces no wire bytes
 
-  func test_enum_defaultValue_omittedInProto3() throws {
+  func test_enum_defaultValue_omittedInProto3() async throws {
     // Direction A: oracle with intent = .intentDefault (0) → empty serializedData
     var proto = Testcompat_IntentHolder()
     proto.intent = .intentDefault
@@ -230,12 +230,12 @@ final class BinaryCompatEnumTests: XCTestCase {
 
   // MARK: - 8. Aliased Priority enum (NORMAL == MEDIUM, both value 2)
 
-  func test_enum_aliased_priorityNormalMedium_bidirectional() throws {
+  func test_enum_aliased_priorityNormalMedium_bidirectional() async throws {
     var proto = Testcompat_CrossFileAll()
     proto.priority = .normal  // raw value 2 (same as .medium)
 
     let desc = CompatDescriptors.crossFileAll()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -256,12 +256,12 @@ final class BinaryCompatEnumTests: XCTestCase {
 
   // MARK: - 9. Enum inside oneof (OneofComplex.enumVal = DELETED = 3)
 
-  func test_enum_inOneof_bidirectional() throws {
+  func test_enum_inOneof_bidirectional() async throws {
     var proto = Testcompat_OneofComplex()
     proto.enumVal = .deleted  // raw value 3
 
     let desc = CompatDescriptors.oneofComplex()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -286,14 +286,14 @@ final class BinaryCompatEnumTests: XCTestCase {
 
   // MARK: - 10. All IntentHolder enum field types simultaneously
 
-  func test_enum_allEnumTypes_simultaneously_bidirectional() throws {
+  func test_enum_allEnumTypes_simultaneously_bidirectional() async throws {
     var proto = Testcompat_IntentHolder()
     proto.intent = .intentTransactional  // 4
     proto.allIntents = [.intentInformational, .intentNavigational, .intentTransactional, .intentCommercial]
     proto.byName = ["info": .intentInformational, "buy": .intentTransactional]
 
     let desc = CompatDescriptors.intentHolder()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -324,13 +324,13 @@ final class BinaryCompatEnumTests: XCTestCase {
 
   // MARK: - 11. Round-trip all Direction values including negatives
 
-  func test_enum_roundTrip_allDirectionValues() throws {
+  func test_enum_roundTrip_allDirectionValues() async throws {
     // [0=UNSPECIFIED, 1=UP, -1=DOWN, -2=LEFT, 2=RIGHT]
     var proto = Testcompat_DirectionHolder()
     proto.dirs = [.unspecified, .up, .down, .left, .right]
 
     let desc = CompatDescriptors.directionHolder()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -353,7 +353,7 @@ final class BinaryCompatEnumTests: XCTestCase {
     var dynRt = DynamicMessage(descriptor: desc)
     try dynRt.set(allValues, forField: 2)
     let roundTripData = try serializer.serialize(dynRt)
-    let restored = try BinaryCompatHelpers.makeDeserializer(registry: registry)
+    let restored = try await BinaryCompatHelpers.makeDeserializer(registry: registry)
       .deserialize(roundTripData, using: desc)
     let restoredVals = try XCTUnwrap(try restored.get(forField: 2) as? [Int32])
     XCTAssertEqual(restoredVals, allValues, "binary self-roundtrip must preserve negative enum values")
@@ -361,13 +361,13 @@ final class BinaryCompatEnumTests: XCTestCase {
 
   // MARK: - 12. Nested enum inside message (INNER_GAMMA = 3)
 
-  func test_enum_nestedInsideMessage_bidirectional() throws {
+  func test_enum_nestedInsideMessage_bidirectional() async throws {
     var proto = Testcompat_WithNestedEnum()
     proto.kind = .innerGamma  // raw value 3
     proto.label = "gamma test"
 
     let desc = CompatDescriptors.withNestedEnum()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -390,7 +390,7 @@ final class BinaryCompatEnumTests: XCTestCase {
 
   // MARK: - 13. Negative enum encodes as 10-byte 2's-complement varint (not zigzag)
 
-  func test_enum_negativeValue_varintEncoding_10bytes() throws {
+  func test_enum_negativeValue_varintEncoding_10bytes() async throws {
     // Field 1 (wire type 0): tag = (1 << 3) | 0 = 0x08
     // -1 as int32 → sign-extended to uint64 → 0xFFFFFFFFFFFFFFFF
     // Encoded as 10-byte varint: 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0x01
@@ -412,8 +412,9 @@ final class BinaryCompatEnumTests: XCTestCase {
     let desc = CompatDescriptors.directionHolder()
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(-1), forField: 1)
+    let _asyncResult20 = try serializer.serialize(dynamic)
     XCTAssertEqual(
-      try serializer.serialize(dynamic),
+      _asyncResult20,
       expected,
       "BinarySerializer: enum -1 must encode as 10-byte 2's-complement varint (0xFF×9 + 0x01)"
     )
@@ -421,14 +422,14 @@ final class BinaryCompatEnumTests: XCTestCase {
 
   // MARK: - 14. Unknown enum value preserved as raw Int32 on deserialization
 
-  func test_enum_unknownValue_preserved_bidirectional() throws {
+  func test_enum_unknownValue_preserved_bidirectional() async throws {
     // Craft binary: IntentHolder field 1 = 999 (unknown value)
     // tag = (1 << 3) | 0 = 0x08
     // 999 as varint: 999 = 0x3E7 → 0xE7 (low 7 bits + continue) 0x07 (high 7 bits)
     let crafted = Data([0x08, 0xE7, 0x07])
 
     let desc = CompatDescriptors.intentHolder()
-    let dynamic = try BinaryCompatHelpers.makeDeserializer(registry: registry)
+    let dynamic = try await BinaryCompatHelpers.makeDeserializer(registry: registry)
       .deserialize(crafted, using: desc)
     let value = try XCTUnwrap(try dynamic.get(forField: 1) as? Int32)
     XCTAssertEqual(value, 999, "Unknown enum value 999 must be preserved as raw Int32 by BinaryDeserializer")

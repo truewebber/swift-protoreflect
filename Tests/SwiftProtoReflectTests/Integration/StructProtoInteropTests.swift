@@ -24,19 +24,19 @@ final class StructProtoInteropTests: XCTestCase {
   /// TypeRegistry populated with all struct.proto descriptors so the deserializer
   /// can resolve google.protobuf.Value, google.protobuf.Struct, and google.protobuf.ListValue
   /// when they appear as nested message fields.
-  private func makeRegistry() throws -> TypeRegistry {
+  private func makeRegistry() async throws -> TypeRegistry {
     let registry = TypeRegistry()
-    try registry.registerFile(StructProtoDescriptors.fileDescriptor)
+    try await registry.registerFile(StructProtoDescriptors.fileDescriptor)
     return registry
   }
 
-  private func makeDeserializer() throws -> BinaryDeserializer {
-    BinaryDeserializer(options: DeserializationOptions(typeRegistry: try makeRegistry()))
+  private func makeDeserializer() async throws -> BinaryDeserializer {
+    BinaryDeserializer(options: DeserializationOptions(typeRegistry: try await makeRegistry()))
   }
 
   // MARK: - Struct interop
 
-  func test_interop_struct_swiftpbToLibrary_decodesCorrectly() throws {
+  func test_interop_struct_swiftpbToLibrary_decodesCorrectly() async throws {
     var swiftpbStruct = Google_Protobuf_Struct()
     swiftpbStruct.fields["name"] = Google_Protobuf_Value(stringValue: "Alice")
     swiftpbStruct.fields["age"] = Google_Protobuf_Value(numberValue: 30)
@@ -44,7 +44,7 @@ final class StructProtoInteropTests: XCTestCase {
 
     let data = try swiftpbStruct.serializedData()
 
-    let decoded = try makeDeserializer().deserialize(data, using: StructProtoDescriptors.structDescriptor)
+    let decoded = try await makeDeserializer().deserialize(data, using: StructProtoDescriptors.structDescriptor)
     let specialized = try XCTUnwrap(
       try StructHandler.createSpecialized(from: decoded) as? StructHandler.StructValue
     )
@@ -55,7 +55,7 @@ final class StructProtoInteropTests: XCTestCase {
     XCTAssertEqual(specialized.fields.count, 3)
   }
 
-  func test_interop_struct_libraryToSwiftpb_encodesCorrectly() throws {
+  func test_interop_struct_libraryToSwiftpb_encodesCorrectly() async throws {
     let sv = StructHandler.StructValue(fields: [
       "city": .stringValue("London"),
       "population": .numberValue(8_900_000),
@@ -72,7 +72,7 @@ final class StructProtoInteropTests: XCTestCase {
 
   // MARK: - Value interop (null)
 
-  func test_interop_value_nullValue_bothDirections() throws {
+  func test_interop_value_nullValue_bothDirections() async throws {
     // SwiftProtobuf → Library
     var swiftpbValue = Google_Protobuf_Value()
     swiftpbValue.nullValue = .nullValue
@@ -80,7 +80,7 @@ final class StructProtoInteropTests: XCTestCase {
 
     // Null value serialises to empty bytes in proto3 (default enum = 0 is not emitted).
     // Our library should return .nullValue for an empty (or zero-field) Value message.
-    let decodedFwd = try makeDeserializer().deserialize(dataFwd, using: StructProtoDescriptors.valueDescriptor)
+    let decodedFwd = try await makeDeserializer().deserialize(dataFwd, using: StructProtoDescriptors.valueDescriptor)
     let valueFwd = try XCTUnwrap(
       try ValueHandler.createSpecialized(from: decodedFwd) as? ValueHandler.ValueValue
     )
@@ -100,7 +100,7 @@ final class StructProtoInteropTests: XCTestCase {
     )
   }
 
-  func test_interop_value_numberValue_bothDirections() throws {
+  func test_interop_value_numberValue_bothDirections() async throws {
     let number: Double = 3.14
 
     // SwiftProtobuf → Library
@@ -108,7 +108,7 @@ final class StructProtoInteropTests: XCTestCase {
     swiftpbValue.numberValue = number
     let dataFwd = try swiftpbValue.serializedData()
 
-    let decodedFwd = try makeDeserializer().deserialize(dataFwd, using: StructProtoDescriptors.valueDescriptor)
+    let decodedFwd = try await makeDeserializer().deserialize(dataFwd, using: StructProtoDescriptors.valueDescriptor)
     let valueFwd = try XCTUnwrap(
       try ValueHandler.createSpecialized(from: decodedFwd) as? ValueHandler.ValueValue
     )
@@ -121,7 +121,7 @@ final class StructProtoInteropTests: XCTestCase {
     XCTAssertEqual(decodedBwd.numberValue, number, accuracy: 1e-10)
   }
 
-  func test_interop_value_stringValue_bothDirections() throws {
+  func test_interop_value_stringValue_bothDirections() async throws {
     let str = "hello, протобуф"
 
     // SwiftProtobuf → Library
@@ -129,7 +129,7 @@ final class StructProtoInteropTests: XCTestCase {
     swiftpbValue.stringValue = str
     let dataFwd = try swiftpbValue.serializedData()
 
-    let decodedFwd = try makeDeserializer().deserialize(dataFwd, using: StructProtoDescriptors.valueDescriptor)
+    let decodedFwd = try await makeDeserializer().deserialize(dataFwd, using: StructProtoDescriptors.valueDescriptor)
     let valueFwd = try XCTUnwrap(
       try ValueHandler.createSpecialized(from: decodedFwd) as? ValueHandler.ValueValue
     )
@@ -142,14 +142,14 @@ final class StructProtoInteropTests: XCTestCase {
     XCTAssertEqual(decodedBwd.stringValue, str)
   }
 
-  func test_interop_value_structValue_bothDirections() throws {
+  func test_interop_value_structValue_bothDirections() async throws {
     var inner = Google_Protobuf_Struct()
     inner.fields["x"] = Google_Protobuf_Value(numberValue: 1.0)
     var swiftpbValue = Google_Protobuf_Value()
     swiftpbValue.structValue = inner
     let dataFwd = try swiftpbValue.serializedData()
 
-    let decodedFwd = try makeDeserializer().deserialize(dataFwd, using: StructProtoDescriptors.valueDescriptor)
+    let decodedFwd = try await makeDeserializer().deserialize(dataFwd, using: StructProtoDescriptors.valueDescriptor)
     let valueFwd = try XCTUnwrap(
       try ValueHandler.createSpecialized(from: decodedFwd) as? ValueHandler.ValueValue
     )
@@ -168,12 +168,12 @@ final class StructProtoInteropTests: XCTestCase {
     XCTAssertEqual(decodedBwd.structValue.fields["y"]?.stringValue, "world")
   }
 
-  func test_interop_value_boolValue_bothDirections() throws {
+  func test_interop_value_boolValue_bothDirections() async throws {
     // SwiftProtobuf → Library (boolValue: false — field value equals proto default)
     var swiftpbFalse = Google_Protobuf_Value()
     swiftpbFalse.boolValue = false
     let dataFalse = try swiftpbFalse.serializedData()
-    let decodedFalse = try makeDeserializer().deserialize(
+    let decodedFalse = try await makeDeserializer().deserialize(
       dataFalse,
       using: StructProtoDescriptors.valueDescriptor
     )
@@ -186,7 +186,7 @@ final class StructProtoInteropTests: XCTestCase {
     var swiftpbTrue = Google_Protobuf_Value()
     swiftpbTrue.boolValue = true
     let dataTrue = try swiftpbTrue.serializedData()
-    let decodedTrue = try makeDeserializer().deserialize(
+    let decodedTrue = try await makeDeserializer().deserialize(
       dataTrue,
       using: StructProtoDescriptors.valueDescriptor
     )
@@ -209,7 +209,7 @@ final class StructProtoInteropTests: XCTestCase {
     XCTAssertEqual(decodedBwdTrue.kind, .boolValue(true))
   }
 
-  func test_interop_value_listValue_bothDirections() throws {
+  func test_interop_value_listValue_bothDirections() async throws {
     // SwiftProtobuf → Library
     var swiftpbListInner = Google_Protobuf_ListValue()
     swiftpbListInner.values = [
@@ -220,7 +220,7 @@ final class StructProtoInteropTests: XCTestCase {
     swiftpbValue.listValue = swiftpbListInner
     let dataFwd = try swiftpbValue.serializedData()
 
-    let decodedFwd = try makeDeserializer().deserialize(dataFwd, using: StructProtoDescriptors.valueDescriptor)
+    let decodedFwd = try await makeDeserializer().deserialize(dataFwd, using: StructProtoDescriptors.valueDescriptor)
     let valueFwd = try XCTUnwrap(
       try ValueHandler.createSpecialized(from: decodedFwd) as? ValueHandler.ValueValue
     )
@@ -247,7 +247,7 @@ final class StructProtoInteropTests: XCTestCase {
 
   // MARK: - ListValue interop
 
-  func test_interop_listValue_swiftpbToLibrary_decodesCorrectly() throws {
+  func test_interop_listValue_swiftpbToLibrary_decodesCorrectly() async throws {
     var swiftpbList = Google_Protobuf_ListValue()
     swiftpbList.values = [
       Google_Protobuf_Value(numberValue: 1),
@@ -256,7 +256,7 @@ final class StructProtoInteropTests: XCTestCase {
     ]
     let data = try swiftpbList.serializedData()
 
-    let decoded = try makeDeserializer().deserialize(data, using: StructProtoDescriptors.listValueDescriptor)
+    let decoded = try await makeDeserializer().deserialize(data, using: StructProtoDescriptors.listValueDescriptor)
     let specialized = try XCTUnwrap(
       try ListValueHandler.createSpecialized(from: decoded) as? [StructHandler.ValueValue]
     )
@@ -267,7 +267,7 @@ final class StructProtoInteropTests: XCTestCase {
     XCTAssertEqual(specialized[2], .boolValue(false))
   }
 
-  func test_interop_listValue_libraryToSwiftpb_encodesCorrectly() throws {
+  func test_interop_listValue_libraryToSwiftpb_encodesCorrectly() async throws {
     let values: [StructHandler.ValueValue] = [
       .nullValue,
       .numberValue(42),
@@ -291,7 +291,7 @@ final class StructProtoInteropTests: XCTestCase {
 
   // MARK: - Nesting interop
 
-  func test_interop_nestedStructInList_roundTrip() throws {
+  func test_interop_nestedStructInList_roundTrip() async throws {
     // Build a deeply nested SwiftProtobuf structure:
     // { "items": [{ "id": 1, "name": "Alice" }, { "id": 2, "name": "Bob" }] }
     var alice = Google_Protobuf_Struct()
@@ -316,7 +316,7 @@ final class StructProtoInteropTests: XCTestCase {
 
     // SwiftProtobuf → binary → Library
     let data = try root.serializedData()
-    let decoded = try makeDeserializer().deserialize(data, using: StructProtoDescriptors.structDescriptor)
+    let decoded = try await makeDeserializer().deserialize(data, using: StructProtoDescriptors.structDescriptor)
     let sv = try XCTUnwrap(
       try StructHandler.createSpecialized(from: decoded) as? StructHandler.StructValue
     )

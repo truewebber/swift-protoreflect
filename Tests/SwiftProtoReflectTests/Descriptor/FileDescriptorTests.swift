@@ -24,8 +24,8 @@ final class FileDescriptorTests: XCTestCase {
 
   // MARK: - Setup
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     fileDescriptor = FileDescriptor(
       name: "person.proto",
       package: "example.person",
@@ -34,14 +34,14 @@ final class FileDescriptorTests: XCTestCase {
     )
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     fileDescriptor = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Tests
 
-  func testInitialization() {
+  func testInitialization() async throws {
     XCTAssertEqual(fileDescriptor.name, "person.proto")
     XCTAssertEqual(fileDescriptor.package, "example.person")
     XCTAssertEqual(fileDescriptor.dependencies, ["google/protobuf/timestamp.proto"])
@@ -51,7 +51,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertTrue(fileDescriptor.services.isEmpty)
   }
 
-  func testInitializationWithDefaults() {
+  func testInitializationWithDefaults() async throws {
     let descriptor = FileDescriptor(name: "empty.proto", package: "test")
     XCTAssertEqual(descriptor.name, "empty.proto")
     XCTAssertEqual(descriptor.package, "test")
@@ -59,7 +59,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertTrue(descriptor.options.isEmpty)
   }
 
-  func testInitializationWithEmptyPackage() {
+  func testInitializationWithEmptyPackage() async throws {
     let descriptor = FileDescriptor(name: "no_package.proto", package: "")
     XCTAssertEqual(descriptor.name, "no_package.proto")
     XCTAssertEqual(descriptor.package, "")
@@ -68,7 +68,7 @@ final class FileDescriptorTests: XCTestCase {
   /// Tests adding message to file.
   ///
   /// Verifies message field types, field numbers and field options.
-  func testAddMessage() {
+  func testAddMessage() async throws {
     let personMessage = MessageDescriptor(name: "Person")
     fileDescriptor.addMessage(personMessage)
 
@@ -120,7 +120,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertFalse(finalMessage.field(number: 2)?.isOptional ?? true)
   }
 
-  func testAddMessageReplacement() {
+  func testAddMessageReplacement() async throws {
     // Add first message
     let personMessage1 = MessageDescriptor(name: "Person")
     fileDescriptor.addMessage(personMessage1)
@@ -136,7 +136,7 @@ final class FileDescriptorTests: XCTestCase {
   /// Tests adding enum to file.
   ///
   /// Verifies enum values, enum options and options for individual values.
-  func testAddEnum() {
+  func testAddEnum() async throws {
     var genderEnum = EnumDescriptor(name: "Gender", options: ["deprecated": .bool(false)])
 
     // Add enum values with options
@@ -201,7 +201,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(femaleValue?.number, 2)
   }
 
-  func testAddEnumReplacement() {
+  func testAddEnumReplacement() async throws {
     // Add first enum
     let enum1 = EnumDescriptor(name: "Status")
     fileDescriptor.addEnum(enum1)
@@ -217,7 +217,7 @@ final class FileDescriptorTests: XCTestCase {
   /// Tests adding service to file.
   ///
   /// Verifies service methods, input and output parameter types, as well as service and method options.
-  func testAddService() {
+  func testAddService() async throws {
     var personService = ServiceDescriptor(
       name: "PersonService",
       parent: fileDescriptor,
@@ -296,7 +296,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(streamPersonsMethod?.options["deprecated"], .bool(true))
   }
 
-  func testAddServiceReplacement() {
+  func testAddServiceReplacement() async throws {
     // Add first service
     let service1 = ServiceDescriptor(name: "DataService", parent: fileDescriptor)
     fileDescriptor.addService(service1)
@@ -309,7 +309,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(fileDescriptor.services.count, 1)
   }
 
-  func testHasMessage() {
+  func testHasMessage() async throws {
     // Verify message absence
     XCTAssertFalse(fileDescriptor.hasMessage(named: "Person"))
 
@@ -324,7 +324,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertFalse(fileDescriptor.hasMessage(named: "Address"))
   }
 
-  func testHasEnum() {
+  func testHasEnum() async throws {
     // Verify enum absence
     XCTAssertFalse(fileDescriptor.hasEnum(named: "Gender"))
 
@@ -339,7 +339,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertFalse(fileDescriptor.hasEnum(named: "Status"))
   }
 
-  func testHasService() {
+  func testHasService() async throws {
     // Verify service absence
     XCTAssertFalse(fileDescriptor.hasService(named: "PersonService"))
 
@@ -357,7 +357,7 @@ final class FileDescriptorTests: XCTestCase {
   /// Tests getting full type name.
   ///
   /// Verifies getting name for nested types and behavior for imported types.
-  func testGetFullName() {
+  func testGetFullName() async throws {
     XCTAssertEqual(fileDescriptor.getFullName(for: "Person"), "example.person.Person")
 
     let emptyPackageFileDescriptor = FileDescriptor(name: "test.proto", package: "")
@@ -415,7 +415,7 @@ final class FileDescriptorTests: XCTestCase {
     XCTAssertEqual(fileDescriptor.getFullName(for: ""), "example.person.")
   }
 
-  func testFluentInterface() {
+  func testFluentInterface() async throws {
     // Verify methods separately as they are mutating and cannot be called in chain
     let personMessage = MessageDescriptor(name: "Person")
     let genderEnum = EnumDescriptor(name: "Gender")
@@ -434,7 +434,7 @@ final class FileDescriptorTests: XCTestCase {
   // MARK: - Business Tests
 
   /// Verifies nested object properties (not just name, but other attributes too).
-  func testNestedObjectProperties() {
+  func testNestedObjectProperties() async throws {
     // Create main message
     var personMessage = MessageDescriptor(name: "Person", parent: fileDescriptor)
 
@@ -544,7 +544,7 @@ final class FileDescriptorTests: XCTestCase {
   }
 
   /// Verifies correctness of full paths for nested types.
-  func testNestedTypeFullPaths() {
+  func testNestedTypeFullPaths() async throws {
     // Create multi-level structure
     var companyMessage = MessageDescriptor(name: "Company", parent: fileDescriptor)
     var departmentMessage = MessageDescriptor(name: "Department", parent: companyMessage)
@@ -623,7 +623,7 @@ final class FileDescriptorTests: XCTestCase {
   }
 
   /// Verifies working with OneOf fields in file descriptor context.
-  func testOneOfFieldsInFileContext() {
+  func testOneOfFieldsInFileContext() async throws {
     // Create message with OneOf fields
     var paymentMessage = MessageDescriptor(name: "Payment", parent: fileDescriptor)
 
@@ -726,7 +726,7 @@ final class FileDescriptorTests: XCTestCase {
   }
 
   /// Tests cyclic dependencies between messages in file context.
-  func testCyclicDependenciesInFileContext() {
+  func testCyclicDependenciesInFileContext() async throws {
     // Create node graph with cyclic references
     var nodeMessage = MessageDescriptor(name: "GraphNode", parent: fileDescriptor)
 
@@ -830,7 +830,7 @@ final class FileDescriptorTests: XCTestCase {
   }
 
   /// Verifies handling of imported types in file context.
-  func testImportedTypesInFileContext() {
+  func testImportedTypesInFileContext() async throws {
     // Create file with multiple imports
     var apiFile = FileDescriptor(
       name: "api.proto",

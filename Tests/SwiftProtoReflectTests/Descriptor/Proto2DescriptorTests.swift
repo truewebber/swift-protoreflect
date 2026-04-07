@@ -14,22 +14,22 @@ final class Proto2DescriptorTests: XCTestCase {
 
   // MARK: - 1.0 MessageDescriptor.syntax
 
-  func test_messageDescriptor_syntax_defaultIsProto3() {
+  func test_messageDescriptor_syntax_defaultIsProto3() async throws {
     let desc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     XCTAssertEqual(desc.syntax, "proto3")
   }
 
-  func test_messageDescriptor_syntax_setExplicitly() {
+  func test_messageDescriptor_syntax_setExplicitly() async throws {
     let desc = MessageDescriptor(name: "Msg", fullName: "test.Msg", syntax: "proto2")
     XCTAssertEqual(desc.syntax, "proto2")
   }
 
-  func test_messageDescriptor_syntax_emptyNormalisedToProto2() {
+  func test_messageDescriptor_syntax_emptyNormalisedToProto2() async throws {
     let desc = MessageDescriptor(name: "Msg", fullName: "test.Msg", syntax: "")
     XCTAssertEqual(desc.syntax, "proto2")
   }
 
-  func test_fileDescriptor_addMessage_propagatesSyntax() {
+  func test_fileDescriptor_addMessage_propagatesSyntax() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test", syntax: "proto2")
     let msg = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     file.addMessage(msg)
@@ -37,7 +37,7 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertEqual(file.messages["Msg"]?.syntax, "proto2")
   }
 
-  func test_fileDescriptor_addMessage_propagatesSyntaxProto3() {
+  func test_fileDescriptor_addMessage_propagatesSyntaxProto3() async throws {
     var file = FileDescriptor(name: "test.proto", package: "test", syntax: "proto3")
     let msg = MessageDescriptor(name: "Msg", fullName: "test.Msg", syntax: "proto2")
     file.addMessage(msg)
@@ -45,7 +45,7 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertEqual(file.messages["Msg"]?.syntax, "proto3")
   }
 
-  func test_messageDescriptor_addNestedMessage_propagatesSyntax() {
+  func test_messageDescriptor_addNestedMessage_propagatesSyntax() async throws {
     var parent = MessageDescriptor(name: "Parent", fullName: "test.Parent", syntax: "proto2")
     let child = MessageDescriptor(name: "Child", fullName: "test.Parent.Child")
     parent.addNestedMessage(child)
@@ -53,28 +53,28 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertEqual(parent.nestedMessages["Child"]?.syntax, "proto2")
   }
 
-  func test_messageDescriptor_initWithParentFile_inheritsSyntax() {
+  func test_messageDescriptor_initWithParentFile_inheritsSyntax() async throws {
     let file = FileDescriptor(name: "test.proto", package: "test", syntax: "proto2")
     let msg = MessageDescriptor(name: "Msg", parent: file)
 
     XCTAssertEqual(msg.syntax, "proto2")
   }
 
-  func test_messageDescriptor_initWithParentMessage_inheritsSyntax() {
+  func test_messageDescriptor_initWithParentMessage_inheritsSyntax() async throws {
     let parent = MessageDescriptor(name: "Parent", fullName: "test.Parent", syntax: "proto2")
     let child = MessageDescriptor(name: "Child", parent: parent)
 
     XCTAssertEqual(child.syntax, "proto2")
   }
 
-  func test_messageDescriptor_initWithNilParent_usesDefaultProto3() {
+  func test_messageDescriptor_initWithNilParent_usesDefaultProto3() async throws {
     let msg = MessageDescriptor(name: "Msg", parent: nil)
     XCTAssertEqual(msg.syntax, "proto3")
   }
 
   // MARK: - 1.1 ExtensionRange and Extensions
 
-  func test_messageDescriptor_addExtensionRange_stored() {
+  func test_messageDescriptor_addExtensionRange_stored() async throws {
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     let range = ExtensionRange(start: 100, end: 200)
     desc.addExtensionRange(range)
@@ -84,7 +84,7 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertEqual(desc.extensionRanges[0].end, 200)
   }
 
-  func test_messageDescriptor_addMultipleExtensionRanges() {
+  func test_messageDescriptor_addMultipleExtensionRanges() async throws {
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     desc.addExtensionRange(ExtensionRange(start: 100, end: 200))
     desc.addExtensionRange(ExtensionRange(start: 300, end: 400))
@@ -92,7 +92,7 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertEqual(desc.extensionRanges.count, 2)
   }
 
-  func test_messageDescriptor_addExtension_stored() {
+  func test_messageDescriptor_addExtension_stored() async throws {
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     desc.addExtensionRange(ExtensionRange(start: 100, end: 200))
     let extField = FieldDescriptor(name: "ext_field", number: 100, type: .string)
@@ -102,7 +102,7 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertEqual(desc.extensions[100]?.name, "ext_field")
   }
 
-  func test_messageDescriptor_isExtensionNumber_true_inRange() {
+  func test_messageDescriptor_isExtensionNumber_true_inRange() async throws {
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     desc.addExtensionRange(ExtensionRange(start: 100, end: 200))
 
@@ -111,7 +111,7 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertTrue(desc.isExtensionNumber(199))
   }
 
-  func test_messageDescriptor_isExtensionNumber_false_outsideRange() {
+  func test_messageDescriptor_isExtensionNumber_false_outsideRange() async throws {
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     desc.addExtensionRange(ExtensionRange(start: 100, end: 200))
 
@@ -120,12 +120,12 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertFalse(desc.isExtensionNumber(50))
   }
 
-  func test_messageDescriptor_isExtensionNumber_false_noRanges() {
+  func test_messageDescriptor_isExtensionNumber_false_noRanges() async throws {
     let desc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     XCTAssertFalse(desc.isExtensionNumber(100))
   }
 
-  func test_extensionRange_equatable() {
+  func test_extensionRange_equatable() async throws {
     let a = ExtensionRange(start: 100, end: 200)
     let b = ExtensionRange(start: 100, end: 200)
     let c = ExtensionRange(start: 100, end: 300)
@@ -136,7 +136,7 @@ final class Proto2DescriptorTests: XCTestCase {
 
   // MARK: - 1.2 FieldDescriptor defaultValue in ==
 
-  func test_fieldDescriptor_defaultValue_includedInEquality() {
+  func test_fieldDescriptor_defaultValue_includedInEquality() async throws {
     let a = FieldDescriptor(
       name: "f",
       number: 1,
@@ -153,14 +153,14 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertNotEqual(a, b)
   }
 
-  func test_fieldDescriptor_defaultValue_nil_equalToNil() {
+  func test_fieldDescriptor_defaultValue_nil_equalToNil() async throws {
     let a = FieldDescriptor(name: "f", number: 1, type: .string)
     let b = FieldDescriptor(name: "f", number: 1, type: .string)
 
     XCTAssertEqual(a, b)
   }
 
-  func test_fieldDescriptor_defaultValue_sameValue_equal() {
+  func test_fieldDescriptor_defaultValue_sameValue_equal() async throws {
     let a = FieldDescriptor(
       name: "f",
       number: 1,
@@ -177,7 +177,7 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertEqual(a, b)
   }
 
-  func test_fieldDescriptor_defaultValue_nilVsValue_notEqual() {
+  func test_fieldDescriptor_defaultValue_nilVsValue_notEqual() async throws {
     let a = FieldDescriptor(name: "f", number: 1, type: .string)
     let b = FieldDescriptor(
       name: "f",
@@ -191,7 +191,7 @@ final class Proto2DescriptorTests: XCTestCase {
 
   // MARK: - 1.3 DescriptorOption.double
 
-  func test_descriptorOption_double_storedCorrectly() {
+  func test_descriptorOption_double_storedCorrectly() async throws {
     let option = DescriptorOption.double(3.14)
     if case .double(let v) = option {
       XCTAssertEqual(v, 3.14, accuracy: 0.001)
@@ -201,7 +201,7 @@ final class Proto2DescriptorTests: XCTestCase {
     }
   }
 
-  func test_descriptorOption_double_asAny() {
+  func test_descriptorOption_double_asAny() async throws {
     let option = DescriptorOption.double(2.718)
     let value = option.asAny
     XCTAssertTrue(value is Double)
@@ -212,7 +212,7 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertEqual(doubleValue, 2.718, accuracy: 0.001)
   }
 
-  func test_descriptorOption_double_equatable() {
+  func test_descriptorOption_double_equatable() async throws {
     let a = DescriptorOption.double(1.5)
     let b = DescriptorOption.double(1.5)
     let c = DescriptorOption.double(2.5)
@@ -221,7 +221,7 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertNotEqual(a, c)
   }
 
-  func test_descriptorOption_double_notEqualToFloat() {
+  func test_descriptorOption_double_notEqualToFloat() async throws {
     let d = DescriptorOption.double(1.5)
     let f = DescriptorOption.float(1.5)
 
@@ -230,7 +230,7 @@ final class Proto2DescriptorTests: XCTestCase {
 
   // MARK: - 1.4 EnumDescriptor.validateProto2
 
-  func test_enumDescriptor_validateProto2_noValueZero_valid() {
+  func test_enumDescriptor_validateProto2_noValueZero_valid() async throws {
     var enumDesc = EnumDescriptor(name: "Priority", fullName: "test.Priority")
     enumDesc.addValue(.init(name: "LOW", number: 1))
     enumDesc.addValue(.init(name: "HIGH", number: 2))
@@ -239,7 +239,7 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertTrue(errors.isEmpty, "Proto2 enum without zero value should be valid")
   }
 
-  func test_enumDescriptor_validateProto2_withValueZero_valid() {
+  func test_enumDescriptor_validateProto2_withValueZero_valid() async throws {
     var enumDesc = EnumDescriptor(name: "Status", fullName: "test.Status")
     enumDesc.addValue(.init(name: "UNKNOWN", number: 0))
     enumDesc.addValue(.init(name: "ACTIVE", number: 1))
@@ -248,7 +248,7 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertTrue(errors.isEmpty)
   }
 
-  func test_enumDescriptor_validateProto2_empty_invalid() {
+  func test_enumDescriptor_validateProto2_empty_invalid() async throws {
     let enumDesc = EnumDescriptor(name: "Empty", fullName: "test.Empty")
 
     let errors = enumDesc.validateProto2()
@@ -256,7 +256,7 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertTrue(errors[0].contains("at least one value"))
   }
 
-  func test_enumDescriptor_validateProto3_noZero_vs_validateProto2_noZero() {
+  func test_enumDescriptor_validateProto3_noZero_vs_validateProto2_noZero() async throws {
     var enumDesc = EnumDescriptor(name: "Priority", fullName: "test.Priority")
     enumDesc.addValue(.init(name: "LOW", number: 1))
 
@@ -269,12 +269,12 @@ final class Proto2DescriptorTests: XCTestCase {
 
   // MARK: - 1.5 FieldDescriptor.isPacked
 
-  func test_fieldDescriptor_isPacked_nil_byDefault() {
+  func test_fieldDescriptor_isPacked_nil_byDefault() async throws {
     let field = FieldDescriptor(name: "values", number: 1, type: .int32, isRepeated: true)
     XCTAssertNil(field.isPacked)
   }
 
-  func test_fieldDescriptor_isPacked_true_whenSet() {
+  func test_fieldDescriptor_isPacked_true_whenSet() async throws {
     let field = FieldDescriptor(
       name: "values",
       number: 1,
@@ -285,7 +285,7 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertEqual(field.isPacked, true)
   }
 
-  func test_fieldDescriptor_isPacked_false_whenSet() {
+  func test_fieldDescriptor_isPacked_false_whenSet() async throws {
     let field = FieldDescriptor(
       name: "values",
       number: 1,
@@ -296,17 +296,17 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertEqual(field.isPacked, false)
   }
 
-  func test_fieldDescriptor_effectiveIsPacked_nilInProto3_true() {
+  func test_fieldDescriptor_effectiveIsPacked_nilInProto3_true() async throws {
     let field = FieldDescriptor(name: "values", number: 1, type: .int32, isRepeated: true)
     XCTAssertTrue(field.effectiveIsPacked(syntax: "proto3"))
   }
 
-  func test_fieldDescriptor_effectiveIsPacked_nilInProto2_false() {
+  func test_fieldDescriptor_effectiveIsPacked_nilInProto2_false() async throws {
     let field = FieldDescriptor(name: "values", number: 1, type: .int32, isRepeated: true)
     XCTAssertFalse(field.effectiveIsPacked(syntax: "proto2"))
   }
 
-  func test_fieldDescriptor_effectiveIsPacked_explicitTrue_proto2_true() {
+  func test_fieldDescriptor_effectiveIsPacked_explicitTrue_proto2_true() async throws {
     let field = FieldDescriptor(
       name: "values",
       number: 1,
@@ -317,7 +317,7 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertTrue(field.effectiveIsPacked(syntax: "proto2"))
   }
 
-  func test_fieldDescriptor_effectiveIsPacked_explicitFalse_proto3_false() {
+  func test_fieldDescriptor_effectiveIsPacked_explicitFalse_proto3_false() async throws {
     let field = FieldDescriptor(
       name: "values",
       number: 1,
@@ -328,7 +328,7 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertFalse(field.effectiveIsPacked(syntax: "proto3"))
   }
 
-  func test_fieldDescriptor_isPacked_includedInEquality() {
+  func test_fieldDescriptor_isPacked_includedInEquality() async throws {
     let a = FieldDescriptor(
       name: "values",
       number: 1,
@@ -347,7 +347,7 @@ final class Proto2DescriptorTests: XCTestCase {
     XCTAssertNotEqual(a, b)
   }
 
-  func test_fieldDescriptor_isPacked_nilEqualsNil() {
+  func test_fieldDescriptor_isPacked_nilEqualsNil() async throws {
     let a = FieldDescriptor(name: "values", number: 1, type: .int32, isRepeated: true)
     let b = FieldDescriptor(name: "values", number: 1, type: .int32, isRepeated: true)
 
@@ -356,7 +356,7 @@ final class Proto2DescriptorTests: XCTestCase {
 
   // MARK: - Default value for every scalar type
 
-  func test_fieldDescriptor_defaultValue_everyScalarType() {
+  func test_fieldDescriptor_defaultValue_everyScalarType() async throws {
     let cases: [(FieldType, DescriptorOption)] = [
       (.int32, .int(42)),
       (.int64, .int(100)),

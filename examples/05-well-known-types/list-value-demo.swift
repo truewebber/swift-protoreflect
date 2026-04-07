@@ -22,13 +22,13 @@ import SwiftProtoReflect
 
 @main
 struct ListValueDemo {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("Google Protobuf ListValue")
 
-    try demonstrateBasicList()
-    try demonstrateMixedTypeList()
-    try demonstrateEmptyList()
-    try demonstrateRegistryIntegration()
+    try await demonstrateBasicList()
+    try await demonstrateMixedTypeList()
+    try await demonstrateEmptyList()
+    try await demonstrateRegistryIntegration()
 
     ExampleUtils.printSuccess(
       "ListValue demo completed!"
@@ -43,7 +43,7 @@ struct ListValueDemo {
 
   // MARK: - Basic List
 
-  private static func demonstrateBasicList() throws {
+  private static func demonstrateBasicList() async throws {
     ExampleUtils.printStep(1, "Basic ListValue Operations")
 
     let values: [StructHandler.ValueValue] = [
@@ -73,7 +73,7 @@ struct ListValueDemo {
 
   // MARK: - Mixed Type List
 
-  private static func demonstrateMixedTypeList() throws {
+  private static func demonstrateMixedTypeList() async throws {
     ExampleUtils.printStep(2, "Mixed-Type List")
 
     let mixed: [StructHandler.ValueValue] = [
@@ -103,7 +103,7 @@ struct ListValueDemo {
 
   // MARK: - Empty List
 
-  private static func demonstrateEmptyList() throws {
+  private static func demonstrateEmptyList() async throws {
     ExampleUtils.printStep(3, "Empty ListValue")
 
     let empty: [StructHandler.ValueValue] = []
@@ -124,18 +124,18 @@ struct ListValueDemo {
 
   // MARK: - Registry Integration
 
-  private static func demonstrateRegistryIntegration() throws {
+  private static func demonstrateRegistryIntegration() async throws {
     ExampleUtils.printStep(4, "Registry Integration")
 
     let registry = WellKnownTypesRegistry.shared
     let typeName = WellKnownTypeNames.listValue
 
     print("  Type name: \(typeName)")
-    print("  Registered: \(registry.getHandler(for: typeName) != nil)")
+    print("  Registered: \(await registry.getHandler(for: typeName) != nil)")
 
     let values: [StructHandler.ValueValue] = [.stringValue("test"), .numberValue(123)]
-    let dynamic = try registry.createDynamic(from: values, typeName: typeName)
-    let restored = try registry.createSpecialized(from: dynamic, typeName: typeName)
+    let dynamic = try await registry.createDynamic(from: values, typeName: typeName)
+    let restored = try await registry.createSpecialized(from: dynamic, typeName: typeName)
 
     print("  Registry round-trip: \(restored)")
 

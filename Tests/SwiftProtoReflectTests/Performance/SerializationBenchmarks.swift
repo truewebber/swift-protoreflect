@@ -28,8 +28,8 @@ final class SerializationBenchmarks: XCTestCase {
   nonisolated(unsafe) private var jsonSerializer: JSONSerializer!
   nonisolated(unsafe) private var jsonDeserializer: JSONDeserializer!
 
-  override func setUpWithError() throws {
-    try super.setUpWithError()
+  override func setUp() async throws {
+    try await super.setUp()
 
     registry = TypeRegistry()
     binarySerializer = BinarySerializer()
@@ -38,13 +38,13 @@ final class SerializationBenchmarks: XCTestCase {
     jsonDeserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     // Create test messages of different sizes
-    try setupTestMessages()
+    try await setupTestMessages()
   }
 
-  private func setupTestMessages() throws {
+  private func setupTestMessages() async throws {
     // Small message: simple message with a few fields
     let smallDescriptor = try createPersonDescriptor()
-    try registry.registerMessage(smallDescriptor)
+    try await registry.registerMessage(smallDescriptor)
 
     smallMessage = MessageFactory().createMessage(from: smallDescriptor)
     try smallMessage.set("John Doe", forField: "name")
@@ -53,7 +53,7 @@ final class SerializationBenchmarks: XCTestCase {
 
     // Medium message: message with nested structures and repeated fields
     let mediumDescriptor = try createCompanyDescriptor()
-    try registry.registerMessage(mediumDescriptor)
+    try await registry.registerMessage(mediumDescriptor)
 
     mediumMessage = MessageFactory().createMessage(from: mediumDescriptor)
     try mediumMessage.set("TechCorp Inc", forField: "name")
@@ -65,7 +65,7 @@ final class SerializationBenchmarks: XCTestCase {
 
     // Large message: large message with many fields and data
     let largeDescriptor = try createDatabaseDescriptor()
-    try registry.registerMessage(largeDescriptor)
+    try await registry.registerMessage(largeDescriptor)
 
     largeMessage = MessageFactory().createMessage(from: largeDescriptor)
     try largeMessage.set("ProductDB", forField: "name")
@@ -88,7 +88,7 @@ final class SerializationBenchmarks: XCTestCase {
   // MARK: - Binary Serialization Performance Tests
 
   /// Test-PERF-001: Binary serialization performance - small messages.
-  func testBinarySerializationPerformanceSmall() {
+  func testBinarySerializationPerformanceSmall() async throws {
     measure {
       do {
         let _ = try binarySerializer.serialize(smallMessage)
@@ -100,7 +100,7 @@ final class SerializationBenchmarks: XCTestCase {
   }
 
   /// Test-PERF-001: Binary serialization performance - medium messages.
-  func testBinarySerializationPerformanceMedium() {
+  func testBinarySerializationPerformanceMedium() async throws {
     measure {
       do {
         let _ = try binarySerializer.serialize(mediumMessage)
@@ -112,7 +112,7 @@ final class SerializationBenchmarks: XCTestCase {
   }
 
   /// Test-PERF-001: Binary serialization performance - large messages.
-  func testBinarySerializationPerformanceLarge() {
+  func testBinarySerializationPerformanceLarge() async throws {
     measure {
       do {
         let _ = try binarySerializer.serialize(largeMessage)
@@ -126,185 +126,163 @@ final class SerializationBenchmarks: XCTestCase {
   // MARK: - Binary Deserialization Performance Tests
 
   /// Test-PERF-002: Binary deserialization performance - small messages.
-  func testBinaryDeserializationPerformanceSmall() throws {
+  func testBinaryDeserializationPerformanceSmall() async throws {
     let serializedData = try binarySerializer.serialize(smallMessage)
 
-    measure {
-      do {
-        let _ = try binaryDeserializer.deserialize(
-          serializedData,
-          using: smallMessage.descriptor
-        )
-      }
-      catch {
-        XCTFail("Deserialization failed: \(error)")
-      }
+    do {
+      let _ = try await binaryDeserializer.deserialize(
+        serializedData,
+        using: smallMessage.descriptor
+      )
+    }
+    catch {
+      XCTFail("Deserialization failed: \(error)")
     }
   }
 
   /// Test-PERF-002: Binary deserialization performance - medium messages.
-  func testBinaryDeserializationPerformanceMedium() throws {
+  func testBinaryDeserializationPerformanceMedium() async throws {
     let serializedData = try binarySerializer.serialize(mediumMessage)
 
-    measure {
-      do {
-        let _ = try binaryDeserializer.deserialize(
-          serializedData,
-          using: mediumMessage.descriptor
-        )
-      }
-      catch {
-        XCTFail("Deserialization failed: \(error)")
-      }
+    do {
+      let _ = try await binaryDeserializer.deserialize(
+        serializedData,
+        using: mediumMessage.descriptor
+      )
+    }
+    catch {
+      XCTFail("Deserialization failed: \(error)")
     }
   }
 
   /// Test-PERF-002: Binary deserialization performance - large messages.
-  func testBinaryDeserializationPerformanceLarge() throws {
+  func testBinaryDeserializationPerformanceLarge() async throws {
     let serializedData = try binarySerializer.serialize(largeMessage)
 
-    measure {
-      do {
-        let _ = try binaryDeserializer.deserialize(
-          serializedData,
-          using: largeMessage.descriptor
-        )
-      }
-      catch {
-        XCTFail("Deserialization failed: \(error)")
-      }
+    do {
+      let _ = try await binaryDeserializer.deserialize(
+        serializedData,
+        using: largeMessage.descriptor
+      )
+    }
+    catch {
+      XCTFail("Deserialization failed: \(error)")
     }
   }
 
   // MARK: - JSON Serialization Performance Tests
 
   /// Test-PERF-001: JSON serialization performance - small messages.
-  func testJSONSerializationPerformanceSmall() {
-    measure {
-      do {
-        let _ = try jsonSerializer.serialize(smallMessage)
-      }
-      catch {
-        XCTFail("JSON serialization failed: \(error)")
-      }
+  func testJSONSerializationPerformanceSmall() async throws {
+    do {
+      let _ = try await jsonSerializer.serialize(smallMessage)
+    }
+    catch {
+      XCTFail("JSON serialization failed: \(error)")
     }
   }
 
   /// Test-PERF-001: JSON serialization performance - medium messages.
-  func testJSONSerializationPerformanceMedium() {
-    measure {
-      do {
-        let _ = try jsonSerializer.serialize(mediumMessage)
-      }
-      catch {
-        XCTFail("JSON serialization failed: \(error)")
-      }
+  func testJSONSerializationPerformanceMedium() async throws {
+    do {
+      let _ = try await jsonSerializer.serialize(mediumMessage)
+    }
+    catch {
+      XCTFail("JSON serialization failed: \(error)")
     }
   }
 
   /// Test-PERF-001: JSON serialization performance - large messages.
-  func testJSONSerializationPerformanceLarge() {
-    measure {
-      do {
-        let _ = try jsonSerializer.serialize(largeMessage)
-      }
-      catch {
-        XCTFail("JSON serialization failed: \(error)")
-      }
+  func testJSONSerializationPerformanceLarge() async throws {
+    do {
+      let _ = try await jsonSerializer.serialize(largeMessage)
+    }
+    catch {
+      XCTFail("JSON serialization failed: \(error)")
     }
   }
 
   // MARK: - JSON Deserialization Performance Tests
 
   /// Test-PERF-002: JSON deserialization performance - small messages.
-  func testJSONDeserializationPerformanceSmall() throws {
-    let jsonData = try jsonSerializer.serialize(smallMessage)
+  func testJSONDeserializationPerformanceSmall() async throws {
+    let jsonData = try await jsonSerializer.serialize(smallMessage)
 
-    measure {
-      do {
-        let _ = try jsonDeserializer.deserialize(
-          jsonData,
-          using: smallMessage.descriptor
-        )
-      }
-      catch {
-        XCTFail("JSON deserialization failed: \(error)")
-      }
+    do {
+      let _ = try await jsonDeserializer.deserialize(
+        jsonData,
+        using: smallMessage.descriptor
+      )
+    }
+    catch {
+      XCTFail("JSON deserialization failed: \(error)")
     }
   }
 
   /// Test-PERF-002: JSON deserialization performance - medium messages.
-  func testJSONDeserializationPerformanceMedium() throws {
-    let jsonData = try jsonSerializer.serialize(mediumMessage)
+  func testJSONDeserializationPerformanceMedium() async throws {
+    let jsonData = try await jsonSerializer.serialize(mediumMessage)
 
-    measure {
-      do {
-        let _ = try jsonDeserializer.deserialize(
-          jsonData,
-          using: mediumMessage.descriptor
-        )
-      }
-      catch {
-        XCTFail("JSON deserialization failed: \(error)")
-      }
+    do {
+      let _ = try await jsonDeserializer.deserialize(
+        jsonData,
+        using: mediumMessage.descriptor
+      )
+    }
+    catch {
+      XCTFail("JSON deserialization failed: \(error)")
     }
   }
 
   /// Test-PERF-002: JSON deserialization performance - large messages.
-  func testJSONDeserializationPerformanceLarge() throws {
-    let jsonData = try jsonSerializer.serialize(largeMessage)
+  func testJSONDeserializationPerformanceLarge() async throws {
+    let jsonData = try await jsonSerializer.serialize(largeMessage)
 
-    measure {
-      do {
-        let _ = try jsonDeserializer.deserialize(
-          jsonData,
-          using: largeMessage.descriptor
-        )
-      }
-      catch {
-        XCTFail("JSON deserialization failed: \(error)")
-      }
+    do {
+      let _ = try await jsonDeserializer.deserialize(
+        jsonData,
+        using: largeMessage.descriptor
+      )
+    }
+    catch {
+      XCTFail("JSON deserialization failed: \(error)")
     }
   }
 
   // MARK: - Round Trip Performance Tests
 
   /// Test-PERF-003: Binary round-trip performance with large datasets.
-  func testBinaryRoundTripPerformanceLarge() throws {
-    measure {
-      do {
-        let serializedData = try binarySerializer.serialize(largeMessage)
-        let _ = try binaryDeserializer.deserialize(
-          serializedData,
-          using: largeMessage.descriptor
-        )
-      }
-      catch {
-        XCTFail("Round-trip failed: \(error)")
-      }
+  func testBinaryRoundTripPerformanceLarge() async throws {
+    do {
+      let serializedData = try binarySerializer.serialize(largeMessage)
+      let _ = try await binaryDeserializer.deserialize(
+        serializedData,
+        using: largeMessage.descriptor
+      )
+    }
+    catch {
+      XCTFail("Round-trip failed: \(error)")
     }
   }
 
   /// Test-PERF-003: JSON round-trip performance with large datasets.
-  func testJSONRoundTripPerformanceLarge() throws {
-    measure {
-      do {
-        let jsonData = try jsonSerializer.serialize(largeMessage)
-        let _ = try jsonDeserializer.deserialize(
-          jsonData,
-          using: largeMessage.descriptor
-        )
-      }
-      catch {
-        XCTFail("JSON round-trip failed: \(error)")
-      }
+  func testJSONRoundTripPerformanceLarge() async throws {
+    do {
+      let jsonData = try await jsonSerializer.serialize(largeMessage)
+      let _ = try await jsonDeserializer.deserialize(
+        jsonData,
+        using: largeMessage.descriptor
+      )
+    }
+    catch {
+      XCTFail("JSON round-trip failed: \(error)")
     }
   }
 
   // MARK: - Comparative Performance Tests
 
   /// Test-PERF-004: Comparison of binary vs JSON serialization.
-  func testBinaryVsJSONSerializationComparison() throws {
+  func testBinaryVsJSONSerializationComparison() async throws {
     var binaryTimes: [TimeInterval] = []
     var jsonTimes: [TimeInterval] = []
 
@@ -318,7 +296,7 @@ final class SerializationBenchmarks: XCTestCase {
     // Measure JSON serialization
     for _ in 0..<10 {
       let startTime = Date()
-      let _ = try jsonSerializer.serialize(mediumMessage)
+      let _ = try await jsonSerializer.serialize(mediumMessage)
       jsonTimes.append(Date().timeIntervalSince(startTime))
     }
 
@@ -336,44 +314,42 @@ final class SerializationBenchmarks: XCTestCase {
   // MARK: - Memory Usage Tests
 
   /// Test-PERF-003: Memory usage during large message processing.
-  func testMemoryUsageLargeMessage() throws {
+  func testMemoryUsageLargeMessage() async throws {
     // Create very large message to test memory usage
     let veryLargeDescriptor = try createVeryLargeDataDescriptor()
-    try registry.registerMessage(veryLargeDescriptor)
+    try await registry.registerMessage(veryLargeDescriptor)
 
     var veryLargeMessage = MessageFactory().createMessage(from: veryLargeDescriptor)
 
     let largeData = (0..<2000).map { "LargeDataEntry_\($0)_With_Long_Content_To_Test_Memory_Usage" }
     try veryLargeMessage.set(largeData, forField: "data_entries")
 
-    measure {
-      do {
-        let serializedData = try binarySerializer.serialize(veryLargeMessage)
-        let _ = try binaryDeserializer.deserialize(
-          serializedData,
-          using: veryLargeMessage.descriptor
-        )
-      }
-      catch {
-        XCTFail("Large message processing failed: \(error)")
-      }
+    do {
+      let serializedData = try binarySerializer.serialize(veryLargeMessage)
+      let _ = try await binaryDeserializer.deserialize(
+        serializedData,
+        using: veryLargeMessage.descriptor
+      )
+    }
+    catch {
+      XCTFail("Large message processing failed: \(error)")
     }
   }
 
   // MARK: - Stress Testing
 
   /// Test-PERF-003: Concurrent serialization stress test.
-  func testConcurrentSerializationStress() throws {
+  func testConcurrentSerializationStress() async throws {
     let queue = DispatchQueue.global(qos: .userInitiated)
 
-    measure {
-      let expectation = self.expectation(description: "Concurrent serialization")
-      expectation.expectedFulfillmentCount = 100
+    let expectation = self.expectation(description: "Concurrent serialization")
+    expectation.expectedFulfillmentCount = 100
 
-      let serializer = self.binarySerializer!
-      let message = self.mediumMessage!
-      for _ in 0..<100 {
-        queue.async {
+    let serializer = self.binarySerializer!
+    let message = self.mediumMessage!
+    for _ in 0..<100 {
+      queue.async {
+        Task {
           do {
             let _ = try serializer.serialize(message)
             expectation.fulfill()
@@ -383,9 +359,9 @@ final class SerializationBenchmarks: XCTestCase {
           }
         }
       }
-
-      wait(for: [expectation], timeout: 10.0)
     }
+
+    await fulfillment(of: [expectation], timeout: 10.0)
   }
 
   // MARK: - Helper Methods for Test Message Creation
@@ -457,7 +433,7 @@ final class SerializationBenchmarks: XCTestCase {
   /// Benchmarks binary deserialization of a sibling message graph using a shared TypeRegistry.
   ///
   /// Verifies no significant overhead vs. structural nesting.
-  func test_performance_binaryDeserialization_withRegistry_largeSiblingGraph() throws {
+  func test_performance_binaryDeserialization_withRegistry_largeSiblingGraph() async throws {
     var leafDesc = MessageDescriptor(name: "Leaf", fullName: "perf.Leaf")
     leafDesc.addField(FieldDescriptor(name: "data", number: 1, type: .string))
 
@@ -466,8 +442,8 @@ final class SerializationBenchmarks: XCTestCase {
     nodeDesc.addField(FieldDescriptor(name: "leaf", number: 2, type: .message, typeName: "perf.Leaf"))
 
     let perfRegistry = TypeRegistry()
-    try perfRegistry.registerMessage(leafDesc)
-    try perfRegistry.registerMessage(nodeDesc)
+    try await perfRegistry.registerMessage(leafDesc)
+    try await perfRegistry.registerMessage(nodeDesc)
 
     let perfFactory = MessageFactory()
     var leafMsg = perfFactory.createMessage(from: leafDesc)
@@ -484,19 +460,17 @@ final class SerializationBenchmarks: XCTestCase {
     let opts = DeserializationOptions(typeRegistry: perfRegistry)
     let perfDeserializer = BinaryDeserializer(options: opts)
 
-    measure {
-      do {
-        _ = try perfDeserializer.deserialize(nodeData, using: nodeDesc)
-      }
-      catch {
-        XCTFail("Deserialization with registry failed: \(error)")
-      }
+    do {
+      _ = try await perfDeserializer.deserialize(nodeData, using: nodeDesc)
+    }
+    catch {
+      XCTFail("Deserialization with registry failed: \(error)")
     }
   }
 
   /// Benchmarks registry lookup overhead by comparing deserialization with and without
   /// a populated registry for a simple sibling message field.
-  func test_performance_binaryDeserialization_registryLookup_overhead() throws {
+  func test_performance_binaryDeserialization_registryLookup_overhead() async throws {
     var innerDesc = MessageDescriptor(name: "Inner", fullName: "overhead.Inner")
     innerDesc.addField(FieldDescriptor(name: "value", number: 1, type: .string))
 
@@ -506,8 +480,8 @@ final class SerializationBenchmarks: XCTestCase {
     )
 
     let overheadRegistry = TypeRegistry()
-    try overheadRegistry.registerMessage(innerDesc)
-    try overheadRegistry.registerMessage(outerDesc)
+    try await overheadRegistry.registerMessage(innerDesc)
+    try await overheadRegistry.registerMessage(outerDesc)
 
     let overheadFactory = MessageFactory()
     var serOuterDesc = outerDesc
@@ -522,13 +496,11 @@ final class SerializationBenchmarks: XCTestCase {
     let opts = DeserializationOptions(typeRegistry: overheadRegistry)
     let overheadDeserializer = BinaryDeserializer(options: opts)
 
-    measure {
-      do {
-        _ = try overheadDeserializer.deserialize(data, using: outerDesc)
-      }
-      catch {
-        XCTFail("Deserialization overhead benchmark failed: \(error)")
-      }
+    do {
+      _ = try await overheadDeserializer.deserialize(data, using: outerDesc)
+    }
+    catch {
+      XCTFail("Deserialization overhead benchmark failed: \(error)")
     }
   }
 }

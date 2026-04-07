@@ -32,19 +32,19 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   private var registry: TypeRegistry!
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - 1. 1-level nesting (Nested1 → Nested2)
 
-  func test_nested_1level_bidirectional() throws {
+  func test_nested_1level_bidirectional() async throws {
     var proto = Testcompat_Nested1()
     proto.name = "level1"
     proto.child.count = 10
@@ -52,7 +52,7 @@ final class BinaryCompatNestedTests: XCTestCase {
     let desc = CompatDescriptors.nested1()
     let n2desc = CompatDescriptors.nested2()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -78,7 +78,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 2. 2-level nesting (Nested1 → Nested2 → Nested3)
 
-  func test_nested_2levels_bidirectional() throws {
+  func test_nested_2levels_bidirectional() async throws {
     var proto = Testcompat_Nested1()
     proto.name = "level1"
     proto.child.count = 5
@@ -89,7 +89,7 @@ final class BinaryCompatNestedTests: XCTestCase {
     let n2desc = CompatDescriptors.nested2()
     let n3desc = CompatDescriptors.nested3()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -125,7 +125,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 3. 3-level nesting (Nested1 → Nested2 → Nested3 → Nested4)
 
-  func test_nested_3levels_bidirectional() throws {
+  func test_nested_3levels_bidirectional() async throws {
     var proto = Testcompat_Nested1()
     proto.name = "top"
     proto.child.count = 3
@@ -138,7 +138,7 @@ final class BinaryCompatNestedTests: XCTestCase {
     let n3desc = CompatDescriptors.nested3()
     let n4desc = CompatDescriptors.nested4()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -175,7 +175,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 4. Nested1 with repeated siblings (two Nested2 messages)
 
-  func test_nested_siblings_bidirectional() throws {
+  func test_nested_siblings_bidirectional() async throws {
     var proto = Testcompat_Nested1()
     proto.name = "parent"
     var s1 = Testcompat_Nested2()
@@ -187,7 +187,7 @@ final class BinaryCompatNestedTests: XCTestCase {
     let desc = CompatDescriptors.nested1()
     let n2desc = CompatDescriptors.nested2()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -218,14 +218,14 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 5. Nested2 with oneof text variant alongside count
 
-  func test_nested_nested2_oneofText_bidirectional() throws {
+  func test_nested_nested2_oneofText_bidirectional() async throws {
     var proto = Testcompat_Nested2()
     proto.count = 5
     proto.text = "chosen"
 
     let desc = CompatDescriptors.nested2()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -253,7 +253,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 6. Recursive: root (value=1) with single child (value=2)
 
-  func test_nested_recursive_shallow_bidirectional() throws {
+  func test_nested_recursive_shallow_bidirectional() async throws {
     var proto = Testcompat_Recursive()
     proto.value = 1
     proto.label = "root"
@@ -262,7 +262,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
     let desc = CompatDescriptors.recursive()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -295,7 +295,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 7. Recursive with repeated children list (value=10, value=20)
 
-  func test_nested_recursive_withChildren_bidirectional() throws {
+  func test_nested_recursive_withChildren_bidirectional() async throws {
     var proto = Testcompat_Recursive()
     proto.value = 5
     var c1 = Testcompat_Recursive()
@@ -306,7 +306,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
     let desc = CompatDescriptors.recursive()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -338,7 +338,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 8. 4-level fully populated (Nested1 → Nested2 → Nested3 → Nested4)
 
-  func test_nested_4level_fullyPopulated_bidirectional() throws {
+  func test_nested_4level_fullyPopulated_bidirectional() async throws {
     var proto = Testcompat_Nested1()
     proto.name = "root"
     proto.child.count = 3
@@ -357,7 +357,7 @@ final class BinaryCompatNestedTests: XCTestCase {
     let n3desc = CompatDescriptors.nested3()
     let n4desc = CompatDescriptors.nested4()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -412,7 +412,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 9. OuterWithNestedDefs: map<string, MiddleDef.InnerDef>
 
-  func test_nested_nestedDefs_mapWithInnerDef_bidirectional() throws {
+  func test_nested_nestedDefs_mapWithInnerDef_bidirectional() async throws {
     var proto = Testcompat_OuterWithNestedDefs()
     proto.kind = .outerB
     var innerDef = Testcompat_OuterWithNestedDefs.MiddleDef.InnerDef()
@@ -424,7 +424,7 @@ final class BinaryCompatNestedTests: XCTestCase {
     let middleDesc = try XCTUnwrap(desc.nestedMessages["MiddleDef"])
     let innerDesc = try XCTUnwrap(middleDesc.nestedMessages["InnerDef"])
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -455,7 +455,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 10. OuterWithNestedDefs: repeated MiddleDef messages
 
-  func test_nested_nestedDefs_repeatedMiddleDef_bidirectional() throws {
+  func test_nested_nestedDefs_repeatedMiddleDef_bidirectional() async throws {
     var proto = Testcompat_OuterWithNestedDefs()
     var m1 = Testcompat_OuterWithNestedDefs.MiddleDef()
     m1.label = "sec1"
@@ -467,7 +467,7 @@ final class BinaryCompatNestedTests: XCTestCase {
     let desc = CompatDescriptors.outerWithNestedDefs()
     let middleDesc = try XCTUnwrap(desc.nestedMessages["MiddleDef"])
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -498,7 +498,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 11. Recursive 4 levels deep (value 1→2→3→4)
 
-  func test_nested_recursive_4deep_bidirectional() throws {
+  func test_nested_recursive_4deep_bidirectional() async throws {
     var proto = Testcompat_Recursive()
     proto.value = 1
     proto.child.value = 2
@@ -507,7 +507,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
     let desc = CompatDescriptors.recursive()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -545,7 +545,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 12. MixedNest1: map<string, MixedNest2>
 
-  func test_nested_mixedNest_mapOfNested_bidirectional() throws {
+  func test_nested_mixedNest_mapOfNested_bidirectional() async throws {
     var proto = Testcompat_MixedNest1()
     proto.name = "mix"
     var n2a = Testcompat_MixedNest1.MixedNest2()
@@ -557,7 +557,7 @@ final class BinaryCompatNestedTests: XCTestCase {
     let desc = CompatDescriptors.mixedNest1()
     let nest2Desc = try XCTUnwrap(desc.nestedMessages["MixedNest2"])
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -590,7 +590,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 13. MixedNest1: child.list (repeated MixedNest3) + flags (repeated enum)
 
-  func test_nested_mixedNest_repeatedNested_bidirectional() throws {
+  func test_nested_mixedNest_repeatedNested_bidirectional() async throws {
     var proto = Testcompat_MixedNest1()
     var n3a = Testcompat_MixedNest1.MixedNest2.MixedNest3()
     n3a.val = 1
@@ -604,7 +604,7 @@ final class BinaryCompatNestedTests: XCTestCase {
     let nest2Desc = try XCTUnwrap(desc.nestedMessages["MixedNest2"])
     let nest3Desc = try XCTUnwrap(nest2Desc.nestedMessages["MixedNest3"])
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -641,7 +641,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 14. Empty explicitly-set Nested2 child (bidirectional)
 
-  func test_nested_emptyInner_bidirectional() throws {
+  func test_nested_emptyInner_bidirectional() async throws {
     // proto.child.count = 0 causes swift-protobuf to treat child as explicitly present
     // (hasChild == true), so it is serialized as field 1 tag + 0x00 (empty body).
     var proto = Testcompat_Nested1()
@@ -657,7 +657,7 @@ final class BinaryCompatNestedTests: XCTestCase {
     // The reference bytes must contain the child field tag 0x0A.
     XCTAssertTrue(refData.contains(0x0A), "oracle must include child tag 0x0A for explicitly-set empty child")
 
-    let dynamic = try BinaryCompatHelpers.makeDeserializer(registry: registry)
+    let dynamic = try await BinaryCompatHelpers.makeDeserializer(registry: registry)
       .deserialize(refData, using: desc)
     XCTAssertEqual(try dynamic.get(forField: 2) as? String, "parent")
 
@@ -680,7 +680,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 15. Absent Nested2 child produces no wire bytes for field 1
 
-  func test_nested_absentInner_producesNoWireBytes() throws {
+  func test_nested_absentInner_producesNoWireBytes() async throws {
     let desc = CompatDescriptors.nested1()
     let serializer = BinaryCompatHelpers.makeSerializer()
 
@@ -705,7 +705,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 16. Status enum at Nested4 level through all 4 levels
 
-  func test_nested_enumAtEveryLevel_bidirectional() throws {
+  func test_nested_enumAtEveryLevel_bidirectional() async throws {
     var proto = Testcompat_Nested1()
     proto.child.child.child.status = .active
     proto.child.child.child.tags = ["t"]
@@ -716,7 +716,7 @@ final class BinaryCompatNestedTests: XCTestCase {
     let n3desc = CompatDescriptors.nested3()
     let n4desc = CompatDescriptors.nested4()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -752,7 +752,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 17. OuterWithNestedDefs: kind enum + primary MiddleDef label
 
-  func test_nested_outerWithNestedDefs_bidirectional() throws {
+  func test_nested_outerWithNestedDefs_bidirectional() async throws {
     var proto = Testcompat_OuterWithNestedDefs()
     proto.kind = .outerA
     proto.primary.label = "primary_label"
@@ -760,7 +760,7 @@ final class BinaryCompatNestedTests: XCTestCase {
     let desc = CompatDescriptors.outerWithNestedDefs()
     let middleDesc = try XCTUnwrap(desc.nestedMessages["MiddleDef"])
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -787,7 +787,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 18. Nested message field uses wire type 2: first tag byte is 0x0A
 
-  func test_nested_messageField_wireType2_exactTag() throws {
+  func test_nested_messageField_wireType2_exactTag() async throws {
     // field 1 = child (Nested2), wire type 2 (LEN): tag = (1 << 3) | 2 = 0x0A
     let desc = CompatDescriptors.nested1()
     let n2desc = CompatDescriptors.nested2()
@@ -811,7 +811,7 @@ final class BinaryCompatNestedTests: XCTestCase {
 
   // MARK: - 19. Empty explicitly-set child ≠ absent child in wire bytes
 
-  func test_nested_emptyVsAbsent_wireDistinction() throws {
+  func test_nested_emptyVsAbsent_wireDistinction() async throws {
     // When only the child field is set (and it's empty), wire output = 0x0A 0x00 (2 bytes).
     // When nothing is set, wire output = empty Data.
     let desc = CompatDescriptors.nested1()

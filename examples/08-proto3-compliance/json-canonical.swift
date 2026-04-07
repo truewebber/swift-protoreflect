@@ -22,13 +22,13 @@ import SwiftProtoReflect
 
 @main
 struct JsonCanonicalExample {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("Proto3 Canonical JSON Encoding")
 
-    try demonstrateInt64AsString()
-    try demonstrateBytesAsBase64()
-    try demonstrateEnumAsName()
-    try demonstrateIncludeDefaultValues()
+    try await demonstrateInt64AsString()
+    try await demonstrateBytesAsBase64()
+    try await demonstrateEnumAsName()
+    try await demonstrateIncludeDefaultValues()
 
     ExampleUtils.printSuccess(
       "Proto3 canonical JSON encoding demo completed!"
@@ -43,7 +43,7 @@ struct JsonCanonicalExample {
 
   // MARK: - Int64 as String
 
-  private static func demonstrateInt64AsString() throws {
+  private static func demonstrateInt64AsString() async throws {
     ExampleUtils.printStep(1, "Int64/UInt64 as JSON Strings")
 
     var desc = MessageDescriptor(name: "BigNumbers", fullName: "example.BigNumbers")
@@ -56,7 +56,7 @@ struct JsonCanonicalExample {
     try msg.set(UInt64(18_446_744_073_709_551_615), forField: "unsigned_big")
     try msg.set(Int32(42), forField: "regular_int")
 
-    let json = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
+    let json = try await JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
     print("  signed_big type:   \(type(of: json["signed_big"]!)) = \(json["signed_big"]!)")
     print("  unsigned_big type: \(type(of: json["unsigned_big"]!)) = \(json["unsigned_big"]!)")
     print("  regular_int type:  \(type(of: json["regular_int"]!)) = \(json["regular_int"]!)")
@@ -68,7 +68,7 @@ struct JsonCanonicalExample {
 
   // MARK: - Bytes as Base64
 
-  private static func demonstrateBytesAsBase64() throws {
+  private static func demonstrateBytesAsBase64() async throws {
     ExampleUtils.printStep(2, "Bytes as Base64 Strings")
 
     var desc = MessageDescriptor(name: "BinaryPayload", fullName: "example.BinaryPayload")
@@ -79,7 +79,7 @@ struct JsonCanonicalExample {
     try msg.set("Hello, Proto3!".data(using: .utf8)!, forField: "data")
     try msg.set(Data([0xDE, 0xAD, 0xBE, 0xEF]), forField: "checksum")
 
-    let json = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
+    let json = try await JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serializeToJSONObject(msg)
     let dataB64 = json["data"] as? String ?? ""
     let checksumB64 = json["checksum"] as? String ?? ""
     print("  data (base64):     \"\(dataB64)\"")
@@ -95,7 +95,7 @@ struct JsonCanonicalExample {
 
   // MARK: - Enum as Name
 
-  private static func demonstrateEnumAsName() throws {
+  private static func demonstrateEnumAsName() async throws {
     ExampleUtils.printStep(3, "Enum Values as String Names")
 
     var desc = MessageDescriptor(name: "Account", fullName: "example.Account")
@@ -117,12 +117,12 @@ struct JsonCanonicalExample {
     try msg.set(Int32(1), forField: "status")
 
     let enumRegistry = TypeRegistry()
-    let json = try JSONSerializer(options: .init(typeRegistry: enumRegistry)).serializeToJSONObject(msg)
+    let json = try await JSONSerializer(options: .init(typeRegistry: enumRegistry)).serializeToJSONObject(msg)
     print("  status value: \(json["status"]!)")
     print("  status type:  \(type(of: json["status"]!))")
 
-    let jsonData = try JSONSerializer(options: .init(typeRegistry: enumRegistry)).serialize(msg)
-    let deserialized = try JSONDeserializer(options: .init(typeRegistry: enumRegistry)).deserialize(
+    let jsonData = try await JSONSerializer(options: .init(typeRegistry: enumRegistry)).serialize(msg)
+    let deserialized = try await JSONDeserializer(options: .init(typeRegistry: enumRegistry)).deserialize(
       jsonData,
       using: desc
     )
@@ -136,7 +136,7 @@ struct JsonCanonicalExample {
 
   // MARK: - Include Default Values
 
-  private static func demonstrateIncludeDefaultValues() throws {
+  private static func demonstrateIncludeDefaultValues() async throws {
     ExampleUtils.printStep(4, "includeDefaultValues Option")
 
     var desc = MessageDescriptor(name: "Profile", fullName: "example.Profile")
@@ -156,13 +156,13 @@ struct JsonCanonicalExample {
     let msg = MessageFactory().createMessage(from: desc)
 
     let defaultSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-    let jsonDefault = try defaultSerializer.serializeToJSONObject(msg)
+    let jsonDefault = try await defaultSerializer.serializeToJSONObject(msg)
     print("  Default mode (empty message):  \(jsonDefault)")
 
     let fullSerializer = JSONSerializer(
       options: JSONSerializationOptions(includeDefaultValues: true, typeRegistry: TypeRegistry())
     )
-    let jsonFull = try fullSerializer.serializeToJSONObject(msg)
+    let jsonFull = try await fullSerializer.serializeToJSONObject(msg)
     print("  includeDefaultValues=true:     \(jsonFull)")
 
     ExampleUtils.printInfo(

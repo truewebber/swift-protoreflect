@@ -77,6 +77,22 @@ public enum ExampleUtils {
     return (result, timeElapsed)
   }
 
+  /// Measures async operation execution time and returns result with time.
+  public static func measureTimeAsync<T>(
+    _ operation: () async throws -> T
+  ) async rethrows -> (result: T, time: TimeInterval) {
+    #if canImport(CoreFoundation) && !os(Linux)
+      let startTime = CFAbsoluteTimeGetCurrent()
+      let result = try await operation()
+      let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
+    #else
+      let startTime = Date().timeIntervalSince1970
+      let result = try await operation()
+      let timeElapsed = Date().timeIntervalSince1970 - startTime
+    #endif
+    return (result, timeElapsed)
+  }
+
   /// Prints execution time information.
   public static func printTiming(_ description: String, time: TimeInterval) {
     let timeString: String

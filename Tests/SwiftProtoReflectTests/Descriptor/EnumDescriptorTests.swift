@@ -16,8 +16,8 @@ final class EnumDescriptorTests: XCTestCase {
 
   // MARK: - Setup
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     fileDescriptor = FileDescriptor(
       name: "test.proto",
       package: "test",
@@ -30,15 +30,15 @@ final class EnumDescriptorTests: XCTestCase {
     )
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     fileDescriptor = nil
     messageDescriptor = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Tests
 
-  func testInitWithNameAndFullName() {
+  func testInitWithNameAndFullName() async throws {
     // Arrange
     let name = "Status"
     let fullName = "test.Status"
@@ -57,7 +57,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertEqual(enumDescriptor.options["deprecated"], .bool(true))
   }
 
-  func testInitWithParentFileDescriptor() {
+  func testInitWithParentFileDescriptor() async throws {
     // Arrange
     let name = "Status"
 
@@ -74,7 +74,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertNil(enumDescriptor.parentMessageFullName)
   }
 
-  func testInitWithParentMessageDescriptor() {
+  func testInitWithParentMessageDescriptor() async throws {
     // Arrange
     let name = "Status"
 
@@ -91,7 +91,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertEqual(enumDescriptor.parentMessageFullName, messageDescriptor.fullName)
   }
 
-  func testInitWithNoParent() {
+  func testInitWithNoParent() async throws {
     // Arrange
     let name = "Status"
 
@@ -107,7 +107,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertNil(enumDescriptor.parentMessageFullName)
   }
 
-  func testAddAndRetrieveEnumValue() {
+  func testAddAndRetrieveEnumValue() async throws {
     // Arrange
     var enumDescriptor = EnumDescriptor(
       name: "Status",
@@ -131,7 +131,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertNil(enumDescriptor.value(number: 99))
   }
 
-  func testAllValues() {
+  func testAllValues() async throws {
     // Arrange
     var enumDescriptor = EnumDescriptor(
       name: "Status",
@@ -154,7 +154,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertEqual(allValues[2], value1)  // number = 4
   }
 
-  func testEnumValueEquality() {
+  func testEnumValueEquality() async throws {
     // Arrange
     let options1: [String: DescriptorOption] = ["deprecated": .bool(true)]
     let options2: [String: DescriptorOption] = ["deprecated": .bool(true)]
@@ -175,7 +175,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertNotEqual(value1, value6)
   }
 
-  func testEnumDescriptorEquality() {
+  func testEnumDescriptorEquality() async throws {
     // Arrange
     var enum1 = EnumDescriptor(name: "Status", parent: fileDescriptor)
     var enum2 = EnumDescriptor(name: "Status", parent: fileDescriptor)
@@ -202,7 +202,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertNotEqual(enum1, enum2)
   }
 
-  func testEnumDescriptorEqualityWithDifferentOptions() {
+  func testEnumDescriptorEqualityWithDifferentOptions() async throws {
     // Arrange
     var enum1 = EnumDescriptor(
       name: "Status",
@@ -231,7 +231,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertNotEqual(enum1, enum3)
   }
 
-  func testChainedAddValue() {
+  func testChainedAddValue() async throws {
     // Arrange
     var enumDescriptor = EnumDescriptor(name: "Status", parent: fileDescriptor)
     let value1 = EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0)
@@ -249,7 +249,7 @@ final class EnumDescriptorTests: XCTestCase {
 
   // MARK: - Additional tests for coverage improvement
 
-  func testEnumValueEqualityWithDifferentOptionTypes() {
+  func testEnumValueEqualityWithDifferentOptionTypes() async throws {
     // Testing enum value equality with different option types
 
     // Int options
@@ -277,7 +277,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertNotEqual(value7, value9)
   }
 
-  func testEnumValueWithDifferentOptionKeys() {
+  func testEnumValueWithDifferentOptionKeys() async throws {
     // Verify comparison of values with different option key sets
     let value1 = EnumDescriptor.EnumValue(
       name: "OPTION1",
@@ -293,7 +293,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertNotEqual(value1, value2)
   }
 
-  func testEnumDescriptorWithDifferentFileDescriptorPath() {
+  func testEnumDescriptorWithDifferentFileDescriptorPath() async throws {
     // Verify that descriptors with different file paths are not equal
     let enum1 = EnumDescriptor(name: "Status", fullName: "test.Status")
     var enum2 = EnumDescriptor(name: "Status", fullName: "test.Status")
@@ -302,7 +302,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertNotEqual(enum1, enum2)
   }
 
-  func testEnumDescriptorWithDifferentParentMessageFullName() {
+  func testEnumDescriptorWithDifferentParentMessageFullName() async throws {
     // Verify that descriptors with different parent messages are not equal
     let enum1 = EnumDescriptor(name: "Status", fullName: "test.Status")
     var enum2 = EnumDescriptor(name: "Status", fullName: "test.Status")
@@ -311,7 +311,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertNotEqual(enum1, enum2)
   }
 
-  func testEnumDescriptorWithDifferentOptionTypes() {
+  func testEnumDescriptorWithDifferentOptionTypes() async throws {
     // Testing descriptors with different option types
 
     // Int options
@@ -339,7 +339,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertNotEqual(enum7, enum9)
   }
 
-  func testEnumDescriptorWithDifferentOptionKeys() {
+  func testEnumDescriptorWithDifferentOptionKeys() async throws {
     // Verify descriptor comparison with different option key sets
     let enum1 = EnumDescriptor(
       name: "Status",
@@ -355,7 +355,7 @@ final class EnumDescriptorTests: XCTestCase {
     XCTAssertNotEqual(enum1, enum2)
   }
 
-  func testEnumDescriptorWithDifferentEnumValues() {
+  func testEnumDescriptorWithDifferentEnumValues() async throws {
     // Verify descriptor comparison with different value sets
     var enum1 = EnumDescriptor(name: "Status", parent: fileDescriptor)
     var enum2 = EnumDescriptor(name: "Status", parent: fileDescriptor)
@@ -366,6 +366,27 @@ final class EnumDescriptorTests: XCTestCase {
 
     enum2.addValue(EnumDescriptor.EnumValue(name: "VALUE1", number: 1))
     enum2.addValue(EnumDescriptor.EnumValue(name: "DIFFERENT", number: 2))
+
+    XCTAssertNotEqual(enum1, enum2)
+  }
+
+  // MARK: - == false-branches: fullName and value-content mismatch
+
+  func test_enumDescriptorEquality_whenFullNameDiffers_isNotEqual() async throws {
+    // Same name but different fullName (different package)
+    let enum1 = EnumDescriptor(name: "Status", fullName: "pkgA.Status")
+    let enum2 = EnumDescriptor(name: "Status", fullName: "pkgB.Status")
+
+    XCTAssertNotEqual(enum1, enum2)
+  }
+
+  func test_enumDescriptorEquality_whenSameNameValueDiffersInNumber_isNotEqual() async throws {
+    // Same value name but different number — key found in rhs but value != lhsValue
+    var enum1 = EnumDescriptor(name: "Status", fullName: "test.Status")
+    var enum2 = EnumDescriptor(name: "Status", fullName: "test.Status")
+
+    enum1.addValue(EnumDescriptor.EnumValue(name: "ACTIVE", number: 1))
+    enum2.addValue(EnumDescriptor.EnumValue(name: "ACTIVE", number: 2))
 
     XCTAssertNotEqual(enum1, enum2)
   }

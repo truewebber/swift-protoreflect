@@ -95,7 +95,7 @@ The library uses several specific integration mechanisms:
    // Our serializers delegate to Swift Protobuf for wire format compatibility
    func serialize(message: DynamicMessage) throws -> Data {
      // Use optimized binary encoding with full wire format support
-     return try BinarySerializer().serialize(message: message)
+     return try BinarySerializer().serialize(message)
    }
    ```
 
@@ -143,33 +143,38 @@ extension DynamicMessage {
 The primary API interfaces include:
 
 ```swift
+// Defining a message schema at runtime
+var personDescriptor = MessageDescriptor(name: "Person", fullName: "Person")
+personDescriptor.addField(FieldDescriptor(name: "name", number: 1, type: .string))
+personDescriptor.addField(FieldDescriptor(name: "age", number: 2, type: .int32))
+
 // Creating a dynamic message
-let message = try MessageFactory().createMessage(from: personDescriptor)
+var message = MessageFactory().createMessage(from: personDescriptor)
 
-// Setting field values with type safety
-try message.set("name", value: "John Doe")
-try message.set("age", value: Int32(30))
+// Setting field values
+try message.set("John Doe", forField: "name")
+try message.set(Int32(30), forField: "age")
 
-// Getting field values with explicit typing
-let name: String = try message.get("name")
-let age: Int32 = try message.get("age")
+// Getting field values
+let name = try message.get(forField: "name") as? String
+let age = try message.get(forField: "age") as? Int32
 
-// Serialization — TypeRegistry is required for all serializers/deserializers
+// Serialization — TypeRegistry is required for JSONSerializer and all deserializers
 let registry = TypeRegistry()
 // Register nested/sibling types if your message has message or enum fields:
 // try registry.registerMessage(addressDescriptor)
 // try registry.registerEnum(statusEnum)
 
-let binaryData = try BinarySerializer().serialize(message: message)
-let jsonData = try JSONSerializer(options: .init(typeRegistry: registry)).serialize(message)
+let binaryData = try BinarySerializer().serialize(message)
+let jsonData = try await JSONSerializer(options: .init(typeRegistry: registry)).serialize(message)
 
-// Deserialization
-let parsedMessage = try BinaryDeserializer(options: .init(typeRegistry: registry))
+// Deserialization (both are async due to actor-isolated TypeRegistry)
+let parsedMessage = try await BinaryDeserializer(options: .init(typeRegistry: registry))
     .deserialize(binaryData, using: personDescriptor)
 
 // Converting between static and dynamic
-let staticMessage: Person = try message.toStaticMessage()
-let dynamicFromStatic = try DynamicMessage.fromStatic(staticPerson)
+let staticMessage: Person = try message.toStaticMessage(as: Person.self)
+let dynamicFromStatic = try staticPerson.toDynamicMessage()
 ```
 
 ## 7. Performance Considerations
@@ -184,56 +189,68 @@ let dynamicFromStatic = try DynamicMessage.fromStatic(staticPerson)
 ## 8. Project Structure
 
 ```
-Sources/SwiftProtoReflect/          # 29 source files
-├── Descriptor/                     # Proto descriptor types
-│   ├── DescriptorOption.swift      # Descriptor option values
-│   ├── DescriptorParent.swift      # Protocol for parent context (FileDescriptor/MessageDescriptor)
-│   ├── EnumDescriptor.swift        # Enum types with proto3 validation
-│   ├── FieldDescriptor.swift       # Field metadata (type, proto3Optional, mapEntryInfo)
-│   ├── FileDescriptor.swift        # File-level metadata with syntax tracking
-│   ├── MessageDescriptor.swift     # Message schema with nested types
-│   ├── OneofDescriptor.swift       # Oneof field grouping
-│   └── ServiceDescriptor.swift     # gRPC service definitions
-├── Dynamic/                        # Runtime message manipulation
-│   ├── DynamicMessage.swift        # Message representation with unknown fields
-│   ├── FieldAccessor.swift         # Type-safe field operations
-│   └── MessageFactory.swift        # Creation and syntax-aware validation
-├── Serialization/                  # Binary and JSON serialization
-│   ├── BinarySerializer.swift      # Binary encoding with unknown fields passthrough
-│   ├── BinaryDeserializer.swift    # Binary decoding with nested message support
-│   ├── JSONSerializer.swift        # JSON with proto3 canonical encoding
-│   ├── JSONDeserializer.swift      # JSON with enum name resolution
-│   └── WireFormat.swift            # Wire type definitions
-├── Registry/                       # Type management
-│   ├── TypeRegistry.swift          # Central type registry (actor)
-│   └── DescriptorPool.swift        # Descriptor dependency resolution
-├── Bridge/                         # Static/Dynamic interoperability
-│   ├── StaticMessageBridge.swift   # Message conversion with Visitor extraction
-│   └── DescriptorBridge.swift      # Descriptor conversion with syntax support
-└── Integration/                    # Well-Known Types (18 types)
-    ├── WellKnownTypes.swift        # Registry and type name constants
-    ├── TimestampHandler.swift      # google.protobuf.Timestamp
-    ├── DurationHandler.swift       # google.protobuf.Duration
-    ├── EmptyHandler.swift          # google.protobuf.Empty
-    ├── FieldMaskHandler.swift      # google.protobuf.FieldMask
-    ├── StructHandler.swift         # google.protobuf.Struct
-    ├── ValueHandler.swift          # google.protobuf.Value
-    ├── ListValueHandler.swift      # google.protobuf.ListValue
-    ├── AnyHandler.swift            # google.protobuf.Any
-    └── WrapperHandlers.swift       # All 9 wrapper types
+Sources/SwiftProtoReflect/          # 41 source files
+├── Descriptor/                     # Proto descriptor types (internal)
+│   ├── Mapping.swift               # Internal type mapping utilities
+│   ├── _DescriptorOption.swift     # Descriptor option values
+│   ├── _DescriptorParent.swift     # Protocol for parent context (FileDescriptor/MessageDescriptor)
+│   ├── _EnumDescriptor.swift       # Enum types with proto3 validation
+│   ├── _ExtensionRange.swift       # Proto2 extension range definition
+│   ├── _FieldDescriptor.swift      # Field metadata (type, proto3Optional, mapEntryInfo)
+│   ├── _FileDescriptor.swift       # File-level metadata with syntax tracking
+│   ├── _MessageDescriptor.swift    # Message schema with nested types
+│   ├── _OneofDescriptor.swift      # Oneof field grouping
+│   └── _ServiceDescriptor.swift    # gRPC service definitions
+├── Dynamic/                        # Runtime message manipulation (internal)
+│   ├── _DynamicMessage.swift       # Message representation with unknown fields
+│   ├── _FieldAccessor.swift        # Type-safe field operations
+│   └── _MessageFactory.swift       # Creation and syntax-aware validation
+├── Serialization/                  # Binary and JSON serialization (internal)
+│   ├── _BinarySerializer.swift     # Binary encoding with unknown fields passthrough
+│   ├── _BinaryDeserializer.swift   # Binary decoding with nested message support
+│   ├── _JSONSerializer.swift       # JSON with proto3 canonical encoding
+│   ├── _JSONDeserializer.swift     # JSON with enum name resolution
+│   └── _WireFormat.swift           # Wire type definitions
+├── Registry/                       # Type management (internal)
+│   ├── _TypeRegistry.swift         # Central type registry (actor)
+│   └── _DescriptorPool.swift       # Descriptor dependency resolution
+├── Bridge/                         # Static/Dynamic interoperability (internal)
+│   ├── _StaticMessageBridge.swift  # Message conversion with Visitor extraction
+│   └── _DescriptorBridge.swift     # Descriptor conversion with syntax support
+├── Integration/                    # Well-Known Types (internal)
+│   ├── _WellKnownTypes.swift       # Registry and type name constants
+│   ├── _TimestampHandler.swift     # google.protobuf.Timestamp
+│   ├── _DurationHandler.swift      # google.protobuf.Duration
+│   ├── _EmptyHandler.swift         # google.protobuf.Empty
+│   ├── _FieldMaskHandler.swift     # google.protobuf.FieldMask
+│   ├── _StructHandler.swift        # google.protobuf.Struct
+│   ├── _StructProtoDescriptors.swift # Shared struct.proto descriptor definitions
+│   ├── _StructProtoHelpers.swift   # Struct serialization helpers
+│   ├── _ValueHandler.swift         # google.protobuf.Value
+│   ├── _ListValueHandler.swift     # google.protobuf.ListValue
+│   ├── _AnyHandler.swift           # google.protobuf.Any
+│   └── _WrapperHandlers.swift      # All 9 wrapper types
+└── Public/                         # Public API surface (façade layer)
+    ├── Descriptor.swift            # MessageDescriptor, FieldDescriptor, EnumDescriptor, etc.
+    ├── DynamicMessage.swift        # DynamicMessage, MessageFactory, FieldAccessor
+    ├── Serialization.swift         # BinarySerializer/Deserializer, JSONSerializer/Deserializer
+    ├── Registry.swift              # TypeRegistry, DescriptorPool
+    ├── Bridge.swift                # DescriptorBridge, StaticMessageBridge
+    ├── WellKnownTypeHandlers.swift # Well-Known Type handlers and convenience extensions
+    └── WellKnownTypes.swift        # WellKnownTypeNames, WellKnownTypesRegistry
 
-Tests/SwiftProtoReflectTests/       # 85 test files, 1689 tests
-├── Descriptor/                     # Descriptor system tests (13 files)
-├── Dynamic/                        # Dynamic message tests (7 files)
-├── Serialization/                  # Serialization tests (13 files)
-├── Registry/                       # Registry tests (4 files)
-├── Bridge/                         # Bridge tests (10 files)
-├── Integration/                    # Well-Known Types tests (11 files)
+Tests/SwiftProtoReflectTests/       # 139 Swift files, 2348 tests
+├── Descriptor/                     # Descriptor system tests (15 files)
+├── Dynamic/                        # Dynamic message tests (10 files)
+├── Serialization/                  # Serialization tests (28 files)
+├── Registry/                       # Registry tests (5 files)
+├── Bridge/                         # Bridge tests (12 files)
+├── Integration/                    # Well-Known Types and integration tests (43 files)
 ├── Spec/                           # Proto3 spec compliance tests (3 files)
-├── Compatibility/                  # Cross-platform / C++ compat tests (3 files)
+├── Compatibility/                  # Cross-platform / C++ compat tests (5 files)
 ├── Error/                          # Error handling tests (1 file)
 ├── Performance/                    # Performance benchmarks (3 files)
-├── Fixtures/                       # Test data
+├── Fixtures/                       # Test data (13 files)
 ├── Mocks/                          # Test mocks
 └── TestUtils/                      # Test helpers
 ```

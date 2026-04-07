@@ -101,7 +101,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Double Field Type Mismatch Tests (Line 177)
 
-  func testEncodeValue_doubleField_stringValue() throws {
+  func testEncodeValue_doubleField_stringValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .double,
       wrongValue: "not_a_double",
@@ -110,7 +110,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_doubleField_dataValue() throws {
+  func testEncodeValue_doubleField_dataValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .double,
       wrongValue: Data([1, 2, 3]),
@@ -121,7 +121,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Float Field Type Mismatch Tests (Line 183)
 
-  func testEncodeValue_floatField_stringValue() throws {
+  func testEncodeValue_floatField_stringValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .float,
       wrongValue: "not_a_float",
@@ -130,7 +130,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_floatField_dataValue() throws {
+  func testEncodeValue_floatField_dataValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .float,
       wrongValue: Data([1, 2, 3]),
@@ -141,7 +141,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Int32 Field Type Mismatch Tests (Line 189)
 
-  func testEncodeValue_int32Field_stringValue() throws {
+  func testEncodeValue_int32Field_stringValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .int32,
       wrongValue: "not_an_int",
@@ -150,7 +150,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_int32Field_doubleValue() throws {
+  func testEncodeValue_int32Field_doubleValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .int32,
       wrongValue: 42.5,
@@ -159,7 +159,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_int32Field_boolValue() throws {
+  func testEncodeValue_int32Field_boolValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .int32,
       wrongValue: true,
@@ -168,7 +168,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_int32Field_int64Value() throws {
+  func testEncodeValue_int32Field_int64Value() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .int32,
       wrongValue: Int64(42),
@@ -179,7 +179,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Int64 Field Type Mismatch Tests (Line 195)
 
-  func testEncodeValue_int64Field_stringValue() throws {
+  func testEncodeValue_int64Field_stringValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .int64,
       wrongValue: "not_an_int64",
@@ -188,7 +188,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_int64Field_floatValue() throws {
+  func testEncodeValue_int64Field_floatValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .int64,
       wrongValue: Float(42.5),
@@ -197,7 +197,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_int64Field_boolValue() throws {
+  func testEncodeValue_int64Field_boolValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .int64,
       wrongValue: false,
@@ -206,7 +206,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_int64Field_int32Value() throws {
+  func testEncodeValue_int64Field_int32Value() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .int64,
       wrongValue: Int32(42),
@@ -217,7 +217,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - UInt32 Field Type Mismatch Tests (Line 201)
 
-  func testEncodeValue_uint32Field_stringValue() throws {
+  func testEncodeValue_uint32Field_stringValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .uint32,
       wrongValue: "not_uint32",
@@ -226,7 +226,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_uint32Field_doubleValue() throws {
+  func testEncodeValue_uint32Field_doubleValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .uint32,
       wrongValue: 42.5,
@@ -235,7 +235,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_uint32Field_boolValue() throws {
+  func testEncodeValue_uint32Field_boolValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .uint32,
       wrongValue: true,
@@ -244,7 +244,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_uint32Field_uint64Value() throws {
+  func testEncodeValue_uint32Field_uint64Value() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .uint32,
       wrongValue: UInt64(42),
@@ -255,7 +255,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - UInt64 Field Type Mismatch Tests (Line 207)
 
-  func testEncodeValue_uint64Field_stringValue() throws {
+  func testEncodeValue_uint64Field_stringValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .uint64,
       wrongValue: "not_uint64",
@@ -264,7 +264,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_uint64Field_floatValue() throws {
+  func testEncodeValue_uint64Field_floatValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .uint64,
       wrongValue: Float(42.5),
@@ -273,7 +273,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_uint64Field_boolValue() throws {
+  func testEncodeValue_uint64Field_boolValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .uint64,
       wrongValue: false,
@@ -282,7 +282,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_uint64Field_uint32Value() throws {
+  func testEncodeValue_uint64Field_uint32Value() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .uint64,
       wrongValue: UInt32(42),
@@ -293,7 +293,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Sint32 Field Type Mismatch Tests (Line 213)
 
-  func testEncodeValue_sint32Field_stringValue() throws {
+  func testEncodeValue_sint32Field_stringValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .sint32,
       wrongValue: "not_sint32",
@@ -302,7 +302,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_sint32Field_doubleValue() throws {
+  func testEncodeValue_sint32Field_doubleValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .sint32,
       wrongValue: 42.5,
@@ -311,7 +311,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_sint32Field_boolValue() throws {
+  func testEncodeValue_sint32Field_boolValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .sint32,
       wrongValue: true,
@@ -320,7 +320,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_sint32Field_int64Value() throws {
+  func testEncodeValue_sint32Field_int64Value() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .sint32,
       wrongValue: Int64(42),
@@ -331,7 +331,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Sint64 Field Type Mismatch Tests (Line 219)
 
-  func testEncodeValue_sint64Field_stringValue() throws {
+  func testEncodeValue_sint64Field_stringValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .sint64,
       wrongValue: "not_sint64",
@@ -340,7 +340,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_sint64Field_floatValue() throws {
+  func testEncodeValue_sint64Field_floatValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .sint64,
       wrongValue: Float(42.5),
@@ -349,7 +349,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_sint64Field_boolValue() throws {
+  func testEncodeValue_sint64Field_boolValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .sint64,
       wrongValue: false,
@@ -358,7 +358,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_sint64Field_int32Value() throws {
+  func testEncodeValue_sint64Field_int32Value() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .sint64,
       wrongValue: Int32(42),
@@ -369,7 +369,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Fixed32 Field Type Mismatch Tests (Line 225)
 
-  func testEncodeValue_fixed32Field_stringValue() throws {
+  func testEncodeValue_fixed32Field_stringValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .fixed32,
       wrongValue: "not_fixed32",
@@ -378,7 +378,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_fixed32Field_doubleValue() throws {
+  func testEncodeValue_fixed32Field_doubleValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .fixed32,
       wrongValue: 42.5,
@@ -387,7 +387,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_fixed32Field_boolValue() throws {
+  func testEncodeValue_fixed32Field_boolValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .fixed32,
       wrongValue: true,
@@ -396,7 +396,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_fixed32Field_int32Value() throws {
+  func testEncodeValue_fixed32Field_int32Value() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .fixed32,
       wrongValue: Int32(42),
@@ -407,7 +407,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Fixed64 Field Type Mismatch Tests (Line 231)
 
-  func testEncodeValue_fixed64Field_stringValue() throws {
+  func testEncodeValue_fixed64Field_stringValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .fixed64,
       wrongValue: "not_fixed64",
@@ -416,7 +416,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_fixed64Field_floatValue() throws {
+  func testEncodeValue_fixed64Field_floatValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .fixed64,
       wrongValue: Float(42.5),
@@ -425,7 +425,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_fixed64Field_boolValue() throws {
+  func testEncodeValue_fixed64Field_boolValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .fixed64,
       wrongValue: false,
@@ -434,7 +434,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_fixed64Field_int64Value() throws {
+  func testEncodeValue_fixed64Field_int64Value() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .fixed64,
       wrongValue: Int64(42),
@@ -445,7 +445,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Sfixed32 Field Type Mismatch Tests (Line 237)
 
-  func testEncodeValue_sfixed32Field_stringValue() throws {
+  func testEncodeValue_sfixed32Field_stringValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .sfixed32,
       wrongValue: "not_sfixed32",
@@ -454,7 +454,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_sfixed32Field_doubleValue() throws {
+  func testEncodeValue_sfixed32Field_doubleValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .sfixed32,
       wrongValue: 42.5,
@@ -463,7 +463,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_sfixed32Field_boolValue() throws {
+  func testEncodeValue_sfixed32Field_boolValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .sfixed32,
       wrongValue: true,
@@ -472,7 +472,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_sfixed32Field_uint32Value() throws {
+  func testEncodeValue_sfixed32Field_uint32Value() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .sfixed32,
       wrongValue: UInt32(42),
@@ -483,7 +483,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Sfixed64 Field Type Mismatch Tests (Line 243)
 
-  func testEncodeValue_sfixed64Field_stringValue() throws {
+  func testEncodeValue_sfixed64Field_stringValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .sfixed64,
       wrongValue: "not_sfixed64",
@@ -492,7 +492,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_sfixed64Field_floatValue() throws {
+  func testEncodeValue_sfixed64Field_floatValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .sfixed64,
       wrongValue: Float(42.5),
@@ -501,7 +501,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_sfixed64Field_boolValue() throws {
+  func testEncodeValue_sfixed64Field_boolValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .sfixed64,
       wrongValue: false,
@@ -510,7 +510,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_sfixed64Field_uint64Value() throws {
+  func testEncodeValue_sfixed64Field_uint64Value() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .sfixed64,
       wrongValue: UInt64(42),
@@ -521,7 +521,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Bool Field Type Mismatch Tests (Line 249)
 
-  func testEncodeValue_boolField_stringValue() throws {
+  func testEncodeValue_boolField_stringValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .bool,
       wrongValue: "true",
@@ -530,7 +530,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_boolField_intValue() throws {
+  func testEncodeValue_boolField_intValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .bool,
       wrongValue: Int32(1),
@@ -539,7 +539,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_boolField_doubleValue() throws {
+  func testEncodeValue_boolField_doubleValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .bool,
       wrongValue: 1.0,
@@ -548,7 +548,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_boolField_dataValue() throws {
+  func testEncodeValue_boolField_dataValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .bool,
       wrongValue: Data([1]),
@@ -559,7 +559,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - String Field Type Mismatch Tests (Line 255)
 
-  func testEncodeValue_stringField_intValue() throws {
+  func testEncodeValue_stringField_intValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .string,
       wrongValue: Int32(42),
@@ -568,7 +568,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_stringField_boolValue() throws {
+  func testEncodeValue_stringField_boolValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .string,
       wrongValue: true,
@@ -577,7 +577,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_stringField_doubleValue() throws {
+  func testEncodeValue_stringField_doubleValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .string,
       wrongValue: 42.5,
@@ -586,7 +586,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_stringField_dataValue() throws {
+  func testEncodeValue_stringField_dataValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .string,
       wrongValue: Data([65, 66, 67]),
@@ -597,7 +597,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Bytes Field Type Mismatch Tests (Line 263)
 
-  func testEncodeValue_bytesField_stringValue() throws {
+  func testEncodeValue_bytesField_stringValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .bytes,
       wrongValue: "not_data",
@@ -606,7 +606,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_bytesField_intValue() throws {
+  func testEncodeValue_bytesField_intValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .bytes,
       wrongValue: Int32(42),
@@ -615,7 +615,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_bytesField_boolValue() throws {
+  func testEncodeValue_bytesField_boolValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .bytes,
       wrongValue: true,
@@ -624,7 +624,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_bytesField_doubleValue() throws {
+  func testEncodeValue_bytesField_doubleValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .bytes,
       wrongValue: 42.5,
@@ -635,7 +635,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Message Field Type Mismatch Tests (Line 270)
 
-  func testEncodeValue_messageField_stringValue() throws {
+  func testEncodeValue_messageField_stringValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .message,
       wrongValue: "not_a_message",
@@ -645,7 +645,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_messageField_intValue() throws {
+  func testEncodeValue_messageField_intValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .message,
       wrongValue: Int32(42),
@@ -655,7 +655,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_messageField_boolValue() throws {
+  func testEncodeValue_messageField_boolValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .message,
       wrongValue: true,
@@ -665,7 +665,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_messageField_dataValue() throws {
+  func testEncodeValue_messageField_dataValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .message,
       wrongValue: Data([1, 2, 3]),
@@ -677,7 +677,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
   // MARK: - Enum Field Type Mismatch Tests (Line 284)
 
-  func testEncodeValue_enumField_stringValue() throws {
+  func testEncodeValue_enumField_stringValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .enum,
       wrongValue: Data([1, 2, 3]),
@@ -687,7 +687,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_enumField_doubleValue() throws {
+  func testEncodeValue_enumField_doubleValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .enum,
       wrongValue: 42.5,
@@ -697,7 +697,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_enumField_boolValue() throws {
+  func testEncodeValue_enumField_boolValue() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .enum,
       wrongValue: true,
@@ -707,7 +707,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
     )
   }
 
-  func testEncodeValue_enumField_int64Value() throws {
+  func testEncodeValue_enumField_int64Value() async throws {
     testEncodeValueTypeMismatch(
       fieldType: .enum,
       wrongValue: Int64(42),
@@ -720,7 +720,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
   // MARK: - Field Validation Error Tests
 
   /// Tests missing field value error - create situation where field should be present but it's not.
-  func testSerialize_missingFieldValue() throws {
+  func testSerialize_missingFieldValue() async throws {
     var messageDescriptor = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     messageDescriptor.addField(FieldDescriptor(name: "test_field", number: 1, type: .string))
     fileDescriptor.addMessage(messageDescriptor)
@@ -734,7 +734,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
   }
 
   /// Tests invalid repeated field type error - try to set non-array to repeated field.
-  func testSerialize_invalidRepeatedFieldType() throws {
+  func testSerialize_invalidRepeatedFieldType() async throws {
     var messageDescriptor = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     messageDescriptor.addField(
       FieldDescriptor(
@@ -762,7 +762,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
   }
 
   /// Tests missing map entry info error - create map field without mapEntryInfo.
-  func testSerialize_missingMapEntryInfo() throws {
+  func testSerialize_missingMapEntryInfo() async throws {
     var messageDescriptor = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
 
     // Create regular message field (not map) to avoid fatal error
@@ -786,7 +786,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
   }
 
   /// Tests invalid map field type error - try to set non-dictionary to map field.
-  func testSerialize_invalidMapFieldType() throws {
+  func testSerialize_invalidMapFieldType() async throws {
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: keyFieldInfo, valueFieldInfo: valueFieldInfo)

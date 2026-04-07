@@ -11,12 +11,12 @@ import XCTest
 
 final class JSONSerializationOptionsTests: XCTestCase {
 
-  func test_options_defaultCanonicalWKTEncoding_isTrue() {
+  func test_options_defaultCanonicalWKTEncoding_isTrue() async throws {
     let options = JSONSerializationOptions(typeRegistry: TypeRegistry())
     XCTAssertTrue(options.useCanonicalWellKnownTypeEncoding)
   }
 
-  func test_options_customCanonicalWKTEncoding_respectsValue() {
+  func test_options_customCanonicalWKTEncoding_respectsValue() async throws {
     let optionsTrue = JSONSerializationOptions(
       useCanonicalWellKnownTypeEncoding: true,
       typeRegistry: TypeRegistry()
@@ -30,11 +30,4 @@ final class JSONSerializationOptionsTests: XCTestCase {
     XCTAssertFalse(optionsFalse.useCanonicalWellKnownTypeEncoding)
   }
 
-  // swiftlint:disable deprecated_usage
-  @available(*, deprecated)
-  func test_options_deprecatedInit_hasCanonicalWKTEncodingTrue() {
-    let options = JSONSerializationOptions()
-    XCTAssertTrue(options.useCanonicalWellKnownTypeEncoding)
-  }
-  // swiftlint:enable deprecated_usage
 }

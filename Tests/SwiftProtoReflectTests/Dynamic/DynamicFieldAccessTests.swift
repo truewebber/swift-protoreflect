@@ -24,8 +24,8 @@ final class DynamicFieldAccessTests: XCTestCase {
 
   // MARK: - Setup
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     messageFactory = MessageFactory()
     fileDescriptor = FileDescriptor(name: "test_field_access.proto", package: "test.access")
@@ -247,18 +247,18 @@ final class DynamicFieldAccessTests: XCTestCase {
     fileDescriptor.addMessage(testMessage)
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     fileDescriptor = nil
     messageFactory = nil
     testMessage = nil
     nestedMessage = nil
     enumDescriptor = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Test-DYN-004: Manipulation of repeated fields
 
-  func testRepeatedFieldAddition() throws {
+  func testRepeatedFieldAddition() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Add elements to repeated string field
@@ -296,7 +296,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(boolArray?[2], true)
   }
 
-  func testRepeatedFieldReplacement() throws {
+  func testRepeatedFieldReplacement() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Set array entirely
@@ -315,7 +315,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getStringArray("repeated_strings")?.count, 4)
   }
 
-  func testRepeatedFieldClearing() throws {
+  func testRepeatedFieldClearing() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Add elements
@@ -333,7 +333,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertFalse(try message.hasValue(forField: "repeated_int64"))
   }
 
-  func testRepeatedMessageFields() throws {
+  func testRepeatedMessageFields() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Create nested messages
@@ -379,7 +379,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getMessageArray("repeated_messages")?.count, 3)
   }
 
-  func testRepeatedFieldsAllNumericTypes() throws {
+  func testRepeatedFieldsAllNumericTypes() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Test all numeric types
@@ -402,7 +402,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(doubleArray?[0] ?? 0.0, 10.1, accuracy: 0.01)
   }
 
-  func testRepeatedBytesField() throws {
+  func testRepeatedBytesField() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     let data1 = Data("hello".utf8)
@@ -421,7 +421,7 @@ final class DynamicFieldAccessTests: XCTestCase {
 
   // MARK: - Test-DYN-005: Manipulation of map fields
 
-  func testMapFieldsAllKeyTypes() throws {
+  func testMapFieldsAllKeyTypes() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // String -> String map
@@ -471,7 +471,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(boolFloatMap?[false] ?? 0.0, Float(2.71), accuracy: Float(0.01))
   }
 
-  func testMapFieldsWithMessages() throws {
+  func testMapFieldsWithMessages() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Create nested messages for map
@@ -521,7 +521,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(try updatedMap?["fourth"]?.get(forField: "id") as? Int32, 1)
   }
 
-  func testMapFieldsWithEnums() throws {
+  func testMapFieldsWithEnums() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Add enum values to map
@@ -536,7 +536,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(enumMap?["blue"] as? Int32, 3)
   }
 
-  func testMapFieldModification() throws {
+  func testMapFieldModification() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Create initial map
@@ -562,7 +562,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(finalAccessor.getStringMap("string_to_string_map")?.count, 3)
   }
 
-  func testMapFieldClearing() throws {
+  func testMapFieldClearing() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Add data to map
@@ -582,7 +582,7 @@ final class DynamicFieldAccessTests: XCTestCase {
 
   // MARK: - Test-DYN-006: Working with oneof fields
 
-  func testOneofFieldSwitching() throws {
+  func testOneofFieldSwitching() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Initially all oneof fields are not set
@@ -616,7 +616,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(boolAccessor.getBool("oneof_bool"), true)
   }
 
-  func testOneofFieldWithMessage() throws {
+  func testOneofFieldWithMessage() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Create nested message for oneof
@@ -650,7 +650,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(switchedAccessor.getString("oneof_string"), "new_string")
   }
 
-  func testOneofFieldWithEnum() throws {
+  func testOneofFieldWithEnum() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Set enum variant by number
@@ -675,7 +675,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertTrue(finalAccessor.hasValue("oneof_string"))
   }
 
-  func testMultipleOneofGroups() throws {
+  func testMultipleOneofGroups() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Set fields from first oneof group
@@ -709,7 +709,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(finalAccessor.getValue("second_oneof_b", as: Int64.self), 777)
   }
 
-  func testOneofFieldClearing() throws {
+  func testOneofFieldClearing() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Set oneof field
@@ -729,7 +729,7 @@ final class DynamicFieldAccessTests: XCTestCase {
 
   // MARK: - Test-DYN-007: Handling enum values
 
-  func testEnumByNumber() throws {
+  func testEnumByNumber() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Set enum values by number
@@ -750,7 +750,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(try message.get(forField: "single_enum") as? Int32, 999)
   }
 
-  func testEnumByName() throws {
+  func testEnumByName() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Set enum values by name
@@ -770,7 +770,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(try message.get(forField: "single_enum") as? String, "CUSTOM")
   }
 
-  func testEnumUnknownValues() throws {
+  func testEnumUnknownValues() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Test unknown enum numbers (protobufs should support them)
@@ -791,7 +791,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(try message.get(forField: "single_enum") as? Int32, 500)
   }
 
-  func testEnumInRepeatedField() throws {
+  func testEnumInRepeatedField() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Add enum values to repeated field by numbers
@@ -822,7 +822,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     XCTAssertEqual(finalEnumArray?[5] as? Int32, 777)
   }
 
-  func testEnumValidation() throws {
+  func testEnumValidation() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     // Valid types should work
@@ -843,7 +843,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     }
   }
 
-  func testEnumEquality() throws {
+  func testEnumEquality() async throws {
     var message1 = messageFactory.createMessage(from: testMessage)
     var message2 = messageFactory.createMessage(from: testMessage)
 
@@ -866,7 +866,7 @@ final class DynamicFieldAccessTests: XCTestCase {
 
   // MARK: - Integration Tests
 
-  func testCombinedFieldTypes() throws {
+  func testCombinedFieldTypes() async throws {
     // Test integration of all field types together
     var message = messageFactory.createMessage(from: testMessage)
 
@@ -902,7 +902,7 @@ final class DynamicFieldAccessTests: XCTestCase {
 
   // MARK: - Performance Tests
 
-  func testRepeatedFieldPerformance() {
+  func testRepeatedFieldPerformance() async throws {
     measure {
       var message = messageFactory.createMessage(from: testMessage)
       for i in 0..<1000 {
@@ -919,7 +919,7 @@ final class DynamicFieldAccessTests: XCTestCase {
     }
   }
 
-  func testMapFieldPerformance() throws {
+  func testMapFieldPerformance() async throws {
     var message = messageFactory.createMessage(from: testMessage)
 
     measure {

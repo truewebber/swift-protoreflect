@@ -15,19 +15,19 @@ final class JSONCompatFieldNamesTests: XCTestCase {
 
   private var registry: TypeRegistry!
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - snake_case → camelCase mapping
 
-  func test_fieldNames_snakeToCamel_bidirectional() throws {
+  func test_fieldNames_snakeToCamel_bidirectional() async throws {
     // my_field_name → myFieldName
     // a_long_field_name_here → aLongFieldNameHere
     // http_request → httpRequest
@@ -39,7 +39,7 @@ final class JSONCompatFieldNamesTests: XCTestCase {
     proto.myRpc = "service"
 
     let desc = CompatDescriptors.fieldNameEdgeCases()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? String, "test1")
       XCTAssertEqual(try msg.get(forField: 2) as? Int32, 42)
       XCTAssertEqual(try msg.get(forField: 3) as? Bool, true)
@@ -51,7 +51,7 @@ final class JSONCompatFieldNamesTests: XCTestCase {
     try dynamic.set(Int32(42), forField: 2)
     try dynamic.set(true, forField: 3)
     try dynamic.set("service", forField: 4)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_FieldNameEdgeCases.self
@@ -65,7 +65,7 @@ final class JSONCompatFieldNamesTests: XCTestCase {
 
   // MARK: - custom json_name option overrides camelCase
 
-  func test_fieldNames_customJsonName_bidirectional() throws {
+  func test_fieldNames_customJsonName_bidirectional() async throws {
     // custom_json has json_name = "customOverride"
     var proto = Testcompat_FieldNameEdgeCases()
     proto.customJson = "override_value"
@@ -83,20 +83,20 @@ final class JSONCompatFieldNamesTests: XCTestCase {
       "JSON must NOT use camelCase name when json_name is set, got: \(jsonStr)"
     )
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 7) as? String, "override_value")
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("override_value", forField: 7)
-    let jsonData = try CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
+    let jsonData = try await CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
     let ourJson = try XCTUnwrap(String(data: jsonData, encoding: .utf8))
     XCTAssertTrue(
       ourJson.contains("customOverride"),
       "Our serializer must use json_name override, got: \(ourJson)"
     )
 
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_FieldNameEdgeCases.self
@@ -107,7 +107,7 @@ final class JSONCompatFieldNamesTests: XCTestCase {
 
   // MARK: - ALLCAPS field name (no camelCase transformation)
 
-  func test_fieldNames_allCaps_noChange_bidirectional() throws {
+  func test_fieldNames_allCaps_noChange_bidirectional() async throws {
     var proto = Testcompat_FieldNameEdgeCases()
     proto.allcaps = "caps_value"
 
@@ -116,13 +116,13 @@ final class JSONCompatFieldNamesTests: XCTestCase {
     // ALLCAPS → JSON key should be "ALLCAPS" (no transformation)
     XCTAssertTrue(jsonStr.contains("ALLCAPS"), "ALLCAPS field should remain unchanged in JSON: \(jsonStr)")
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 8) as? String, "caps_value")
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("caps_value", forField: 8)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_FieldNameEdgeCases.self
@@ -133,7 +133,7 @@ final class JSONCompatFieldNamesTests: XCTestCase {
 
   // MARK: - CamelCase field name (preserved as-is)
 
-  func test_fieldNames_camelCase_preserved_bidirectional() throws {
+  func test_fieldNames_camelCase_preserved_bidirectional() async throws {
     var proto = Testcompat_FieldNameEdgeCases()
     proto.camelCase = "camel_value"
 
@@ -142,13 +142,13 @@ final class JSONCompatFieldNamesTests: XCTestCase {
     // CamelCase → JSON key should be "CamelCase" (no transformation for already-camel)
     XCTAssertTrue(jsonStr.contains("CamelCase"), "CamelCase field should be 'CamelCase' in JSON: \(jsonStr)")
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 9) as? String, "camel_value")
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("camel_value", forField: 9)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_FieldNameEdgeCases.self
@@ -159,7 +159,7 @@ final class JSONCompatFieldNamesTests: XCTestCase {
 
   // MARK: - Numeric suffix in field name (field_10 → field10)
 
-  func test_fieldNames_numericSuffix_bidirectional() throws {
+  func test_fieldNames_numericSuffix_bidirectional() async throws {
     var proto = Testcompat_FieldNameEdgeCases()
     proto.field10 = 999
 
@@ -167,13 +167,13 @@ final class JSONCompatFieldNamesTests: XCTestCase {
     let jsonStr = try proto.jsonString()
     XCTAssertTrue(jsonStr.contains("field10"), "field_10 should map to 'field10' in JSON: \(jsonStr)")
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 10) as? Int32, 999)
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(999), forField: 10)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_FieldNameEdgeCases.self
@@ -184,7 +184,7 @@ final class JSONCompatFieldNamesTests: XCTestCase {
 
   // MARK: - All edge cases together
 
-  func test_fieldNames_allEdgeCases_bidirectional() throws {
+  func test_fieldNames_allEdgeCases_bidirectional() async throws {
     var proto = Testcompat_FieldNameEdgeCases()
     proto.myFieldName = "field"
     proto.aLongFieldNameHere = 7
@@ -198,7 +198,7 @@ final class JSONCompatFieldNamesTests: XCTestCase {
     proto.field10 = 10
 
     let desc = CompatDescriptors.fieldNameEdgeCases()
-    let msg = try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    let msg = try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? String, "field")
       XCTAssertEqual(try msg.get(forField: 2) as? Int32, 7)
       XCTAssertEqual(try msg.get(forField: 3) as? Bool, true)
@@ -222,7 +222,7 @@ final class JSONCompatFieldNamesTests: XCTestCase {
     try dynamic.set("ALLCAPS", forField: 8)
     try dynamic.set("Camel", forField: 9)
     try dynamic.set(Int32(10), forField: 10)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_FieldNameEdgeCases.self
@@ -243,7 +243,7 @@ final class JSONCompatFieldNamesTests: XCTestCase {
 
   // MARK: - Double leading underscores: __double_leading → DoubleLeading
 
-  func test_fieldNames_doubleLeadingUnderscore_bidirectional() throws {
+  func test_fieldNames_doubleLeadingUnderscore_bidirectional() async throws {
     var proto = Testcompat_FieldNameEdgeCases()
     proto._DoubleLeading = "double_val"
 
@@ -252,21 +252,17 @@ final class JSONCompatFieldNamesTests: XCTestCase {
     // protobuf spec: leading underscores stripped, first real char uppercased
     XCTAssertTrue(jsonStr.contains("DoubleLeading"), "Expected 'DoubleLeading' in JSON: \(jsonStr)")
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 5) as? String, "double_val")
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("double_val", forField: 5)
-    let ourJson = try XCTUnwrap(
-      String(
-        data: try CompatHelpers.makeSerializer(registry: registry).serialize(dynamic),
-        encoding: .utf8
-      )
-    )
+    let _doubleData = try await CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
+    let ourJson = try XCTUnwrap(String(data: _doubleData, encoding: .utf8))
     XCTAssertTrue(ourJson.contains("DoubleLeading"), "Our JSON must use DoubleLeading: \(ourJson)")
 
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_FieldNameEdgeCases.self
@@ -277,7 +273,7 @@ final class JSONCompatFieldNamesTests: XCTestCase {
 
   // MARK: - Trailing underscore: trailing_ → trailing
 
-  func test_fieldNames_trailingUnderscore_bidirectional() throws {
+  func test_fieldNames_trailingUnderscore_bidirectional() async throws {
     var proto = Testcompat_FieldNameEdgeCases()
     proto.trailing_ = "trail_val"
 
@@ -286,21 +282,17 @@ final class JSONCompatFieldNamesTests: XCTestCase {
     XCTAssertTrue(jsonStr.contains("\"trailing\""), "Expected 'trailing' key in JSON: \(jsonStr)")
     XCTAssertFalse(jsonStr.contains("trailing_"), "Should not contain trailing underscore in key: \(jsonStr)")
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 6) as? String, "trail_val")
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("trail_val", forField: 6)
-    let ourJson = try XCTUnwrap(
-      String(
-        data: try CompatHelpers.makeSerializer(registry: registry).serialize(dynamic),
-        encoding: .utf8
-      )
-    )
+    let _trailData = try await CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
+    let ourJson = try XCTUnwrap(String(data: _trailData, encoding: .utf8))
     XCTAssertTrue(ourJson.contains("\"trailing\""), "Our JSON must use 'trailing': \(ourJson)")
 
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_FieldNameEdgeCases.self
@@ -311,7 +303,7 @@ final class JSONCompatFieldNamesTests: XCTestCase {
 
   // MARK: - Direction A: original snake_case name accepted on input
 
-  func test_fieldNames_originalNameAccepted_directionA() throws {
+  func test_fieldNames_originalNameAccepted_directionA() async throws {
     // JSON from protoc uses camelCase keys. But the deserializer should also accept
     // the original snake_case field name as an alternative input.
     let snakeCaseJson = """
@@ -319,7 +311,7 @@ final class JSONCompatFieldNamesTests: XCTestCase {
       """
     guard let data = snakeCaseJson.data(using: .utf8) else { throw CompatError.jsonEncodingFailed }
     let desc = CompatDescriptors.fieldNameEdgeCases()
-    let msg = try CompatHelpers.makeDeserializer(registry: registry).deserialize(data, using: desc)
+    let msg = try await CompatHelpers.makeDeserializer(registry: registry).deserialize(data, using: desc)
     XCTAssertEqual(try msg.get(forField: 1) as? String, "snake")
     XCTAssertEqual(try msg.get(forField: 2) as? Int32, 7)
     XCTAssertEqual(try msg.get(forField: 3) as? Bool, true)
@@ -328,7 +320,7 @@ final class JSONCompatFieldNamesTests: XCTestCase {
 
   // MARK: - Simple message: id and name camelCase is a no-op (already camel)
 
-  func test_fieldNames_simpleMessage_idAndName_bidirectional() throws {
+  func test_fieldNames_simpleMessage_idAndName_bidirectional() async throws {
     var proto = Testcompat_SimpleMessage()
     proto.id = 123
     proto.name = "simple"
@@ -338,7 +330,7 @@ final class JSONCompatFieldNamesTests: XCTestCase {
     XCTAssertTrue(jsonStr.contains("\"id\""), "id should appear as 'id' in JSON: \(jsonStr)")
     XCTAssertTrue(jsonStr.contains("\"name\""), "name should appear as 'name' in JSON: \(jsonStr)")
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? Int32, 123)
       XCTAssertEqual(try msg.get(forField: 2) as? String, "simple")
     }
@@ -346,7 +338,11 @@ final class JSONCompatFieldNamesTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(123), forField: 1)
     try dynamic.set("simple", forField: 2)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_SimpleMessage.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_SimpleMessage.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.id, 123)
       XCTAssertEqual(decoded.name, "simple")

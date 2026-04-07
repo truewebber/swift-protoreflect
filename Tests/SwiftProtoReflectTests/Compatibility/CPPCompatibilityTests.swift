@@ -22,7 +22,7 @@ final class CPPCompatibilityTests: XCTestCase {
 
   // MARK: - Unknown fields preserved across round-trip
 
-  func test_unknownFields_preservedAcrossRoundTrip() throws {
+  func test_unknownFields_preservedAcrossRoundTrip() async throws {
     var fullDesc = MessageDescriptor(name: "M", fullName: "test.M")
     fullDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
     fullDesc.addField(FieldDescriptor(name: "extra", number: 2, type: .string))
@@ -35,19 +35,19 @@ final class CPPCompatibilityTests: XCTestCase {
     var reducedDesc = MessageDescriptor(name: "M", fullName: "test.M")
     reducedDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
-    let partial = try deserializer.deserialize(data, using: reducedDesc)
+    let partial = try await deserializer.deserialize(data, using: reducedDesc)
     XCTAssertEqual(try partial.get(forField: "id") as? Int32, 42)
     XCTAssertFalse(partial.unknownFields.isEmpty)
 
     let reencoded = try serializer.serialize(partial)
-    let restored = try deserializer.deserialize(reencoded, using: fullDesc)
+    let restored = try await deserializer.deserialize(reencoded, using: fullDesc)
     XCTAssertEqual(try restored.get(forField: "id") as? Int32, 42)
     XCTAssertEqual(try restored.get(forField: "extra") as? String, "hidden")
   }
 
   // MARK: - Field identified by number, not name
 
-  func test_fieldIdentifiedByNumber_notName() throws {
+  func test_fieldIdentifiedByNumber_notName() async throws {
     var writerDesc = MessageDescriptor(name: "M", fullName: "test.M")
     writerDesc.addField(FieldDescriptor(name: "old_name", number: 1, type: .int32))
 
@@ -58,7 +58,7 @@ final class CPPCompatibilityTests: XCTestCase {
     var readerDesc = MessageDescriptor(name: "M", fullName: "test.M")
     readerDesc.addField(FieldDescriptor(name: "new_name", number: 1, type: .int32))
 
-    let decoded = try deserializer.deserialize(data, using: readerDesc)
+    let decoded = try await deserializer.deserialize(data, using: readerDesc)
     XCTAssertEqual(
       try decoded.get(forField: "new_name") as? Int32,
       99,
@@ -68,7 +68,7 @@ final class CPPCompatibilityTests: XCTestCase {
 
   // MARK: - Edge values of numeric types
 
-  func test_int32_extremeValues() throws {
+  func test_int32_extremeValues() async throws {
     // 0 is the proto3 default and is omitted from wire; excluded from round-trip.
     for value: Int32 in [.min, .max, 1, -1] {
       var desc = MessageDescriptor(name: "M", fullName: "test.M")
@@ -77,12 +77,12 @@ final class CPPCompatibilityTests: XCTestCase {
       var msg = factory.createMessage(from: desc)
       try msg.set(value, forField: "v")
       let data = try serializer.serialize(msg)
-      let decoded = try deserializer.deserialize(data, using: desc)
+      let decoded = try await deserializer.deserialize(data, using: desc)
       XCTAssertEqual(try decoded.get(forField: "v") as? Int32, value, "Round-trip failed for \(value)")
     }
   }
 
-  func test_int64_extremeValues() throws {
+  func test_int64_extremeValues() async throws {
     // 0 is the proto3 default and is omitted from wire; excluded from round-trip.
     for value: Int64 in [.min, .max, 1, -1] {
       var desc = MessageDescriptor(name: "M", fullName: "test.M")
@@ -91,12 +91,12 @@ final class CPPCompatibilityTests: XCTestCase {
       var msg = factory.createMessage(from: desc)
       try msg.set(value, forField: "v")
       let data = try serializer.serialize(msg)
-      let decoded = try deserializer.deserialize(data, using: desc)
+      let decoded = try await deserializer.deserialize(data, using: desc)
       XCTAssertEqual(try decoded.get(forField: "v") as? Int64, value, "Round-trip failed for \(value)")
     }
   }
 
-  func test_uint32_extremeValues() throws {
+  func test_uint32_extremeValues() async throws {
     // 0 (.min) is the proto3 default and is omitted from wire; excluded from round-trip.
     for value: UInt32 in [.max, 1] {
       var desc = MessageDescriptor(name: "M", fullName: "test.M")
@@ -105,12 +105,12 @@ final class CPPCompatibilityTests: XCTestCase {
       var msg = factory.createMessage(from: desc)
       try msg.set(value, forField: "v")
       let data = try serializer.serialize(msg)
-      let decoded = try deserializer.deserialize(data, using: desc)
+      let decoded = try await deserializer.deserialize(data, using: desc)
       XCTAssertEqual(try decoded.get(forField: "v") as? UInt32, value, "Round-trip failed for \(value)")
     }
   }
 
-  func test_uint64_extremeValues() throws {
+  func test_uint64_extremeValues() async throws {
     // 0 (.min) is the proto3 default and is omitted from wire; excluded from round-trip.
     for value: UInt64 in [.max, 1] {
       var desc = MessageDescriptor(name: "M", fullName: "test.M")
@@ -119,14 +119,14 @@ final class CPPCompatibilityTests: XCTestCase {
       var msg = factory.createMessage(from: desc)
       try msg.set(value, forField: "v")
       let data = try serializer.serialize(msg)
-      let decoded = try deserializer.deserialize(data, using: desc)
+      let decoded = try await deserializer.deserialize(data, using: desc)
       XCTAssertEqual(try decoded.get(forField: "v") as? UInt64, value, "Round-trip failed for \(value)")
     }
   }
 
   // MARK: - Float special values
 
-  func test_float_specialValues() throws {
+  func test_float_specialValues() async throws {
     // 0.0 is the proto3 default and is omitted from wire; excluded from round-trip.
     for value: Float in [.infinity, -.infinity, .greatestFiniteMagnitude, .leastNonzeroMagnitude] {
       var desc = MessageDescriptor(name: "M", fullName: "test.M")
@@ -135,25 +135,25 @@ final class CPPCompatibilityTests: XCTestCase {
       var msg = factory.createMessage(from: desc)
       try msg.set(value, forField: "v")
       let data = try serializer.serialize(msg)
-      let decoded = try deserializer.deserialize(data, using: desc)
+      let decoded = try await deserializer.deserialize(data, using: desc)
       XCTAssertEqual(try decoded.get(forField: "v") as? Float, value, "Round-trip failed for \(value)")
     }
   }
 
-  func test_float_NaN() throws {
+  func test_float_NaN() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "v", number: 1, type: .float))
 
     var msg = factory.createMessage(from: desc)
     try msg.set(Float.nan, forField: "v")
     let data = try serializer.serialize(msg)
-    let decoded = try deserializer.deserialize(data, using: desc)
+    let decoded = try await deserializer.deserialize(data, using: desc)
     let result = try decoded.get(forField: "v") as? Float
     XCTAssertNotNil(result)
     XCTAssertTrue(result!.isNaN)
   }
 
-  func test_double_specialValues() throws {
+  func test_double_specialValues() async throws {
     // 0.0 is the proto3 default and is omitted from wire; excluded from round-trip.
     for value: Double in [.infinity, -.infinity, .greatestFiniteMagnitude, .leastNonzeroMagnitude] {
       var desc = MessageDescriptor(name: "M", fullName: "test.M")
@@ -162,19 +162,19 @@ final class CPPCompatibilityTests: XCTestCase {
       var msg = factory.createMessage(from: desc)
       try msg.set(value, forField: "v")
       let data = try serializer.serialize(msg)
-      let decoded = try deserializer.deserialize(data, using: desc)
+      let decoded = try await deserializer.deserialize(data, using: desc)
       XCTAssertEqual(try decoded.get(forField: "v") as? Double, value, "Round-trip failed for \(value)")
     }
   }
 
-  func test_double_NaN() throws {
+  func test_double_NaN() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "v", number: 1, type: .double))
 
     var msg = factory.createMessage(from: desc)
     try msg.set(Double.nan, forField: "v")
     let data = try serializer.serialize(msg)
-    let decoded = try deserializer.deserialize(data, using: desc)
+    let decoded = try await deserializer.deserialize(data, using: desc)
     let result = try decoded.get(forField: "v") as? Double
     XCTAssertNotNil(result)
     XCTAssertTrue(result!.isNaN)
@@ -182,7 +182,7 @@ final class CPPCompatibilityTests: XCTestCase {
 
   // MARK: - Packed repeated encoding
 
-  func test_packedRepeated_roundtrip() throws {
+  func test_packedRepeated_roundtrip() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(
       FieldDescriptor(name: "values", number: 1, type: .int32, isRepeated: true)
@@ -192,7 +192,7 @@ final class CPPCompatibilityTests: XCTestCase {
     try msg.set([Int32(1), Int32(2), Int32(3)] as [Any], forField: "values")
 
     let data = try serializer.serialize(msg)
-    let decoded = try deserializer.deserialize(data, using: desc)
+    let decoded = try await deserializer.deserialize(data, using: desc)
 
     let values = try decoded.get(forField: "values")
     let arr = values as? [Any]
@@ -202,7 +202,7 @@ final class CPPCompatibilityTests: XCTestCase {
 
   // MARK: - F. C++ Compatibility: sibling message wire format
 
-  func test_cppCompat_binaryFormat_siblingMessageReference_matchesExpected() throws {
+  func test_cppCompat_binaryFormat_siblingMessageReference_matchesExpected() async throws {
     // Verifies that our serialiser produces the canonical protobuf wire format for a
     // message field referencing a sibling type, and that our deserialiser (with registry)
     // can parse the same bytes a C++ implementation would produce.
@@ -234,16 +234,16 @@ final class CPPCompatibilityTests: XCTestCase {
 
     // Deserialise the canonical bytes using registry.
     let registry = TypeRegistry()
-    try registry.registerMessage(descA)
+    try await registry.registerMessage(descA)
     let opts = DeserializationOptions(typeRegistry: registry)
     let cppBytes = Data(expectedBytes)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(cppBytes, using: descB)
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(cppBytes, using: descB)
 
     let decodedA = try XCTUnwrap(decoded.get(forField: "a") as? DynamicMessage)
     XCTAssertEqual(try decodedA.get(forField: "value") as? String, "hi")
   }
 
-  func test_cppCompat_binaryFormat_nestedSiblingChain_matchesExpected() throws {
+  func test_cppCompat_binaryFormat_nestedSiblingChain_matchesExpected() async throws {
     // Verifies the canonical wire format for a two-level sibling chain:
     //   message Inner { int32 n = 1; }
     //   message Middle { Inner inner = 1; }
@@ -280,10 +280,10 @@ final class CPPCompatibilityTests: XCTestCase {
 
     // Deserialise canonical bytes with registry.
     let registry = TypeRegistry()
-    try registry.registerMessage(innerDesc)
-    try registry.registerMessage(middleDesc)
+    try await registry.registerMessage(innerDesc)
+    try await registry.registerMessage(middleDesc)
     let opts = DeserializationOptions(typeRegistry: registry)
-    let decoded = try BinaryDeserializer(options: opts).deserialize(
+    let decoded = try await BinaryDeserializer(options: opts).deserialize(
       Data(expectedBytes),
       using: outerDesc
     )

@@ -19,8 +19,8 @@ final class FieldAccessorTests: XCTestCase {
 
   // MARK: - Setup and Teardown
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     // Create file descriptor
     fileDescriptor = FileDescriptor(name: "test.proto", package: "test")
@@ -111,7 +111,7 @@ final class FieldAccessorTests: XCTestCase {
 
   // MARK: - Basic Field Access Tests
 
-  func testStringFieldAccess() throws {
+  func testStringFieldAccess() async throws {
     // Test getting non-existent field
     let accessor = personMessage.fieldAccessor
     XCTAssertNil(accessor.getString("name"))
@@ -125,7 +125,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getString(1), "John Doe")
   }
 
-  func testInt32FieldAccess() throws {
+  func testInt32FieldAccess() async throws {
     let accessor = personMessage.fieldAccessor
     XCTAssertNil(accessor.getInt32("age"))
     XCTAssertNil(accessor.getInt32(2))
@@ -137,7 +137,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getInt32(2), 25)
   }
 
-  func testInt64FieldAccess() throws {
+  func testInt64FieldAccess() async throws {
     let accessor = personMessage.fieldAccessor
     XCTAssertNil(accessor.getInt64("user_id"))
     XCTAssertNil(accessor.getInt64(7))
@@ -149,7 +149,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getInt64(7), 123_456_789)
   }
 
-  func testUInt32FieldAccess() throws {
+  func testUInt32FieldAccess() async throws {
     let accessor = personMessage.fieldAccessor
     XCTAssertNil(accessor.getUInt32("score"))
     XCTAssertNil(accessor.getUInt32(8))
@@ -161,7 +161,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getUInt32(8), 100)
   }
 
-  func testUInt64FieldAccess() throws {
+  func testUInt64FieldAccess() async throws {
     let accessor = personMessage.fieldAccessor
     XCTAssertNil(accessor.getUInt64("total_score"))
     XCTAssertNil(accessor.getUInt64(9))
@@ -173,7 +173,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getUInt64(9), 987_654_321)
   }
 
-  func testFloatFieldAccess() throws {
+  func testFloatFieldAccess() async throws {
     let accessor = personMessage.fieldAccessor
     XCTAssertNil(accessor.getFloat("weight"))
     XCTAssertNil(accessor.getFloat(4))
@@ -185,7 +185,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getFloat(4), 75.5)
   }
 
-  func testDoubleFieldAccess() throws {
+  func testDoubleFieldAccess() async throws {
     let accessor = personMessage.fieldAccessor
     XCTAssertNil(accessor.getDouble("height"))
     XCTAssertNil(accessor.getDouble(3))
@@ -197,7 +197,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getDouble(3), 180.5)
   }
 
-  func testBoolFieldAccess() throws {
+  func testBoolFieldAccess() async throws {
     let accessor = personMessage.fieldAccessor
     XCTAssertNil(accessor.getBool("is_active"))
     XCTAssertNil(accessor.getBool(5))
@@ -209,7 +209,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getBool(5), true)
   }
 
-  func testDataFieldAccess() throws {
+  func testDataFieldAccess() async throws {
     let accessor = personMessage.fieldAccessor
     XCTAssertNil(accessor.getData("avatar"))
     XCTAssertNil(accessor.getData(6))
@@ -222,7 +222,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getData(6), testData)
   }
 
-  func testMessageFieldAccess() throws {
+  func testMessageFieldAccess() async throws {
     // Create address
     var addressDescriptor = MessageDescriptor(name: "Address", parent: fileDescriptor)
     addressDescriptor.addField(FieldDescriptor(name: "street", number: 1, type: .string))
@@ -250,7 +250,7 @@ final class FieldAccessorTests: XCTestCase {
 
   // MARK: - Repeated Field Access Tests
 
-  func testStringArrayFieldAccess() throws {
+  func testStringArrayFieldAccess() async throws {
     let accessor = personMessage.fieldAccessor
     XCTAssertNil(accessor.getStringArray("tags"))
     XCTAssertNil(accessor.getStringArray(10))
@@ -263,7 +263,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getStringArray(10), tags)
   }
 
-  func testInt32ArrayFieldAccess() throws {
+  func testInt32ArrayFieldAccess() async throws {
     let accessor = personMessage.fieldAccessor
     XCTAssertNil(accessor.getInt32Array("numbers"))
     XCTAssertNil(accessor.getInt32Array(11))
@@ -276,7 +276,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getInt32Array(11), numbers)
   }
 
-  func testInt64ArrayFieldAccess() throws {
+  func testInt64ArrayFieldAccess() async throws {
     let accessor = personMessage.fieldAccessor
     XCTAssertNil(accessor.getInt64Array("scores"))
     XCTAssertNil(accessor.getInt64Array(12))
@@ -289,7 +289,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getInt64Array(12), scores)
   }
 
-  func testMessageArrayFieldAccess() throws {
+  func testMessageArrayFieldAccess() async throws {
     // Create phones
     var phoneDescriptor = MessageDescriptor(name: "Phone", parent: fileDescriptor)
     phoneDescriptor.addField(FieldDescriptor(name: "number", number: 1, type: .string))
@@ -318,7 +318,7 @@ final class FieldAccessorTests: XCTestCase {
 
   // MARK: - Map Field Access Tests
 
-  func testStringMapFieldAccess() throws {
+  func testStringMapFieldAccess() async throws {
     let accessor = personMessage.fieldAccessor
     XCTAssertNil(accessor.getStringMap("attributes"))
     XCTAssertNil(accessor.getStringMap(13))
@@ -331,7 +331,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getStringMap(13), attributes)
   }
 
-  func testStringToInt32MapFieldAccess() throws {
+  func testStringToInt32MapFieldAccess() async throws {
     let accessor = personMessage.fieldAccessor
     XCTAssertNil(accessor.getStringToInt32Map("counters"))
     XCTAssertNil(accessor.getStringToInt32Map(14))
@@ -344,7 +344,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(updatedAccessor.getStringToInt32Map(14), counters)
   }
 
-  func testStringToMessageMapFieldAccess() throws {
+  func testStringToMessageMapFieldAccess() async throws {
     // Create phone for map
     var phoneDescriptor = MessageDescriptor(name: "Phone", parent: fileDescriptor)
     phoneDescriptor.addField(FieldDescriptor(name: "number", number: 1, type: .string))
@@ -376,7 +376,7 @@ final class FieldAccessorTests: XCTestCase {
 
   // MARK: - Field Existence and Safety Tests
 
-  func testHasValueMethods() throws {
+  func testHasValueMethods() async throws {
     let accessor = personMessage.fieldAccessor
 
     // Check that fields are initially not set
@@ -395,7 +395,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertFalse(updatedAccessor.hasValue(999))
   }
 
-  func testFieldExistsMethods() {
+  func testFieldExistsMethods() async throws {
     let accessor = personMessage.fieldAccessor
 
     // Check existing fields
@@ -409,7 +409,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertFalse(accessor.fieldExists(999))
   }
 
-  func testGetFieldTypeMethods() {
+  func testGetFieldTypeMethods() async throws {
     let accessor = personMessage.fieldAccessor
 
     // Check types of existing fields
@@ -427,7 +427,7 @@ final class FieldAccessorTests: XCTestCase {
 
   // MARK: - Generic Field Access Tests
 
-  func testGenericValueAccess() throws {
+  func testGenericValueAccess() async throws {
     let accessor = personMessage.fieldAccessor
 
     // Check getting non-existent values
@@ -457,7 +457,7 @@ final class FieldAccessorTests: XCTestCase {
 
   // MARK: - Type Safety Tests
 
-  func testTypeSafetyForWrongTypes() throws {
+  func testTypeSafetyForWrongTypes() async throws {
     // Set string value
     try personMessage.set("John", forField: "name")
 
@@ -481,7 +481,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertNil(updatedAccessor.getString("age"))
   }
 
-  func testTypeSafetyForRepeatedFields() throws {
+  func testTypeSafetyForRepeatedFields() async throws {
     // Set repeated strings
     try personMessage.set(["tag1", "tag2"], forField: "tags")
 
@@ -499,7 +499,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertNil(updatedAccessor.getStringArray("numbers"))
   }
 
-  func testTypeSafetyForMapFields() throws {
+  func testTypeSafetyForMapFields() async throws {
     // Set string->string map
     try personMessage.set(["key": "value"], forField: "attributes")
 
@@ -518,7 +518,7 @@ final class FieldAccessorTests: XCTestCase {
 
   // MARK: - Mixed Type Arrays Safety Tests
 
-  func testMixedTypeArraySafety() throws {
+  func testMixedTypeArraySafety() async throws {
     // Create array with mixed types (this should not happen in reality,
     // but testing safety)
     let mixedArray: [Any] = ["string", Int32(42), true]
@@ -535,7 +535,7 @@ final class FieldAccessorTests: XCTestCase {
 
   // MARK: - MutableFieldAccessor Tests
 
-  func testMutableFieldAccessorBasicOperations() {
+  func testMutableFieldAccessorBasicOperations() async throws {
     var mutableMessage = personMessage!
     var mutableAccessor = mutableMessage.mutableFieldAccessor()
 
@@ -561,7 +561,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(readAccessor.getBool("is_active"), false)  // Last set value
   }
 
-  func testMutableFieldAccessorWithNestedMessage() throws {
+  func testMutableFieldAccessorWithNestedMessage() async throws {
     // Create address
     var addressDescriptor = MessageDescriptor(name: "Address", parent: fileDescriptor)
     addressDescriptor.addField(FieldDescriptor(name: "street", number: 1, type: .string))
@@ -587,7 +587,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(try retrievedAddress?.get(forField: "street") as? String, "Broadway")
   }
 
-  func testMutableFieldAccessorErrorHandling() {
+  func testMutableFieldAccessorErrorHandling() async throws {
     var mutableMessage = personMessage!
     var mutableAccessor = mutableMessage.mutableFieldAccessor()
 
@@ -606,7 +606,7 @@ final class FieldAccessorTests: XCTestCase {
 
   // MARK: - Convenience Extension Tests
 
-  func testConvenienceExtensions() {
+  func testConvenienceExtensions() async throws {
     // Test fieldAccessor extension
     let readAccessor = personMessage.fieldAccessor
     XCTAssertNotNil(readAccessor)
@@ -624,7 +624,7 @@ final class FieldAccessorTests: XCTestCase {
 
   // MARK: - Edge Cases Tests
 
-  func testEmptyRepeatedFields() throws {
+  func testEmptyRepeatedFields() async throws {
     // Set empty repeated fields
     try personMessage.set([String](), forField: "tags")
     try personMessage.set([Int32](), forField: "numbers")
@@ -636,7 +636,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(accessor.getInt32Array("numbers"), [])
   }
 
-  func testEmptyMapFields() throws {
+  func testEmptyMapFields() async throws {
     // Set empty map fields
     try personMessage.set([String: String](), forField: "attributes")
     try personMessage.set([String: Int32](), forField: "counters")
@@ -648,7 +648,7 @@ final class FieldAccessorTests: XCTestCase {
     XCTAssertEqual(accessor.getStringToInt32Map("counters"), [:])
   }
 
-  func testNilDefaultValues() {
+  func testNilDefaultValues() async throws {
     let accessor = personMessage.fieldAccessor
 
     // All methods should return nil for unset fields

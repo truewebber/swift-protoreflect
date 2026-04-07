@@ -24,8 +24,8 @@ final class MessageDescriptorTests: XCTestCase {
 
   // MARK: - Setup
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     fileDescriptor = FileDescriptor(
       name: "person.proto",
       package: "example.person"
@@ -38,15 +38,15 @@ final class MessageDescriptorTests: XCTestCase {
     )
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     messageDescriptor = nil
     fileDescriptor = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Tests
 
-  func testInitialization() {
+  func testInitialization() async throws {
     XCTAssertEqual(messageDescriptor.name, "Person")
     XCTAssertEqual(messageDescriptor.fullName, "example.person.Person")
     XCTAssertEqual(messageDescriptor.options["deprecated"], .bool(false))
@@ -58,7 +58,7 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertNil(messageDescriptor.parentMessageFullName)
   }
 
-  func testInitializationWithoutParent() {
+  func testInitializationWithoutParent() async throws {
     let descriptor = MessageDescriptor(name: "Test", fullName: "test.Test")
     XCTAssertEqual(descriptor.name, "Test")
     XCTAssertEqual(descriptor.fullName, "test.Test")
@@ -66,7 +66,7 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertNil(descriptor.parentMessageFullName)
   }
 
-  func testInitializationWithParentMessage() {
+  func testInitializationWithParentMessage() async throws {
     let parentMessage = MessageDescriptor(name: "Parent", fullName: "example.Parent")
     let childMessage = MessageDescriptor(name: "Child", parent: parentMessage)
 
@@ -76,7 +76,7 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertEqual(childMessage.parentMessageFullName, "example.Parent")
   }
 
-  func testAddField() {
+  func testAddField() async throws {
     let nameField = FieldDescriptor(
       name: "name",
       number: 1,
@@ -93,7 +93,7 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertEqual(messageDescriptor.field(named: "name")?.number, 1)
   }
 
-  func testAddMultipleFields() {
+  func testAddMultipleFields() async throws {
     let nameField = FieldDescriptor(name: "name", number: 1, type: .string)
     let ageField = FieldDescriptor(name: "age", number: 2, type: .int32)
     let activeField = FieldDescriptor(name: "active", number: 3, type: .bool)
@@ -115,7 +115,7 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertEqual(allFields[2].number, 3)
   }
 
-  func testAddFieldReplacement() {
+  func testAddFieldReplacement() async throws {
     let nameField1 = FieldDescriptor(name: "name", number: 1, type: .string)
     messageDescriptor.addField(nameField1)
 
@@ -126,7 +126,7 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertTrue(messageDescriptor.field(number: 1)!.isOptional, "New field should be used")
   }
 
-  func testAddNestedMessage() {
+  func testAddNestedMessage() async throws {
     let addressMessage = MessageDescriptor(name: "Address", parent: messageDescriptor)
     messageDescriptor.addNestedMessage(addressMessage)
 
@@ -141,7 +141,7 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertEqual(nestedAddress?.fileDescriptorPath, "person.proto")
   }
 
-  func testAddNestedEnum() {
+  func testAddNestedEnum() async throws {
     let genderEnum = EnumDescriptor(name: "Gender")
     messageDescriptor.addNestedEnum(genderEnum)
 
@@ -153,7 +153,7 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertEqual(nestedGender?.name, "Gender")
   }
 
-  func testMessageWithComplexFields() {
+  func testMessageWithComplexFields() async throws {
     // Create field with message type
     let addressField = FieldDescriptor(
       name: "address",
@@ -216,7 +216,7 @@ final class MessageDescriptorTests: XCTestCase {
   // MARK: - Business Tests
 
   /// Verifies working with nested OneOf fields.
-  func testNestedOneOfFields() {
+  func testNestedOneOfFields() async throws {
     // Create nested message with OneOf fields
     var addressMessage = MessageDescriptor(name: "Address", parent: messageDescriptor)
 
@@ -266,7 +266,7 @@ final class MessageDescriptorTests: XCTestCase {
   }
 
   /// Verifies correctness of field type for complex types (messages, enums).
-  func testComplexFieldTypes() {
+  func testComplexFieldTypes() async throws {
     // Create field with message type
     let addressField = FieldDescriptor(
       name: "address",
@@ -359,7 +359,7 @@ final class MessageDescriptorTests: XCTestCase {
   }
 
   /// Tests cyclic dependencies between messages.
-  func testCyclicDependencies() {
+  func testCyclicDependencies() async throws {
     // Create Node message that can reference itself
     var nodeMessage = MessageDescriptor(name: "Node", parent: fileDescriptor)
 
@@ -433,7 +433,7 @@ final class MessageDescriptorTests: XCTestCase {
   }
 
   /// Verifies handling of imported types.
-  func testImportedTypes() {
+  func testImportedTypes() async throws {
     // Create file with dependencies
     var fileWithImports = FileDescriptor(
       name: "user.proto",
@@ -526,7 +526,7 @@ final class MessageDescriptorTests: XCTestCase {
 
   // MARK: - Oneof Decls Tests
 
-  func testAddOneofDecl() {
+  func testAddOneofDecl() async throws {
     let oneof = OneofDescriptor(name: "contact", index: 0)
     messageDescriptor.addOneofDecl(oneof)
 
@@ -540,7 +540,7 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertEqual(found?.index, 0)
   }
 
-  func testAddMultipleOneofDecls() {
+  func testAddMultipleOneofDecls() async throws {
     let oneof0 = OneofDescriptor(name: "contact", index: 0)
     let oneof1 = OneofDescriptor(name: "identifier", index: 1)
     messageDescriptor.addOneofDecl(oneof0)
@@ -557,14 +557,14 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertEqual(found1?.name, "identifier")
   }
 
-  func testOneofAtIndexNotFound() {
+  func testOneofAtIndexNotFound() async throws {
     let oneof = OneofDescriptor(name: "contact", index: 0)
     messageDescriptor.addOneofDecl(oneof)
 
     XCTAssertNil(messageDescriptor.oneof(at: 99))
   }
 
-  func testOneofDeclsOrderedByInsertion() {
+  func testOneofDeclsOrderedByInsertion() async throws {
     let oneofC = OneofDescriptor(name: "c_group", index: 2)
     let oneofA = OneofDescriptor(name: "a_group", index: 0)
     let oneofB = OneofDescriptor(name: "b_group", index: 1)
@@ -577,7 +577,7 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertEqual(messageDescriptor.oneofDecls[2].name, "b_group")
   }
 
-  func testAddOneofDeclReturnsSelf() {
+  func testAddOneofDeclReturnsSelf() async throws {
     let oneof0 = OneofDescriptor(name: "contact", index: 0)
     let oneof1 = OneofDescriptor(name: "identifier", index: 1)
 
@@ -592,7 +592,7 @@ final class MessageDescriptorTests: XCTestCase {
 
   // MARK: - OPE-221 MessageDescriptor oneof API (T-MD-07…17)
 
-  func test_messageDescriptor_whenFieldsAndOneofDeclsAdded_remainIndependent_TMD07() {
+  func test_messageDescriptor_whenFieldsAndOneofDeclsAdded_remainIndependent_TMD07() async throws {
     messageDescriptor.addField(
       FieldDescriptor(name: "email", number: 1, type: .string, oneofIndex: 0)
     )
@@ -601,7 +601,7 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertEqual(messageDescriptor.oneofDecls.count, 1)
   }
 
-  func test_messageDescriptor_fieldOneofIndexResolvesViaOneofAt_TMD08() {
+  func test_messageDescriptor_fieldOneofIndexResolvesViaOneofAt_TMD08() async throws {
     messageDescriptor.addField(
       FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0)
     )
@@ -613,7 +613,7 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertEqual(messageDescriptor.oneof(at: idx)?.name, "contact")
   }
 
-  func test_messageDescriptor_allFieldsOneofLookup_returnsGroupName_TMD09() {
+  func test_messageDescriptor_allFieldsOneofLookup_returnsGroupName_TMD09() async throws {
     messageDescriptor.addField(FieldDescriptor(name: "id", number: 1, type: .string))
     messageDescriptor.addField(
       FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0)
@@ -630,7 +630,7 @@ final class MessageDescriptorTests: XCTestCase {
     }
   }
 
-  func test_messageDescriptor_nestedMessage_hasIndependentOneofDecls_TMD10() {
+  func test_messageDescriptor_nestedMessage_hasIndependentOneofDecls_TMD10() async throws {
     var parent = MessageDescriptor(name: "Parent", fullName: "Parent")
     var child = MessageDescriptor(name: "Child", fullName: "Parent.Child")
     child.addOneofDecl(OneofDescriptor(name: "childGroup", index: 0))
@@ -639,32 +639,32 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertEqual(parent.nestedMessage(named: "Child")?.oneofDecls.count, 1)
   }
 
-  func test_messageDescriptor_whenOneofDeclsEmpty_oneofAtReturnsNil_TMD12() {
+  func test_messageDescriptor_whenOneofDeclsEmpty_oneofAtReturnsNil_TMD12() async throws {
     XCTAssertTrue(messageDescriptor.oneofDecls.isEmpty)
     XCTAssertNil(messageDescriptor.oneof(at: 0))
   }
 
-  func test_messageDescriptor_whenFieldHasNoOneofIndex_oneofLookupNotUsed_TMD13() {
+  func test_messageDescriptor_whenFieldHasNoOneofIndex_oneofLookupNotUsed_TMD13() async throws {
     messageDescriptor.addField(FieldDescriptor(name: "plain", number: 1, type: .string))
     messageDescriptor.addOneofDecl(OneofDescriptor(name: "contact", index: 0))
     XCTAssertNil(messageDescriptor.field(named: "plain")?.oneofIndex)
   }
 
-  func test_messageDescriptor_whenDuplicateOneofIndex_oneofAtReturnsFirst_TMD14() {
+  func test_messageDescriptor_whenDuplicateOneofIndex_oneofAtReturnsFirst_TMD14() async throws {
     messageDescriptor.addOneofDecl(OneofDescriptor(name: "first", index: 0))
     messageDescriptor.addOneofDecl(OneofDescriptor(name: "second", index: 0))
     XCTAssertEqual(messageDescriptor.oneofDecls.count, 2)
     XCTAssertEqual(messageDescriptor.oneof(at: 0)?.name, "first")
   }
 
-  func test_messageDescriptor_whenDuplicateNameDifferentIndex_bothStored_TMD15() {
+  func test_messageDescriptor_whenDuplicateNameDifferentIndex_bothStored_TMD15() async throws {
     messageDescriptor.addOneofDecl(OneofDescriptor(name: "x", index: 0))
     messageDescriptor.addOneofDecl(OneofDescriptor(name: "x", index: 1))
     XCTAssertEqual(messageDescriptor.oneof(at: 0)?.name, "x")
     XCTAssertEqual(messageDescriptor.oneof(at: 1)?.name, "x")
   }
 
-  func test_messageDescriptor_whenFieldOneofIndexHasNoMatchingDecl_oneofAtReturnsNil_TMD16() {
+  func test_messageDescriptor_whenFieldOneofIndexHasNoMatchingDecl_oneofAtReturnsNil_TMD16() async throws {
     messageDescriptor.addField(
       FieldDescriptor(name: "orphan", number: 1, type: .string, oneofIndex: 2)
     )
@@ -672,7 +672,7 @@ final class MessageDescriptorTests: XCTestCase {
     XCTAssertNil(messageDescriptor.oneof(at: 2))
   }
 
-  func test_messageDescriptor_whenOneofDeclAddedAfterFields_lookupStillWorks_TMD17() {
+  func test_messageDescriptor_whenOneofDeclAddedAfterFields_lookupStillWorks_TMD17() async throws {
     messageDescriptor.addField(
       FieldDescriptor(name: "email", number: 2, type: .string, oneofIndex: 0)
     )
@@ -683,6 +683,31 @@ final class MessageDescriptorTests: XCTestCase {
     other.addOneofDecl(OneofDescriptor(name: "g", index: 0))
     other.addField(FieldDescriptor(name: "f", number: 1, type: .string, oneofIndex: 0))
     XCTAssertEqual(other.oneof(at: 0)?.name, "g")
+  }
+
+  // MARK: - _MessageDescriptor.isExtensionNumber (internal)
+
+  func test_internalMessageDescriptor_isExtensionNumber_trueWhenInRange() throws {
+    var desc = _MessageDescriptor(name: "M", fullName: "M")
+    desc.addExtensionRange(_ExtensionRange(start: 100, end: 200))
+
+    XCTAssertTrue(desc.isExtensionNumber(100))
+    XCTAssertTrue(desc.isExtensionNumber(150))
+    XCTAssertTrue(desc.isExtensionNumber(199))
+  }
+
+  func test_internalMessageDescriptor_isExtensionNumber_falseWhenOutsideRange() throws {
+    var desc = _MessageDescriptor(name: "M", fullName: "M")
+    desc.addExtensionRange(_ExtensionRange(start: 100, end: 200))
+
+    XCTAssertFalse(desc.isExtensionNumber(99))
+    XCTAssertFalse(desc.isExtensionNumber(200))
+    XCTAssertFalse(desc.isExtensionNumber(50))
+  }
+
+  func test_internalMessageDescriptor_isExtensionNumber_falseWhenNoRanges() throws {
+    let desc = _MessageDescriptor(name: "M", fullName: "M")
+    XCTAssertFalse(desc.isExtensionNumber(100))
   }
 
   // MARK: - Helpers

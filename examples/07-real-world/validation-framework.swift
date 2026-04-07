@@ -108,12 +108,12 @@ struct ValidationFrameworkExample {
     print("  🧪 Running basic validation tests...")
 
     var passedTests = 0
-    var totalTests = testCases.count
+    let totalTests = testCases.count
 
     for testCase in testCases {
       let userMessage = try createUserMessage(from: testCase.data)
 
-      let (result, validationTime) = try ExampleUtils.measureTime {
+      let (result, validationTime) = ExampleUtils.measureTime {
         return framework.validate(userMessage, schemaName: "User")
       }
 

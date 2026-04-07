@@ -20,8 +20,8 @@ final class StaticMessageBridgeTests: XCTestCase {
 
   // MARK: - Setup and Teardown
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     bridge = StaticMessageBridge()
 
     // Create test descriptors
@@ -35,23 +35,23 @@ final class StaticMessageBridgeTests: XCTestCase {
     fileDescriptor.addMessage(personDescriptor)
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     bridge = nil
     fileDescriptor = nil
     personDescriptor = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Initialization Tests
 
-  func testInitialization() {
+  func testInitialization() async throws {
     let bridge = StaticMessageBridge()
     XCTAssertNotNil(bridge)
   }
 
   // MARK: - Dynamic to Static Conversion Tests
 
-  func testDynamicToStaticConversion() throws {
+  func testDynamicToStaticConversion() async throws {
     // Create dynamic message
     var dynamicMessage = DynamicMessage(descriptor: personDescriptor)
     try dynamicMessage.set("John Doe", forField: "name")
@@ -65,7 +65,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     XCTAssertNotNil(staticMessage)
   }
 
-  func testDynamicToStaticConversionWithEmptyMessage() throws {
+  func testDynamicToStaticConversionWithEmptyMessage() async throws {
     // Create empty dynamic message
     let dynamicMessage = DynamicMessage(descriptor: personDescriptor)
 
@@ -77,7 +77,7 @@ final class StaticMessageBridgeTests: XCTestCase {
 
   // MARK: - Static to Dynamic Conversion Tests
 
-  func testStaticToDynamicConversion() throws {
+  func testStaticToDynamicConversion() async throws {
     // Create static message
     let staticMessage = Google_Protobuf_Empty()
 
@@ -87,7 +87,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     XCTAssertEqual(dynamicMessage.descriptor.name, personDescriptor.name)
   }
 
-  func testStaticToDynamicConversionWithAutoDescriptor() throws {
+  func testStaticToDynamicConversionWithAutoDescriptor() async throws {
     // Create static message
     let staticMessage = Google_Protobuf_Empty()
 
@@ -100,7 +100,7 @@ final class StaticMessageBridgeTests: XCTestCase {
 
   // MARK: - Batch Conversion Tests
 
-  func testBatchStaticToDynamicConversion() throws {
+  func testBatchStaticToDynamicConversion() async throws {
     // Create array of static messages
     let staticMessages = [Google_Protobuf_Empty(), Google_Protobuf_Empty()]
 
@@ -112,7 +112,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     XCTAssertEqual(dynamicMessages[1].descriptor.name, personDescriptor.name)
   }
 
-  func testBatchDynamicToStaticConversion() throws {
+  func testBatchDynamicToStaticConversion() async throws {
     // Create array of dynamic messages
     let dynamicMessage1 = DynamicMessage(descriptor: personDescriptor)
     let dynamicMessage2 = DynamicMessage(descriptor: personDescriptor)
@@ -124,7 +124,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     XCTAssertEqual(staticMessages.count, 2)
   }
 
-  func testEmptyBatchConversion() throws {
+  func testEmptyBatchConversion() async throws {
     // Test conversion of empty arrays
     let emptyStaticMessages: [Google_Protobuf_Empty] = []
     let emptyDynamicMessages: [DynamicMessage] = []
@@ -138,7 +138,7 @@ final class StaticMessageBridgeTests: XCTestCase {
 
   // MARK: - Validation Tests
 
-  func testCompatibilityCheckStaticWithDescriptor() {
+  func testCompatibilityCheckStaticWithDescriptor() async throws {
     let staticMessage = Google_Protobuf_Empty()
 
     let isCompatible = bridge.isCompatible(staticMessage: staticMessage, with: personDescriptor)
@@ -147,7 +147,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     XCTAssertTrue(isCompatible || !isCompatible)  // Simply check that method doesn't crash
   }
 
-  func testCompatibilityCheckDynamicWithStatic() {
+  func testCompatibilityCheckDynamicWithStatic() async throws {
     let dynamicMessage = DynamicMessage(descriptor: personDescriptor)
 
     let isCompatible = bridge.isCompatible(dynamicMessage: dynamicMessage, with: Google_Protobuf_Empty.self)
@@ -158,7 +158,7 @@ final class StaticMessageBridgeTests: XCTestCase {
 
   // MARK: - Round-trip Tests
 
-  func testRoundTripConversion() throws {
+  func testRoundTripConversion() async throws {
     // Create dynamic message with data
     var originalDynamic = DynamicMessage(descriptor: personDescriptor)
     try originalDynamic.set("Alice", forField: "name")
@@ -174,7 +174,7 @@ final class StaticMessageBridgeTests: XCTestCase {
 
   // MARK: - Error Handling Tests
 
-  func testSerializationError() {
+  func testSerializationError() async throws {
     // Create descriptor with invalid data to provoke error
     let invalidDescriptor = MessageDescriptor(name: "Invalid")
     var dynamicMessage = DynamicMessage(descriptor: invalidDescriptor)
@@ -190,7 +190,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     }
   }
 
-  func testDescriptorCreationError() {
+  func testDescriptorCreationError() async throws {
     // Test descriptor creation from static message
     let staticMessage = Google_Protobuf_Empty()
 
@@ -206,7 +206,7 @@ final class StaticMessageBridgeTests: XCTestCase {
 
   // MARK: - Extension Tests
 
-  func testDynamicMessageExtension() throws {
+  func testDynamicMessageExtension() async throws {
     var dynamicMessage = DynamicMessage(descriptor: personDescriptor)
     try dynamicMessage.set("Bob", forField: "name")
 
@@ -215,7 +215,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     XCTAssertNotNil(staticMessage)
   }
 
-  func testStaticMessageExtension() throws {
+  func testStaticMessageExtension() async throws {
     let staticMessage = Google_Protobuf_Empty()
 
     // Test SwiftProtobuf.Message extension
@@ -223,7 +223,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     XCTAssertEqual(dynamicMessage.descriptor.name, personDescriptor.name)
   }
 
-  func testStaticMessageExtensionWithAutoDescriptor() {
+  func testStaticMessageExtensionWithAutoDescriptor() async throws {
     let staticMessage = Google_Protobuf_Empty()
 
     // Test extension with automatic descriptor creation
@@ -238,7 +238,7 @@ final class StaticMessageBridgeTests: XCTestCase {
 
   // MARK: - Error Description Tests
 
-  func testErrorDescriptions() {
+  func testErrorDescriptions() async throws {
     let errors: [StaticMessageBridgeError] = [
       .incompatibleTypes(staticType: "TypeA", descriptorType: "TypeB"),
       .serializationFailed(underlying: NSError(domain: "test", code: 1)),
@@ -255,7 +255,7 @@ final class StaticMessageBridgeTests: XCTestCase {
 
   // MARK: - Performance Tests
 
-  func testConversionPerformance() throws {
+  func testConversionPerformance() async throws {
     // Create test data
     var dynamicMessage = DynamicMessage(descriptor: personDescriptor)
     try dynamicMessage.set("Performance Test", forField: "name")
@@ -273,7 +273,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     }
   }
 
-  func testBatchConversionPerformance() throws {
+  func testBatchConversionPerformance() async throws {
     // Create array of test data
     var dynamicMessages: [DynamicMessage] = []
     for i in 0..<100 {
@@ -297,7 +297,7 @@ final class StaticMessageBridgeTests: XCTestCase {
 
   // MARK: - Additional Coverage Tests
 
-  func testCompatibilityCheckWithIncompatibleTypes() throws {
+  func testCompatibilityCheckWithIncompatibleTypes() async throws {
     // Create incompatible types to test error paths in isCompatible methods
 
     // Create descriptor with fields that don't match Google_Protobuf_Empty
@@ -315,7 +315,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     XCTAssertTrue(isCompatible || !isCompatible)  // Simply check that method works
   }
 
-  func testCompatibilityCheckDynamicWithIncompatibleStatic() throws {
+  func testCompatibilityCheckDynamicWithIncompatibleStatic() async throws {
     // Create dynamic message with data that cannot be deserialized to Google_Protobuf_Empty
     var dynamicMessage = DynamicMessage(descriptor: personDescriptor)
     try dynamicMessage.set("John", forField: "name")
@@ -330,7 +330,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     XCTAssertTrue(isCompatible || !isCompatible)  // Verify method doesn't crash
   }
 
-  func testCompatibilityWithCorruptedData() throws {
+  func testCompatibilityWithCorruptedData() async throws {
     // Create descriptor with invalid structure to provoke error
     let corruptedDescriptor = MessageDescriptor(name: "CorruptedMessage")
     // Don't add fields which may cause problems during serialization
@@ -344,7 +344,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     XCTAssertTrue(isCompatible || !isCompatible)
   }
 
-  func testCompatibilityWithInvalidDynamicMessage() throws {
+  func testCompatibilityWithInvalidDynamicMessage() async throws {
     // Create dynamic message with invalid data
     let invalidDescriptor = MessageDescriptor(name: "InvalidMessage")
     let dynamicMessage = DynamicMessage(descriptor: invalidDescriptor)
@@ -359,7 +359,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     XCTAssertTrue(isCompatible || !isCompatible)
   }
 
-  func testErrorHandlingInValidationMethods() {
+  func testErrorHandlingInValidationMethods() async throws {
     // Create conditions that may cause errors in validation methods
 
     // Test 1: Static message with descriptor requiring fields that are not in message
@@ -385,7 +385,7 @@ final class StaticMessageBridgeTests: XCTestCase {
     XCTAssertTrue(result2 || !result2)  // Simply check that method doesn't crash
   }
 
-  func testEdgeCasesInCompatibilityChecks() {
+  func testEdgeCasesInCompatibilityChecks() async throws {
     // Test edge cases for full error path coverage
 
     // Create descriptor with maximally complex structure

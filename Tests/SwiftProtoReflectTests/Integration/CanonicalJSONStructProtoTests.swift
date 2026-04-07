@@ -40,48 +40,48 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
 
   // MARK: - Round-trip: Value variants
 
-  func test_roundTrip_valueNull_preservesData() throws {
+  func test_roundTrip_valueNull_preservesData() async throws {
     let original = ValueHandler.ValueValue.nullValue
     let dynMsg = try ValueHandler.createDynamic(from: original)
 
-    let jsonData = try makeSerializer().serialize(dynMsg)
-    let restored = try makeDeserializer().deserialize(jsonData, using: valueDesc)
+    let jsonData = try await makeSerializer().serialize(dynMsg)
+    let restored = try await makeDeserializer().deserialize(jsonData, using: valueDesc)
     let result = try XCTUnwrap(try ValueHandler.createSpecialized(from: restored) as? ValueHandler.ValueValue)
 
     XCTAssertEqual(result, .nullValue)
   }
 
-  func test_roundTrip_valueNumber_preservesData() throws {
+  func test_roundTrip_valueNumber_preservesData() async throws {
     let number: Double = 42.5
     let original = ValueHandler.ValueValue.numberValue(number)
     let dynMsg = try ValueHandler.createDynamic(from: original)
 
-    let jsonData = try makeSerializer().serialize(dynMsg)
-    let restored = try makeDeserializer().deserialize(jsonData, using: valueDesc)
+    let jsonData = try await makeSerializer().serialize(dynMsg)
+    let restored = try await makeDeserializer().deserialize(jsonData, using: valueDesc)
     let result = try XCTUnwrap(try ValueHandler.createSpecialized(from: restored) as? ValueHandler.ValueValue)
 
     XCTAssertEqual(result, .numberValue(number))
   }
 
-  func test_roundTrip_valueString_preservesData() throws {
+  func test_roundTrip_valueString_preservesData() async throws {
     let str = "Hello, 世界 🌍"
     let original = ValueHandler.ValueValue.stringValue(str)
     let dynMsg = try ValueHandler.createDynamic(from: original)
 
-    let jsonData = try makeSerializer().serialize(dynMsg)
-    let restored = try makeDeserializer().deserialize(jsonData, using: valueDesc)
+    let jsonData = try await makeSerializer().serialize(dynMsg)
+    let restored = try await makeDeserializer().deserialize(jsonData, using: valueDesc)
     let result = try XCTUnwrap(try ValueHandler.createSpecialized(from: restored) as? ValueHandler.ValueValue)
 
     XCTAssertEqual(result, .stringValue(str))
   }
 
-  func test_roundTrip_valueBool_preservesData() throws {
+  func test_roundTrip_valueBool_preservesData() async throws {
     for boolVal in [true, false] {
       let original = ValueHandler.ValueValue.boolValue(boolVal)
       let dynMsg = try ValueHandler.createDynamic(from: original)
 
-      let jsonData = try makeSerializer().serialize(dynMsg)
-      let restored = try makeDeserializer().deserialize(jsonData, using: valueDesc)
+      let jsonData = try await makeSerializer().serialize(dynMsg)
+      let restored = try await makeDeserializer().deserialize(jsonData, using: valueDesc)
       let result = try XCTUnwrap(try ValueHandler.createSpecialized(from: restored) as? ValueHandler.ValueValue)
 
       XCTAssertEqual(result, .boolValue(boolVal), "bool_value=\(boolVal) must survive round-trip")
@@ -90,7 +90,7 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
 
   // MARK: - Round-trip: Struct
 
-  func test_roundTrip_struct_preservesData() throws {
+  func test_roundTrip_struct_preservesData() async throws {
     let sv = StructHandler.StructValue(fields: [
       "name": .stringValue("Alice"),
       "score": .numberValue(99.5),
@@ -99,8 +99,8 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
     ])
     let dynMsg = try StructHandler.createDynamic(from: sv)
 
-    let jsonData = try makeSerializer().serialize(dynMsg)
-    let restored = try makeDeserializer().deserialize(jsonData, using: structDesc)
+    let jsonData = try await makeSerializer().serialize(dynMsg)
+    let restored = try await makeDeserializer().deserialize(jsonData, using: structDesc)
     let result = try XCTUnwrap(try StructHandler.createSpecialized(from: restored) as? StructHandler.StructValue)
 
     XCTAssertEqual(result.fields["name"], .stringValue("Alice"))
@@ -110,12 +110,12 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
     XCTAssertEqual(result.fields.count, 4)
   }
 
-  func test_roundTrip_emptyStruct_preservesData() throws {
+  func test_roundTrip_emptyStruct_preservesData() async throws {
     let sv = StructHandler.StructValue(fields: [:])
     let dynMsg = try StructHandler.createDynamic(from: sv)
 
-    let jsonData = try makeSerializer().serialize(dynMsg)
-    let restored = try makeDeserializer().deserialize(jsonData, using: structDesc)
+    let jsonData = try await makeSerializer().serialize(dynMsg)
+    let restored = try await makeDeserializer().deserialize(jsonData, using: structDesc)
     let result = try XCTUnwrap(try StructHandler.createSpecialized(from: restored) as? StructHandler.StructValue)
 
     XCTAssertTrue(result.fields.isEmpty)
@@ -123,7 +123,7 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
 
   // MARK: - Round-trip: ListValue
 
-  func test_roundTrip_listValue_preservesData() throws {
+  func test_roundTrip_listValue_preservesData() async throws {
     let values: [StructHandler.ValueValue] = [
       .nullValue,
       .numberValue(1.0),
@@ -132,8 +132,8 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
     ]
     let dynMsg = try ListValueHandler.createDynamic(from: values)
 
-    let jsonData = try makeSerializer().serialize(dynMsg)
-    let restored = try makeDeserializer().deserialize(jsonData, using: listValueDesc)
+    let jsonData = try await makeSerializer().serialize(dynMsg)
+    let restored = try await makeDeserializer().deserialize(jsonData, using: listValueDesc)
     let result = try XCTUnwrap(try ListValueHandler.createSpecialized(from: restored) as? [StructHandler.ValueValue])
 
     XCTAssertEqual(result.count, 4)
@@ -143,12 +143,12 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
     XCTAssertEqual(result[3], .boolValue(false))
   }
 
-  func test_roundTrip_emptyListValue_preservesData() throws {
+  func test_roundTrip_emptyListValue_preservesData() async throws {
     let values: [StructHandler.ValueValue] = []
     let dynMsg = try ListValueHandler.createDynamic(from: values)
 
-    let jsonData = try makeSerializer().serialize(dynMsg)
-    let restored = try makeDeserializer().deserialize(jsonData, using: listValueDesc)
+    let jsonData = try await makeSerializer().serialize(dynMsg)
+    let restored = try await makeDeserializer().deserialize(jsonData, using: listValueDesc)
     let result = try XCTUnwrap(try ListValueHandler.createSpecialized(from: restored) as? [StructHandler.ValueValue])
 
     XCTAssertTrue(result.isEmpty)
@@ -156,7 +156,7 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
 
   // MARK: - Round-trip: deep nesting
 
-  func test_roundTrip_deepNesting_preservesData() throws {
+  func test_roundTrip_deepNesting_preservesData() async throws {
     // Build 5-level nesting: Struct { "l1": Struct { "l2": Struct { "l3": Struct { "l4": Struct { "leaf": 42 } } } } }
     let l4 = StructHandler.StructValue(fields: ["leaf": .numberValue(42)])
     let l3 = StructHandler.StructValue(fields: ["l4": .structValue(l4)])
@@ -165,8 +165,8 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
     let root = StructHandler.StructValue(fields: ["l1": .structValue(l1)])
 
     let dynMsg = try StructHandler.createDynamic(from: root)
-    let jsonData = try makeSerializer().serialize(dynMsg)
-    let restored = try makeDeserializer().deserialize(jsonData, using: structDesc)
+    let jsonData = try await makeSerializer().serialize(dynMsg)
+    let restored = try await makeDeserializer().deserialize(jsonData, using: structDesc)
     let result = try XCTUnwrap(try StructHandler.createSpecialized(from: restored) as? StructHandler.StructValue)
 
     guard case .structValue(let r1) = result.fields["l1"],
@@ -182,7 +182,7 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
 
   // MARK: - Interop: SwiftProtobuf JSON → our deserializer
 
-  func test_interop_swiftProtobufJSON_toOurDeserializer() throws {
+  func test_interop_swiftProtobufJSON_toOurDeserializer() async throws {
     var swiftpbNull = Google_Protobuf_Value()
     swiftpbNull.nullValue = .nullValue
 
@@ -198,7 +198,7 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
       let jsonStr = try swiftpbValue.jsonString()
       let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-      let restored = try makeDeserializer().deserialize(jsonData, using: valueDesc)
+      let restored = try await makeDeserializer().deserialize(jsonData, using: valueDesc)
       let result = try XCTUnwrap(try ValueHandler.createSpecialized(from: restored) as? ValueHandler.ValueValue)
 
       XCTAssertEqual(result, expected, "SwiftProtobuf JSON '\(jsonStr)' must parse to \(expected)")
@@ -207,7 +207,7 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
 
   // MARK: - Interop: our serializer → SwiftProtobuf
 
-  func test_interop_ourSerializer_toSwiftProtobufJSON() throws {
+  func test_interop_ourSerializer_toSwiftProtobufJSON() async throws {
     let cases: [(ValueHandler.ValueValue, (Google_Protobuf_Value) -> Void)] = [
       (.nullValue, { XCTAssertEqual($0.kind, .nullValue(.nullValue)) }),
       (.numberValue(2.71), { XCTAssertEqual($0.numberValue, 2.71, accuracy: 1e-10) }),
@@ -218,7 +218,7 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
 
     for (valueValue, assert) in cases {
       let dynMsg = try ValueHandler.createDynamic(from: valueValue)
-      let jsonData = try makeSerializer().serialize(dynMsg)
+      let jsonData = try await makeSerializer().serialize(dynMsg)
       let jsonStr = try XCTUnwrap(String(data: jsonData, encoding: .utf8))
 
       let swiftpbValue = try Google_Protobuf_Value(jsonString: jsonStr)
@@ -228,7 +228,7 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
 
   // MARK: - Interop: Struct bidirectional
 
-  func test_interop_struct_bidirectional() throws {
+  func test_interop_struct_bidirectional() async throws {
     // SwiftProtobuf → JSON → our deserializer
     var swiftpbStruct = Google_Protobuf_Struct()
     swiftpbStruct.fields["city"] = Google_Protobuf_Value(stringValue: "Tokyo")
@@ -238,7 +238,7 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
     let jsonStr = try swiftpbStruct.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let restored = try makeDeserializer().deserialize(jsonData, using: structDesc)
+    let restored = try await makeDeserializer().deserialize(jsonData, using: structDesc)
     let sv = try XCTUnwrap(try StructHandler.createSpecialized(from: restored) as? StructHandler.StructValue)
 
     XCTAssertEqual(sv.fields["city"], .stringValue("Tokyo"))
@@ -252,7 +252,7 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
       "version": .numberValue(6.0),
     ])
     let dynMsg = try StructHandler.createDynamic(from: libSv)
-    let libJsonData = try makeSerializer().serialize(dynMsg)
+    let libJsonData = try await makeSerializer().serialize(dynMsg)
     let libJsonStr = try XCTUnwrap(String(data: libJsonData, encoding: .utf8))
 
     let decodedBySwiftpb = try Google_Protobuf_Struct(jsonString: libJsonStr)
@@ -263,7 +263,7 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
 
   // MARK: - Interop: ListValue bidirectional
 
-  func test_interop_listValue_bidirectional() throws {
+  func test_interop_listValue_bidirectional() async throws {
     // SwiftProtobuf → JSON → our deserializer
     var swiftpbNull = Google_Protobuf_Value()
     swiftpbNull.nullValue = .nullValue
@@ -279,7 +279,7 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
     let jsonStr = try swiftpbList.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let restored = try makeDeserializer().deserialize(jsonData, using: listValueDesc)
+    let restored = try await makeDeserializer().deserialize(jsonData, using: listValueDesc)
     let lv = try XCTUnwrap(try ListValueHandler.createSpecialized(from: restored) as? [StructHandler.ValueValue])
 
     XCTAssertEqual(lv.count, 4)
@@ -291,7 +291,7 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
     // Our serializer → JSON → SwiftProtobuf
     let libValues: [StructHandler.ValueValue] = [.stringValue("a"), .numberValue(2), .boolValue(true)]
     let dynMsg = try ListValueHandler.createDynamic(from: libValues)
-    let libJsonData = try makeSerializer().serialize(dynMsg)
+    let libJsonData = try await makeSerializer().serialize(dynMsg)
     let libJsonStr = try XCTUnwrap(String(data: libJsonData, encoding: .utf8))
 
     let decodedBySwiftpb = try Google_Protobuf_ListValue(jsonString: libJsonStr)
@@ -303,7 +303,7 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
 
   // MARK: - Interop: nested Struct bidirectional
 
-  func test_interop_nestedStruct_bidirectional() throws {
+  func test_interop_nestedStruct_bidirectional() async throws {
     // Build: { "items": [{ "id": 1, "name": "Alice" }, { "id": 2, "name": "Bob" }] }
     var alice = Google_Protobuf_Struct()
     alice.fields["id"] = Google_Protobuf_Value(numberValue: 1)
@@ -329,7 +329,7 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
     let jsonStr = try root.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let restored = try makeDeserializer().deserialize(jsonData, using: structDesc)
+    let restored = try await makeDeserializer().deserialize(jsonData, using: structDesc)
     let sv = try XCTUnwrap(try StructHandler.createSpecialized(from: restored) as? StructHandler.StructValue)
 
     guard case .listValue(let items) = sv.fields["items"] else {
@@ -356,7 +356,7 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
     let libRoot = StructHandler.StructValue(fields: ["items": .listValue(libItems)])
 
     let libDynMsg = try StructHandler.createDynamic(from: libRoot)
-    let libJsonData = try makeSerializer().serialize(libDynMsg)
+    let libJsonData = try await makeSerializer().serialize(libDynMsg)
     let libJsonStr = try XCTUnwrap(String(data: libJsonData, encoding: .utf8))
 
     let decodedBySwiftpb = try Google_Protobuf_Struct(jsonString: libJsonStr)
@@ -370,19 +370,19 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
 
   // MARK: - Edge cases
 
-  func test_roundTrip_unicodeString_preservesData() throws {
+  func test_roundTrip_unicodeString_preservesData() async throws {
     let unicode = "日本語 한국어 العربية \u{1F600}\u{1F4AF}"
     let original = ValueHandler.ValueValue.stringValue(unicode)
     let dynMsg = try ValueHandler.createDynamic(from: original)
 
-    let jsonData = try makeSerializer().serialize(dynMsg)
-    let restored = try makeDeserializer().deserialize(jsonData, using: valueDesc)
+    let jsonData = try await makeSerializer().serialize(dynMsg)
+    let restored = try await makeDeserializer().deserialize(jsonData, using: valueDesc)
     let result = try XCTUnwrap(try ValueHandler.createSpecialized(from: restored) as? ValueHandler.ValueValue)
 
     XCTAssertEqual(result, .stringValue(unicode))
   }
 
-  func test_roundTrip_allValueVariantsInListValue_preservesData() throws {
+  func test_roundTrip_allValueVariantsInListValue_preservesData() async throws {
     let innerStruct = StructHandler.StructValue(fields: ["k": .numberValue(1)])
     let values: [StructHandler.ValueValue] = [
       .nullValue,
@@ -395,8 +395,8 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
     ]
     let dynMsg = try ListValueHandler.createDynamic(from: values)
 
-    let jsonData = try makeSerializer().serialize(dynMsg)
-    let restored = try makeDeserializer().deserialize(jsonData, using: listValueDesc)
+    let jsonData = try await makeSerializer().serialize(dynMsg)
+    let restored = try await makeDeserializer().deserialize(jsonData, using: listValueDesc)
     let result = try XCTUnwrap(try ListValueHandler.createSpecialized(from: restored) as? [StructHandler.ValueValue])
 
     XCTAssertEqual(result.count, 7)
@@ -417,13 +417,13 @@ final class CanonicalJSONStructProtoTests: XCTestCase {
     XCTAssertEqual(nested, [.stringValue("nested")])
   }
 
-  func test_roundTrip_largeNumber_preservesData() throws {
+  func test_roundTrip_largeNumber_preservesData() async throws {
     let large: Double = 1.7976931348623157e+308
     let original = ValueHandler.ValueValue.numberValue(large)
     let dynMsg = try ValueHandler.createDynamic(from: original)
 
-    let jsonData = try makeSerializer().serialize(dynMsg)
-    let restored = try makeDeserializer().deserialize(jsonData, using: valueDesc)
+    let jsonData = try await makeSerializer().serialize(dynMsg)
+    let restored = try await makeDeserializer().deserialize(jsonData, using: valueDesc)
     let result = try XCTUnwrap(try ValueHandler.createSpecialized(from: restored) as? ValueHandler.ValueValue)
 
     guard case .numberValue(let val) = result else {

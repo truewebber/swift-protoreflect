@@ -35,36 +35,36 @@ final class JSONWrapperTypesTests: XCTestCase {
 
   // MARK: - Encoder tests
 
-  func test_serialize_doubleValue_producesNumber() throws {
+  func test_serialize_doubleValue_producesNumber() async throws {
     let desc = makeWrapperDescriptor(name: "DoubleValue", fullName: WellKnownTypeNames.doubleValue, fieldType: .double)
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(Double(3.14), forField: 1)
-    let data = try canonicalSerializer().serialize(msg)
+    let data = try await canonicalSerializer().serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
     let doubleVal = try XCTUnwrap(json as? Double)
     XCTAssertEqual(doubleVal, 3.14, accuracy: 0.0001)
   }
 
-  func test_serialize_floatValue_producesNumber() throws {
+  func test_serialize_floatValue_producesNumber() async throws {
     let desc = makeWrapperDescriptor(name: "FloatValue", fullName: WellKnownTypeNames.floatValue, fieldType: .float)
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(Float(1.5), forField: 1)
-    let data = try canonicalSerializer().serialize(msg)
+    let data = try await canonicalSerializer().serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
     let floatVal = try XCTUnwrap((json as? NSNumber)?.doubleValue)
     XCTAssertEqual(floatVal, 1.5, accuracy: 0.001)
   }
 
-  func test_serialize_int64Value_producesString() throws {
+  func test_serialize_int64Value_producesString() async throws {
     let desc = makeWrapperDescriptor(name: "Int64Value", fullName: WellKnownTypeNames.int64Value, fieldType: .int64)
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(Int64(9_007_199_254_740_993), forField: 1)
-    let data = try canonicalSerializer().serialize(msg)
+    let data = try await canonicalSerializer().serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
     XCTAssertEqual(json as? String, "9007199254740993")
   }
 
-  func test_serialize_uint64Value_producesString() throws {
+  func test_serialize_uint64Value_producesString() async throws {
     let desc = makeWrapperDescriptor(
       name: "UInt64Value",
       fullName: WellKnownTypeNames.uint64Value,
@@ -72,21 +72,21 @@ final class JSONWrapperTypesTests: XCTestCase {
     )
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(UInt64(18_446_744_073_709_551_615), forField: 1)
-    let data = try canonicalSerializer().serialize(msg)
+    let data = try await canonicalSerializer().serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
     XCTAssertEqual(json as? String, "18446744073709551615")
   }
 
-  func test_serialize_int32Value_producesNumber() throws {
+  func test_serialize_int32Value_producesNumber() async throws {
     let desc = makeWrapperDescriptor(name: "Int32Value", fullName: WellKnownTypeNames.int32Value, fieldType: .int32)
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(Int32(42), forField: 1)
-    let data = try canonicalSerializer().serialize(msg)
+    let data = try await canonicalSerializer().serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
     XCTAssertEqual(json as? Int, 42)
   }
 
-  func test_serialize_uint32Value_producesNumber() throws {
+  func test_serialize_uint32Value_producesNumber() async throws {
     let desc = makeWrapperDescriptor(
       name: "UInt32Value",
       fullName: WellKnownTypeNames.uint32Value,
@@ -94,35 +94,35 @@ final class JSONWrapperTypesTests: XCTestCase {
     )
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(UInt32(100), forField: 1)
-    let data = try canonicalSerializer().serialize(msg)
+    let data = try await canonicalSerializer().serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
     XCTAssertEqual(json as? Int, 100)
   }
 
-  func test_serialize_boolValue_producesBool() throws {
+  func test_serialize_boolValue_producesBool() async throws {
     let desc = makeWrapperDescriptor(name: "BoolValue", fullName: WellKnownTypeNames.boolValue, fieldType: .bool)
     var msg = DynamicMessage(descriptor: desc)
     try msg.set(true, forField: 1)
-    let data = try canonicalSerializer().serialize(msg)
+    let data = try await canonicalSerializer().serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
     XCTAssertEqual(json as? Bool, true)
   }
 
-  func test_serialize_stringValue_producesString() throws {
+  func test_serialize_stringValue_producesString() async throws {
     let desc = makeWrapperDescriptor(name: "StringValue", fullName: WellKnownTypeNames.stringValue, fieldType: .string)
     var msg = DynamicMessage(descriptor: desc)
     try msg.set("hello", forField: 1)
-    let data = try canonicalSerializer().serialize(msg)
+    let data = try await canonicalSerializer().serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
     XCTAssertEqual(json as? String, "hello")
   }
 
-  func test_serialize_bytesValue_producesBase64String() throws {
+  func test_serialize_bytesValue_producesBase64String() async throws {
     let desc = makeWrapperDescriptor(name: "BytesValue", fullName: WellKnownTypeNames.bytesValue, fieldType: .bytes)
     var msg = DynamicMessage(descriptor: desc)
     let bytes = Data([0x01, 0x02, 0x03])
     try msg.set(bytes, forField: 1)
-    let data = try canonicalSerializer().serialize(msg)
+    let data = try await canonicalSerializer().serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
     let base64 = try XCTUnwrap(json as? String)
     XCTAssertEqual(Data(base64Encoded: base64), bytes)
@@ -130,60 +130,60 @@ final class JSONWrapperTypesTests: XCTestCase {
 
   // MARK: - Decoder tests
 
-  func test_deserialize_doubleValue_fromNumber() throws {
+  func test_deserialize_doubleValue_fromNumber() async throws {
     let json = "3.14".data(using: .utf8)!
     let desc = makeWrapperDescriptor(name: "DoubleValue", fullName: WellKnownTypeNames.doubleValue, fieldType: .double)
-    let msg = try deserializer().deserialize(json, using: desc)
+    let msg = try await deserializer().deserialize(json, using: desc)
     let value = try XCTUnwrap(try msg.get(forField: 1) as? Double)
     XCTAssertEqual(value, 3.14, accuracy: 0.0001)
   }
 
-  func test_deserialize_boolValue_fromBool() throws {
+  func test_deserialize_boolValue_fromBool() async throws {
     let json = "true".data(using: .utf8)!
     let desc = makeWrapperDescriptor(name: "BoolValue", fullName: WellKnownTypeNames.boolValue, fieldType: .bool)
-    let msg = try deserializer().deserialize(json, using: desc)
+    let msg = try await deserializer().deserialize(json, using: desc)
     let value = try XCTUnwrap(try msg.get(forField: 1) as? Bool)
     XCTAssertTrue(value)
   }
 
-  func test_deserialize_stringValue_fromString() throws {
+  func test_deserialize_stringValue_fromString() async throws {
     let json = #""hello""#.data(using: .utf8)!
     let desc = makeWrapperDescriptor(name: "StringValue", fullName: WellKnownTypeNames.stringValue, fieldType: .string)
-    let msg = try deserializer().deserialize(json, using: desc)
+    let msg = try await deserializer().deserialize(json, using: desc)
     let value = try XCTUnwrap(try msg.get(forField: 1) as? String)
     XCTAssertEqual(value, "hello")
   }
 
-  func test_deserialize_int64Value_fromString() throws {
+  func test_deserialize_int64Value_fromString() async throws {
     let json = #""9007199254740993""#.data(using: .utf8)!
     let desc = makeWrapperDescriptor(name: "Int64Value", fullName: WellKnownTypeNames.int64Value, fieldType: .int64)
-    let msg = try deserializer().deserialize(json, using: desc)
+    let msg = try await deserializer().deserialize(json, using: desc)
     let value = try XCTUnwrap(try msg.get(forField: 1) as? Int64)
     XCTAssertEqual(value, 9_007_199_254_740_993)
   }
 
-  func test_deserialize_wrapperNull_meansAbsent() throws {
+  func test_deserialize_wrapperNull_meansAbsent() async throws {
     let json = "null".data(using: .utf8)!
     let desc = makeWrapperDescriptor(name: "StringValue", fullName: WellKnownTypeNames.stringValue, fieldType: .string)
-    let msg = try deserializer().deserialize(json, using: desc)
+    let msg = try await deserializer().deserialize(json, using: desc)
     // null means absent — field 1 should not be set
     let hasValue = (try? msg.hasValue(forField: 1)) ?? false
     XCTAssertFalse(hasValue)
   }
 
-  func test_deserialize_bytesValue_fromBase64() throws {
+  func test_deserialize_bytesValue_fromBase64() async throws {
     let bytes = Data([0x01, 0x02, 0x03])
     let base64 = bytes.base64EncodedString()
     let json = "\"\(base64)\"".data(using: .utf8)!
     let desc = makeWrapperDescriptor(name: "BytesValue", fullName: WellKnownTypeNames.bytesValue, fieldType: .bytes)
-    let msg = try deserializer().deserialize(json, using: desc)
+    let msg = try await deserializer().deserialize(json, using: desc)
     let value = try XCTUnwrap(try msg.get(forField: 1) as? Data)
     XCTAssertEqual(value, bytes)
   }
 
   // MARK: - Round-trip tests
 
-  func test_roundTrip_allWrapperTypes_preserveValues() throws {
+  func test_roundTrip_allWrapperTypes_preserveValues() async throws {
     // Int32
     let int32Desc = makeWrapperDescriptor(
       name: "Int32Value",
@@ -192,16 +192,16 @@ final class JSONWrapperTypesTests: XCTestCase {
     )
     var int32Msg = DynamicMessage(descriptor: int32Desc)
     try int32Msg.set(Int32(-7), forField: 1)
-    let int32Data = try canonicalSerializer().serialize(int32Msg)
-    let int32RT = try deserializer().deserialize(int32Data, using: int32Desc)
+    let int32Data = try await canonicalSerializer().serialize(int32Msg)
+    let int32RT = try await deserializer().deserialize(int32Data, using: int32Desc)
     XCTAssertEqual(try int32RT.get(forField: 1) as? Int32, -7)
 
     // Bool false
     let boolDesc = makeWrapperDescriptor(name: "BoolValue", fullName: WellKnownTypeNames.boolValue, fieldType: .bool)
     var boolMsg = DynamicMessage(descriptor: boolDesc)
     try boolMsg.set(false, forField: 1)
-    let boolData = try canonicalSerializer().serialize(boolMsg)
-    let boolRT = try deserializer().deserialize(boolData, using: boolDesc)
+    let boolData = try await canonicalSerializer().serialize(boolMsg)
+    let boolRT = try await deserializer().deserialize(boolData, using: boolDesc)
     XCTAssertEqual(try boolRT.get(forField: 1) as? Bool, false)
 
     // String
@@ -212,8 +212,8 @@ final class JSONWrapperTypesTests: XCTestCase {
     )
     var strMsg = DynamicMessage(descriptor: strDesc)
     try strMsg.set("world", forField: 1)
-    let strData = try canonicalSerializer().serialize(strMsg)
-    let strRT = try deserializer().deserialize(strData, using: strDesc)
+    let strData = try await canonicalSerializer().serialize(strMsg)
+    let strRT = try await deserializer().deserialize(strData, using: strDesc)
     XCTAssertEqual(try strRT.get(forField: 1) as? String, "world")
   }
 }

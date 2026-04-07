@@ -49,7 +49,7 @@ final class ResolutionPriorityTests: XCTestCase {
   /// The outer descriptor carries a nestedMessage "Inner" with field "bad_field" (wrong).
   /// TypeRegistry has "pkg.Outer.Inner" with field "good_field" (correct).
   /// After the priority flip, TypeRegistry is consulted first → "good_field" is accessible.
-  func test_binaryDeserialize_nestedMessage_resolvedViaRegistry() throws {
+  func test_binaryDeserialize_nestedMessage_resolvedViaRegistry() async throws {
     // Build the "correct" inner descriptor (in TypeRegistry).
     var registryInner = MessageDescriptor(name: "Inner", fullName: "pkg.Outer.Inner")
     registryInner.addField(FieldDescriptor(name: "good_field", number: 1, type: .string))
@@ -77,9 +77,9 @@ final class ResolutionPriorityTests: XCTestCase {
 
     // Register the CORRECT inner in TypeRegistry — must win after priority flip.
     let registry = TypeRegistry()
-    try registry.registerMessage(registryInner)
+    try await registry.registerMessage(registryInner)
 
-    let decoded = try BinaryDeserializer(options: .init(typeRegistry: registry))
+    let decoded = try await BinaryDeserializer(options: .init(typeRegistry: registry))
       .deserialize(data, using: deserDesc)
 
     let decodedInner = try XCTUnwrap(decoded.get(forField: "inner") as? DynamicMessage)
@@ -88,7 +88,7 @@ final class ResolutionPriorityTests: XCTestCase {
   }
 
   /// A sibling message (not structurally nested) is resolved via TypeRegistry as primary lookup.
-  func test_binaryDeserialize_siblingMessage_resolvedViaRegistry() throws {
+  func test_binaryDeserialize_siblingMessage_resolvedViaRegistry() async throws {
     var innerDesc = MessageDescriptor(name: "Payload", fullName: "pkg.Payload")
     innerDesc.addField(FieldDescriptor(name: "data", number: 1, type: .string))
 
@@ -104,9 +104,9 @@ final class ResolutionPriorityTests: XCTestCase {
     let data = try binarySerializer.serialize(outerMsg)
 
     let registry = TypeRegistry()
-    try registry.registerMessage(innerDesc)
+    try await registry.registerMessage(innerDesc)
 
-    let decoded = try BinaryDeserializer(options: .init(typeRegistry: registry))
+    let decoded = try await BinaryDeserializer(options: .init(typeRegistry: registry))
       .deserialize(data, using: outerDesc)
 
     let decodedPayload = try XCTUnwrap(decoded.get(forField: "payload") as? DynamicMessage)
@@ -114,7 +114,7 @@ final class ResolutionPriorityTests: XCTestCase {
   }
 
   /// When TypeRegistry has no entry, resolution falls back to structural nesting (deprecated path).
-  func test_binaryDeserialize_withoutRegisteredType_fallsBackToNested() throws {
+  func test_binaryDeserialize_withoutRegisteredType_fallsBackToNested() async throws {
     var innerDesc = MessageDescriptor(name: "Inner", fullName: "pkg.Outer.Inner")
     innerDesc.addField(FieldDescriptor(name: "val", number: 1, type: .int32))
 
@@ -131,7 +131,7 @@ final class ResolutionPriorityTests: XCTestCase {
     let data = try binarySerializer.serialize(outerMsg)
 
     // Empty TypeRegistry → must fall back to nestedMessage.
-    let decoded = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
+    let decoded = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
       .deserialize(data, using: outerDesc)
 
     let decodedInner = try XCTUnwrap(decoded.get(forField: "inner") as? DynamicMessage)
@@ -142,18 +142,18 @@ final class ResolutionPriorityTests: XCTestCase {
 
   /// Enum resolved from TypeRegistry (no nestedEnum on the descriptor) →
   /// enum value is serialised as its string name, not as a raw integer.
-  func test_jsonSerialize_enumField_resolvedViaRegistry() throws {
+  func test_jsonSerialize_enumField_resolvedViaRegistry() async throws {
     let enumDesc = makeStatusEnum()
     let msgDesc = makeMsgDescWithEnumField()
 
     let registry = TypeRegistry()
-    try registry.registerEnum(enumDesc)
+    try await registry.registerEnum(enumDesc)
 
     var msg = factory.createMessage(from: msgDesc)
     try msg.set(Int32(1), forField: "status")
 
     let serializer = JSONSerializer(options: .init(typeRegistry: registry))
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
 
     // TypeRegistry must supply the enum → value should be string "ACTIVE", not Int 1.
@@ -162,7 +162,7 @@ final class ResolutionPriorityTests: XCTestCase {
 
   /// Enum in a map field's value is resolved from TypeRegistry →
   /// values serialised as string names.
-  func test_jsonSerialize_mapEnumValue_resolvedViaRegistry() throws {
+  func test_jsonSerialize_mapEnumValue_resolvedViaRegistry() async throws {
     let enumDesc = makeStatusEnum()
 
     let keyInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
@@ -182,13 +182,13 @@ final class ResolutionPriorityTests: XCTestCase {
     )
 
     let registry = TypeRegistry()
-    try registry.registerEnum(enumDesc)
+    try await registry.registerEnum(enumDesc)
 
     var msg = factory.createMessage(from: msgDesc)
     try msg.set(["alice": Int32(1)] as [AnyHashable: Any], forField: "statuses")
 
     let serializer = JSONSerializer(options: .init(typeRegistry: registry))
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
     let statuses = try XCTUnwrap(json["statuses"] as? [String: Any])
 
@@ -197,12 +197,12 @@ final class ResolutionPriorityTests: XCTestCase {
   }
 
   /// proto3 default for an enum field uses TypeRegistry to emit the string name of value 0.
-  func test_jsonSerialize_proto3DefaultEnum_resolvedViaRegistry() throws {
+  func test_jsonSerialize_proto3DefaultEnum_resolvedViaRegistry() async throws {
     let enumDesc = makeStatusEnum()
     let msgDesc = makeMsgDescWithEnumField()
 
     let registry = TypeRegistry()
-    try registry.registerEnum(enumDesc)
+    try await registry.registerEnum(enumDesc)
 
     // Create message without setting the enum field → proto3 default is value 0 ("UNKNOWN").
     let msg = factory.createMessage(from: msgDesc)
@@ -210,7 +210,7 @@ final class ResolutionPriorityTests: XCTestCase {
     let serializer = JSONSerializer(
       options: .init(includeDefaultValues: true, typeRegistry: registry)
     )
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
 
     // TypeRegistry must supply the enum → default value 0 → "UNKNOWN", not 0.
@@ -218,7 +218,7 @@ final class ResolutionPriorityTests: XCTestCase {
   }
 
   /// When TypeRegistry has no enum, resolution falls back to structural nesting (deprecated path).
-  func test_jsonSerialize_enumField_fallsBackToNestedEnum() throws {
+  func test_jsonSerialize_enumField_fallsBackToNestedEnum() async throws {
     let enumDesc = makeStatusEnum()
 
     var msgDesc = MessageDescriptor(name: "Msg", fullName: "pkg.Msg")
@@ -232,7 +232,7 @@ final class ResolutionPriorityTests: XCTestCase {
 
     // Empty TypeRegistry → must fall back to nestedEnum.
     let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
 
     // nestedEnum fallback must produce the string name.
@@ -243,15 +243,15 @@ final class ResolutionPriorityTests: XCTestCase {
 
   /// Enum resolved from TypeRegistry (no nestedEnum on the descriptor) →
   /// string name in JSON is mapped to the correct integer.
-  func test_jsonDeserialize_enumField_resolvedViaRegistry() throws {
+  func test_jsonDeserialize_enumField_resolvedViaRegistry() async throws {
     let enumDesc = makeStatusEnum()
     let msgDesc = makeMsgDescWithEnumField()
 
     let registry = TypeRegistry()
-    try registry.registerEnum(enumDesc)
+    try await registry.registerEnum(enumDesc)
 
     let deserializer = JSONDeserializer(options: .init(typeRegistry: registry))
-    let msg = try deserializer.deserialize(activeStatusJSON(), using: msgDesc)
+    let msg = try await deserializer.deserialize(activeStatusJSON(), using: msgDesc)
 
     // TypeRegistry must supply the enum → "ACTIVE" → 1.
     XCTAssertEqual(try msg.get(forField: "status") as? Int32, 1)
@@ -259,7 +259,7 @@ final class ResolutionPriorityTests: XCTestCase {
 
   /// Enum in a map field's value is resolved from TypeRegistry →
   /// string names in JSON are converted to integers.
-  func test_jsonDeserialize_mapEnumValue_resolvedViaRegistry() throws {
+  func test_jsonDeserialize_mapEnumValue_resolvedViaRegistry() async throws {
     let enumDesc = makeStatusEnum()
 
     let keyInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
@@ -279,11 +279,11 @@ final class ResolutionPriorityTests: XCTestCase {
     )
 
     let registry = TypeRegistry()
-    try registry.registerEnum(enumDesc)
+    try await registry.registerEnum(enumDesc)
 
     let jsonData = Data(#"{"statuses":{"alice":"ACTIVE"}}"#.utf8)
     let deserializer = JSONDeserializer(options: .init(typeRegistry: registry))
-    let msg = try deserializer.deserialize(jsonData, using: msgDesc)
+    let msg = try await deserializer.deserialize(jsonData, using: msgDesc)
 
     let statuses = try XCTUnwrap(msg.get(forField: "statuses") as? [AnyHashable: Any])
     // TypeRegistry must supply the enum → "ACTIVE" → 1.
@@ -291,7 +291,7 @@ final class ResolutionPriorityTests: XCTestCase {
   }
 
   /// When TypeRegistry has no enum, resolution falls back to structural nesting (deprecated path).
-  func test_jsonDeserialize_enumField_fallsBackToNestedEnum() throws {
+  func test_jsonDeserialize_enumField_fallsBackToNestedEnum() async throws {
     let enumDesc = makeStatusEnum()
 
     var msgDesc = MessageDescriptor(name: "Msg", fullName: "pkg.Msg")
@@ -302,7 +302,7 @@ final class ResolutionPriorityTests: XCTestCase {
 
     // Empty TypeRegistry → must fall back to nestedEnum.
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let msg = try deserializer.deserialize(activeStatusJSON(), using: msgDesc)
+    let msg = try await deserializer.deserialize(activeStatusJSON(), using: msgDesc)
 
     // nestedEnum fallback must map "ACTIVE" → 1.
     XCTAssertEqual(try msg.get(forField: "status") as? Int32, 1)

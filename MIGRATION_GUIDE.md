@@ -1,716 +1,297 @@
-# Migration Guide: From Static Swift Protobuf to Dynamic SwiftProtoReflect
+# Migration Guide
 
-**Migrating to runtime Protocol Buffers has never been easier!** This guide helps you transition from static Swift Protobuf code generation to dynamic message manipulation with SwiftProtoReflect.
+## Part 1: SwiftProtobuf vs SwiftProtoReflect
 
-## Migration Overview
+SwiftProtobuf requires compile-time code generation (`protoc`). SwiftProtoReflect works entirely at runtime — no `.pb.swift` files needed.
 
-| Static Swift Protobuf | Dynamic SwiftProtoReflect | Benefits |
-|----------------------|---------------------------|-----------|
-| **Code Generation Required** | **Zero Code Generation** | ✅ No build-time dependencies |
-| **Compile-time Schema** | **Runtime Schema** | ✅ Handle unknown schemas |
-| **Type-safe but Rigid** | **Type-safe and Flexible** | ✅ Schema evolution support |
-| **Per-proto Compilation** | **Universal Message Handling** | ✅ Generic tools possible |
+### Message Creation
 
-## Quick Migration Examples
+**SwiftProtobuf:**
 
-### Basic Message Creation
-
-**Before (Static):**
 ```swift
-// Generated code required
 import GeneratedProtos
 
-let person = Person.with {
-    $0.name = "John Doe"
-    $0.age = 30
-    $0.email = "john@example.com"
-}
+var person = Person()
+person.name = "Alice"
+person.age = 30
+person.email = "alice@example.com"
+```
 
+**SwiftProtoReflect:**
+
+```swift
+import SwiftProtoReflect
+
+var desc = MessageDescriptor(name: "Person", fullName: "example.Person")
+desc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
+desc.addField(FieldDescriptor(name: "age", number: 2, type: .int32))
+desc.addField(FieldDescriptor(name: "email", number: 3, type: .string))
+
+var person = DynamicMessage(descriptor: desc)
+try person.set("Alice", forField: "name")
+try person.set(Int32(30), forField: "age")
+try person.set("alice@example.com", forField: "email")
+```
+
+### Serialization
+
+**SwiftProtobuf:**
+
+```swift
 let data = try person.serializedData()
+let json = try person.jsonUTF8Data()
+
+let decoded = try Person(serializedBytes: data)
 ```
 
-**After (Dynamic):**
+**SwiftProtoReflect:**
+
 ```swift
-// No code generation needed
-import SwiftProtoReflect
+let registry = TypeRegistry()
+try registry.registerMessage(desc)
 
-let personSchema = try MessageDescriptor.builder("Person")
-    .addField("name", number: 1, type: .string)
-    .addField("age", number: 2, type: .int32)
-    .addField("email", number: 3, type: .string)
-    .build()
+let data = try BinarySerializer().serialize(person)
+let json = try JSONSerializer(options: .init(typeRegistry: registry)).serialize(person)
 
-let person = try MessageFactory().createMessage(from: personSchema)
-try person.set("name", value: "John Doe")
-try person.set("age", value: 30)
-try person.set("email", value: "john@example.com")
-
-let data = try BinarySerializer().serialize(message: person)
+let decoded = try BinaryDeserializer(options: .init(typeRegistry: registry))
+    .deserialize(data, using: desc)
 ```
 
-### Reading Message Fields
+### Field Access
 
-**Before (Static):**
+**SwiftProtobuf:**
+
 ```swift
-let person = try Person(serializedData: data)
-print("Name: \(person.name)")
-print("Age: \(person.age)")
-if person.hasEmail {
-    print("Email: \(person.email)")
-}
+let name = person.name          // String, compile-time safe
+let age = person.age            // Int32
 ```
 
-**After (Dynamic):**
-```swift
-let registry = TypeRegistry()  // register nested types if any
-let person = try BinaryDeserializer(options: .init(typeRegistry: registry))
-    .deserialize(data, using: personSchema)
-let name: String = try person.get("name")
-let age: Int32 = try person.get("age")
-print("Name: \(name)")
-print("Age: \(age)")
+**SwiftProtoReflect:**
 
-if person.hasField("email") {
-    let email: String = try person.get("email")
-    print("Email: \(email)")
-}
+```swift
+let name = try person.get(forField: "name") as? String
+let age = try person.get(forField: "age") as? Int32
+
+// Or via typed accessor:
+let accessor = person.fieldAccessor
+let name = accessor.getString("name")
+let age = accessor.getInt32("age")
 ```
 
-## Hybrid Approach - Best of Both Worlds
+### Nested and Cross-File Types
 
-You don't have to migrate everything at once! SwiftProtoReflect seamlessly integrates with existing Swift Protobuf code:
+**SwiftProtobuf:** Handled automatically by generated code.
 
-### Converting Static to Dynamic
+**SwiftProtoReflect:** Register all types in `TypeRegistry`:
 
 ```swift
-// Start with your existing static message
-let staticPerson = Person.with {
-    $0.name = "Alice"
-    $0.age = 25
-}
+let registry = TypeRegistry()
+try registry.registerFile(addressFile)
+try registry.registerFile(personFile)
 
-// Convert to dynamic for flexible processing
-let dynamicPerson = try staticPerson.toDynamicMessage()
-
-// Perform dynamic operations
-try dynamicPerson.set("email", value: "alice@example.com")
-let processedMessage = try transformMessage(dynamicPerson)
-
-// Convert back to static for type-safe usage
-let finalPerson: Person = try processedMessage.toStaticMessage()
+// Or use the convenience initializer:
+let registry = try TypeRegistry(fileDescriptors: [addressFile, personFile])
 ```
 
-### Batch Migration Helper
+### Static-Dynamic Interop
+
+Convert between generated SwiftProtobuf messages and DynamicMessage:
 
 ```swift
-// Migrate multiple messages efficiently
-let staticMessages: [Person] = loadExistingPersons()
 let bridge = StaticMessageBridge()
-let dynamicMessages = try bridge.toDynamicMessages(from: staticMessages, using: personSchema)
 
-// Process dynamically
-let processedMessages = try dynamicMessages.map { message in
-    try enhancePersonData(message)
-}
+// Static → Dynamic
+let dynamic = try bridge.toDynamicMessage(from: staticPerson, using: personDesc)
 
-// Convert back if needed
-let finalStaticMessages: [Person] = try bridge.toStaticMessages(from: processedMessages, as: Person.self)
+// Dynamic → Static
+let static: Person = try bridge.toStaticMessage(from: dynamic, as: Person.self)
+
+// Shorthand extensions
+let dynamic = try staticPerson.toDynamicMessage(using: personDesc)
+let static: Person = try dynamic.toStaticMessage(as: Person.self)
 ```
 
-## Migration Strategies
+### Well-Known Types
 
-### Strategy 1: Gradual Migration (Recommended)
+**SwiftProtobuf:**
 
-**Best for:** Large existing codebases with extensive static protobuf usage
-
-1. **Start with utilities** - Migrate debugging, logging, and data transformation tools
-2. **Keep core business logic static** - Maintain type safety for critical paths
-3. **Use hybrid approach** - Convert at boundaries where flexibility is needed
-4. **Migrate incrementally** - One service/module at a time
-
-**Example Timeline:**
-- Week 1: Migrate logging and debugging tools
-- Week 2: Migrate data transformation pipelines  
-- Week 3: Migrate API gateways and proxies
-- Week 4+: Evaluate core business logic migration
-
-### Strategy 2: New Features First
-
-**Best for:** Actively developed projects with new requirements
-
-1. **All new features use dynamic** - Avoid new static code generation
-2. **Interop at boundaries** - Convert between static/dynamic as needed
-3. **Refactor opportunistically** - When touching existing code, consider migration
-
-### Strategy 3: Complete Migration
-
-**Best for:** Smaller projects or tools that benefit from maximum flexibility
-
-1. **Stop code generation** - Remove .pb.swift generation from build
-2. **Create schema registry** - Central location for all schemas
-3. **Migrate all message handling** - Use dynamic throughout
-4. **Add runtime schema loading** - Load schemas from files/network
-
-## Common Migration Patterns
-
-### Pattern 1: Message Validation
-
-**Before (Static):**
 ```swift
-func validatePerson(_ person: Person) -> Bool {
-    return !person.name.isEmpty && 
-           person.age > 0 && 
-           person.age < 150 &&
-           person.email.contains("@")
-}
+let ts = Google_Protobuf_Timestamp(date: Date())
 ```
 
-**After (Dynamic):**
-```swift
-func validatePerson(_ person: DynamicMessage) throws -> Bool {
-    let name: String = try person.get("name")
-    let age: Int32 = try person.get("age")
-    
-    guard !name.isEmpty else { return false }
-    guard age > 0 && age < 150 else { return false }
-    
-    if person.hasField("email") {
-        let email: String = try person.get("email")
-        guard email.contains("@") else { return false }
-    }
-    
-    return true
-}
-```
-
-### Pattern 2: Message Transformation
-
-**Before (Static):**
-```swift
-func addMetadata(to person: Person) -> PersonWithMetadata {
-    return PersonWithMetadata.with {
-        $0.person = person
-        $0.createdAt = Timestamp(date: Date())
-        $0.version = 1
-    }
-}
-```
-
-**After (Dynamic):**
-```swift
-func addMetadata(to message: DynamicMessage) throws -> DynamicMessage {
-    let enhancedSchema = try MessageDescriptor.builder("PersonWithMetadata")
-        .addField("person", number: 1, type: .message, typeName: "Person")
-        .addField("created_at", number: 2, type: .message, typeName: "google.protobuf.Timestamp")
-        .addField("version", number: 3, type: .int32)
-        .build()
-    
-    let enhanced = try MessageFactory().createMessage(from: enhancedSchema)
-    try enhanced.set("person", value: message)
-    try enhanced.set("created_at", value: DynamicMessage.timestampMessage(from: Date()))
-    try enhanced.set("version", value: Int32(1))
-    
-    return enhanced
-}
-```
-
-### Pattern 3: Generic Message Processing
-
-**Before (Static - Not Possible):**
-```swift
-// Static protobuf cannot handle unknown message types generically
-func processUnknownMessage(data: Data) -> Data {
-    // ❌ Impossible without knowing the type at compile time
-}
-```
-
-**After (Dynamic - Powerful!):**
-```swift
-func processUnknownMessage(data: Data, schema: MessageDescriptor, registry: TypeRegistry) throws -> Data {
-    // ✅ Handle any message type at runtime
-    let message = try BinaryDeserializer(options: .init(typeRegistry: registry))
-        .deserialize(data, using: schema)
-
-    // Add common fields to any message
-    if !message.hasField("processed_at") {
-        try message.set("processed_at", value: DynamicMessage.timestampMessage(from: Date()))
-    }
-
-    return try BinarySerializer().serialize(message: message)
-}
-```
-
-## Well-Known Types Migration
-
-SwiftProtoReflect provides seamless migration for Google's Well-Known Types:
-
-### Timestamps
-
-**Before (Static):**
-```swift
-import SwiftProtobuf
-
-let timestamp = Google_Protobuf_Timestamp(date: Date())
-let event = Event.with {
-    $0.name = "UserLogin"
-    $0.timestamp = timestamp
-}
-```
-
-**After (Dynamic):**
-```swift
-import SwiftProtoReflect
-
-let event = try MessageFactory().createMessage(from: eventSchema)
-try event.set("name", value: "UserLogin")
-try event.set("timestamp", value: DynamicMessage.timestampMessage(from: Date()))
-```
-
-### Struct (JSON-like data)
-
-**Before (Static):**
-```swift
-let structData = Google_Protobuf_Struct.with {
-    $0.fields["user"] = Google_Protobuf_Value.with { $0.stringValue = "john" }
-    $0.fields["active"] = Google_Protobuf_Value.with { $0.boolValue = true }
-    $0.fields["score"] = Google_Protobuf_Value.with { $0.numberValue = 95.5 }
-}
-```
-
-**After (Dynamic):**
-```swift
-// Native Swift types, automatic conversion
-let data: [String: Any] = [
-    "user": "john",
-    "active": true,
-    "score": 95.5
-]
-let structMessage = try DynamicMessage.structMessage(from: data)
-```
-
-## Migration Gotchas & Solutions
-
-### Gotcha 1: Field Access Type Safety
-
-**Problem:** Dynamic field access requires explicit typing
-```swift
-// ❌ This won't compile
-let age = try person.get("age")  // What type is age?
-
-// ✅ Solution: Explicit typing
-let age: Int32 = try person.get("age")
-```
-
-**Pro Tip:** Create typed accessors for frequently used messages:
-```swift
-extension DynamicMessage {
-    var personName: String? { try? get("name") }
-    var personAge: Int32? { try? get("age") }
-    var personEmail: String? { try? get("email") }
-}
-```
-
-### Gotcha 2: Schema Definition Boilerplate
-
-**Problem:** Creating schemas is more verbose than static generation
-
-**Solution:** Create schema builders and reusable components:
-```swift
-class SchemaRepository {
-    static let personSchema = try! MessageDescriptor.builder("Person")
-        .addField("name", number: 1, type: .string)
-        .addField("age", number: 2, type: .int32)
-        .addField("email", number: 3, type: .string)
-        .build()
-    
-    // Load schemas from .proto files at runtime
-    static func loadSchema(name: String) throws -> MessageDescriptor {
-        // Implementation to load from files/resources
-    }
-}
-```
-
-### Gotcha 3: Performance Concerns
-
-**Fear:** "Dynamic must be slower than static"
-
-**Reality:** SwiftProtoReflect is highly optimized:
-- Field access: 1-4μs (negligible for most use cases)
-- Serialization: Only 1.3x slower than static for JSON, binary is comparable
-- Type lookup: 127-639μs with efficient caching
-
-**Best Practices:**
-```swift
-// ✅ Cache schemas and reuse
-let schema = SchemaRepository.personSchema  // Cache this
-
-// ✅ Use typed accessors for hot paths
-extension DynamicMessage {
-    func getPersonId() throws -> String {
-        return try get("id")  // Cached field lookup
-    }
-}
-```
-
-## 📊 Feature Comparison
-
-| Feature | Static Swift Protobuf | Dynamic SwiftProtoReflect |
-|---------|----------------------|---------------------------|
-| **Type Safety** | ✅ Compile-time | ✅ Runtime + optional compile-time |
-| **Performance** | ✅ Excellent | ✅ Excellent (1-4μs overhead) |
-| **Schema Evolution** | ⚠️ Limited | ✅ Full support |
-| **Unknown Fields** | ⚠️ Basic | ✅ Full inspection/manipulation |
-| **Generic Tools** | ❌ Not possible | ✅ Easy to build |
-| **Build Dependencies** | ❌ Required | ✅ None |
-| **Runtime Schema Loading** | ❌ Not possible | ✅ Full support |
-| **Interoperability** | ➖ Static only | ✅ Static + Dynamic |
-
-## Migration Examples by Use Case
-
-### API Gateway Migration
-
-**Before:** Separate handlers for each message type
-```swift
-// Need different handlers for each type
-router.post("/users") { req in
-    let person = try Person(jsonUTF8Data: req.body)
-    return try handlePerson(person)
-}
-
-router.post("/orders") { req in
-    let order = try Order(jsonUTF8Data: req.body)
-    return try handleOrder(order)
-}
-```
-
-**After:** Generic handler for all message types
-```swift
-// Single handler for all protobuf messages
-router.post("/:messageType") { req in
-    let messageType = req.parameters.get("messageType")!
-    let schema = try SchemaRegistry.getSchema(for: messageType)
-    let registry = try SchemaRegistry.getTypeRegistry()  // pre-built registry
-    let message = try JSONDeserializer(options: .init(typeRegistry: registry))
-        .deserialize(req.body, using: schema)
-    return try handleMessage(message, type: messageType)
-}
-```
-
-### Configuration System Migration
-
-**Before:** Strong typing, limited flexibility
-```swift
-struct DatabaseConfig {
-    let config: Database_Config
-    
-    var host: String { config.host }
-    var port: Int32 { config.port }
-    var username: String { config.username }
-}
-```
-
-**After:** Dynamic configuration with validation
-```swift
-class ConfigManager {
-    private let configMessage: DynamicMessage
-    
-    init(configData: Data) throws {
-        let schema = try SchemaRegistry.loadSchema("database_config")
-        let registry = try SchemaRegistry.getTypeRegistry()  // pre-built registry
-        self.configMessage = try BinaryDeserializer(options: .init(typeRegistry: registry))
-            .deserialize(configData, using: schema)
-    }
-    
-    func getValue<T>(_ key: String) throws -> T {
-        return try configMessage.get(key)
-    }
-    
-    func updateValue<T>(_ key: String, value: T) throws {
-        try configMessage.set(key, value: value)
-    }
-}
-```
-
-## Advanced Migration Patterns
-
-### Schema Registry Pattern
-
-Create a centralized schema management system:
+**SwiftProtoReflect:**
 
 ```swift
-class SchemaRegistry {
-    private static var schemas: [String: MessageDescriptor] = [:]
-    
-    static func register(_ schema: MessageDescriptor) {
-        schemas[schema.fullName] = schema
-    }
-    
-    static func getSchema(_ name: String) throws -> MessageDescriptor {
-        guard let schema = schemas[name] else {
-            throw RegistryError.schemaNotFound(name)
-        }
-        return schema
-    }
-    
-    // Load schemas from .proto files at startup
-    static func loadFromProtoFiles() throws {
-        // Implementation to parse .proto files and create descriptors
-    }
-}
-```
+let ts = try DynamicMessage.timestampMessage(from: Date())
+let date = try ts.toDate()
 
-### Message Factory Pattern
-
-Simplify message creation:
-
-```swift
-class MessageFactory {
-    static func createPerson(name: String, age: Int32, email: String? = nil) throws -> DynamicMessage {
-        let person = try createMessage(from: SchemaRegistry.getSchema("Person"))
-        try person.set("name", value: name)
-        try person.set("age", value: age)
-        if let email = email {
-            try person.set("email", value: email)
-        }
-        return person
-    }
-    
-    static func createOrder(userId: String, items: [String], total: Double) throws -> DynamicMessage {
-        let order = try createMessage(from: SchemaRegistry.getSchema("Order"))
-        try order.set("user_id", value: userId)
-        try order.set("items", value: items)
-        try order.set("total", value: total)
-        try order.set("created_at", value: Date())
-        return order
-    }
-}
+let dur = try DynamicMessage.durationMessage(from: TimeInterval(3.5))
+let empty = try DynamicMessage.emptyMessage()
+let mask = try DynamicMessage.fieldMaskMessage(from: ["name", "email"])
+let structMsg = try DynamicMessage.structMessage(from: ["key": "value", "count": 42])
 ```
 
 ---
 
-## Nested Type `fullName` Fix (Breaking Change in Descriptor API)
+## Part 2: SwiftProtoReflect v5 → v6
 
-### What changed
+### Removed: Deprecated Descriptor Initializers
 
-Previously, `MessageDescriptor` and `EnumDescriptor` initializers accepted `parent: Any?`.
-Their `fullName` was set to the **bare name** (e.g., `"Cursor"`) instead of the
-**fully-qualified name** (e.g., `"pkg.GetGroupedAdsResponse.Cursor"`).
-
-This caused two failures when using `DescriptorBridge`:
-1. `RegistryError.duplicateType` when iterating `DescriptorPool.allMessageTypeNames()` and
-   re-registering each type independently.
-2. `JSONDeserializationError.nestedMessageDescriptorNotFound` during deserialization of
-   messages with nested message fields.
-
-### New API — `DescriptorParent` protocol
-
-`FileDescriptor` and `MessageDescriptor` now both conform to `DescriptorParent`:
+The `parent: Any?` overloads are removed. Use typed `DescriptorParent` instead.
 
 ```swift
-public protocol DescriptorParent: Sendable {
-  var descriptorFullNamePrefix: String { get }
-  var descriptorFilePath: String { get }
-  var descriptorSyntax: String { get }
-  var descriptorParentMessageFullName: String? { get }
-}
+// v5 (removed)
+let msg = MessageDescriptor(name: "Child", parent: fileDesc as Any?)
+let enm = EnumDescriptor(name: "Status", parent: fileDesc as Any?)
+
+// v6
+let msg = MessageDescriptor(name: "Child", parent: fileDesc)
+let enm = EnumDescriptor(name: "Status", parent: fileDesc)
 ```
 
-Pass a typed parent to `MessageDescriptor.init` and `EnumDescriptor.init`:
+Both `FileDescriptor` and `MessageDescriptor` conform to `DescriptorParent`.
+
+### Removed: Deprecated Serializer Constructors
+
+No-argument `init()` is removed from all serializers/deserializers. Pass `TypeRegistry` explicitly.
 
 ```swift
-// ✅ New (preferred)
-let fileDesc = FileDescriptor(name: "ads.proto", package: "pkg")
-let nested   = MessageDescriptor(name: "Cursor", parent: fileDesc)
-// nested.fullName == "pkg.Cursor"
+// v5 (removed)
+let ser = JSONSerializer()
+let deser = JSONDeserializer()
+let binDeser = BinaryDeserializer()
 
-let parent   = MessageDescriptor(name: "Response", parent: fileDesc)
-let child    = MessageDescriptor(name: "Cursor", parent: parent)
-// child.fullName == "pkg.Response.Cursor"
-```
-
-### Deprecated API
-
-The old `parent: Any?` signature is still available but deprecated:
-
-```swift
-// ⚠️ Deprecated — still compiles, emits deprecation warning
-let nested = MessageDescriptor(name: "Cursor", parent: someFileDescriptor as Any?)
-```
-
-### `DescriptorBridge` changes
-
-`fromProtobufDescriptor(_:parent:)` and `fromProtobufEnumDescriptor(_:parent:)` now prefer
-`(any DescriptorParent)?` over `FileDescriptor?`:
-
-```swift
-// ✅ New (preferred)
-let msg = try bridge.fromProtobufDescriptor(proto, parent: fileDesc)
-
-// ⚠️ Deprecated — still works, emits deprecation warning
-let msg = try bridge.fromProtobufDescriptor(proto, parent: fileDesc as FileDescriptor?)
-```
-
-The `fromProtobufFileDescriptor(_:)` function was updated internally and requires no
-call-site changes.
-
-### `DynamicMessage` type-name comparison fix
-
-`DynamicMessage.set(value:forField:)` now strips a leading dot from `field.typeName` before
-comparing against the nested message's `fullName`. This is transparent — no call-site
-changes required.
-
-### Recommended migration
-
-If you build nested descriptors manually, replace the `Any?` parent with a typed one:
-
-```swift
-// Before
-var child = MessageDescriptor(name: "Child", parent: parentMessage as Any?)
-
-// After
-var child = MessageDescriptor(name: "Child", parent: parentMessage)
-```
-
-If you use `DescriptorBridge.fromProtobufFileDescriptor`, no changes are required — the
-fix is applied automatically.
-
----
-
-## Mandatory TypeRegistry for Serialization (Breaking Change)
-
-### What changed
-
-`TypeRegistry` is now the **primary** (and required) mechanism for resolving nested message and
-enum types during serialization and deserialization. The no-argument constructors
-`BinaryDeserializer()`, `JSONDeserializer()`, and `JSONSerializer()` are **deprecated**.
-
-The type resolution priority has been flipped:
-
-1. **TypeRegistry** (fully-qualified name lookup) — primary, strict, correct.
-2. `nestedMessage(named:)` / `nestedEnum(named:)` structural lookup — **deprecated fallback**,
-   retained for backward compatibility, **will be removed in a future major version**.
-
-### What you need to change
-
-#### Serializer / Deserializer construction
-
-**Before (deprecated):**
-```swift
-let serializer   = JSONSerializer()
-let deserializer = JSONDeserializer()
-let binDeser     = BinaryDeserializer()
-```
-
-**After (required):**
-```swift
-// For hand-built descriptors — register individual types
+// v6
 let registry = TypeRegistry()
-try registry.registerMessage(innerDescriptor)
-try registry.registerEnum(statusEnum)
-
-let serializer   = JSONSerializer(options: .init(typeRegistry: registry))
-let deserializer = JSONDeserializer(options: .init(typeRegistry: registry))
-let binDeser     = BinaryDeserializer(options: .init(typeRegistry: registry))
+let ser = JSONSerializer(options: .init(typeRegistry: registry))
+let deser = JSONDeserializer(options: .init(typeRegistry: registry))
+let binDeser = BinaryDeserializer(options: .init(typeRegistry: registry))
 ```
 
+### Removed: Deprecated Options Constructors
+
+Options structs without `typeRegistry` parameter are removed.
+
 ```swift
-// For production use with FileDescriptors — convenience init
-let registry = TypeRegistry(fileDescriptors: [fileA, fileB])
-
-let serializer   = JSONSerializer(options: .init(typeRegistry: registry))
-let deserializer = JSONDeserializer(options: .init(typeRegistry: registry))
-let binDeser     = BinaryDeserializer(options: .init(typeRegistry: registry))
-```
-
-#### Options structs
-
-`DeserializationOptions`, `JSONDeserializationOptions`, and `JSONSerializationOptions` now
-require a `typeRegistry` parameter in their primary initializer:
-
-**Before (deprecated):**
-```swift
+// v5 (removed)
 let opts = DeserializationOptions()
-let jsonOpts = JSONDeserializationOptions(ignoreUnknownFields: true)
-let serOpts = JSONSerializationOptions(useOriginalFieldNames: true)
+let jsonOpts = JSONSerializationOptions(useOriginalFieldNames: true)
+let jsonDeserOpts = JSONDeserializationOptions(ignoreUnknownFields: false)
+
+// v6
+let opts = DeserializationOptions(typeRegistry: registry)
+let jsonOpts = JSONSerializationOptions(useOriginalFieldNames: true, typeRegistry: registry)
+let jsonDeserOpts = JSONDeserializationOptions(ignoreUnknownFields: false, typeRegistry: registry)
 ```
 
-**After:**
+### Removed: Deprecated Bridge Methods
+
 ```swift
-let opts     = DeserializationOptions(typeRegistry: TypeRegistry())
-let jsonOpts = JSONDeserializationOptions(ignoreUnknownFields: true, typeRegistry: TypeRegistry())
-let serOpts  = JSONSerializationOptions(useOriginalFieldNames: true, typeRegistry: TypeRegistry())
+// v5 (removed)
+let msg = try bridge.fromProtobufDescriptor(proto, parent: fileDesc as FileDescriptor?)
+let enm = try bridge.fromProtobufEnumDescriptor(proto, parent: fileDesc as Any?)
+
+// v6
+let msg = try bridge.fromProtobufDescriptor(proto, parent: fileDesc)
+let enm = try bridge.fromProtobufEnumDescriptor(proto, parent: fileDesc)
 ```
 
-#### Behavioral change: full qualified name resolution
+### Removed: MessageFactory.validate(\_:syntax:)
 
-Type resolution now uses the fully-qualified `typeName` stored on `FieldDescriptor` (e.g.,
-`"pkg.Status"`) to look up types in `TypeRegistry` by their `fullName`. The old lenient
-simple-name lookup via `nestedMessage(named:)` / `nestedEnum(named:)` is retained as a
-**deprecated fallback** but will be removed in a future major version.
-
-This means that hand-built descriptors must set correct fully-qualified `typeName` values on
-their fields and register types with matching `fullName` in `TypeRegistry`:
+Syntax is now read from `descriptor.syntax`.
 
 ```swift
-// Correct: typeName matches the EnumDescriptor.fullName registered in TypeRegistry
-var statusEnum = EnumDescriptor(name: "Status", fullName: "pkg.Status")
-statusEnum.addValue(.init(name: "UNKNOWN", number: 0))
-statusEnum.addValue(.init(name: "ACTIVE", number: 1))
+// v5 (removed)
+let result = factory.validate(message, syntax: "proto2")
 
-var msgDesc = MessageDescriptor(name: "Msg", fullName: "pkg.Msg")
-msgDesc.addField(
-    FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "pkg.Status")
-//                                                                       ↑ must match fullName
-)
+// v6
+let result = factory.validate(message)
+```
 
+### Breaking: TypeRegistry, DescriptorPool, WellKnownTypesRegistry Are Now Actors
+
+All three types changed from `class` to `actor`. Every method call requires `await`.
+
+```swift
+// v5
 let registry = TypeRegistry()
-try registry.registerEnum(statusEnum)
-// Now "pkg.Status" is found via TypeRegistry — correct, strict resolution.
-```
+try registry.registerMessage(desc)
+let found = registry.findMessage(named: "pkg.Msg")
 
-#### Deprecated fallback notice
-
-The `nestedMessage(named:)` / `nestedEnum(named:)` fallback in serializers/deserializers is
-**temporarily retained** for backward compatibility with descriptors that use `addNestedMessage()`
-or `addNestedEnum()`. It **will be removed in a future major version** (see Linear epic
-"Remove Deprecated Type Resolution Fallbacks"). Migrate all type resolution to `TypeRegistry`
-as soon as possible.
-
-### TypeRegistry convenience init
-
-For production use where you load types from `.proto`-derived `FileDescriptor`s, use the
-convenience initializer:
-
-```swift
-// Build FileDescriptors for all your proto files, then:
-let registry = TypeRegistry(fileDescriptors: [userFile, orderFile, commonFile])
-// All messages and enums from all files are registered automatically.
-```
-
-For hand-built descriptors in tests and tools, use explicit registration:
-
-```swift
+// v6
 let registry = TypeRegistry()
-try registry.registerMessage(userDescriptor)
-try registry.registerEnum(statusEnum)
+try await registry.registerMessage(desc)
+let found = await registry.findMessage(named: "pkg.Msg")
 ```
 
----
+```swift
+// v5
+let pool = DescriptorPool()
+try pool.addFileDescriptor(file)
+let msg = pool.findMessageDescriptor(named: "pkg.Msg")
 
-## 🤝 Need Help?
+// v6
+let pool = DescriptorPool()
+try await pool.addFileDescriptor(file)
+let msg = await pool.findMessageDescriptor(named: "pkg.Msg")
+```
 
-**Migration Questions?**
-- Check our [38 comprehensive examples](examples/)
-- Read the [Architecture Guide](docs/ARCHITECTURE.md)
-- Open a GitHub Issue for specific migration challenges
+```swift
+// v5
+let handler = WellKnownTypesRegistry.shared.getHandler(for: "google.protobuf.Timestamp")
 
-**Found an Issue?**
-- Integration problems? Check the [interoperability examples](examples/07-advanced/)
-- Schema questions? Explore [schema management patterns](examples/04-registry/)
+// v6
+let handler = await WellKnownTypesRegistry.shared.getHandler(for: "google.protobuf.Timestamp")
+```
 
-**Success Story?**
-We'd love to hear about your migration! Share your experience and help others make the transition.
+`WellKnownTypesRegistry.init()` is now `public` — you can create isolated instances instead of using `shared`.
 
----
+### Breaking: Serializer Methods Become Async
 
-**Ready to migrate?** 🚀 Start with our [HelloWorld example](examples/01-basic-usage/) and experience the power of dynamic Protocol Buffers!
+Because serializers call `TypeRegistry` (now an actor), three methods become `async throws`:
+
+```swift
+// v5
+let data = try jsonSerializer.serialize(message)
+let msg = try jsonDeserializer.deserialize(jsonData, using: desc)
+let msg = try binaryDeserializer.deserialize(binData, using: desc)
+
+// v6
+let data = try await jsonSerializer.serialize(message)
+let msg = try await jsonDeserializer.deserialize(jsonData, using: desc)
+let msg = try await binaryDeserializer.deserialize(binData, using: desc)
+```
+
+`BinarySerializer.serialize()` stays synchronous — it does not call `TypeRegistry`.
+
+### MessageFactory: Sendable Without @unchecked
+
+`MessageFactory` has no stored state. In v6 it conforms to `Sendable` directly (without `@unchecked`). No call-site changes required.
+
+### Removed: JSONSerializationOptions No-Argument Initializer
+
+The `JSONSerializationOptions()` no-argument initializer (which defaulted to an empty `TypeRegistry`) is removed. Pass an explicit `TypeRegistry`.
+
+```swift
+// v5 (removed)
+let opts = JSONSerializationOptions()
+
+// v6
+let opts = JSONSerializationOptions(typeRegistry: TypeRegistry())
+```
+
+### Summary of All Removed APIs
+
+| Removed API | Replacement |
+|---|---|
+| `MessageDescriptor.init(name:parent: Any?)` | `init(name:parent: (any DescriptorParent)?)` |
+| `EnumDescriptor.init(name:parent: Any?)` | `init(name:parent: (any DescriptorParent)?)` |
+| `BinaryDeserializer.init()` | `init(options:)` |
+| `JSONSerializer.init()` | `init(options:)` |
+| `JSONDeserializer.init()` | `init(options:)` |
+| `DeserializationOptions.init(preserveUnknownFields:strictUTF8Validation:)` | `init(preserveUnknownFields:strictUTF8Validation:typeRegistry:)` |
+| `JSONSerializationOptions.init(useOriginalFieldNames:prettyPrinted:includeDefaultValues:)` | `init(useOriginalFieldNames:prettyPrinted:includeDefaultValues:useCanonicalWellKnownTypeEncoding:typeRegistry:)` |
+| `JSONDeserializationOptions.init(ignoreUnknownFields:strictTypeValidation:maxNestingDepth:)` | `init(ignoreUnknownFields:strictTypeValidation:typeRegistry:maxNestingDepth:)` |
+| `DescriptorBridge.fromProtobufDescriptor(_:parent: FileDescriptor?)` | `fromProtobufDescriptor(_:parent: (any DescriptorParent)?)` |
+| `DescriptorBridge.fromProtobufEnumDescriptor(_:parent: Any?)` | `fromProtobufEnumDescriptor(_:parent: (any DescriptorParent)?)` |
+| `MessageFactory.validate(_:syntax:)` | `validate(_:)` |

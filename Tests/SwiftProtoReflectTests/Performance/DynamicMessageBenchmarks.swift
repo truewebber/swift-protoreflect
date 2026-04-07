@@ -24,33 +24,33 @@ final class DynamicMessageBenchmarks: XCTestCase {
   nonisolated(unsafe) private var messageFactory: MessageFactory!
   nonisolated(unsafe) private var registry: TypeRegistry!
 
-  override func setUpWithError() throws {
-    try super.setUpWithError()
+  override func setUp() async throws {
+    try await super.setUp()
 
     messageFactory = MessageFactory()
     registry = TypeRegistry()
 
-    try setupTestMessages()
+    try await setupTestMessages()
   }
 
-  private func setupTestMessages() throws {
+  private func setupTestMessages() async throws {
     // Simple message for basic operations
     let simpleDescriptor = try createSimpleMessageDescriptor()
-    try registry.registerMessage(simpleDescriptor)
+    try await registry.registerMessage(simpleDescriptor)
     simpleMessage = messageFactory.createMessage(from: simpleDescriptor)
 
     // Nested message descriptor (needs to be created before complex message)
     let nestedDescriptor = try createNestedMessageDescriptor()
-    try registry.registerMessage(nestedDescriptor)
+    try await registry.registerMessage(nestedDescriptor)
 
     // Complex message with nested structures
     let complexDescriptor = try createComplexMessageDescriptor()
-    try registry.registerMessage(complexDescriptor)
+    try await registry.registerMessage(complexDescriptor)
     complexMessage = messageFactory.createMessage(from: complexDescriptor)
 
     // Large message with many fields
     let largeDescriptor = try createLargeMessageDescriptor()
-    try registry.registerMessage(largeDescriptor)
+    try await registry.registerMessage(largeDescriptor)
     largeMessage = messageFactory.createMessage(from: largeDescriptor)
 
     // Populate messages with data
@@ -84,7 +84,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
   // MARK: - Field Access Performance Tests
 
   /// Performance test for get operations.
-  func testFieldGetPerformance() {
+  func testFieldGetPerformance() async throws {
     measure {
       for _ in 0..<1000 {
         let _ = try? simpleMessage.get(forField: "text_field")
@@ -95,7 +95,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
   }
 
   /// Performance test for set operations.
-  func testFieldSetPerformance() {
+  func testFieldSetPerformance() async throws {
     measure {
       do {
         for i in 0..<1000 {
@@ -111,7 +111,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
   }
 
   /// Performance test for repeated field operations.
-  func testRepeatedFieldPerformance() {
+  func testRepeatedFieldPerformance() async throws {
     measure {
       do {
         for i in 0..<100 {
@@ -126,7 +126,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
   }
 
   /// Performance test for nested message access.
-  func testNestedMessageAccessPerformance() {
+  func testNestedMessageAccessPerformance() async throws {
     measure {
       for _ in 0..<1000 {
         if let nested = try? complexMessage.get(forField: "nested_message") as? DynamicMessage {
@@ -140,7 +140,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
   // MARK: - Message Creation Performance Tests
 
   /// Performance test for message creation.
-  func testMessageCreationPerformance() {
+  func testMessageCreationPerformance() async throws {
     measure {
       do {
         for _ in 0..<1000 {
@@ -157,7 +157,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
   }
 
   /// Performance test for message cloning.
-  func testMessageCloningPerformance() {
+  func testMessageCloningPerformance() async throws {
     measure {
       do {
         for _ in 0..<1000 {
@@ -171,7 +171,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
   }
 
   /// Performance test for large message creation.
-  func testLargeMessageCreationPerformance() {
+  func testLargeMessageCreationPerformance() async throws {
     measure {
       do {
         for _ in 0..<100 {
@@ -193,9 +193,9 @@ final class DynamicMessageBenchmarks: XCTestCase {
   // MARK: - Well-Known Types Performance Tests
 
   /// Performance test for Timestamp conversions.
-  func testTimestampConversionPerformance() throws {
+  func testTimestampConversionPerformance() async throws {
     let timestampDescriptor = try createTimestampDescriptor()
-    try registry.registerMessage(timestampDescriptor)
+    try await registry.registerMessage(timestampDescriptor)
 
     measure {
       do {
@@ -225,9 +225,9 @@ final class DynamicMessageBenchmarks: XCTestCase {
   }
 
   /// Performance test for Struct conversions.
-  func testStructConversionPerformance() throws {
+  func testStructConversionPerformance() async throws {
     let structDescriptor = try createStructDescriptor()
-    try registry.registerMessage(structDescriptor)
+    try await registry.registerMessage(structDescriptor)
 
     measure {
       do {
@@ -260,7 +260,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
   // MARK: - Memory Usage Tests
 
   /// Memory usage test for large messages.
-  func testLargeMessageMemoryUsage() {
+  func testLargeMessageMemoryUsage() async throws {
     measure {
       do {
         var messages: [DynamicMessage] = []
@@ -296,7 +296,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
   // MARK: - Concurrent Access Tests
 
   /// Performance test for concurrent field access.
-  func testConcurrentFieldAccessPerformance() {
+  func testConcurrentFieldAccessPerformance() async throws {
     let queue = DispatchQueue.global(qos: .userInitiated)
 
     measure {
@@ -322,7 +322,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
   }
 
   /// Performance test for concurrent message creation.
-  func testConcurrentMessageCreationPerformance() {
+  func testConcurrentMessageCreationPerformance() async throws {
     let queue = DispatchQueue.global(qos: .userInitiated)
 
     measure {
@@ -353,7 +353,7 @@ final class DynamicMessageBenchmarks: XCTestCase {
   // MARK: - Validation Performance Tests
 
   /// Performance test for message validation.
-  func testMessageValidationPerformance() {
+  func testMessageValidationPerformance() async throws {
     measure {
       for _ in 0..<1000 {
         let result = messageFactory.validate(complexMessage)

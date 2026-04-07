@@ -83,7 +83,7 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
 
   // MARK: - Timestamp interop
 
-  func test_interop_timestamp_bidirectional() throws {
+  func test_interop_timestamp_bidirectional() async throws {
     // SwiftProtobuf → JSON → our deserializer
     var ts = Google_Protobuf_Timestamp()
     ts.seconds = 1_234_567_890
@@ -92,7 +92,7 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     let jsonStr = try ts.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let msg = try makeDeserializer().deserialize(jsonData, using: timestampDescriptor())
+    let msg = try await makeDeserializer().deserialize(jsonData, using: timestampDescriptor())
     let seconds = try XCTUnwrap(try msg.get(forField: 1) as? Int64)
     let nanos = (try? msg.get(forField: 2) as? Int32) ?? 0
     XCTAssertEqual(seconds, 1_234_567_890)
@@ -101,7 +101,7 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     // Our serializer → JSON → SwiftProtobuf
     var dynMsg = DynamicMessage(descriptor: timestampDescriptor())
     try dynMsg.set(Int64(1_234_567_890), forField: 1)
-    let libData = try makeSerializer().serialize(dynMsg)
+    let libData = try await makeSerializer().serialize(dynMsg)
     let libStr = try XCTUnwrap(String(data: libData, encoding: .utf8))
 
     let decoded = try Google_Protobuf_Timestamp(jsonString: libStr)
@@ -109,7 +109,7 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     XCTAssertEqual(decoded.nanos, 0)
   }
 
-  func test_interop_timestamp_withNanos_bidirectional() throws {
+  func test_interop_timestamp_withNanos_bidirectional() async throws {
     // SwiftProtobuf → JSON → our deserializer
     var ts = Google_Protobuf_Timestamp()
     ts.seconds = 0
@@ -118,7 +118,7 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     let jsonStr = try ts.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let msg = try makeDeserializer().deserialize(jsonData, using: timestampDescriptor())
+    let msg = try await makeDeserializer().deserialize(jsonData, using: timestampDescriptor())
     let seconds = (try? msg.get(forField: 1) as? Int64) ?? 0
     let nanos = try XCTUnwrap(try msg.get(forField: 2) as? Int32)
     XCTAssertEqual(seconds, 0)
@@ -128,7 +128,7 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     var dynMsg = DynamicMessage(descriptor: timestampDescriptor())
     try dynMsg.set(Int64(0), forField: 1)
     try dynMsg.set(Int32(123_456_789), forField: 2)
-    let libData = try makeSerializer().serialize(dynMsg)
+    let libData = try await makeSerializer().serialize(dynMsg)
     let libStr = try XCTUnwrap(String(data: libData, encoding: .utf8))
 
     let decoded = try Google_Protobuf_Timestamp(jsonString: libStr)
@@ -136,13 +136,13 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     XCTAssertEqual(decoded.nanos, 123_456_789)
   }
 
-  func test_roundTrip_timestamp_preservesData() throws {
+  func test_roundTrip_timestamp_preservesData() async throws {
     var dynMsg = DynamicMessage(descriptor: timestampDescriptor())
     try dynMsg.set(Int64(1_700_000_000), forField: 1)
     try dynMsg.set(Int32(500_000_000), forField: 2)
 
-    let data = try makeSerializer().serialize(dynMsg)
-    let restored = try makeDeserializer().deserialize(data, using: timestampDescriptor())
+    let data = try await makeSerializer().serialize(dynMsg)
+    let restored = try await makeDeserializer().deserialize(data, using: timestampDescriptor())
 
     XCTAssertEqual(try restored.get(forField: 1) as? Int64, 1_700_000_000)
     XCTAssertEqual(try restored.get(forField: 2) as? Int32, 500_000_000)
@@ -150,7 +150,7 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
 
   // MARK: - Duration interop
 
-  func test_interop_duration_bidirectional() throws {
+  func test_interop_duration_bidirectional() async throws {
     // SwiftProtobuf → JSON → our deserializer
     var dur = Google_Protobuf_Duration()
     dur.seconds = 300
@@ -159,7 +159,7 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     let jsonStr = try dur.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let msg = try makeDeserializer().deserialize(jsonData, using: durationDescriptor())
+    let msg = try await makeDeserializer().deserialize(jsonData, using: durationDescriptor())
     let seconds = try XCTUnwrap(try msg.get(forField: 1) as? Int64)
     let nanos = (try? msg.get(forField: 2) as? Int32) ?? 0
     XCTAssertEqual(seconds, 300)
@@ -168,7 +168,7 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     // Our serializer → JSON → SwiftProtobuf
     var dynMsg = DynamicMessage(descriptor: durationDescriptor())
     try dynMsg.set(Int64(300), forField: 1)
-    let libData = try makeSerializer().serialize(dynMsg)
+    let libData = try await makeSerializer().serialize(dynMsg)
     let libStr = try XCTUnwrap(String(data: libData, encoding: .utf8))
 
     let decoded = try Google_Protobuf_Duration(jsonString: libStr)
@@ -176,7 +176,7 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     XCTAssertEqual(decoded.nanos, 0)
   }
 
-  func test_interop_duration_negative_bidirectional() throws {
+  func test_interop_duration_negative_bidirectional() async throws {
     // SwiftProtobuf → JSON → our deserializer
     var dur = Google_Protobuf_Duration()
     dur.seconds = -1
@@ -185,7 +185,7 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     let jsonStr = try dur.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let msg = try makeDeserializer().deserialize(jsonData, using: durationDescriptor())
+    let msg = try await makeDeserializer().deserialize(jsonData, using: durationDescriptor())
     let seconds = try XCTUnwrap(try msg.get(forField: 1) as? Int64)
     let nanos = try XCTUnwrap(try msg.get(forField: 2) as? Int32)
     XCTAssertEqual(seconds, -1)
@@ -195,7 +195,7 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     var dynMsg = DynamicMessage(descriptor: durationDescriptor())
     try dynMsg.set(Int64(-1), forField: 1)
     try dynMsg.set(Int32(-500_000_000), forField: 2)
-    let libData = try makeSerializer().serialize(dynMsg)
+    let libData = try await makeSerializer().serialize(dynMsg)
     let libStr = try XCTUnwrap(String(data: libData, encoding: .utf8))
 
     let decoded = try Google_Protobuf_Duration(jsonString: libStr)
@@ -203,13 +203,13 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     XCTAssertEqual(decoded.nanos, -500_000_000)
   }
 
-  func test_roundTrip_duration_preservesData() throws {
+  func test_roundTrip_duration_preservesData() async throws {
     var dynMsg = DynamicMessage(descriptor: durationDescriptor())
     try dynMsg.set(Int64(123), forField: 1)
     try dynMsg.set(Int32(456_789_000), forField: 2)
 
-    let data = try makeSerializer().serialize(dynMsg)
-    let restored = try makeDeserializer().deserialize(data, using: durationDescriptor())
+    let data = try await makeSerializer().serialize(dynMsg)
+    let restored = try await makeDeserializer().deserialize(data, using: durationDescriptor())
 
     XCTAssertEqual(try restored.get(forField: 1) as? Int64, 123)
     XCTAssertEqual(try restored.get(forField: 2) as? Int32, 456_789_000)
@@ -217,7 +217,7 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
 
   // MARK: - FieldMask interop
 
-  func test_interop_fieldMask_bidirectional() throws {
+  func test_interop_fieldMask_bidirectional() async throws {
     // SwiftProtobuf → JSON → our deserializer (multi-path)
     var fm = Google_Protobuf_FieldMask()
     fm.paths = ["foo_bar", "baz_qux"]
@@ -225,46 +225,46 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     let jsonStr = try fm.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let msg = try makeDeserializer().deserialize(jsonData, using: fieldMaskDescriptor())
+    let msg = try await makeDeserializer().deserialize(jsonData, using: fieldMaskDescriptor())
     let paths = try XCTUnwrap(try msg.get(forField: 1) as? [String])
     XCTAssertEqual(paths, ["foo_bar", "baz_qux"])
 
     // Our serializer → JSON → SwiftProtobuf
     var dynMsg = DynamicMessage(descriptor: fieldMaskDescriptor())
     try dynMsg.set(["foo_bar", "baz_qux"], forField: 1)
-    let libData = try makeSerializer().serialize(dynMsg)
+    let libData = try await makeSerializer().serialize(dynMsg)
     let libStr = try XCTUnwrap(String(data: libData, encoding: .utf8))
 
     let decoded = try Google_Protobuf_FieldMask(jsonString: libStr)
     XCTAssertEqual(decoded.paths, ["foo_bar", "baz_qux"])
   }
 
-  func test_interop_fieldMask_singlePath_bidirectional() throws {
+  func test_interop_fieldMask_singlePath_bidirectional() async throws {
     var fm = Google_Protobuf_FieldMask()
     fm.paths = ["user_name"]
 
     let jsonStr = try fm.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let msg = try makeDeserializer().deserialize(jsonData, using: fieldMaskDescriptor())
+    let msg = try await makeDeserializer().deserialize(jsonData, using: fieldMaskDescriptor())
     let paths = try XCTUnwrap(try msg.get(forField: 1) as? [String])
     XCTAssertEqual(paths, ["user_name"])
   }
 
-  func test_roundTrip_fieldMask_preservesData() throws {
+  func test_roundTrip_fieldMask_preservesData() async throws {
     let original = ["foo_bar", "baz_qux_quux"]
     var dynMsg = DynamicMessage(descriptor: fieldMaskDescriptor())
     try dynMsg.set(original, forField: 1)
 
-    let data = try makeSerializer().serialize(dynMsg)
-    let restored = try makeDeserializer().deserialize(data, using: fieldMaskDescriptor())
+    let data = try await makeSerializer().serialize(dynMsg)
+    let restored = try await makeDeserializer().deserialize(data, using: fieldMaskDescriptor())
     let paths = try XCTUnwrap(try restored.get(forField: 1) as? [String])
     XCTAssertEqual(paths, original)
   }
 
   // MARK: - Wrapper types interop
 
-  func test_interop_doubleValue_bidirectional() throws {
+  func test_interop_doubleValue_bidirectional() async throws {
     let desc = wrapperDescriptor(name: "DoubleValue", fullName: WellKnownTypeNames.doubleValue, fieldType: FT.double)
 
     // SwiftProtobuf → JSON → our deserializer
@@ -273,21 +273,21 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     let jsonStr = try wrapped.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let msg = try makeDeserializer().deserialize(jsonData, using: desc)
+    let msg = try await makeDeserializer().deserialize(jsonData, using: desc)
     let value = try XCTUnwrap(try msg.get(forField: 1) as? Double)
     XCTAssertEqual(value, 3.14159, accuracy: 1e-10)
 
     // Our serializer → JSON → SwiftProtobuf
     var dynMsg = DynamicMessage(descriptor: desc)
     try dynMsg.set(Double(2.71828), forField: 1)
-    let libData = try makeSerializer().serialize(dynMsg)
+    let libData = try await makeSerializer().serialize(dynMsg)
     let libStr = try XCTUnwrap(String(data: libData, encoding: .utf8))
 
     let decoded = try Google_Protobuf_DoubleValue(jsonString: libStr)
     XCTAssertEqual(decoded.value, 2.71828, accuracy: 1e-10)
   }
 
-  func test_interop_int64Value_bidirectional() throws {
+  func test_interop_int64Value_bidirectional() async throws {
     let desc = wrapperDescriptor(name: "Int64Value", fullName: WellKnownTypeNames.int64Value, fieldType: FT.int64)
     let largeInt: Int64 = 9_007_199_254_740_993
 
@@ -297,21 +297,21 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     let jsonStr = try wrapped.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let msg = try makeDeserializer().deserialize(jsonData, using: desc)
+    let msg = try await makeDeserializer().deserialize(jsonData, using: desc)
     let value = try XCTUnwrap(try msg.get(forField: 1) as? Int64)
     XCTAssertEqual(value, largeInt)
 
     // Our serializer → JSON → SwiftProtobuf
     var dynMsg = DynamicMessage(descriptor: desc)
     try dynMsg.set(largeInt, forField: 1)
-    let libData = try makeSerializer().serialize(dynMsg)
+    let libData = try await makeSerializer().serialize(dynMsg)
     let libStr = try XCTUnwrap(String(data: libData, encoding: .utf8))
 
     let decoded = try Google_Protobuf_Int64Value(jsonString: libStr)
     XCTAssertEqual(decoded.value, largeInt)
   }
 
-  func test_interop_boolValue_bidirectional() throws {
+  func test_interop_boolValue_bidirectional() async throws {
     let desc = wrapperDescriptor(name: "BoolValue", fullName: WellKnownTypeNames.boolValue, fieldType: FT.bool)
 
     for boolVal in [true, false] {
@@ -321,14 +321,14 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
       let jsonStr = try wrapped.jsonString()
       let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-      let msg = try makeDeserializer().deserialize(jsonData, using: desc)
+      let msg = try await makeDeserializer().deserialize(jsonData, using: desc)
       let value = try XCTUnwrap(try msg.get(forField: 1) as? Bool)
       XCTAssertEqual(value, boolVal, "BoolValue=\(boolVal) must survive SwiftProtobuf→our interop")
 
       // Our serializer → JSON → SwiftProtobuf
       var dynMsg = DynamicMessage(descriptor: desc)
       try dynMsg.set(boolVal, forField: 1)
-      let libData = try makeSerializer().serialize(dynMsg)
+      let libData = try await makeSerializer().serialize(dynMsg)
       let libStr = try XCTUnwrap(String(data: libData, encoding: .utf8))
 
       let decoded = try Google_Protobuf_BoolValue(jsonString: libStr)
@@ -336,7 +336,7 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     }
   }
 
-  func test_interop_stringValue_bidirectional() throws {
+  func test_interop_stringValue_bidirectional() async throws {
     let desc = wrapperDescriptor(name: "StringValue", fullName: WellKnownTypeNames.stringValue, fieldType: FT.string)
     let str = "Hello, 世界 🌍"
 
@@ -346,21 +346,21 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     let jsonStr = try wrapped.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let msg = try makeDeserializer().deserialize(jsonData, using: desc)
+    let msg = try await makeDeserializer().deserialize(jsonData, using: desc)
     let value = try XCTUnwrap(try msg.get(forField: 1) as? String)
     XCTAssertEqual(value, str)
 
     // Our serializer → JSON → SwiftProtobuf
     var dynMsg = DynamicMessage(descriptor: desc)
     try dynMsg.set(str, forField: 1)
-    let libData = try makeSerializer().serialize(dynMsg)
+    let libData = try await makeSerializer().serialize(dynMsg)
     let libStr = try XCTUnwrap(String(data: libData, encoding: .utf8))
 
     let decoded = try Google_Protobuf_StringValue(jsonString: libStr)
     XCTAssertEqual(decoded.value, str)
   }
 
-  func test_interop_bytesValue_bidirectional() throws {
+  func test_interop_bytesValue_bidirectional() async throws {
     let desc = wrapperDescriptor(name: "BytesValue", fullName: WellKnownTypeNames.bytesValue, fieldType: FT.bytes)
     let bytes = Data([0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0xFF])
 
@@ -370,21 +370,21 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     let jsonStr = try wrapped.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let msg = try makeDeserializer().deserialize(jsonData, using: desc)
+    let msg = try await makeDeserializer().deserialize(jsonData, using: desc)
     let value = try XCTUnwrap(try msg.get(forField: 1) as? Data)
     XCTAssertEqual(value, bytes)
 
     // Our serializer → JSON → SwiftProtobuf
     var dynMsg = DynamicMessage(descriptor: desc)
     try dynMsg.set(bytes, forField: 1)
-    let libData = try makeSerializer().serialize(dynMsg)
+    let libData = try await makeSerializer().serialize(dynMsg)
     let libStr = try XCTUnwrap(String(data: libData, encoding: .utf8))
 
     let decoded = try Google_Protobuf_BytesValue(jsonString: libStr)
     XCTAssertEqual(decoded.value, bytes)
   }
 
-  func test_interop_floatValue_bidirectional() throws {
+  func test_interop_floatValue_bidirectional() async throws {
     let desc = wrapperDescriptor(name: "FloatValue", fullName: WellKnownTypeNames.floatValue, fieldType: FT.float)
 
     // SwiftProtobuf → JSON → our deserializer
@@ -393,21 +393,21 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     let jsonStr = try wrapped.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let msg = try makeDeserializer().deserialize(jsonData, using: desc)
+    let msg = try await makeDeserializer().deserialize(jsonData, using: desc)
     let value = try XCTUnwrap(try msg.get(forField: 1) as? Float)
     XCTAssertEqual(value, 1.5, accuracy: 0.001)
 
     // Our serializer → JSON → SwiftProtobuf
     var dynMsg = DynamicMessage(descriptor: desc)
     try dynMsg.set(Float(2.5), forField: 1)
-    let libData = try makeSerializer().serialize(dynMsg)
+    let libData = try await makeSerializer().serialize(dynMsg)
     let libStr = try XCTUnwrap(String(data: libData, encoding: .utf8))
 
     let decoded = try Google_Protobuf_FloatValue(jsonString: libStr)
     XCTAssertEqual(decoded.value, 2.5, accuracy: 0.001)
   }
 
-  func test_interop_int32Value_bidirectional() throws {
+  func test_interop_int32Value_bidirectional() async throws {
     let desc = wrapperDescriptor(name: "Int32Value", fullName: WellKnownTypeNames.int32Value, fieldType: FT.int32)
 
     // SwiftProtobuf → JSON → our deserializer
@@ -416,21 +416,21 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     let jsonStr = try wrapped.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let msg = try makeDeserializer().deserialize(jsonData, using: desc)
+    let msg = try await makeDeserializer().deserialize(jsonData, using: desc)
     let value = try XCTUnwrap(try msg.get(forField: 1) as? Int32)
     XCTAssertEqual(value, Int32.min)
 
     // Our serializer → JSON → SwiftProtobuf
     var dynMsg = DynamicMessage(descriptor: desc)
     try dynMsg.set(Int32(2_147_483_647), forField: 1)  // Int32.max
-    let libData = try makeSerializer().serialize(dynMsg)
+    let libData = try await makeSerializer().serialize(dynMsg)
     let libStr = try XCTUnwrap(String(data: libData, encoding: .utf8))
 
     let decoded = try Google_Protobuf_Int32Value(jsonString: libStr)
     XCTAssertEqual(decoded.value, Int32.max)
   }
 
-  func test_interop_uint32Value_bidirectional() throws {
+  func test_interop_uint32Value_bidirectional() async throws {
     let desc = wrapperDescriptor(name: "UInt32Value", fullName: WellKnownTypeNames.uint32Value, fieldType: FT.uint32)
 
     // SwiftProtobuf → JSON → our deserializer
@@ -439,21 +439,21 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     let jsonStr = try wrapped.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let msg = try makeDeserializer().deserialize(jsonData, using: desc)
+    let msg = try await makeDeserializer().deserialize(jsonData, using: desc)
     let value = try XCTUnwrap(try msg.get(forField: 1) as? UInt32)
     XCTAssertEqual(value, UInt32.max)
 
     // Our serializer → JSON → SwiftProtobuf
     var dynMsg = DynamicMessage(descriptor: desc)
     try dynMsg.set(UInt32(100), forField: 1)
-    let libData = try makeSerializer().serialize(dynMsg)
+    let libData = try await makeSerializer().serialize(dynMsg)
     let libStr = try XCTUnwrap(String(data: libData, encoding: .utf8))
 
     let decoded = try Google_Protobuf_UInt32Value(jsonString: libStr)
     XCTAssertEqual(decoded.value, 100)
   }
 
-  func test_interop_uint64Value_bidirectional() throws {
+  func test_interop_uint64Value_bidirectional() async throws {
     let desc = wrapperDescriptor(name: "UInt64Value", fullName: WellKnownTypeNames.uint64Value, fieldType: FT.uint64)
     let largeUInt: UInt64 = 18_446_744_073_709_551_615  // UInt64.max
 
@@ -463,14 +463,14 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     let jsonStr = try wrapped.jsonString()
     let jsonData = try XCTUnwrap(jsonStr.data(using: .utf8))
 
-    let msg = try makeDeserializer().deserialize(jsonData, using: desc)
+    let msg = try await makeDeserializer().deserialize(jsonData, using: desc)
     let value = try XCTUnwrap(try msg.get(forField: 1) as? UInt64)
     XCTAssertEqual(value, largeUInt)
 
     // Our serializer → JSON → SwiftProtobuf
     var dynMsg = DynamicMessage(descriptor: desc)
     try dynMsg.set(largeUInt, forField: 1)
-    let libData = try makeSerializer().serialize(dynMsg)
+    let libData = try await makeSerializer().serialize(dynMsg)
     let libStr = try XCTUnwrap(String(data: libData, encoding: .utf8))
 
     let decoded = try Google_Protobuf_UInt64Value(jsonString: libStr)
@@ -479,13 +479,13 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
 
   // MARK: - Any interop
 
-  func test_interop_any_regularMessage_bidirectional() throws {
+  func test_interop_any_regularMessage_bidirectional() async throws {
     // Build registry with Ping type
     var file = FileDescriptor(name: "test.proto", package: "test")
     var pingDesc = MessageDescriptor(name: "Ping", parent: file)
     pingDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32, jsonName: "id"))
     file.addMessage(pingDesc)
-    let registry = try TypeRegistry(fileDescriptors: [file])
+    let registry = try await TypeRegistry(fileDescriptors: [file])
     let actualPingDesc = file.messages["Ping"]!
 
     // Build DynamicMessage packed as Any
@@ -498,7 +498,7 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     try anyMsg.set(binaryData, forField: 2)
 
     // Our serializer → JSON → parse as object
-    let libData = try makeSerializer(registry: registry).serialize(anyMsg)
+    let libData = try await makeSerializer(registry: registry).serialize(anyMsg)
     let libStr = try XCTUnwrap(String(data: libData, encoding: .utf8))
     let libJson = try XCTUnwrap(
       try JSONSerialization.jsonObject(with: libData, options: .fragmentsAllowed) as? [String: Any]
@@ -508,15 +508,16 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
 
     // Our serializer → JSON → our deserializer (round-trip)
     let anyDesc = anyDescriptor()
-    let restored = try makeDeserializer(registry: registry).deserialize(libData, using: anyDesc)
+    let restored = try await makeDeserializer(registry: registry).deserialize(libData, using: anyDesc)
     let restoredTypeUrl = try XCTUnwrap(try restored.get(forField: 1) as? String)
     let restoredBytes = try XCTUnwrap(try restored.get(forField: 2) as? Data)
     XCTAssertEqual(restoredTypeUrl, typeUrl)
 
-    let unpacked = try BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry())).deserialize(
-      restoredBytes,
-      using: actualPingDesc
-    )
+    let unpacked = try await BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry()))
+      .deserialize(
+        restoredBytes,
+        using: actualPingDesc
+      )
     XCTAssertEqual(try unpacked.get(forField: 1) as? Int32, 42)
 
     // SwiftProtobuf → JSON  (note: SwiftProtobuf Any JSON interop requires proto2 registry, skip direct parse)
@@ -526,13 +527,13 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     XCTAssertTrue(libStr.contains("test.Ping"))
   }
 
-  func test_interop_any_wktMessage_bidirectional() throws {
+  func test_interop_any_wktMessage_bidirectional() async throws {
     // Pack a StringValue inside Any
     var fileWKT = FileDescriptor(name: "google/protobuf/wrappers.proto", package: "google.protobuf")
     var strDesc = MessageDescriptor(name: "StringValue", parent: fileWKT)
     strDesc.addField(FieldDescriptor(name: "value", number: 1, type: .string))
     fileWKT.addMessage(strDesc)
-    let registry = try TypeRegistry(fileDescriptors: [fileWKT])
+    let registry = try await TypeRegistry(fileDescriptors: [fileWKT])
     let actualStrDesc = fileWKT.messages["StringValue"]!
 
     var innerMsg = DynamicMessage(descriptor: actualStrDesc)
@@ -545,7 +546,7 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     try anyMsg.set(binaryData, forField: 2)
 
     // Our serializer → JSON
-    let libData = try makeSerializer(registry: registry).serialize(anyMsg)
+    let libData = try await makeSerializer(registry: registry).serialize(anyMsg)
     let libJson = try XCTUnwrap(
       try JSONSerialization.jsonObject(with: libData, options: .fragmentsAllowed) as? [String: Any]
     )
@@ -554,27 +555,28 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
 
     // Round-trip: our serializer → JSON → our deserializer
     let anyDesc = anyDescriptor()
-    let restored = try makeDeserializer(registry: registry).deserialize(libData, using: anyDesc)
+    let restored = try await makeDeserializer(registry: registry).deserialize(libData, using: anyDesc)
     let restoredTypeUrl = try XCTUnwrap(try restored.get(forField: 1) as? String)
     let restoredBytes = try XCTUnwrap(try restored.get(forField: 2) as? Data)
     XCTAssertEqual(restoredTypeUrl, typeUrl)
 
-    let unpacked = try BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry())).deserialize(
-      restoredBytes,
-      using: actualStrDesc
-    )
+    let unpacked = try await BinaryDeserializer(options: DeserializationOptions(typeRegistry: TypeRegistry()))
+      .deserialize(
+        restoredBytes,
+        using: actualStrDesc
+      )
     XCTAssertEqual(try unpacked.get(forField: 1) as? String, "interop-test")
   }
 
   // MARK: - Round-trip for all WKTs
 
-  func test_roundTrip_allWKTs_preserveData() throws {
+  func test_roundTrip_allWKTs_preserveData() async throws {
     // Timestamp
     var tsMsg = DynamicMessage(descriptor: timestampDescriptor())
     try tsMsg.set(Int64(1_700_000_000), forField: 1)
     try tsMsg.set(Int32(123_456_789), forField: 2)
-    let tsData = try makeSerializer().serialize(tsMsg)
-    let tsRestored = try makeDeserializer().deserialize(tsData, using: timestampDescriptor())
+    let tsData = try await makeSerializer().serialize(tsMsg)
+    let tsRestored = try await makeDeserializer().deserialize(tsData, using: timestampDescriptor())
     XCTAssertEqual(try tsRestored.get(forField: 1) as? Int64, 1_700_000_000)
     XCTAssertEqual(try tsRestored.get(forField: 2) as? Int32, 123_456_789)
 
@@ -582,48 +584,48 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     var durMsg = DynamicMessage(descriptor: durationDescriptor())
     try durMsg.set(Int64(-5), forField: 1)
     try durMsg.set(Int32(-500_000_000), forField: 2)
-    let durData = try makeSerializer().serialize(durMsg)
-    let durRestored = try makeDeserializer().deserialize(durData, using: durationDescriptor())
+    let durData = try await makeSerializer().serialize(durMsg)
+    let durRestored = try await makeDeserializer().deserialize(durData, using: durationDescriptor())
     XCTAssertEqual(try durRestored.get(forField: 1) as? Int64, -5)
     XCTAssertEqual(try durRestored.get(forField: 2) as? Int32, -500_000_000)
 
     // FieldMask
     var fmMsg = DynamicMessage(descriptor: fieldMaskDescriptor())
     try fmMsg.set(["user_name", "display_name"], forField: 1)
-    let fmData = try makeSerializer().serialize(fmMsg)
-    let fmRestored = try makeDeserializer().deserialize(fmData, using: fieldMaskDescriptor())
+    let fmData = try await makeSerializer().serialize(fmMsg)
+    let fmRestored = try await makeDeserializer().deserialize(fmData, using: fieldMaskDescriptor())
     XCTAssertEqual(try fmRestored.get(forField: 1) as? [String], ["user_name", "display_name"])
 
     // StringValue
     let strDesc = wrapperDescriptor(name: "StringValue", fullName: WellKnownTypeNames.stringValue, fieldType: FT.string)
     var strMsg = DynamicMessage(descriptor: strDesc)
     try strMsg.set("round-trip", forField: 1)
-    let strData = try makeSerializer().serialize(strMsg)
-    let strRestored = try makeDeserializer().deserialize(strData, using: strDesc)
+    let strData = try await makeSerializer().serialize(strMsg)
+    let strRestored = try await makeDeserializer().deserialize(strData, using: strDesc)
     XCTAssertEqual(try strRestored.get(forField: 1) as? String, "round-trip")
 
     // BoolValue
     let boolDesc = wrapperDescriptor(name: "BoolValue", fullName: WellKnownTypeNames.boolValue, fieldType: FT.bool)
     var boolMsg = DynamicMessage(descriptor: boolDesc)
     try boolMsg.set(false, forField: 1)
-    let boolData = try makeSerializer().serialize(boolMsg)
-    let boolRestored = try makeDeserializer().deserialize(boolData, using: boolDesc)
+    let boolData = try await makeSerializer().serialize(boolMsg)
+    let boolRestored = try await makeDeserializer().deserialize(boolData, using: boolDesc)
     XCTAssertEqual(try boolRestored.get(forField: 1) as? Bool, false)
 
     // Int64Value
     let i64Desc = wrapperDescriptor(name: "Int64Value", fullName: WellKnownTypeNames.int64Value, fieldType: FT.int64)
     var i64Msg = DynamicMessage(descriptor: i64Desc)
     try i64Msg.set(Int64.min, forField: 1)
-    let i64Data = try makeSerializer().serialize(i64Msg)
-    let i64Restored = try makeDeserializer().deserialize(i64Data, using: i64Desc)
+    let i64Data = try await makeSerializer().serialize(i64Msg)
+    let i64Restored = try await makeDeserializer().deserialize(i64Data, using: i64Desc)
     XCTAssertEqual(try i64Restored.get(forField: 1) as? Int64, Int64.min)
 
     // UInt64Value
     let u64Desc = wrapperDescriptor(name: "UInt64Value", fullName: WellKnownTypeNames.uint64Value, fieldType: FT.uint64)
     var u64Msg = DynamicMessage(descriptor: u64Desc)
     try u64Msg.set(UInt64.max, forField: 1)
-    let u64Data = try makeSerializer().serialize(u64Msg)
-    let u64Restored = try makeDeserializer().deserialize(u64Data, using: u64Desc)
+    let u64Data = try await makeSerializer().serialize(u64Msg)
+    let u64Restored = try await makeDeserializer().deserialize(u64Data, using: u64Desc)
     XCTAssertEqual(try u64Restored.get(forField: 1) as? UInt64, UInt64.max)
 
     // BytesValue
@@ -631,8 +633,8 @@ final class CanonicalJSONWKTInteropTests: XCTestCase {
     let testBytes = Data([0x00, 0x01, 0x02, 0xFF])
     var bytesMsg = DynamicMessage(descriptor: bytesDesc)
     try bytesMsg.set(testBytes, forField: 1)
-    let bytesData = try makeSerializer().serialize(bytesMsg)
-    let bytesRestored = try makeDeserializer().deserialize(bytesData, using: bytesDesc)
+    let bytesData = try await makeSerializer().serialize(bytesMsg)
+    let bytesRestored = try await makeDeserializer().deserialize(bytesData, using: bytesDesc)
     XCTAssertEqual(try bytesRestored.get(forField: 1) as? Data, testBytes)
   }
 }

@@ -10,7 +10,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
 
   // MARK: - toProtobuf: required label
 
-  func test_toProtobuf_requiredField_setsRequiredLabel() throws {
+  func test_toProtobuf_requiredField_setsRequiredLabel() async throws {
     var desc = MessageDescriptor(name: "Test", fullName: "Test")
     desc.addField(
       FieldDescriptor(
@@ -26,7 +26,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
 
   // MARK: - Default value parsing: bytes
 
-  func test_fromProtobuf_bytesDefaultValue_parsedCorrectly() throws {
+  func test_fromProtobuf_bytesDefaultValue_parsedCorrectly() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "data"
     fieldProto.number = 1
@@ -45,7 +45,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
 
   // MARK: - Default value parsing: sint64, uint32, uint64
 
-  func test_fromProtobuf_sint64DefaultValue_parsedAsInt() throws {
+  func test_fromProtobuf_sint64DefaultValue_parsedAsInt() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "val"
     fieldProto.number = 1
@@ -62,7 +62,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
     XCTAssertEqual(field?.defaultValue, .int(42))
   }
 
-  func test_fromProtobuf_uint32DefaultValue_parsedAsInt() throws {
+  func test_fromProtobuf_uint32DefaultValue_parsedAsInt() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "val"
     fieldProto.number = 1
@@ -79,7 +79,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
     XCTAssertEqual(field?.defaultValue, .int(100))
   }
 
-  func test_fromProtobuf_uint64DefaultValue_parsedAsInt() throws {
+  func test_fromProtobuf_uint64DefaultValue_parsedAsInt() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "val"
     fieldProto.number = 1
@@ -96,7 +96,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
     XCTAssertEqual(field?.defaultValue, .int(999))
   }
 
-  func test_fromProtobuf_invalidIntDefaultValue_fallsBackToString() throws {
+  func test_fromProtobuf_invalidIntDefaultValue_fallsBackToString() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "val"
     fieldProto.number = 1
@@ -115,7 +115,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
 
   // MARK: - Default value parsing: enum
 
-  func test_fromProtobuf_enumDefaultValue_parsedAsString() throws {
+  func test_fromProtobuf_enumDefaultValue_parsedAsString() async throws {
     var fieldProto = Google_Protobuf_FieldDescriptorProto()
     fieldProto.name = "status"
     fieldProto.number = 1
@@ -135,7 +135,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
 
   // MARK: - Map entry validation: missing fields
 
-  func test_fromProtobuf_mapEntryMissingValueField_throws() throws {
+  func test_fromProtobuf_mapEntryMissingValueField_throws() async throws {
     var keyField = Google_Protobuf_FieldDescriptorProto()
     keyField.name = "key"
     keyField.number = 1
@@ -164,7 +164,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
 
   // MARK: - Map entry validation: wrong field names
 
-  func test_fromProtobuf_mapEntryWrongFieldNames_throws() throws {
+  func test_fromProtobuf_mapEntryWrongFieldNames_throws() async throws {
     var keyField = Google_Protobuf_FieldDescriptorProto()
     keyField.name = "k"
     keyField.number = 1
@@ -199,7 +199,7 @@ final class DescriptorBridgeCoverageTests: XCTestCase {
 
   // MARK: - Map entry validation: invalid key type
 
-  func test_fromProtobuf_mapEntryFloatKeyType_throws() throws {
+  func test_fromProtobuf_mapEntryFloatKeyType_throws() async throws {
     var keyField = Google_Protobuf_FieldDescriptorProto()
     keyField.name = "key"
     keyField.number = 1

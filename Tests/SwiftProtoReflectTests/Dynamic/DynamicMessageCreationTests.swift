@@ -24,8 +24,8 @@ final class DynamicMessageCreationTests: XCTestCase {
 
   // MARK: - Setup
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     messageFactory = MessageFactory()
     fileDescriptor = FileDescriptor(name: "test_creation.proto", package: "test.creation")
@@ -161,19 +161,19 @@ final class DynamicMessageCreationTests: XCTestCase {
     fileDescriptor.addMessage(complexMessage)
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     fileDescriptor = nil
     messageFactory = nil
     simpleMessage = nil
     complexMessage = nil
     nestedMessage = nil
     enumDescriptor = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Test-DYN-001: Creating messages from protodescriptor
 
-  func testCreateEmptyMessageFromDescriptor() {
+  func testCreateEmptyMessageFromDescriptor() async throws {
     // Creating empty message should work like in C++ protobuf
     let message = messageFactory.createMessage(from: simpleMessage)
 
@@ -191,7 +191,7 @@ final class DynamicMessageCreationTests: XCTestCase {
     XCTAssertNil(try message.get(forField: "flag"))
   }
 
-  func testCreateMessageWithFieldValues() throws {
+  func testCreateMessageWithFieldValues() async throws {
     // Creating message with pre-filled values (by field names)
     let fieldValues: [String: Any] = [
       "text": "Hello World",
@@ -211,7 +211,7 @@ final class DynamicMessageCreationTests: XCTestCase {
     XCTAssertEqual(try message.get(forField: "flag") as? Bool, true)
   }
 
-  func testCreateMessageWithFieldNumbers() throws {
+  func testCreateMessageWithFieldNumbers() async throws {
     // Creating message with pre-filled values (by field numbers)
     let fieldValues: [Int: Any] = [
       1: "Test Message",
@@ -226,7 +226,7 @@ final class DynamicMessageCreationTests: XCTestCase {
     XCTAssertEqual(try message.get(forField: 3) as? Bool, false)
   }
 
-  func testCreateMessageErrorHandling() {
+  func testCreateMessageErrorHandling() async throws {
     // Testing errors when creating with incorrect data
     let invalidFieldValues: [String: Any] = [
       "text": 123,  // Wrong type
@@ -244,7 +244,7 @@ final class DynamicMessageCreationTests: XCTestCase {
 
   // MARK: - Test-DYN-002: All proto3 data types
 
-  func testAllScalarTypesProto3() throws {
+  func testAllScalarTypesProto3() async throws {
     // Creating message with all proto3 scalar types
     let scalarValues: [String: Any] = [
       "double_field": 3.14159,
@@ -284,7 +284,7 @@ final class DynamicMessageCreationTests: XCTestCase {
     XCTAssertEqual(try message.get(forField: "bytes_field") as? Data, Data("binary data".utf8))
   }
 
-  func testComplexTypesCreation() throws {
+  func testComplexTypesCreation() async throws {
     // Create nested message
     let nestedMsg = try messageFactory.createMessage(
       from: nestedMessage,
@@ -316,7 +316,7 @@ final class DynamicMessageCreationTests: XCTestCase {
     XCTAssertEqual(try complexMsg.get(forField: "enum_field") as? String, "INACTIVE")
   }
 
-  func testRepeatedFieldsCreation() throws {
+  func testRepeatedFieldsCreation() async throws {
     // Creating message with repeated fields
     let strings = ["first", "second", "third"]
 
@@ -353,7 +353,7 @@ final class DynamicMessageCreationTests: XCTestCase {
     XCTAssertEqual(try retrievedMessages?[1].get(forField: "name") as? String, "Second")
   }
 
-  func testMapFieldsCreation() throws {
+  func testMapFieldsCreation() async throws {
     // Creating message with map fields
     let stringMap = ["key1": "value1", "key2": "value2"]
 
@@ -393,7 +393,7 @@ final class DynamicMessageCreationTests: XCTestCase {
 
   // MARK: - Test-DYN-003: Complex nested structures
 
-  func testDeepNestedMessageCreation() throws {
+  func testDeepNestedMessageCreation() async throws {
     // Create deeply nested structure
 
     // Level 3 (deepest) - simple nested message
@@ -437,7 +437,7 @@ final class DynamicMessageCreationTests: XCTestCase {
     XCTAssertEqual(try retrievedArray?[1].get(forField: "id") as? Int64, 3)
   }
 
-  func testComplexNestedStructureWithAllFieldTypes() throws {
+  func testComplexNestedStructureWithAllFieldTypes() async throws {
     // Create complex structure with combination of all field types
 
     // Nested messages for repeated field
@@ -520,7 +520,7 @@ final class DynamicMessageCreationTests: XCTestCase {
     XCTAssertFalse(try message.hasValue(forField: "option_b"))
   }
 
-  func testMessageCloning() throws {
+  func testMessageCloning() async throws {
     // Test deep cloning of complex structures
     let originalNested = try messageFactory.createMessage(
       from: nestedMessage,
@@ -556,7 +556,7 @@ final class DynamicMessageCreationTests: XCTestCase {
     XCTAssertEqual(try mutableCloned.get(forField: "string_field") as? String, "Modified Clone")
   }
 
-  func testMessageValidation() throws {
+  func testMessageValidation() async throws {
     // Test validation of complex structures
 
     // Create valid message
@@ -586,7 +586,7 @@ final class DynamicMessageCreationTests: XCTestCase {
 
   // MARK: - Performance Tests
 
-  func testMessageCreationPerformance() {
+  func testMessageCreationPerformance() async throws {
     // Test performance of message creation
     measure {
       for _ in 0..<1000 {
@@ -596,7 +596,7 @@ final class DynamicMessageCreationTests: XCTestCase {
     }
   }
 
-  func testComplexMessageCreationPerformance() throws {
+  func testComplexMessageCreationPerformance() async throws {
     // Test performance of complex message creation
     let nestedMsg = try messageFactory.createMessage(
       from: nestedMessage,

@@ -4,7 +4,7 @@ import XCTest
 
 final class DescriptorOptionTests: XCTestCase {
 
-  func testBoolCase() {
+  func testBoolCase() async throws {
     let option = DescriptorOption.bool(true)
     if case .bool(let value) = option {
       XCTAssertTrue(value)
@@ -14,7 +14,7 @@ final class DescriptorOptionTests: XCTestCase {
     }
   }
 
-  func testIntCase() {
+  func testIntCase() async throws {
     let option = DescriptorOption.int(42)
     if case .int(let value) = option {
       XCTAssertEqual(value, 42)
@@ -24,7 +24,7 @@ final class DescriptorOptionTests: XCTestCase {
     }
   }
 
-  func testStringCase() {
+  func testStringCase() async throws {
     let option = DescriptorOption.string("value")
     if case .string(let value) = option {
       XCTAssertEqual(value, "value")
@@ -34,7 +34,7 @@ final class DescriptorOptionTests: XCTestCase {
     }
   }
 
-  func testFloatCase() {
+  func testFloatCase() async throws {
     let option = DescriptorOption.float(1.5)
     if case .float(let value) = option {
       XCTAssertEqual(value, 1.5, accuracy: 0.0001)
@@ -44,14 +44,14 @@ final class DescriptorOptionTests: XCTestCase {
     }
   }
 
-  func testEquality() {
+  func testEquality() async throws {
     XCTAssertEqual(DescriptorOption.bool(true), DescriptorOption.bool(true))
     XCTAssertEqual(DescriptorOption.int(42), DescriptorOption.int(42))
     XCTAssertEqual(DescriptorOption.string("value"), DescriptorOption.string("value"))
     XCTAssertEqual(DescriptorOption.float(1.5), DescriptorOption.float(1.5))
   }
 
-  func testInequality() {
+  func testInequality() async throws {
     XCTAssertNotEqual(DescriptorOption.bool(true), DescriptorOption.bool(false))
     XCTAssertNotEqual(DescriptorOption.int(1), DescriptorOption.int(2))
     XCTAssertNotEqual(DescriptorOption.string("a"), DescriptorOption.string("b"))

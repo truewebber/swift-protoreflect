@@ -13,7 +13,7 @@ import SwiftProtoReflect
 
 @main
 struct ProtoREPLExample {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("Interactive Protocol Buffers REPL")
 
     print("🚀 Starting Interactive Protocol Buffers REPL...")
@@ -22,7 +22,7 @@ struct ProtoREPLExample {
     print()
 
     let repl = ProtoREPL()
-    try repl.run()
+    try await repl.run()
   }
 }
 
@@ -38,7 +38,7 @@ class ProtoREPL {
     setupBuiltinSchemas()
   }
 
-  func run() throws {
+  func run() async throws {
     print("🔧 ProtoREPL v1.0 - Interactive Protocol Buffers Explorer")
     printWelcomeMessage()
 
@@ -54,7 +54,7 @@ class ProtoREPL {
       commandHistory.append(input)
 
       do {
-        try processCommand(input)
+        try await processCommand(input)
       }
       catch {
         print("❌ Error: \(error.localizedDescription)")
@@ -64,7 +64,7 @@ class ProtoREPL {
     print("\n👋 Thanks for using ProtoREPL!")
   }
 
-  private func processCommand(_ input: String) throws {
+  private func processCommand(_ input: String) async throws {
     let components = input.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
     guard let command = components.first else { return }
 
@@ -88,7 +88,7 @@ class ProtoREPL {
     case "validate":
       try validateCurrentMessage()
     case "serialize":
-      try serializeMessage(format: args.isEmpty ? "binary" : args)
+      try await serializeMessage(format: args.isEmpty ? "binary" : args)
     case "load":
       try loadSchema(args)
     case "clear":
@@ -100,9 +100,9 @@ class ProtoREPL {
     case "search":
       try searchFields(args)
     case "demo":
-      try runDemo()
+      try await runDemo()
     case "benchmark":
-      try runBenchmark()
+      try await runBenchmark()
     default:
       print("❓ Unknown command: \(command). Type 'help' for available commands.")
     }
@@ -278,7 +278,7 @@ class ProtoREPL {
     }
   }
 
-  private func serializeMessage(format: String) throws {
+  private func serializeMessage(format: String) async throws {
     guard let message = context.currentMessage else {
       print("❌ No current message to serialize.")
       return
@@ -292,7 +292,7 @@ class ProtoREPL {
 
     case "json":
       let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-      let jsonData = try serializer.serialize(message)
+      let jsonData = try await serializer.serialize(message)
       if let jsonString = String(data: jsonData, encoding: .utf8) {
         print("📄 JSON (\(jsonData.count) bytes):")
         print(jsonString)
@@ -379,38 +379,38 @@ class ProtoREPL {
     }
   }
 
-  private func runDemo() throws {
+  private func runDemo() async throws {
     print("🎬 Running interactive demo...")
 
     // Create a user message step by step
-    try processCommand("create User")
-    Thread.sleep(forTimeInterval: 1)
+    try await processCommand("create User")
+    try await Task.sleep(nanoseconds: 1_000_000_000)
 
-    try processCommand("set name \"Demo User\"")
-    Thread.sleep(forTimeInterval: 1)
+    try await processCommand("set name \"Demo User\"")
+    try await Task.sleep(nanoseconds: 1_000_000_000)
 
-    try processCommand("set email \"demo@example.com\"")
-    Thread.sleep(forTimeInterval: 1)
+    try await processCommand("set email \"demo@example.com\"")
+    try await Task.sleep(nanoseconds: 1_000_000_000)
 
-    try processCommand("set age 25")
-    Thread.sleep(forTimeInterval: 1)
+    try await processCommand("set age 25")
+    try await Task.sleep(nanoseconds: 1_000_000_000)
 
-    try processCommand("show")
-    Thread.sleep(forTimeInterval: 1)
+    try await processCommand("show")
+    try await Task.sleep(nanoseconds: 1_000_000_000)
 
-    try processCommand("validate")
-    Thread.sleep(forTimeInterval: 1)
+    try await processCommand("validate")
+    try await Task.sleep(nanoseconds: 1_000_000_000)
 
-    try processCommand("serialize json")
+    try await processCommand("serialize json")
 
     print("🎉 Demo completed!")
   }
 
-  private func runBenchmark() throws {
+  private func runBenchmark() async throws {
     print("⚡ Running performance benchmarks...")
 
     // Create test message
-    try processCommand("create User")
+    try await processCommand("create User")
 
     // Field setting benchmark
     let (_, fieldSetTime) = try ExampleUtils.measureTime {

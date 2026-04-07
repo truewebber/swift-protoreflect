@@ -21,21 +21,21 @@ final class ServiceDescriptorTests: XCTestCase {
 
   // MARK: - Setup
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     // Test setup
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     // Cleanup after tests
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Tests
 
   // MARK: Initialization Tests
 
-  func testInitWithNameAndFullName() {
+  func testInitWithNameAndFullName() async throws {
     // Arrange & Act
     let service = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
 
@@ -47,7 +47,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertTrue(service.options.isEmpty)
   }
 
-  func testInitWithParent() {
+  func testInitWithParent() async throws {
     // Arrange
     let fileDescriptor = FileDescriptor(name: "user.proto", package: "example")
 
@@ -62,7 +62,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertTrue(service.options.isEmpty)
   }
 
-  func testInitWithOptions() {
+  func testInitWithOptions() async throws {
     // Arrange
     let options: [String: DescriptorOption] = ["deprecated": .bool(true), "customOption": .string("value")]
 
@@ -79,7 +79,7 @@ final class ServiceDescriptorTests: XCTestCase {
 
   // MARK: Method Management Tests
 
-  func testAddMethod() {
+  func testAddMethod() async throws {
     // Arrange
     var service = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
     let method = ServiceDescriptor.MethodDescriptor(
@@ -96,7 +96,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertTrue(service.hasMethod(named: methodName))
   }
 
-  func testAddMultipleMethods() {
+  func testAddMultipleMethods() async throws {
     // Arrange
     var service = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
     let method1 = ServiceDescriptor.MethodDescriptor(
@@ -129,7 +129,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertTrue(service.hasMethod(named: "ListUsers"))
   }
 
-  func testHasMethod() {
+  func testHasMethod() async throws {
     // Arrange
     var service = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
     let method = ServiceDescriptor.MethodDescriptor(
@@ -144,7 +144,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertFalse(service.hasMethod(named: "NonExistentMethod"))
   }
 
-  func testGetMethod() {
+  func testGetMethod() async throws {
     // Arrange
     var service = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
     let method = ServiceDescriptor.MethodDescriptor(
@@ -171,7 +171,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertNil(service.method(named: "NonExistentMethod"))
   }
 
-  func testAllMethods() {
+  func testAllMethods() async throws {
     // Arrange
     var service = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
     let method1 = ServiceDescriptor.MethodDescriptor(
@@ -198,7 +198,7 @@ final class ServiceDescriptorTests: XCTestCase {
 
   // MARK: Method Descriptor Tests
 
-  func testMethodDescriptorInitialization() {
+  func testMethodDescriptorInitialization() async throws {
     // Arrange & Act
     let method = ServiceDescriptor.MethodDescriptor(
       name: methodName,
@@ -219,7 +219,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertEqual(method.options["deprecated"], .bool(true))
   }
 
-  func testMethodDescriptorDefaultValues() {
+  func testMethodDescriptorDefaultValues() async throws {
     // Arrange & Act
     let method = ServiceDescriptor.MethodDescriptor(
       name: methodName,
@@ -238,7 +238,7 @@ final class ServiceDescriptorTests: XCTestCase {
 
   // MARK: Equatable Tests
 
-  func testServiceDescriptorEquality() {
+  func testServiceDescriptorEquality() async throws {
     // Arrange
     var service1 = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
     var service2 = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
@@ -254,7 +254,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertEqual(service1, service2)
   }
 
-  func testServiceDescriptorInequality() {
+  func testServiceDescriptorInequality() async throws {
     // Arrange
     var service1 = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
     var service2 = ServiceDescriptor(name: "DifferentService", fullName: "example.DifferentService")
@@ -270,7 +270,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertNotEqual(service1, service2)
   }
 
-  func testServiceDescriptorInequalityDifferentMethods() {
+  func testServiceDescriptorInequalityDifferentMethods() async throws {
     // Arrange
     var service1 = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
     var service2 = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
@@ -293,7 +293,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertNotEqual(service1, service2)
   }
 
-  func testMethodDescriptorEquality() {
+  func testMethodDescriptorEquality() async throws {
     // Arrange
     let method1 = ServiceDescriptor.MethodDescriptor(
       name: methodName,
@@ -317,7 +317,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertEqual(method1, method2)
   }
 
-  func testMethodDescriptorInequality() {
+  func testMethodDescriptorInequality() async throws {
     // Arrange
     let method1 = ServiceDescriptor.MethodDescriptor(
       name: methodName,
@@ -343,7 +343,7 @@ final class ServiceDescriptorTests: XCTestCase {
 
   // MARK: Additional tests for MethodDescriptor
 
-  func testMethodDescriptorDifferentOptions() {
+  func testMethodDescriptorDifferentOptions() async throws {
     // Arrange
     let method1 = ServiceDescriptor.MethodDescriptor(
       name: methodName,
@@ -363,7 +363,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertNotEqual(method1, method2)
   }
 
-  func testMethodDescriptorOptionsWithDifferentTypes() {
+  func testMethodDescriptorOptionsWithDifferentTypes() async throws {
     // Boolean options
     let method1 = ServiceDescriptor.MethodDescriptor(
       name: methodName,
@@ -435,7 +435,7 @@ final class ServiceDescriptorTests: XCTestCase {
 
   // MARK: Additional tests for ServiceDescriptor
 
-  func testServiceDescriptorDifferentMethodCount() {
+  func testServiceDescriptorDifferentMethodCount() async throws {
     // Arrange
     var service1 = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
     var service2 = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
@@ -460,7 +460,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertNotEqual(service1, service2)
   }
 
-  func testServiceDescriptorWithDifferentOptions() {
+  func testServiceDescriptorWithDifferentOptions() async throws {
     // Arrange
     let options1: [String: DescriptorOption] = ["option1": .bool(true), "option2": .string("value")]
     let options2: [String: DescriptorOption] = ["option1": .bool(true), "option3": .string("different")]
@@ -472,7 +472,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertNotEqual(service1, service2)
   }
 
-  func testServiceDescriptorOptionsWithDifferentTypes() {
+  func testServiceDescriptorOptionsWithDifferentTypes() async throws {
     // Boolean options
     let service1 = ServiceDescriptor(
       name: serviceName,
@@ -534,7 +534,7 @@ final class ServiceDescriptorTests: XCTestCase {
     XCTAssertNotEqual(service7, service8)
   }
 
-  func testServiceDescriptorComplexOptionsComparison() {
+  func testServiceDescriptorComplexOptionsComparison() async throws {
     let service1 = ServiceDescriptor(
       name: serviceName,
       fullName: serviceFullName,
@@ -555,5 +555,47 @@ final class ServiceDescriptorTests: XCTestCase {
 
     XCTAssertEqual(service1, service2)
     XCTAssertNotEqual(service1, service3)
+  }
+
+  // MARK: - == false-branches: fullName, fileDescriptorPath, same-named method content
+
+  func test_serviceDescriptorEquality_whenFullNameDiffers_isNotEqual() async throws {
+    // Same name but different fullName
+    let service1 = ServiceDescriptor(name: serviceName, fullName: "pkgA.UserService")
+    let service2 = ServiceDescriptor(name: serviceName, fullName: "pkgB.UserService")
+
+    XCTAssertNotEqual(service1, service2)
+  }
+
+  func test_serviceDescriptorEquality_whenFileDescriptorPathDiffers_isNotEqual() async throws {
+    // Same name and fullName (same package), different file path
+    let file1 = FileDescriptor(name: "service_v1.proto", package: "example")
+    let file2 = FileDescriptor(name: "service_v2.proto", package: "example")
+    let service1 = ServiceDescriptor(name: serviceName, parent: file1)
+    let service2 = ServiceDescriptor(name: serviceName, parent: file2)
+
+    // Both share "example.UserService" fullName but differ in fileDescriptorPath
+    XCTAssertEqual(service1.fullName, service2.fullName)
+    XCTAssertNotEqual(service1.fileDescriptorPath, service2.fileDescriptorPath)
+    XCTAssertNotEqual(service1, service2)
+  }
+
+  func test_serviceDescriptorEquality_whenSameMethodNameDiffersInContent_isNotEqual() async throws {
+    // Same method name but different inputType — key found in rhs but method != lhsMethod
+    var service1 = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
+    var service2 = ServiceDescriptor(name: serviceName, fullName: serviceFullName)
+
+    service1.addMethod(
+      ServiceDescriptor.MethodDescriptor(name: methodName, inputType: inputType, outputType: outputType)
+    )
+    service2.addMethod(
+      ServiceDescriptor.MethodDescriptor(
+        name: methodName,
+        inputType: "example.DifferentRequest",
+        outputType: outputType
+      )
+    )
+
+    XCTAssertNotEqual(service1, service2)
   }
 }

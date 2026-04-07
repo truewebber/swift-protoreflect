@@ -14,7 +14,7 @@ final class ErrorHandlingTests: XCTestCase {
 
   // MARK: - Incorrect message descriptors
 
-  func test_setField_unknownFieldName_throws() {
+  func test_setField_unknownFieldName_throws() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
     var msg = MessageFactory().createMessage(from: desc)
@@ -22,7 +22,7 @@ final class ErrorHandlingTests: XCTestCase {
     XCTAssertThrowsError(try msg.set(Int32(1), forField: "nonexistent"))
   }
 
-  func test_getField_unknownFieldName_throws() {
+  func test_getField_unknownFieldName_throws() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
     let msg = MessageFactory().createMessage(from: desc)
@@ -32,78 +32,101 @@ final class ErrorHandlingTests: XCTestCase {
 
   // MARK: - Incorrect binary data
 
-  func test_deserialize_emptyData_returnsEmptyMessage() throws {
+  func test_deserialize_emptyData_returnsEmptyMessage() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
-    let msg = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(Data(), using: desc)
+    let msg = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      Data(),
+      using: desc
+    )
     XCTAssertNil(try msg.get(forField: "id"))
   }
 
-  func test_deserialize_truncatedVarint_throws() {
+  func test_deserialize_truncatedVarint_throws() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
     let truncated = Data([0x08, 0x80])
-    XCTAssertThrowsError(
-      try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(truncated, using: desc)
-    )
+    do {
+      _ = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(truncated, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
-  func test_deserialize_truncatedFixed32_throws() {
+  func test_deserialize_truncatedFixed32_throws() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "val", number: 1, type: .fixed32))
 
     let truncated = Data([0x0D, 0x01, 0x02])
-    XCTAssertThrowsError(
-      try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(truncated, using: desc)
-    )
+    do {
+      _ = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(truncated, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
-  func test_deserialize_truncatedLengthDelimited_throws() {
+  func test_deserialize_truncatedLengthDelimited_throws() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "name", number: 1, type: .string))
 
     let truncated = Data([0x0A, 0x05, 0x41])
-    XCTAssertThrowsError(
-      try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(truncated, using: desc)
-    )
+    do {
+      _ = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(truncated, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
   // MARK: - Incorrect JSON data
 
-  func test_deserializeJSON_invalidJSON_throws() {
+  func test_deserializeJSON_invalidJSON_throws() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
     let badJSON = Data("not json".utf8)
-    XCTAssertThrowsError(
-      try JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(badJSON, using: desc)
-    )
+    do {
+      _ = try await JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(badJSON, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
-  func test_deserializeJSON_wrongType_throws() {
+  func test_deserializeJSON_wrongType_throws() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
     let json = Data("{\"id\": \"not_a_number\"}".utf8)
-    XCTAssertThrowsError(
-      try JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(json, using: desc)
-    )
+    do {
+      _ = try await JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(json, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
-  func test_deserializeJSON_emptyObject_returnsEmptyMessage() throws {
+  func test_deserializeJSON_emptyObject_returnsEmptyMessage() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
     let json = Data("{}".utf8)
-    let msg = try JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(json, using: desc)
+    let msg = try await JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(json, using: desc)
     XCTAssertNil(try msg.get(forField: "id"))
   }
 
   // MARK: - Type mismatch on set
 
-  func test_setField_typeMismatch_throws() {
+  func test_setField_typeMismatch_throws() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
     var msg = MessageFactory().createMessage(from: desc)
@@ -113,19 +136,26 @@ final class ErrorHandlingTests: XCTestCase {
 
   // MARK: - Oversized varint
 
-  func test_deserialize_invalidWireType_throws() {
+  func test_deserialize_invalidWireType_throws() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
     let badWireType = Data([0x0F])
-    XCTAssertThrowsError(
-      try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(badWireType, using: desc)
-    )
+    do {
+      _ = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+        badWireType,
+        using: desc
+      )
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 
   // MARK: - Serialization of unsupported type
 
-  func test_serialize_groupField_succeeds() throws {
+  func test_serialize_groupField_succeeds() async throws {
     var innerDesc = MessageDescriptor(name: "G", fullName: "test.G")
     innerDesc.addField(FieldDescriptor(name: "v", number: 1, type: .int32))
 

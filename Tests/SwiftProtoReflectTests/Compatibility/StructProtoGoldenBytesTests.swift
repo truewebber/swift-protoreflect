@@ -32,15 +32,15 @@ final class StructProtoGoldenBytesTests: XCTestCase {
   private var deserializer: BinaryDeserializer!
   private var registry: TypeRegistry!
 
-  override func setUpWithError() throws {
+  override func setUp() async throws {
     registry = TypeRegistry()
-    try registry.registerFile(StructProtoDescriptors.fileDescriptor)
+    try await registry.registerFile(StructProtoDescriptors.fileDescriptor)
     deserializer = BinaryDeserializer(options: DeserializationOptions(typeRegistry: registry))
   }
 
   // MARK: - Value: null_value
 
-  func test_golden_value_nullValue() throws {
+  func test_golden_value_nullValue() async throws {
     // Field 1 (null_value, NullValue enum), varint wire type:
     //   tag  = (1 << 3) | 0 = 0x08
     //   value = NULL_VALUE(0) = 0x00
@@ -56,13 +56,14 @@ final class StructProtoGoldenBytesTests: XCTestCase {
     )
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.nullValue)
+    let _asyncResult1 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
-      try serializer.serialize(dynMsg),
+      _asyncResult1,
       golden,
       "Our serializer golden mismatch for null_value"
     )
 
-    let decoded = try deserializer.deserialize(golden, using: StructProtoDescriptors.valueDescriptor)
+    let decoded = try await deserializer.deserialize(golden, using: StructProtoDescriptors.valueDescriptor)
     let result = try XCTUnwrap(
       try ValueHandler.createSpecialized(from: decoded) as? ValueHandler.ValueValue
     )
@@ -71,7 +72,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
 
   // MARK: - Value: number_value
 
-  func test_golden_value_numberValue_one() throws {
+  func test_golden_value_numberValue_one() async throws {
     // Field 2 (number_value, double), 64-bit wire type:
     //   tag  = (2 << 3) | 1 = 0x11
     //   1.0  = 0x3FF0_0000_0000_0000 IEEE 754 LE
@@ -87,13 +88,14 @@ final class StructProtoGoldenBytesTests: XCTestCase {
     )
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.numberValue(1.0))
+    let _asyncResult2 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
-      try serializer.serialize(dynMsg),
+      _asyncResult2,
       golden,
       "Our serializer golden mismatch for number_value=1.0"
     )
 
-    let decoded = try deserializer.deserialize(golden, using: StructProtoDescriptors.valueDescriptor)
+    let decoded = try await deserializer.deserialize(golden, using: StructProtoDescriptors.valueDescriptor)
     let result = try XCTUnwrap(
       try ValueHandler.createSpecialized(from: decoded) as? ValueHandler.ValueValue
     )
@@ -102,7 +104,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
 
   // MARK: - Value: string_value
 
-  func test_golden_value_stringValue() throws {
+  func test_golden_value_stringValue() async throws {
     // Field 3 (string_value, string), LEN wire type:
     //   tag  = (3 << 3) | 2 = 0x1A
     //   len  = 2 = 0x02
@@ -118,13 +120,14 @@ final class StructProtoGoldenBytesTests: XCTestCase {
     )
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.stringValue("hi"))
+    let _asyncResult3 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
-      try serializer.serialize(dynMsg),
+      _asyncResult3,
       golden,
       "Our serializer golden mismatch for string_value='hi'"
     )
 
-    let decoded = try deserializer.deserialize(golden, using: StructProtoDescriptors.valueDescriptor)
+    let decoded = try await deserializer.deserialize(golden, using: StructProtoDescriptors.valueDescriptor)
     let result = try XCTUnwrap(
       try ValueHandler.createSpecialized(from: decoded) as? ValueHandler.ValueValue
     )
@@ -133,7 +136,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
 
   // MARK: - Value: bool_value = true
 
-  func test_golden_value_boolValue_true() throws {
+  func test_golden_value_boolValue_true() async throws {
     // Field 4 (bool_value, bool), varint wire type:
     //   tag  = (4 << 3) | 0 = 0x20
     //   true = 0x01
@@ -148,13 +151,14 @@ final class StructProtoGoldenBytesTests: XCTestCase {
     )
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.boolValue(true))
+    let _asyncResult4 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
-      try serializer.serialize(dynMsg),
+      _asyncResult4,
       golden,
       "Our serializer golden mismatch for bool_value=true"
     )
 
-    let decoded = try deserializer.deserialize(golden, using: StructProtoDescriptors.valueDescriptor)
+    let decoded = try await deserializer.deserialize(golden, using: StructProtoDescriptors.valueDescriptor)
     let result = try XCTUnwrap(
       try ValueHandler.createSpecialized(from: decoded) as? ValueHandler.ValueValue
     )
@@ -163,7 +167,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
 
   // MARK: - Value: bool_value = false (critical oneof edge case)
 
-  func test_golden_value_boolValue_false() throws {
+  func test_golden_value_boolValue_false() async throws {
     // Field 4 (bool_value, bool), varint wire type:
     //   tag   = (4 << 3) | 0 = 0x20
     //   false = 0x00
@@ -181,13 +185,14 @@ final class StructProtoGoldenBytesTests: XCTestCase {
     )
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.boolValue(false))
+    let _asyncResult5 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
-      try serializer.serialize(dynMsg),
+      _asyncResult5,
       golden,
       "Our serializer golden mismatch for bool_value=false"
     )
 
-    let decoded = try deserializer.deserialize(golden, using: StructProtoDescriptors.valueDescriptor)
+    let decoded = try await deserializer.deserialize(golden, using: StructProtoDescriptors.valueDescriptor)
     let result = try XCTUnwrap(
       try ValueHandler.createSpecialized(from: decoded) as? ValueHandler.ValueValue
     )
@@ -196,7 +201,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
 
   // MARK: - ListValue
 
-  func test_golden_listValue_singleEntry() throws {
+  func test_golden_listValue_singleEntry() async throws {
     // ListValue { values: [Value { string_value: "hi" }] }
     //
     // Value(string_value="hi") = [0x1A, 0x02, 0x68, 0x69]  (4 bytes)
@@ -216,13 +221,14 @@ final class StructProtoGoldenBytesTests: XCTestCase {
     )
 
     let dynMsg = try ListValueHandler.createDynamic(from: [StructHandler.ValueValue.stringValue("hi")])
+    let _asyncResult6 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
-      try serializer.serialize(dynMsg),
+      _asyncResult6,
       golden,
       "Our serializer golden mismatch for ListValue([string_value='hi'])"
     )
 
-    let decoded = try deserializer.deserialize(golden, using: StructProtoDescriptors.listValueDescriptor)
+    let decoded = try await deserializer.deserialize(golden, using: StructProtoDescriptors.listValueDescriptor)
     let result = try XCTUnwrap(
       try ListValueHandler.createSpecialized(from: decoded) as? [StructHandler.ValueValue]
     )
@@ -231,7 +237,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
 
   // MARK: - Struct
 
-  func test_golden_struct_singleStringField() throws {
+  func test_golden_struct_singleStringField() async throws {
     // Struct { fields: {"k": Value { string_value: "v" }} }
     //
     // Value(string_value="v"):
@@ -258,13 +264,14 @@ final class StructProtoGoldenBytesTests: XCTestCase {
 
     let sv = StructHandler.StructValue(fields: ["k": .stringValue("v")])
     let dynMsg = try StructHandler.createDynamic(from: sv)
+    let _asyncResult7 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
-      try serializer.serialize(dynMsg),
+      _asyncResult7,
       golden,
       "Our serializer golden mismatch for Struct({k:string_value='v'})"
     )
 
-    let decoded = try deserializer.deserialize(golden, using: StructProtoDescriptors.structDescriptor)
+    let decoded = try await deserializer.deserialize(golden, using: StructProtoDescriptors.structDescriptor)
     let result = try XCTUnwrap(
       try StructHandler.createSpecialized(from: decoded) as? StructHandler.StructValue
     )
@@ -274,7 +281,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
 
   // MARK: - Value containing Struct (field 5)
 
-  func test_golden_value_structValue() throws {
+  func test_golden_value_structValue() async throws {
     // Value { struct_value: Struct { fields: {"k": Value { string_value: "v" }} } }
     //
     // Struct bytes (from test above):
@@ -299,13 +306,14 @@ final class StructProtoGoldenBytesTests: XCTestCase {
 
     let libSv = StructHandler.StructValue(fields: ["k": .stringValue("v")])
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.structValue(libSv))
+    let _asyncResult8 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
-      try serializer.serialize(dynMsg),
+      _asyncResult8,
       golden,
       "Our serializer golden mismatch for Value(struct_value)"
     )
 
-    let decoded = try deserializer.deserialize(golden, using: StructProtoDescriptors.valueDescriptor)
+    let decoded = try await deserializer.deserialize(golden, using: StructProtoDescriptors.valueDescriptor)
     let result = try XCTUnwrap(
       try ValueHandler.createSpecialized(from: decoded) as? ValueHandler.ValueValue
     )
@@ -318,7 +326,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
 
   // MARK: - Value containing ListValue (field 6)
 
-  func test_golden_value_listValue() throws {
+  func test_golden_value_listValue() async throws {
     // Value { list_value: ListValue { values: [Value { string_value: "hi" }] } }
     //
     // ListValue bytes (from test above):
@@ -339,13 +347,14 @@ final class StructProtoGoldenBytesTests: XCTestCase {
     )
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.listValue([.stringValue("hi")]))
+    let _asyncResult9 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
-      try serializer.serialize(dynMsg),
+      _asyncResult9,
       golden,
       "Our serializer golden mismatch for Value(list_value)"
     )
 
-    let decoded = try deserializer.deserialize(golden, using: StructProtoDescriptors.valueDescriptor)
+    let decoded = try await deserializer.deserialize(golden, using: StructProtoDescriptors.valueDescriptor)
     let result = try XCTUnwrap(
       try ValueHandler.createSpecialized(from: decoded) as? ValueHandler.ValueValue
     )

@@ -23,14 +23,14 @@ import SwiftProtoReflect
 
 @main
 struct HelloWorldExample {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("Hello World - First introduction to SwiftProtoReflect")
 
-    try step1CreateFileDescriptor()
-    try step2DefinePersonMessage()
-    try step3CreateMessageInstance()
-    try step4WorkWithData()
-    try step5UseTypeRegistry()
+    try await step1CreateFileDescriptor()
+    try await step2DefinePersonMessage()
+    try await step3CreateMessageInstance()
+    try await step4WorkWithData()
+    try await step5UseTypeRegistry()
 
     ExampleUtils.printSuccess("Congratulations! You created your first dynamic Protocol Buffers message.")
 
@@ -43,7 +43,7 @@ struct HelloWorldExample {
 
   // MARK: - Implementation Steps
 
-  private static func step1CreateFileDescriptor() throws {
+  private static func step1CreateFileDescriptor() async throws {
     ExampleUtils.printStep(1, "Creating file descriptor")
 
     // Create file descriptor - foundation for all our types
@@ -53,7 +53,7 @@ struct HelloWorldExample {
     print("  🔗 Full name: \(fileDescriptor.name)")
   }
 
-  private static func step2DefinePersonMessage() throws {
+  private static func step2DefinePersonMessage() async throws {
     ExampleUtils.printStep(2, "Defining Person message")
 
     // Create file descriptor
@@ -76,7 +76,7 @@ struct HelloWorldExample {
     print("  ✅ Message registered in file \(fileDescriptor.name)")
   }
 
-  private static func step3CreateMessageInstance() throws {
+  private static func step3CreateMessageInstance() async throws {
     ExampleUtils.printStep(3, "Creating dynamic message instance")
 
     // Recreate structure (in real code this would be extracted to separate method)
@@ -91,7 +91,7 @@ struct HelloWorldExample {
     print("  📋 Available fields: \(person.descriptor.fields.values.map { $0.name }.joined(separator: ", "))")
   }
 
-  private static func step4WorkWithData() throws {
+  private static func step4WorkWithData() async throws {
     ExampleUtils.printStep(4, "Working with message data")
 
     let (messageDescriptor, _) = try createPersonMessageDescriptor()
@@ -126,19 +126,19 @@ struct HelloWorldExample {
     }
   }
 
-  private static func step5UseTypeRegistry() throws {
+  private static func step5UseTypeRegistry() async throws {
     ExampleUtils.printStep(5, "Using TypeRegistry for type management")
 
     let (_, fileDescriptor) = try createPersonMessageDescriptor()
 
     // Create type registry
     let typeRegistry = TypeRegistry()
-    try typeRegistry.registerFile(fileDescriptor)
+    try await typeRegistry.registerFile(fileDescriptor)
 
     print("  📂 File registered in TypeRegistry")
 
     // Search for registered type
-    let foundMessage = typeRegistry.findMessage(named: "example.Person")
+    let foundMessage = await typeRegistry.findMessage(named: "example.Person")
 
     if let found = foundMessage {
       print("  🔍 Type found: \(found.fullName)")

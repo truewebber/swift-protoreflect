@@ -14,19 +14,19 @@ final class JSONCompatDefaultsTests: XCTestCase {
 
   private var registry: TypeRegistry!
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Proto3: zero values omitted from JSON
 
-  func test_defaults_proto3ZeroValues_omittedFromJSON() throws {
+  func test_defaults_proto3ZeroValues_omittedFromJSON() async throws {
     let proto = Testcompat_ScalarMessage()
     // All fields have proto3 defaults (0, false, "", empty bytes)
     let jsonStr = try proto.jsonString()
@@ -34,14 +34,14 @@ final class JSONCompatDefaultsTests: XCTestCase {
 
     let desc = CompatDescriptors.scalarMessage()
     let dynamic = DynamicMessage(descriptor: desc)
-    let jsonData = try CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
+    let jsonData = try await CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
     let ourJson = try XCTUnwrap(String(data: jsonData, encoding: .utf8))
     XCTAssertEqual(ourJson, "{}", "Our serializer should also produce empty JSON for proto3 defaults")
   }
 
   // MARK: - Proto3: explicit zero values are still omitted
 
-  func test_defaults_proto3ExplicitZero_omitted() throws {
+  func test_defaults_proto3ExplicitZero_omitted() async throws {
     var proto = Testcompat_ScalarMessage()
     proto.int32Field = 0  // explicit zero == proto3 default
     proto.boolField = false
@@ -57,26 +57,26 @@ final class JSONCompatDefaultsTests: XCTestCase {
     try dynamic.set(false, forField: 13)
     try dynamic.set("", forField: 14)
     try dynamic.set(Data(), forField: 15)
-    let jsonData = try CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
+    let jsonData = try await CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
     let ourJson = try XCTUnwrap(String(data: jsonData, encoding: .utf8))
     XCTAssertEqual(ourJson, "{}", "Explicit proto3 defaults must be omitted from JSON per spec")
   }
 
   // MARK: - Proto3 optional scalar: nil → omitted, set zero → present
 
-  func test_defaults_proto3Optional_nilOmitted() throws {
+  func test_defaults_proto3Optional_nilOmitted() async throws {
     let proto = Testcompat_OptionalScalarMessage()
     let jsonStr = try proto.jsonString()
     XCTAssertEqual(jsonStr, "{}")
 
     let desc = CompatDescriptors.optionalScalarMessage()
     let dynamic = DynamicMessage(descriptor: desc)
-    let jsonData = try CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
+    let jsonData = try await CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
     let ourJson = try XCTUnwrap(String(data: jsonData, encoding: .utf8))
     XCTAssertEqual(ourJson, "{}")
   }
 
-  func test_defaults_proto3Optional_explicitZero_present() throws {
+  func test_defaults_proto3Optional_explicitZero_present() async throws {
     var proto = Testcompat_OptionalScalarMessage()
     proto.optInt32 = 0  // optional field explicitly set to zero
     proto.optBool = false
@@ -100,13 +100,13 @@ final class JSONCompatDefaultsTests: XCTestCase {
 
   // MARK: - Proto3 optional: nil vs explicitly-set round-trip
 
-  func test_defaults_proto3Optional_setAndRead_bidirectional() throws {
+  func test_defaults_proto3Optional_setAndRead_bidirectional() async throws {
     var proto = Testcompat_OptionalScalarMessage()
     proto.optInt32 = 42
     proto.optString = "hello"
 
     let desc = CompatDescriptors.optionalScalarMessage()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 3) as? Int32, 42)
       XCTAssertEqual(try msg.get(forField: 14) as? String, "hello")
     }
@@ -114,7 +114,7 @@ final class JSONCompatDefaultsTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(42), forField: 3)
     try dynamic.set("hello", forField: 14)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_OptionalScalarMessage.self
@@ -126,7 +126,7 @@ final class JSONCompatDefaultsTests: XCTestCase {
 
   // MARK: - Proto3 optional: explicit zero int64 present in JSON
 
-  func test_proto3Optional_explicitZero_int64_bidirectional() throws {
+  func test_proto3Optional_explicitZero_int64_bidirectional() async throws {
     var proto = Testcompat_OptionalScalarMessage()
     proto.optInt64 = 0  // optional field explicitly set to zero
 
@@ -137,13 +137,13 @@ final class JSONCompatDefaultsTests: XCTestCase {
     )
 
     let desc = CompatDescriptors.optionalScalarMessage()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 4) as? Int64, 0)
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int64(0), forField: 4)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_OptionalScalarMessage.self
@@ -155,7 +155,7 @@ final class JSONCompatDefaultsTests: XCTestCase {
 
   // MARK: - Proto3 optional: explicit empty string present in JSON
 
-  func test_proto3Optional_explicitEmptyString_bidirectional() throws {
+  func test_proto3Optional_explicitEmptyString_bidirectional() async throws {
     var proto = Testcompat_OptionalScalarMessage()
     proto.optString = ""  // optional field explicitly set to empty string
 
@@ -166,13 +166,13 @@ final class JSONCompatDefaultsTests: XCTestCase {
     )
 
     let desc = CompatDescriptors.optionalScalarMessage()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 14) as? String, "")
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("", forField: 14)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_OptionalScalarMessage.self
@@ -184,7 +184,7 @@ final class JSONCompatDefaultsTests: XCTestCase {
 
   // MARK: - Proto3 optional: explicit zero double present in JSON
 
-  func test_proto3Optional_explicitZeroDouble_bidirectional() throws {
+  func test_proto3Optional_explicitZeroDouble_bidirectional() async throws {
     var proto = Testcompat_OptionalScalarMessage()
     proto.optDouble = 0.0  // optional field explicitly set to zero
 
@@ -195,13 +195,13 @@ final class JSONCompatDefaultsTests: XCTestCase {
     )
 
     let desc = CompatDescriptors.optionalScalarMessage()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? Double, 0.0)
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Double(0.0), forField: 1)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_OptionalScalarMessage.self
@@ -213,35 +213,35 @@ final class JSONCompatDefaultsTests: XCTestCase {
 
   // MARK: - Empty repeated field → omitted
 
-  func test_defaults_emptyRepeated_omitted() throws {
+  func test_defaults_emptyRepeated_omitted() async throws {
     let proto = Testcompat_RepeatedAllTypes()
     let jsonStr = try proto.jsonString()
     XCTAssertEqual(jsonStr, "{}")
 
     let desc = CompatDescriptors.repeatedAllTypes()
     let dynamic = DynamicMessage(descriptor: desc)
-    let jsonData = try CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
+    let jsonData = try await CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
     let ourJson = try XCTUnwrap(String(data: jsonData, encoding: .utf8))
     XCTAssertEqual(ourJson, "{}")
   }
 
   // MARK: - Empty map field → omitted
 
-  func test_defaults_emptyMap_omitted() throws {
+  func test_defaults_emptyMap_omitted() async throws {
     let proto = Testcompat_MapAllKeyTypes()
     let jsonStr = try proto.jsonString()
     XCTAssertEqual(jsonStr, "{}")
 
     let desc = CompatDescriptors.mapAllKeyTypes()
     let dynamic = DynamicMessage(descriptor: desc)
-    let jsonData = try CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
+    let jsonData = try await CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
     let ourJson = try XCTUnwrap(String(data: jsonData, encoding: .utf8))
     XCTAssertEqual(ourJson, "{}")
   }
 
   // MARK: - Message field not set → omitted (proto3 default)
 
-  func test_defaults_unsetMessageField_omitted() throws {
+  func test_defaults_unsetMessageField_omitted() async throws {
     var proto = Testcompat_OneofComplex()
     proto.name = "only_name"
     // choice is unset; should not appear
@@ -254,7 +254,7 @@ final class JSONCompatDefaultsTests: XCTestCase {
 
   // MARK: - includeDefaultValues option
 
-  func test_defaults_includeDefaultValues_showsZeroFields() throws {
+  func test_defaults_includeDefaultValues_showsZeroFields() async throws {
     let desc = CompatDescriptors.scalarMessage()
     let dynamic = DynamicMessage(descriptor: desc)
 
@@ -265,7 +265,7 @@ final class JSONCompatDefaultsTests: XCTestCase {
         typeRegistry: registry
       )
     )
-    let jsonData = try serializer.serialize(dynamic)
+    let jsonData = try await serializer.serialize(dynamic)
     let json = try XCTUnwrap(String(data: jsonData, encoding: .utf8))
 
     // With includeDefaultValues, all scalar fields should appear even at default
@@ -276,25 +276,25 @@ final class JSONCompatDefaultsTests: XCTestCase {
 
   // MARK: - Optional message fields proto3 (proto3Optional)
 
-  func test_defaults_optionalMessageField_nil_omitted() throws {
+  func test_defaults_optionalMessageField_nil_omitted() async throws {
     var proto = Testcompat_Proto3OptionalMessages()
     proto.label = "test"
     // opt_simple is nil
 
     let desc = CompatDescriptors.proto3OptionalMessages()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 10) as? String, "test")
       XCTAssertNil(try msg.get(forField: 1) as? DynamicMessage)
     }
   }
 
-  func test_defaults_optionalMessageField_set_present() throws {
+  func test_defaults_optionalMessageField_set_present() async throws {
     var proto = Testcompat_Proto3OptionalMessages()
     proto.optSimple.id = 99
     proto.label = "test2"
 
     let desc = CompatDescriptors.proto3OptionalMessages()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let sub = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       XCTAssertEqual(try sub.get(forField: 1) as? Int32, 99)
       XCTAssertEqual(try msg.get(forField: 10) as? String, "test2")

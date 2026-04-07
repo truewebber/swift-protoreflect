@@ -20,8 +20,8 @@ final class JSONDeserializationTests: XCTestCase {
   var serializer: JSONSerializer!
   var deserializer: JSONDeserializer!
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     fileDescriptor = FileDescriptor(name: "test_json_deserialization.proto", package: "test.json.deser")
     messageFactory = MessageFactory()
@@ -29,17 +29,17 @@ final class JSONDeserializationTests: XCTestCase {
     deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     fileDescriptor = nil
     messageFactory = nil
     serializer = nil
     deserializer = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Round-trip Tests (Test-JSON-Deser-004)
 
-  func testRoundTripAllScalarTypes() throws {
+  func testRoundTripAllScalarTypes() async throws {
     // Create message with all scalar types
     var scalarMessage = MessageDescriptor(name: "ScalarMessage", parent: fileDescriptor)
 
@@ -71,8 +71,8 @@ final class JSONDeserializationTests: XCTestCase {
     let originalMessage = try messageFactory.createMessage(from: scalarMessage, with: originalValues)
 
     // Round-trip: Message -> JSON -> Message
-    let jsonData = try serializer.serialize(originalMessage)
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: scalarMessage)
+    let jsonData = try await serializer.serialize(originalMessage)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: scalarMessage)
 
     // Verify all fields
     let originalAccess = FieldAccessor(originalMessage)
@@ -118,7 +118,7 @@ final class JSONDeserializationTests: XCTestCase {
     )
   }
 
-  func testRoundTripSpecialFloatValues() throws {
+  func testRoundTripSpecialFloatValues() async throws {
     var message = MessageDescriptor(name: "SpecialFloatMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "double_infinity", number: 1, type: .double))
     message.addField(FieldDescriptor(name: "double_neg_infinity", number: 2, type: .double))
@@ -141,8 +141,8 @@ final class JSONDeserializationTests: XCTestCase {
     )
 
     // Round-trip
-    let jsonData = try serializer.serialize(originalMessage)
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let jsonData = try await serializer.serialize(originalMessage)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let _ = FieldAccessor(originalMessage)
     let deserializedAccess = FieldAccessor(deserializedMessage)
@@ -167,7 +167,7 @@ final class JSONDeserializationTests: XCTestCase {
     XCTAssertTrue(floatNaN.isNaN)
   }
 
-  func testRoundTripRepeatedFields() throws {
+  func testRoundTripRepeatedFields() async throws {
     var message = MessageDescriptor(name: "RepeatedMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "numbers", number: 1, type: .int32, isRepeated: true))
     message.addField(FieldDescriptor(name: "words", number: 2, type: .string, isRepeated: true))
@@ -184,8 +184,8 @@ final class JSONDeserializationTests: XCTestCase {
     )
 
     // Round-trip
-    let jsonData = try serializer.serialize(originalMessage)
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let jsonData = try await serializer.serialize(originalMessage)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let originalAccess = FieldAccessor(originalMessage)
     let deserializedAccess = FieldAccessor(deserializedMessage)
@@ -204,7 +204,7 @@ final class JSONDeserializationTests: XCTestCase {
     )
   }
 
-  func testRoundTripMapFields() throws {
+  func testRoundTripMapFields() async throws {
     // Create map field: map<string, int32>
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
@@ -237,8 +237,8 @@ final class JSONDeserializationTests: XCTestCase {
     )
 
     // Round-trip
-    let jsonData = try serializer.serialize(originalMessage)
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let jsonData = try await serializer.serialize(originalMessage)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let originalAccess = FieldAccessor(originalMessage)
     let deserializedAccess = FieldAccessor(deserializedMessage)
@@ -251,7 +251,7 @@ final class JSONDeserializationTests: XCTestCase {
 
   // MARK: - Direct JSON Deserialization Tests (Test-JSON-Deser-001)
 
-  func testDeserializeScalarTypesFromJSON() throws {
+  func testDeserializeScalarTypesFromJSON() async throws {
     var message = MessageDescriptor(name: "ScalarMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "double_field", number: 1, type: .double))
     message.addField(FieldDescriptor(name: "int32_field", number: 2, type: .int32))
@@ -271,7 +271,7 @@ final class JSONDeserializationTests: XCTestCase {
       """
 
     let jsonData = jsonString.data(using: .utf8)!
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
 
@@ -282,7 +282,7 @@ final class JSONDeserializationTests: XCTestCase {
     XCTAssertEqual(fieldAccess.getValue("string_field", as: String.self)!, "Hello, World!")
   }
 
-  func testDeserializeBytesFromJSON() throws {
+  func testDeserializeBytesFromJSON() async throws {
     var message = MessageDescriptor(name: "BytesMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "data", number: 1, type: .bytes))
     fileDescriptor.addMessage(message)
@@ -294,7 +294,7 @@ final class JSONDeserializationTests: XCTestCase {
       """
 
     let jsonData = jsonString.data(using: .utf8)!
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
     let bytesData = fieldAccess.getValue("data", as: Data.self)!
@@ -302,7 +302,7 @@ final class JSONDeserializationTests: XCTestCase {
     XCTAssertEqual(bytesData, Data([0x01, 0x02, 0x03, 0xFF]))
   }
 
-  func testDeserializeSpecialFloatValuesFromJSON() throws {
+  func testDeserializeSpecialFloatValuesFromJSON() async throws {
     var message = MessageDescriptor(name: "SpecialFloatMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "infinity", number: 1, type: .double))
     message.addField(FieldDescriptor(name: "negative_infinity", number: 2, type: .double))
@@ -318,7 +318,7 @@ final class JSONDeserializationTests: XCTestCase {
       """
 
     let jsonData = jsonString.data(using: .utf8)!
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
 
@@ -332,7 +332,7 @@ final class JSONDeserializationTests: XCTestCase {
     XCTAssertTrue(nan.isNaN)
   }
 
-  func testDeserializeRepeatedFieldsFromJSON() throws {
+  func testDeserializeRepeatedFieldsFromJSON() async throws {
     var message = MessageDescriptor(name: "RepeatedMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "numbers", number: 1, type: .int32, isRepeated: true))
     message.addField(FieldDescriptor(name: "words", number: 2, type: .string, isRepeated: true))
@@ -346,7 +346,7 @@ final class JSONDeserializationTests: XCTestCase {
       """
 
     let jsonData = jsonString.data(using: .utf8)!
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
 
@@ -357,7 +357,7 @@ final class JSONDeserializationTests: XCTestCase {
     XCTAssertEqual(words, ["hello", "world", "test"])
   }
 
-  func testDeserializeMapFieldsFromJSON() throws {
+  func testDeserializeMapFieldsFromJSON() async throws {
     // Create map field: map<string, int32>
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
@@ -387,7 +387,7 @@ final class JSONDeserializationTests: XCTestCase {
       """
 
     let jsonData = jsonString.data(using: .utf8)!
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
     let mapData = fieldAccess.getValue("string_to_int", as: [String: Int32].self)!
@@ -397,7 +397,7 @@ final class JSONDeserializationTests: XCTestCase {
     XCTAssertEqual(mapData["third"], 3)
   }
 
-  func testDeserializeMapWithIntegerKeysFromJSON() throws {
+  func testDeserializeMapWithIntegerKeysFromJSON() async throws {
     // Create map field: map<int32, string>
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .int32)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
@@ -427,7 +427,7 @@ final class JSONDeserializationTests: XCTestCase {
       """
 
     let jsonData = jsonString.data(using: .utf8)!
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
     let mapData = fieldAccess.getValue("int_to_string", as: [Int32: String].self)!
@@ -439,7 +439,7 @@ final class JSONDeserializationTests: XCTestCase {
 
   // MARK: - Field Name Handling Tests
 
-  func testDeserializeWithCamelCaseFieldNames() throws {
+  func testDeserializeWithCamelCaseFieldNames() async throws {
     var message = MessageDescriptor(name: "CamelCaseMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "test_field", number: 1, type: .string, jsonName: "testField"))
     message.addField(FieldDescriptor(name: "another_field", number: 2, type: .int32, jsonName: "anotherField"))
@@ -453,7 +453,7 @@ final class JSONDeserializationTests: XCTestCase {
       """
 
     let jsonData = jsonString.data(using: .utf8)!
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
 
@@ -461,7 +461,7 @@ final class JSONDeserializationTests: XCTestCase {
     XCTAssertEqual(fieldAccess.getValue("another_field", as: Int32.self)!, 42)
   }
 
-  func testDeserializeWithOriginalFieldNames() throws {
+  func testDeserializeWithOriginalFieldNames() async throws {
     var message = MessageDescriptor(name: "OriginalFieldMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "test_field", number: 1, type: .string, jsonName: "testField"))
     message.addField(FieldDescriptor(name: "another_field", number: 2, type: .int32, jsonName: "anotherField"))
@@ -475,7 +475,7 @@ final class JSONDeserializationTests: XCTestCase {
       """
 
     let jsonData = jsonString.data(using: .utf8)!
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
 
@@ -485,7 +485,7 @@ final class JSONDeserializationTests: XCTestCase {
 
   // MARK: - Options Tests
 
-  func testDeserializeWithIgnoreUnknownFields() throws {
+  func testDeserializeWithIgnoreUnknownFields() async throws {
     var message = MessageDescriptor(name: "KnownFieldsMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "known_field", number: 1, type: .string))
     fileDescriptor.addMessage(message)
@@ -504,13 +504,13 @@ final class JSONDeserializationTests: XCTestCase {
     let ignoreUnknownDeserializer = JSONDeserializer(
       options: JSONDeserializationOptions(ignoreUnknownFields: true, typeRegistry: TypeRegistry())
     )
-    let deserializedMessage = try ignoreUnknownDeserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await ignoreUnknownDeserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
     XCTAssertEqual(fieldAccess.getValue("known_field", as: String.self)!, "hello")
   }
 
-  func testDeserializeWithStrictUnknownFields() throws {
+  func testDeserializeWithStrictUnknownFields() async throws {
     var message = MessageDescriptor(name: "StrictFieldsMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "known_field", number: 1, type: .string))
     fileDescriptor.addMessage(message)
@@ -529,7 +529,11 @@ final class JSONDeserializationTests: XCTestCase {
       options: JSONDeserializationOptions(ignoreUnknownFields: false, typeRegistry: TypeRegistry())
     )
 
-    XCTAssertThrowsError(try strictDeserializer.deserialize(jsonData, using: message)) { error in
+    do {
+      _ = try await strictDeserializer.deserialize(jsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError {
         if case .unknownField(let fieldName, let messageName) = jsonError {
           XCTAssertEqual(fieldName, "unknown_field")
@@ -547,14 +551,18 @@ final class JSONDeserializationTests: XCTestCase {
 
   // MARK: - Error Handling Tests (Test-JSON-Deser-003)
 
-  func testDeserializeInvalidJSON() throws {
+  func testDeserializeInvalidJSON() async throws {
     var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "test_field", number: 1, type: .string))
     fileDescriptor.addMessage(message)
 
     let invalidJsonData = "{ invalid json }".data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(invalidJsonData, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(invalidJsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .invalidJSON = jsonError
       {
@@ -566,7 +574,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeInvalidJSONStructure() throws {
+  func testDeserializeInvalidJSONStructure() async throws {
     var message = MessageDescriptor(name: "TestMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "test_field", number: 1, type: .string))
     fileDescriptor.addMessage(message)
@@ -574,7 +582,11 @@ final class JSONDeserializationTests: XCTestCase {
     // JSON is not an object (it's an array)
     let arrayJsonData = "[1, 2, 3]".data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(arrayJsonData, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(arrayJsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .invalidJSONStructure(let expected, let actual) = jsonError
       {
@@ -587,7 +599,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeTypeConversionErrorsForPrimitives() throws {
+  func testDeserializeTypeConversionErrorsForPrimitives() async throws {
     var message = MessageDescriptor(name: "TypeErrorMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "double_field", number: 1, type: .double))
     message.addField(FieldDescriptor(name: "int32_field", number: 2, type: .int32))
@@ -604,7 +616,11 @@ final class JSONDeserializationTests: XCTestCase {
       }
       """.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(doubleErrorJson, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(doubleErrorJson, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .valueTypeMismatch(let fieldName, let expected, let actual) = jsonError
       {
@@ -624,7 +640,11 @@ final class JSONDeserializationTests: XCTestCase {
       }
       """.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(int32ErrorJson, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(int32ErrorJson, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .valueTypeMismatch(let fieldName, let expected, let actual) = jsonError
       {
@@ -644,7 +664,11 @@ final class JSONDeserializationTests: XCTestCase {
       }
       """.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(int64ErrorJson, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(int64ErrorJson, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .valueTypeMismatch(let fieldName, let expected, let actual) = jsonError
       {
@@ -664,7 +688,11 @@ final class JSONDeserializationTests: XCTestCase {
       }
       """.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(uint32ErrorJson, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(uint32ErrorJson, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .valueTypeMismatch(let fieldName, let expected, let actual) = jsonError
       {
@@ -684,7 +712,11 @@ final class JSONDeserializationTests: XCTestCase {
       }
       """.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(uint64ErrorJson, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(uint64ErrorJson, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .valueTypeMismatch(let fieldName, let expected, let actual) = jsonError
       {
@@ -704,7 +736,11 @@ final class JSONDeserializationTests: XCTestCase {
       }
       """.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(boolErrorJson, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(boolErrorJson, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .valueTypeMismatch(let fieldName, let expected, let actual) = jsonError
       {
@@ -718,7 +754,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeInvalidNumberFormat() throws {
+  func testDeserializeInvalidNumberFormat() async throws {
     var message = MessageDescriptor(name: "NumberFormatMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "int32_field", number: 1, type: .int32))
     message.addField(FieldDescriptor(name: "int64_field", number: 2, type: .int64))
@@ -735,7 +771,11 @@ final class JSONDeserializationTests: XCTestCase {
       }
       """.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(int32ErrorJson, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(int32ErrorJson, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .invalidNumberFormat(let fieldName, let value) = jsonError
       {
@@ -754,7 +794,11 @@ final class JSONDeserializationTests: XCTestCase {
       }
       """.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(int64ErrorJson, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(int64ErrorJson, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .invalidNumberFormat(let fieldName, let value) = jsonError
       {
@@ -773,7 +817,11 @@ final class JSONDeserializationTests: XCTestCase {
       }
       """.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(uint32ErrorJson, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(uint32ErrorJson, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .invalidNumberFormat(let fieldName, let value) = jsonError
       {
@@ -792,7 +840,11 @@ final class JSONDeserializationTests: XCTestCase {
       }
       """.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(uint64ErrorJson, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(uint64ErrorJson, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .invalidNumberFormat(let fieldName, let value) = jsonError
       {
@@ -811,7 +863,11 @@ final class JSONDeserializationTests: XCTestCase {
       }
       """.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(doubleErrorJson, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(doubleErrorJson, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .invalidNumberFormat(let fieldName, let value) = jsonError
       {
@@ -830,7 +886,11 @@ final class JSONDeserializationTests: XCTestCase {
       }
       """.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(floatErrorJson, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(floatErrorJson, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .invalidNumberFormat(let fieldName, let value) = jsonError
       {
@@ -845,7 +905,7 @@ final class JSONDeserializationTests: XCTestCase {
 
   // MARK: - Error Description and Equality Tests
 
-  func testErrorDescriptions() throws {
+  func testErrorDescriptions() async throws {
     // Test all error types and their descriptions
 
     let error1 = JSONDeserializationError.invalidJSON(underlyingError: NSError(domain: "test", code: 1, userInfo: nil))
@@ -920,7 +980,7 @@ final class JSONDeserializationTests: XCTestCase {
     XCTAssertEqual(error17.description, "Unsupported field type: group")
   }
 
-  func testErrorEquality() throws {
+  func testErrorEquality() async throws {
     // Test error equality
 
     // invalidJSON
@@ -1099,7 +1159,7 @@ final class JSONDeserializationTests: XCTestCase {
 
   // MARK: - Performance Tests
 
-  func testJSONDeserializationPerformance() throws {
+  func testJSONDeserializationPerformance() async throws {
     // Create complex message for performance testing
     var message = MessageDescriptor(name: "PerformanceMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "numbers", number: 1, type: .int32, isRepeated: true))
@@ -1119,19 +1179,17 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    measure {
-      do {
-        _ = try deserializer.deserialize(jsonData, using: message)
-      }
-      catch {
-        XCTFail("Deserialization failed: \(error)")
-      }
+    do {
+      _ = try await deserializer.deserialize(jsonData, using: message)
+    }
+    catch {
+      XCTFail("Deserialization failed: \(error)")
     }
   }
 
   // MARK: - Additional Type Coverage Tests
 
-  func testDeserializeSignedAndFixedIntegerTypes() throws {
+  func testDeserializeSignedAndFixedIntegerTypes() async throws {
     var message = MessageDescriptor(name: "SignedFixedMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "sint32_field", number: 1, type: .sint32))
     message.addField(FieldDescriptor(name: "sint64_field", number: 2, type: .sint64))
@@ -1153,7 +1211,7 @@ final class JSONDeserializationTests: XCTestCase {
       """
 
     let jsonData = jsonString.data(using: .utf8)!
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
 
@@ -1165,7 +1223,7 @@ final class JSONDeserializationTests: XCTestCase {
     XCTAssertEqual(fieldAccess.getValue("fixed64_field", as: UInt64.self)!, UInt64.max)
   }
 
-  func testDeserializeUInt32AndUInt64OutOfRange() throws {
+  func testDeserializeUInt32AndUInt64OutOfRange() async throws {
     var message = MessageDescriptor(name: "UIntRangeMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "uint32_field", number: 1, type: .uint32))
     fileDescriptor.addMessage(message)
@@ -1179,7 +1237,11 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(jsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError {
         if case .numberOutOfRange(let fieldName, _, let expectedRange) = jsonError {
           XCTAssertEqual(fieldName, "uint32_field")
@@ -1195,7 +1257,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeFloatTypesFromStringNumbers() throws {
+  func testDeserializeFloatTypesFromStringNumbers() async throws {
     var message = MessageDescriptor(name: "FloatFromStringMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "float_field", number: 1, type: .float))
     message.addField(FieldDescriptor(name: "double_field", number: 2, type: .double))
@@ -1209,7 +1271,7 @@ final class JSONDeserializationTests: XCTestCase {
       """
 
     let jsonData = jsonString.data(using: .utf8)!
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
 
@@ -1217,7 +1279,7 @@ final class JSONDeserializationTests: XCTestCase {
     XCTAssertEqual(fieldAccess.getValue("double_field", as: Double.self)!, 2.718281828, accuracy: 0.000000001)
   }
 
-  func testDeserializeInvalidFloatFromString() throws {
+  func testDeserializeInvalidFloatFromString() async throws {
     var message = MessageDescriptor(name: "InvalidFloatMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "float_field", number: 1, type: .float))
     fileDescriptor.addMessage(message)
@@ -1230,7 +1292,11 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(jsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError {
         if case .invalidNumberFormat(let fieldName, let value) = jsonError {
           XCTAssertEqual(fieldName, "float_field")
@@ -1246,7 +1312,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeInvalidDoubleFromString() throws {
+  func testDeserializeInvalidDoubleFromString() async throws {
     var message = MessageDescriptor(name: "InvalidDoubleMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "double_field", number: 1, type: .double))
     fileDescriptor.addMessage(message)
@@ -1259,7 +1325,11 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(jsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError {
         if case .invalidNumberFormat(let fieldName, let value) = jsonError {
           XCTAssertEqual(fieldName, "double_field")
@@ -1275,7 +1345,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeMapWithAllKeyTypes() throws {
+  func testDeserializeMapWithAllKeyTypes() async throws {
     // Test map with UInt32 keys
     let uint32KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .uint32)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
@@ -1304,7 +1374,7 @@ final class JSONDeserializationTests: XCTestCase {
       """
 
     let jsonData = jsonString.data(using: .utf8)!
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
     let mapData = fieldAccess.getValue("uint32_to_string", as: [UInt32: String].self)!
@@ -1313,7 +1383,7 @@ final class JSONDeserializationTests: XCTestCase {
     XCTAssertEqual(mapData[UInt32.max], "max_uint32")
   }
 
-  func testDeserializeMapWithUInt64Keys() throws {
+  func testDeserializeMapWithUInt64Keys() async throws {
     let uint64KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .uint64)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     let uint64MapEntryInfo = MapEntryInfo(keyFieldInfo: uint64KeyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -1340,7 +1410,7 @@ final class JSONDeserializationTests: XCTestCase {
       """
 
     let jsonData = jsonString.data(using: .utf8)!
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
     let mapData = fieldAccess.getValue("uint64_to_string", as: [UInt64: String].self)!
@@ -1348,7 +1418,7 @@ final class JSONDeserializationTests: XCTestCase {
     XCTAssertEqual(mapData[UInt64.max], "max_uint64")
   }
 
-  func testDeserializeMapWithBoolKeys() throws {
+  func testDeserializeMapWithBoolKeys() async throws {
     let boolKeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .bool)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     let boolMapEntryInfo = MapEntryInfo(keyFieldInfo: boolKeyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -1376,7 +1446,7 @@ final class JSONDeserializationTests: XCTestCase {
       """
 
     let jsonData = jsonString.data(using: .utf8)!
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
     let mapData = fieldAccess.getValue("bool_to_string", as: [Bool: String].self)!
@@ -1385,7 +1455,7 @@ final class JSONDeserializationTests: XCTestCase {
     XCTAssertEqual(mapData[false], "no")
   }
 
-  func testDeserializeInvalidMapKeyTypes() throws {
+  func testDeserializeInvalidMapKeyTypes() async throws {
     // This test verifies runtime error when deserializing map with unsupported key type
     // Since FieldDescriptor.init already validates allowed key types at creation,
     // we can only test the case where key cannot be converted
@@ -1419,7 +1489,11 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(jsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError {
         if case .invalidMapKeyFormat(let fieldName, let keyType, let value) = jsonError {
           XCTAssertEqual(fieldName, "sint64_map")
@@ -1436,7 +1510,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeInvalidMapKeyFormats() throws {
+  func testDeserializeInvalidMapKeyFormats() async throws {
     let int32KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .int32)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: int32KeyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -1464,7 +1538,11 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(jsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError {
         if case .invalidMapKeyFormat(let fieldName, let keyType, let value) = jsonError {
           XCTAssertEqual(fieldName, "invalid_key_map")
@@ -1481,7 +1559,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeInvalidBoolMapKey() throws {
+  func testDeserializeInvalidBoolMapKey() async throws {
     let boolKeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .bool)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     let mapEntryInfo = MapEntryInfo(keyFieldInfo: boolKeyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -1509,7 +1587,11 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(jsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError {
         if case .invalidMapKeyFormat(let fieldName, let keyType, let value) = jsonError {
           XCTAssertEqual(fieldName, "bool_map")
@@ -1526,7 +1608,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeEnumFromNumber() throws {
+  func testDeserializeEnumFromNumber() async throws {
     var message = MessageDescriptor(name: "EnumMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "Status"))
     fileDescriptor.addMessage(message)
@@ -1538,13 +1620,13 @@ final class JSONDeserializationTests: XCTestCase {
       """
 
     let jsonData = jsonString.data(using: .utf8)!
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
     XCTAssertEqual(fieldAccess.getValue("status", as: Int32.self)!, 42)
   }
 
-  func testDeserializeEnumFromValidString() throws {
+  func testDeserializeEnumFromValidString() async throws {
     var message = MessageDescriptor(name: "EnumStringMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "Status"))
     fileDescriptor.addMessage(message)
@@ -1556,13 +1638,13 @@ final class JSONDeserializationTests: XCTestCase {
       """
 
     let jsonData = jsonString.data(using: .utf8)!
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let fieldAccess = FieldAccessor(deserializedMessage)
     XCTAssertEqual(fieldAccess.getValue("status", as: Int32.self)!, 123)
   }
 
-  func testDeserializeInvalidEnumFromString() throws {
+  func testDeserializeInvalidEnumFromString() async throws {
     var message = MessageDescriptor(name: "InvalidEnumMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "Status"))
     fileDescriptor.addMessage(message)
@@ -1575,7 +1657,11 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(jsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError {
         if case .invalidEnumValue(let fieldName, let value) = jsonError {
           XCTAssertEqual(fieldName, "status")
@@ -1591,7 +1677,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeGroupTypeError_missingTypeName() throws {
+  func testDeserializeGroupTypeError_missingTypeName() async throws {
     var message = MessageDescriptor(name: "GroupMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "group_field", number: 1, type: .group))
     fileDescriptor.addMessage(message)
@@ -1604,7 +1690,11 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(jsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError {
         if case .missingTypeName(let fieldName) = jsonError {
           XCTAssertEqual(fieldName, "group_field")
@@ -1619,7 +1709,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeMessageTypeError() throws {
+  func testDeserializeMessageTypeError() async throws {
     var message = MessageDescriptor(name: "MessageMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "nested_message", number: 1, type: .message, typeName: "NestedMessage"))
     fileDescriptor.addMessage(message)
@@ -1632,7 +1722,11 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(jsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError {
         if case .nestedMessageDescriptorNotFound(let fieldName, let typeName) = jsonError {
           XCTAssertEqual(fieldName, "nested_message")
@@ -1648,7 +1742,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeMessageWithWrongJSONType() throws {
+  func testDeserializeMessageWithWrongJSONType() async throws {
     var message = MessageDescriptor(name: "WrongTypeMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "nested_message", number: 1, type: .message, typeName: "NestedMessage"))
     fileDescriptor.addMessage(message)
@@ -1661,7 +1755,11 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(jsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .valueTypeMismatch(let fieldName, let expected, _) = jsonError
       {
@@ -1674,7 +1772,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeBytesFromNonStringJSON() throws {
+  func testDeserializeBytesFromNonStringJSON() async throws {
     var message = MessageDescriptor(name: "BytesMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "data", number: 1, type: .bytes))
     fileDescriptor.addMessage(message)
@@ -1687,7 +1785,11 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(jsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .valueTypeMismatch(let fieldName, let expected, let actual) = jsonError
       {
@@ -1701,7 +1803,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeMapWithIntegerKeyOverflow() throws {
+  func testDeserializeMapWithIntegerKeyOverflow() async throws {
     // Test overflow for Int32 map key
     let int32KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .int32)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
@@ -1730,7 +1832,11 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(jsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError {
         if case .invalidMapKeyFormat(let fieldName, let keyType, let value) = jsonError {
           XCTAssertEqual(fieldName, "int32_overflow_map")
@@ -1747,7 +1853,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeInvalidArrayElement() throws {
+  func testDeserializeInvalidArrayElement() async throws {
     var message = MessageDescriptor(name: "ArrayErrorMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "numbers", number: 1, type: .int32, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -1760,7 +1866,11 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(jsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .invalidArrayElement(let fieldName, let index, _) = jsonError
       {
@@ -1773,7 +1883,7 @@ final class JSONDeserializationTests: XCTestCase {
     }
   }
 
-  func testDeserializeMapWithInvalidKeyFormats() throws {
+  func testDeserializeMapWithInvalidKeyFormats() async throws {
     // Test invalid formats for different key types
 
     // UInt32 keys with invalid format
@@ -1804,7 +1914,11 @@ final class JSONDeserializationTests: XCTestCase {
 
     let jsonData = jsonString.data(using: .utf8)!
 
-    XCTAssertThrowsError(try deserializer.deserialize(jsonData, using: message)) { error in
+    do {
+      _ = try await deserializer.deserialize(jsonData, using: message)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
       if let jsonError = error as? JSONDeserializationError,
         case .invalidMapKeyFormat(let fieldName, let keyType, let value) = jsonError
       {
@@ -1820,7 +1934,7 @@ final class JSONDeserializationTests: XCTestCase {
 
   // MARK: - Additional Coverage Tests
 
-  func testDeserializeMapWithAllKeyTypesUnique() throws {
+  func testDeserializeMapWithAllKeyTypesUnique() async throws {
     // Test all supported key types for map
 
     // String keys
@@ -1894,7 +2008,7 @@ final class JSONDeserializationTests: XCTestCase {
       """
 
     let jsonData = jsonString.data(using: .utf8)!
-    let deserializedMessage = try deserializer.deserialize(jsonData, using: message)
+    let deserializedMessage = try await deserializer.deserialize(jsonData, using: message)
 
     let accessor = FieldAccessor(deserializedMessage)
 

@@ -1210,32 +1210,32 @@ enum CompatDescriptors {
   // MARK: - Full Registry
 
   /// Creates a TypeRegistry with all descriptors from all fixture .proto files registered.
-  static func fullRegistry() throws -> TypeRegistry {
+  static func fullRegistry() async throws -> TypeRegistry {
     let registry = TypeRegistry()
 
     // WKTs
     var wktFile = FileDescriptor(name: "google/protobuf/timestamp.proto", package: "google.protobuf")
     wktFile.addMessage(wktTimestamp())
-    try registry.registerFile(wktFile)
+    try await registry.registerFile(wktFile)
 
     var durFile = FileDescriptor(name: "google/protobuf/duration.proto", package: "google.protobuf")
     durFile.addMessage(wktDuration())
-    try registry.registerFile(durFile)
+    try await registry.registerFile(durFile)
 
     var fmFile = FileDescriptor(name: "google/protobuf/field_mask.proto", package: "google.protobuf")
     fmFile.addMessage(wktFieldMask())
-    try registry.registerFile(fmFile)
+    try await registry.registerFile(fmFile)
 
     var anyFile = FileDescriptor(name: "google/protobuf/any.proto", package: "google.protobuf")
     anyFile.addMessage(wktAny())
-    try registry.registerFile(anyFile)
+    try await registry.registerFile(anyFile)
 
     var structFile = FileDescriptor(name: "google/protobuf/struct.proto", package: "google.protobuf")
     structFile.addMessage(wktStruct())
     structFile.addMessage(wktValue())
     structFile.addMessage(wktListValue())
     structFile.addEnum(wktNullValue())
-    try registry.registerFile(structFile)
+    try await registry.registerFile(structFile)
 
     var wrappersFile = FileDescriptor(name: "google/protobuf/wrappers.proto", package: "google.protobuf")
     wrappersFile.addMessage(wktWrapper(name: "DoubleValue", fieldType: SwiftProtoReflect.FieldType.double))
@@ -1247,11 +1247,11 @@ enum CompatDescriptors {
     wrappersFile.addMessage(wktWrapper(name: "BoolValue", fieldType: SwiftProtoReflect.FieldType.bool))
     wrappersFile.addMessage(wktWrapper(name: "StringValue", fieldType: SwiftProtoReflect.FieldType.string))
     wrappersFile.addMessage(wktWrapper(name: "BytesValue", fieldType: SwiftProtoReflect.FieldType.bytes))
-    try registry.registerFile(wrappersFile)
+    try await registry.registerFile(wrappersFile)
 
     var emptyFile = FileDescriptor(name: "google/protobuf/empty.proto", package: "google.protobuf")
     emptyFile.addMessage(wktEmpty())
-    try registry.registerFile(emptyFile)
+    try await registry.registerFile(emptyFile)
 
     // common_types.proto
     var commonFile = FileDescriptor(name: "common_types.proto", package: "testcompat")
@@ -1263,7 +1263,7 @@ enum CompatDescriptors {
     commonFile.addMessage(withNestedEnum())
     commonFile.addMessage(withNestedMessage())
     commonFile.addMessage(directionHolder())
-    try registry.registerFile(commonFile)
+    try await registry.registerFile(commonFile)
 
     // scalar_types.proto
     var scalarFile = FileDescriptor(name: "scalar_types.proto", package: "testcompat")
@@ -1271,7 +1271,7 @@ enum CompatDescriptors {
     scalarFile.addMessage(optionalScalarMessage())
     scalarFile.addMessage(fieldNameEdgeCases())
     scalarFile.addMessage(wideMessage())
-    try registry.registerFile(scalarFile)
+    try await registry.registerFile(scalarFile)
 
     // container_types.proto
     var containerFile = FileDescriptor(name: "container_types.proto", package: "testcompat")
@@ -1279,7 +1279,7 @@ enum CompatDescriptors {
     containerFile.addMessage(mapAllKeyTypes())
     containerFile.addMessage(mapAllValueTypes())
     containerFile.addMessage(mixedContainers())
-    try registry.registerFile(containerFile)
+    try await registry.registerFile(containerFile)
 
     // oneof_types.proto
     var oneofFile = FileDescriptor(name: "oneof_types.proto", package: "testcompat")
@@ -1287,7 +1287,7 @@ enum CompatDescriptors {
     oneofFile.addMessage(oneofComplex())
     oneofFile.addMessage(multiOneof())
     oneofFile.addMessage(oneofWKT())
-    try registry.registerFile(oneofFile)
+    try await registry.registerFile(oneofFile)
 
     // nesting_types.proto
     var nestingFile = FileDescriptor(name: "nesting_types.proto", package: "testcompat")
@@ -1298,7 +1298,7 @@ enum CompatDescriptors {
     nestingFile.addMessage(outerWithNestedDefs())
     nestingFile.addMessage(recursive())
     nestingFile.addMessage(mixedNest1())
-    try registry.registerFile(nestingFile)
+    try await registry.registerFile(nestingFile)
 
     // wkt_types.proto
     var wktTypesFile = FileDescriptor(name: "wkt_types.proto", package: "testcompat")
@@ -1307,7 +1307,7 @@ enum CompatDescriptors {
     wktTypesFile.addMessage(mapWKTValues())
     wktTypesFile.addMessage(wktNested())
     wktTypesFile.addMessage(wktMixed())
-    try registry.registerFile(wktTypesFile)
+    try await registry.registerFile(wktTypesFile)
 
     // proto2_types.proto
     var proto2File = FileDescriptor(name: "proto2_types.proto", package: "testcompat2", syntax: "proto2")
@@ -1320,7 +1320,7 @@ enum CompatDescriptors {
     proto2File.addMessage(proto2Complex())
     proto2File.addMessage(proto2Oneof())
     proto2File.addMessage(proto2KitchenSink())
-    try registry.registerFile(proto2File)
+    try await registry.registerFile(proto2File)
 
     // realworld_types.proto
     var realworldFile = FileDescriptor(name: "realworld_types.proto", package: "testcompat")
@@ -1337,7 +1337,7 @@ enum CompatDescriptors {
     realworldFile.addMessage(dateValue())
     realworldFile.addMessage(proto3OptionalMessages())
     realworldFile.addMessage(intentHolder())
-    try registry.registerFile(realworldFile)
+    try await registry.registerFile(realworldFile)
 
     // cross_file_types.proto
     var crossFile = FileDescriptor(name: "cross_file_types.proto", package: "testcompat")
@@ -1350,7 +1350,7 @@ enum CompatDescriptors {
     crossFile.addMessage(deepLevel3())
     crossFile.addMessage(deepLevel2())
     crossFile.addMessage(deepLevel1())
-    try registry.registerFile(crossFile)
+    try await registry.registerFile(crossFile)
 
     return registry
   }

@@ -44,9 +44,9 @@ enum BinaryCompatHelpers {
     file: StaticString = #file,
     line: UInt = #line,
     validate: (DynamicMessage) throws -> Void
-  ) throws -> DynamicMessage {
+  ) async throws -> DynamicMessage {
     let referenceData = try proto.serializedData()
-    let dynamic = try makeDeserializer(registry: registry).deserialize(referenceData, using: descriptor)
+    let dynamic = try await makeDeserializer(registry: registry).deserialize(referenceData, using: descriptor)
     try validate(dynamic)
     return dynamic
   }
@@ -62,7 +62,7 @@ enum BinaryCompatHelpers {
     file: StaticString = #file,
     line: UInt = #line,
     validate: (P) throws -> Void
-  ) throws -> P {
+  ) async throws -> P {
     let ourData = try makeSerializer().serialize(dynamic)
     let decoded = try P(serializedBytes: ourData)
     try validate(decoded)
@@ -83,8 +83,8 @@ enum BinaryCompatHelpers {
     validateDynamic: (DynamicMessage) throws -> Void,
     buildDynamic: () throws -> DynamicMessage,
     validateProto: (P) throws -> Void
-  ) throws {
-    try assertOracleToUs(
+  ) async throws {
+    try await assertOracleToUs(
       proto: proto,
       descriptor: descriptor,
       registry: registry,
@@ -93,7 +93,7 @@ enum BinaryCompatHelpers {
       validate: validateDynamic
     )
     let dynamic = try buildDynamic()
-    try assertUsToOracle(
+    try await assertUsToOracle(
       dynamic: dynamic,
       protoType: P.self,
       file: file,

@@ -32,19 +32,19 @@ final class BinaryCompatWKTTests: XCTestCase {
   private var registry: TypeRegistry!
   private let serializer = BinaryCompatHelpers.makeSerializer()
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - 1. Timestamp (two varint fields: seconds, nanos)
 
-  func test_wkt_timestamp_bidirectional() throws {
+  func test_wkt_timestamp_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.ts.seconds = 1_700_000_000
     proto.ts.nanos = 500_000_000
@@ -52,7 +52,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     let desc = CompatDescriptors.wktHolder()
     let tsDesc = CompatDescriptors.wktTimestamp()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -78,14 +78,14 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 2. Duration (seconds=3600, nanos=0)
 
-  func test_wkt_duration_bidirectional() throws {
+  func test_wkt_duration_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.dur.seconds = 3600
 
     let desc = CompatDescriptors.wktHolder()
     let durDesc = CompatDescriptors.wktDuration()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -111,14 +111,14 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 3. FieldMask (repeated string paths)
 
-  func test_wkt_fieldMask_bidirectional() throws {
+  func test_wkt_fieldMask_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.mask.paths = ["field_one", "nested.field_two", "another"]
 
     let desc = CompatDescriptors.wktHolder()
     let fmDesc = CompatDescriptors.wktFieldMask()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -144,14 +144,14 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 4. Int64Value wrapper (value=Int64.max)
 
-  func test_wkt_int64Value_bidirectional() throws {
+  func test_wkt_int64Value_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.i64W.value = Int64.max
 
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "Int64Value", fieldType: .int64)
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -174,14 +174,14 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 5. StringValue wrapper (value="wrapped string")
 
-  func test_wkt_stringValue_bidirectional() throws {
+  func test_wkt_stringValue_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.strW.value = "wrapped string"
 
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "StringValue", fieldType: .string)
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -204,14 +204,14 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 6. BoolValue wrapper (value=true)
 
-  func test_wkt_boolValue_bidirectional() throws {
+  func test_wkt_boolValue_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.boolW.value = true
 
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "BoolValue", fieldType: .bool)
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -234,7 +234,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 7. BytesValue wrapper (value=Data([0x01,0x02,0x03]))
 
-  func test_wkt_bytesValue_bidirectional() throws {
+  func test_wkt_bytesValue_bidirectional() async throws {
     let testBytes = Data([0x01, 0x02, 0x03])
     var proto = Testcompat_WKTHolder()
     proto.bytesW.value = testBytes
@@ -242,7 +242,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "BytesValue", fieldType: .bytes)
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -265,14 +265,14 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 8. DoubleValue wrapper (value=3.14, 8-byte fixed)
 
-  func test_wkt_doubleValue_bidirectional() throws {
+  func test_wkt_doubleValue_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.dblW.value = 3.14
 
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "DoubleValue", fieldType: .double)
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -295,14 +295,14 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 9. FloatValue wrapper (value=2.5, 4-byte fixed)
 
-  func test_wkt_floatValue_bidirectional() throws {
+  func test_wkt_floatValue_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.fltW.value = 2.5
 
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "FloatValue", fieldType: .float)
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -325,14 +325,14 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 10. Int32Value wrapper (value=Int32.max)
 
-  func test_wkt_int32Value_bidirectional() throws {
+  func test_wkt_int32Value_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.i32W.value = Int32.max
 
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "Int32Value", fieldType: .int32)
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -355,14 +355,14 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 11. UInt32Value wrapper (value=UInt32.max)
 
-  func test_wkt_uint32Value_bidirectional() throws {
+  func test_wkt_uint32Value_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.u32W.value = UInt32.max
 
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "UInt32Value", fieldType: .uint32)
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -385,14 +385,14 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 12. UInt64Value wrapper (value=UInt64.max)
 
-  func test_wkt_uint64Value_bidirectional() throws {
+  func test_wkt_uint64Value_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.u64W.value = UInt64.max
 
     let desc = CompatDescriptors.wktHolder()
     let wrapDesc = CompatDescriptors.wktWrapper(name: "UInt64Value", fieldType: .uint64)
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -415,14 +415,14 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 13. Empty (encoded as zero bytes inside LEN field)
 
-  func test_wkt_empty_bidirectional() throws {
+  func test_wkt_empty_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.emptyVal = Google_Protobuf_Empty()
 
     let desc = CompatDescriptors.wktHolder()
     let emptyDesc = CompatDescriptors.wktEmpty()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -444,7 +444,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 14. Repeated Timestamp: two messages
 
-  func test_wkt_repeatedTimestamps_bidirectional() throws {
+  func test_wkt_repeatedTimestamps_bidirectional() async throws {
     var proto = Testcompat_RepeatedWKTs()
     var ts1 = Google_Protobuf_Timestamp()
     ts1.seconds = 100
@@ -455,7 +455,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     let desc = CompatDescriptors.repeatedWKTs()
     let tsDesc = CompatDescriptors.wktTimestamp()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -484,7 +484,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 15. Repeated StringValue: three wrappers ("a", "b", "")
 
-  func test_wkt_repeatedStringValues_bidirectional() throws {
+  func test_wkt_repeatedStringValues_bidirectional() async throws {
     var proto = Testcompat_RepeatedWKTs()
     var sv1 = Google_Protobuf_StringValue()
     sv1.value = "a"
@@ -496,7 +496,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     let desc = CompatDescriptors.repeatedWKTs()
     let strWrapDesc = CompatDescriptors.wktWrapper(name: "StringValue", fieldType: .string)
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -527,7 +527,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 16. Map<string, Timestamp>: one entry "now"→seconds=999
 
-  func test_wkt_mapTimestampValues_bidirectional() throws {
+  func test_wkt_mapTimestampValues_bidirectional() async throws {
     var proto = Testcompat_MapWKTValues()
     var ts = Google_Protobuf_Timestamp()
     ts.seconds = 999
@@ -537,7 +537,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     let tsDesc = CompatDescriptors.wktTimestamp()
 
     // Direction A: oracle → our deserializer
-    try BinaryCompatHelpers.assertOracleToUs(
+    try await BinaryCompatHelpers.assertOracleToUs(
       proto: proto,
       descriptor: desc,
       registry: registry
@@ -553,7 +553,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.setMapEntry(tsDyn, forKey: "now", inField: 1)
 
-    try BinaryCompatHelpers.assertUsToOracle(
+    try await BinaryCompatHelpers.assertUsToOracle(
       dynamic: dynamic,
       protoType: Testcompat_MapWKTValues.self
     ) { decoded in
@@ -563,7 +563,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 17. Any wrapping a regular SimpleMessage
 
-  func test_wkt_any_regularMessage_bidirectional() throws {
+  func test_wkt_any_regularMessage_bidirectional() async throws {
     var inner = Testcompat_SimpleMessage()
     inner.id = 42
     inner.name = "any_inner"
@@ -575,7 +575,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     let desc = CompatDescriptors.wktHolder()
     let anyDesc = CompatDescriptors.wktAny()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -603,7 +603,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 18. Struct (fields map with string, number, bool Value entries)
 
-  func test_wkt_struct_bidirectional() throws {
+  func test_wkt_struct_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.structVal.fields["name"] = Google_Protobuf_Value.with { $0.stringValue = "test" }
     proto.structVal.fields["count"] = Google_Protobuf_Value.with { $0.numberValue = 5 }
@@ -614,7 +614,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     let valueDesc = CompatDescriptors.wktValue()
 
     // Direction A: verify Struct is deserialized as a DynamicMessage named "Struct"
-    try BinaryCompatHelpers.assertOracleToUs(
+    try await BinaryCompatHelpers.assertOracleToUs(
       proto: proto,
       descriptor: desc,
       registry: registry
@@ -641,7 +641,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(structDyn, forField: 5)
 
-    try BinaryCompatHelpers.assertUsToOracle(
+    try await BinaryCompatHelpers.assertUsToOracle(
       dynamic: dynamic,
       protoType: Testcompat_WKTHolder.self
     ) { decoded in
@@ -654,7 +654,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 19. Value oneof: null, number, string, bool kinds
 
-  func test_wkt_value_allKinds_bidirectional() throws {
+  func test_wkt_value_allKinds_bidirectional() async throws {
     let desc = CompatDescriptors.wktHolder()
 
     // Direction A: each Value kind round-trips through oracle → our deserializer
@@ -690,7 +690,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     ]
 
     for (proto, label) in kindCases {
-      try BinaryCompatHelpers.assertOracleToUs(
+      try await BinaryCompatHelpers.assertOracleToUs(
         proto: proto,
         descriptor: desc,
         registry: registry
@@ -708,7 +708,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     var dynNum = DynamicMessage(descriptor: desc)
     try dynNum.set(valNum, forField: 6)
 
-    try BinaryCompatHelpers.assertUsToOracle(dynamic: dynNum, protoType: Testcompat_WKTHolder.self) { decoded in
+    try await BinaryCompatHelpers.assertUsToOracle(dynamic: dynNum, protoType: Testcompat_WKTHolder.self) { decoded in
       XCTAssertTrue(decoded.hasValueVal)
       XCTAssertEqual(decoded.valueVal.numberValue, 3.14, accuracy: 0.001)
     }
@@ -720,7 +720,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     var dynStr = DynamicMessage(descriptor: desc)
     try dynStr.set(valStr, forField: 6)
 
-    try BinaryCompatHelpers.assertUsToOracle(dynamic: dynStr, protoType: Testcompat_WKTHolder.self) { decoded in
+    try await BinaryCompatHelpers.assertUsToOracle(dynamic: dynStr, protoType: Testcompat_WKTHolder.self) { decoded in
       XCTAssertEqual(decoded.valueVal.stringValue, "hello")
     }
 
@@ -731,14 +731,14 @@ final class BinaryCompatWKTTests: XCTestCase {
     var dynBool = DynamicMessage(descriptor: desc)
     try dynBool.set(valBool, forField: 6)
 
-    try BinaryCompatHelpers.assertUsToOracle(dynamic: dynBool, protoType: Testcompat_WKTHolder.self) { decoded in
+    try await BinaryCompatHelpers.assertUsToOracle(dynamic: dynBool, protoType: Testcompat_WKTHolder.self) { decoded in
       XCTAssertTrue(decoded.valueVal.boolValue)
     }
   }
 
   // MARK: - 20. ListValue (repeated Value: number, string, bool)
 
-  func test_wkt_listValue_bidirectional() throws {
+  func test_wkt_listValue_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.listVal.values = [
       Google_Protobuf_Value.with { $0.numberValue = 1 },
@@ -751,7 +751,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     let valueDesc = CompatDescriptors.wktValue()
 
     // Direction A: verify ListValue is deserialized correctly
-    try BinaryCompatHelpers.assertOracleToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await BinaryCompatHelpers.assertOracleToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let listDyn = try XCTUnwrap(try msg.get(forField: 7) as? DynamicMessage)
       XCTAssertEqual(listDyn.descriptor.name, "ListValue")
     }
@@ -772,7 +772,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(listDyn, forField: 7)
 
-    try BinaryCompatHelpers.assertUsToOracle(dynamic: dynamic, protoType: Testcompat_WKTHolder.self) { decoded in
+    try await BinaryCompatHelpers.assertUsToOracle(dynamic: dynamic, protoType: Testcompat_WKTHolder.self) { decoded in
       XCTAssertTrue(decoded.hasListVal)
       XCTAssertEqual(decoded.listVal.values.count, 3)
       XCTAssertEqual(decoded.listVal.values[0].numberValue, 1)
@@ -783,7 +783,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 21. WKTNested.Inner: Timestamp + Duration + Int32Value combined
 
-  func test_wkt_nested_innerWithWKTs_bidirectional() throws {
+  func test_wkt_nested_innerWithWKTs_bidirectional() async throws {
     var proto = Testcompat_WKTNested()
     proto.primary.created.seconds = 12345
     proto.primary.ttl.seconds = 60
@@ -794,7 +794,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     let durDesc = CompatDescriptors.wktDuration()
     let i32wDesc = CompatDescriptors.wktWrapper(name: "Int32Value", fieldType: .int32)
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -838,7 +838,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 22. WKTNested: repeated Inner history list with two entries
 
-  func test_wkt_nested_repeatedHistory_bidirectional() throws {
+  func test_wkt_nested_repeatedHistory_bidirectional() async throws {
     var proto = Testcompat_WKTNested()
     var e1 = Testcompat_WKTNested.Inner()
     e1.created.seconds = 100
@@ -849,7 +849,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     let desc = CompatDescriptors.wktNested()
     let tsDesc = CompatDescriptors.wktTimestamp()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -888,7 +888,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 23. WKTMixed: Timestamp + oneof Duration + status enum
 
-  func test_wkt_mixed_oneofDuration_bidirectional() throws {
+  func test_wkt_mixed_oneofDuration_bidirectional() async throws {
     var proto = Testcompat_WKTMixed()
     proto.ts.seconds = 500
     proto.durVal.seconds = 120
@@ -898,7 +898,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     let tsDesc = CompatDescriptors.wktTimestamp()
     let durDesc = CompatDescriptors.wktDuration()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -937,7 +937,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 24. Map<string, Struct>: one entry "config"
 
-  func test_wkt_mapValues_structMap_bidirectional() throws {
+  func test_wkt_mapValues_structMap_bidirectional() async throws {
     var proto = Testcompat_MapWKTValues()
     proto.structMap["config"] = Google_Protobuf_Struct.with {
       $0.fields["key"] = Google_Protobuf_Value.with { $0.stringValue = "v" }
@@ -947,7 +947,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     let structDesc = CompatDescriptors.wktStruct()
 
     // Direction A: oracle → our deserializer
-    try BinaryCompatHelpers.assertOracleToUs(
+    try await BinaryCompatHelpers.assertOracleToUs(
       proto: proto,
       descriptor: desc,
       registry: registry
@@ -962,7 +962,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.setMapEntry(structDyn, forKey: "config", inField: 4)
 
-    try BinaryCompatHelpers.assertUsToOracle(
+    try await BinaryCompatHelpers.assertUsToOracle(
       dynamic: dynamic,
       protoType: Testcompat_MapWKTValues.self
     ) { decoded in
@@ -972,7 +972,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 25. WKTHolder with Timestamp + StringValue set simultaneously
 
-  func test_wkt_allFieldsAtOnce_bidirectional() throws {
+  func test_wkt_allFieldsAtOnce_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.ts.seconds = 1_000_000
     proto.strW.value = "hello"
@@ -981,7 +981,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     let tsDesc = CompatDescriptors.wktTimestamp()
     let strwDesc = CompatDescriptors.wktWrapper(name: "StringValue", fieldType: .string)
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -1012,7 +1012,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 26. Any wrapping a Timestamp: type_url + serialized Timestamp bytes
 
-  func test_wkt_any_wktValue_bidirectional() throws {
+  func test_wkt_any_wktValue_bidirectional() async throws {
     let ts = Google_Protobuf_Timestamp.with {
       $0.seconds = 1_700_000_000
       $0.nanos = 500_000_000
@@ -1025,7 +1025,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     let desc = CompatDescriptors.wktHolder()
     let anyDesc = CompatDescriptors.wktAny()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -1057,7 +1057,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 27. WKTHolder with no WKT fields set → empty Data
 
-  func test_wkt_allAbsent_producesNoWireBytes() throws {
+  func test_wkt_allAbsent_producesNoWireBytes() async throws {
     // Direction A: oracle produces empty bytes for unset WKTHolder
     let proto = Testcompat_WKTHolder()
     let referenceData = try proto.serializedData()
@@ -1072,7 +1072,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 28. Timestamp: nanos=0 (proto3 default) MUST be omitted from wire
 
-  func test_wkt_timestamp_zeroNanos_bidirectional() throws {
+  func test_wkt_timestamp_zeroNanos_bidirectional() async throws {
     // Direction A: oracle serializes Timestamp(seconds=54321, nanos=0 default) → no nanos field in wire
     var proto = Testcompat_WKTHolder()
     proto.ts.seconds = 54321
@@ -1081,7 +1081,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     let desc = CompatDescriptors.wktHolder()
     let tsDesc = CompatDescriptors.wktTimestamp()
 
-    try BinaryCompatHelpers.assertOracleToUs(
+    try await BinaryCompatHelpers.assertOracleToUs(
       proto: proto,
       descriptor: desc,
       registry: registry
@@ -1108,7 +1108,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     var holderDyn = DynamicMessage(descriptor: desc)
     try holderDyn.set(tsDyn, forField: 1)
 
-    try BinaryCompatHelpers.assertUsToOracle(
+    try await BinaryCompatHelpers.assertUsToOracle(
       dynamic: holderDyn,
       protoType: Testcompat_WKTHolder.self
     ) { decoded in
@@ -1119,7 +1119,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 29. Duration: negative (seconds=-1, nanos=-500_000_000) round-trips correctly
 
-  func test_wkt_duration_negative_bidirectional() throws {
+  func test_wkt_duration_negative_bidirectional() async throws {
     var proto = Testcompat_WKTHolder()
     proto.dur.seconds = -1
     proto.dur.nanos = -500_000_000
@@ -1127,7 +1127,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     let desc = CompatDescriptors.wktHolder()
     let durDesc = CompatDescriptors.wktDuration()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -1153,7 +1153,7 @@ final class BinaryCompatWKTTests: XCTestCase {
 
   // MARK: - 30. Any: encode type_url + value bytes, oracle parses typeURL and raw bytes correctly
 
-  func test_wkt_any_typeUrlAndValue_roundTrip() throws {
+  func test_wkt_any_typeUrlAndValue_roundTrip() async throws {
     var inner = Testcompat_SimpleMessage()
     inner.id = 99
     inner.name = "round_trip"
@@ -1172,7 +1172,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     var holderDyn = DynamicMessage(descriptor: desc)
     try holderDyn.set(anyDyn, forField: 4)
 
-    try BinaryCompatHelpers.assertUsToOracle(
+    try await BinaryCompatHelpers.assertUsToOracle(
       dynamic: holderDyn,
       protoType: Testcompat_WKTHolder.self
     ) { decoded in
@@ -1185,7 +1185,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     proto.anyVal.typeURL = typeURL
     proto.anyVal.value = innerData
 
-    try BinaryCompatHelpers.assertOracleToUs(
+    try await BinaryCompatHelpers.assertOracleToUs(
       proto: proto,
       descriptor: desc,
       registry: registry

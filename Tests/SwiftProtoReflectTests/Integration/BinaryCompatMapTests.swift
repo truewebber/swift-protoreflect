@@ -23,24 +23,24 @@ final class BinaryCompatMapTests: XCTestCase {
   private var registry: TypeRegistry!
   private let serializer = BinaryCompatHelpers.makeSerializer()
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - 1. map<string, string>
 
-  func test_map_stringString_bidirectional() throws {
+  func test_map_stringString_bidirectional() async throws {
     var proto = Testcompat_MapAllKeyTypes()
     proto.mapStringString = ["key1": "val1", "key2": "val2", "": "empty_key"]
 
     let desc = CompatDescriptors.mapAllKeyTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -67,12 +67,12 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 2. map<int32, string>
 
-  func test_map_int32Key_bidirectional() throws {
+  func test_map_int32Key_bidirectional() async throws {
     var proto = Testcompat_MapAllKeyTypes()
     proto.mapInt32String = [-1: "neg", 0: "zero", Int32.max: "max"]
 
     let desc = CompatDescriptors.mapAllKeyTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -99,12 +99,12 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 3. map<int64, string>
 
-  func test_map_int64Key_bidirectional() throws {
+  func test_map_int64Key_bidirectional() async throws {
     var proto = Testcompat_MapAllKeyTypes()
     proto.mapInt64String = [Int64.min: "min", 0: "zero", Int64.max: "max"]
 
     let desc = CompatDescriptors.mapAllKeyTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -131,12 +131,12 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 4. map<uint32, string>
 
-  func test_map_uint32Key_bidirectional() throws {
+  func test_map_uint32Key_bidirectional() async throws {
     var proto = Testcompat_MapAllKeyTypes()
     proto.mapUint32String = [0: "zero", UInt32.max: "max", 42: "answer"]
 
     let desc = CompatDescriptors.mapAllKeyTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -163,12 +163,12 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 5. map<uint64, string>
 
-  func test_map_uint64Key_bidirectional() throws {
+  func test_map_uint64Key_bidirectional() async throws {
     var proto = Testcompat_MapAllKeyTypes()
     proto.mapUint64String = [0: "zero", UInt64.max: "max"]
 
     let desc = CompatDescriptors.mapAllKeyTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -192,12 +192,12 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 6. map<sint32, string> (zigzag key encoding in map entry)
 
-  func test_map_sint32Key_bidirectional() throws {
+  func test_map_sint32Key_bidirectional() async throws {
     var proto = Testcompat_MapAllKeyTypes()
     proto.mapSint32String = [-100: "neg", 100: "pos"]
 
     let desc = CompatDescriptors.mapAllKeyTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -221,12 +221,12 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 7. map<sint64, string> (zigzag key encoding in map entry)
 
-  func test_map_sint64Key_bidirectional() throws {
+  func test_map_sint64Key_bidirectional() async throws {
     var proto = Testcompat_MapAllKeyTypes()
     proto.mapSint64String = [Int64.min: "min", Int64.max: "max"]
 
     let desc = CompatDescriptors.mapAllKeyTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -250,12 +250,12 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 8. map<fixed32, string> (4-byte little-endian key in map entry)
 
-  func test_map_fixed32Key_bidirectional() throws {
+  func test_map_fixed32Key_bidirectional() async throws {
     var proto = Testcompat_MapAllKeyTypes()
     proto.mapFixed32String = [0: "zero", UInt32.max: "max"]
 
     let desc = CompatDescriptors.mapAllKeyTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -279,12 +279,12 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 9. map<fixed64, string> (8-byte little-endian key in map entry)
 
-  func test_map_fixed64Key_bidirectional() throws {
+  func test_map_fixed64Key_bidirectional() async throws {
     var proto = Testcompat_MapAllKeyTypes()
     proto.mapFixed64String = [UInt64.max: "max"]
 
     let desc = CompatDescriptors.mapAllKeyTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -305,12 +305,12 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 10. map<sfixed32, string> (4-byte signed fixed key in map entry)
 
-  func test_map_sfixed32Key_bidirectional() throws {
+  func test_map_sfixed32Key_bidirectional() async throws {
     var proto = Testcompat_MapAllKeyTypes()
     proto.mapSfixed32String = [Int32.min: "min", Int32.max: "max"]
 
     let desc = CompatDescriptors.mapAllKeyTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -334,12 +334,12 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 11. map<sfixed64, string> (8-byte signed fixed key in map entry)
 
-  func test_map_sfixed64Key_bidirectional() throws {
+  func test_map_sfixed64Key_bidirectional() async throws {
     var proto = Testcompat_MapAllKeyTypes()
     proto.mapSfixed64String = [Int64.min: "min"]
 
     let desc = CompatDescriptors.mapAllKeyTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -360,12 +360,12 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 12. map<bool, string>
 
-  func test_map_boolKey_bidirectional() throws {
+  func test_map_boolKey_bidirectional() async throws {
     var proto = Testcompat_MapAllKeyTypes()
     proto.mapBoolString = [true: "yes", false: "no"]
 
     let desc = CompatDescriptors.mapAllKeyTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -389,7 +389,7 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 13. map<string, SimpleMessage> (embedded message value in map entry)
 
-  func test_map_messageValue_bidirectional() throws {
+  func test_map_messageValue_bidirectional() async throws {
     var m1 = Testcompat_SimpleMessage()
     m1.id = 42
     m1.name = "test"
@@ -399,7 +399,7 @@ final class BinaryCompatMapTests: XCTestCase {
     let desc = CompatDescriptors.mapAllValueTypes()
     let simpleDesc = CompatDescriptors.simpleMessage()
 
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -426,12 +426,12 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 14. map<string, Status> (enum value in map entry)
 
-  func test_map_enumValue_bidirectional() throws {
+  func test_map_enumValue_bidirectional() async throws {
     var proto = Testcompat_MapAllValueTypes()
     proto.mapSEnum = ["a": .active, "b": .inactive]
 
     let desc = CompatDescriptors.mapAllValueTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -455,14 +455,14 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 15. MixedContainers: repeated + map simultaneously
 
-  func test_map_mixedContainers_bidirectional() throws {
+  func test_map_mixedContainers_bidirectional() async throws {
     var proto = Testcompat_MixedContainers()
     proto.ids = [1, 2, 3]
     proto.names = ["a", "b"]
     proto.scores = ["x": 10, "y": 20]
 
     let desc = CompatDescriptors.mixedContainers()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -492,12 +492,12 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 16. map<string, int32> boundary values
 
-  func test_map_stringInt32_bidirectional() throws {
+  func test_map_stringInt32_bidirectional() async throws {
     var proto = Testcompat_MapAllValueTypes()
     proto.mapSInt32 = ["a": Int32.min, "b": 0, "c": Int32.max]
 
     let desc = CompatDescriptors.mapAllValueTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -524,7 +524,7 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 17. Empty map produces no wire bytes
 
-  func test_map_empty_producesNoWireOutput() throws {
+  func test_map_empty_producesNoWireOutput() async throws {
     // Direction A: oracle with all-empty maps → serializedData() = Data()
     let proto = Testcompat_MapAllKeyTypes()
     let referenceData = try proto.serializedData()
@@ -539,12 +539,12 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 18. Single-entry map<string, string>
 
-  func test_map_singleEntry_bidirectional() throws {
+  func test_map_singleEntry_bidirectional() async throws {
     var proto = Testcompat_MapAllKeyTypes()
     proto.mapStringString = ["only": "one"]
 
     let desc = CompatDescriptors.mapAllKeyTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,
@@ -567,14 +567,14 @@ final class BinaryCompatMapTests: XCTestCase {
 
   // MARK: - 19. Large map: 50 entries map<string, int32>
 
-  func test_map_largeMap_50entries_bidirectional() throws {
+  func test_map_largeMap_50entries_bidirectional() async throws {
     var proto = Testcompat_MapAllValueTypes()
     for i in 0..<50 {
       proto.mapSInt32["key\(i)"] = Int32(i * 2)
     }
 
     let desc = CompatDescriptors.mapAllValueTypes()
-    try BinaryCompatHelpers.assertBidirectional(
+    try await BinaryCompatHelpers.assertBidirectional(
       proto: proto,
       descriptor: desc,
       registry: registry,

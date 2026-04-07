@@ -11,7 +11,7 @@ final class FieldTypeGroupTests: XCTestCase {
 
   // MARK: - Binary Serialization
 
-  func test_binarySerialize_groupField_succeeds() throws {
+  func test_binarySerialize_groupField_succeeds() async throws {
     var innerDesc = MessageDescriptor(name: "MyGroup", fullName: "test.MyGroup")
     innerDesc.addField(FieldDescriptor(name: "v", number: 1, type: .int32))
 
@@ -30,7 +30,10 @@ final class FieldTypeGroupTests: XCTestCase {
     let data = try serializer.serialize(msg)
     XCTAssertFalse(data.isEmpty)
 
-    let decoded = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(data, using: desc)
+    let decoded = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+      data,
+      using: desc
+    )
     let decodedGroup = try decoded.get(forField: 1) as? DynamicMessage
     XCTAssertNotNil(decodedGroup)
     let v = try decodedGroup?.get(forField: "v") as? Int32
@@ -39,7 +42,7 @@ final class FieldTypeGroupTests: XCTestCase {
 
   // MARK: - JSON Serialization
 
-  func test_jsonSerialize_groupField_succeeds() throws {
+  func test_jsonSerialize_groupField_succeeds() async throws {
     var innerDesc = MessageDescriptor(name: "MyGroup", fullName: "test.MyGroup")
     innerDesc.addField(FieldDescriptor(name: "v", number: 1, type: .int32))
 
@@ -58,7 +61,7 @@ final class FieldTypeGroupTests: XCTestCase {
     let serializer = JSONSerializer(
       options: JSONSerializationOptions(useOriginalFieldNames: true, typeRegistry: TypeRegistry())
     )
-    let data = try serializer.serialize(msg)
+    let data = try await serializer.serialize(msg)
     XCTAssertFalse(data.isEmpty)
 
     let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
@@ -69,12 +72,18 @@ final class FieldTypeGroupTests: XCTestCase {
 
   // MARK: - Binary Deserialization
 
-  func test_binaryDeserialize_groupWireType_throwsUnsupported() {
+  func test_binaryDeserialize_groupWireType_throwsUnsupported() async throws {
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     desc.addField(FieldDescriptor(name: "value", number: 1, type: .int32))
     // Wire type 3 = start group, field number 1 => tag = (1 << 3) | 3 = 11 = 0x0B
     let data = Data([0x0B])
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    XCTAssertThrowsError(try deserializer.deserialize(data, using: desc))
+    do {
+      _ = try await deserializer.deserialize(data, using: desc)
+      XCTFail("Expected error to be thrown")
+    }
+    catch {
+      // expected error
+    }
   }
 }

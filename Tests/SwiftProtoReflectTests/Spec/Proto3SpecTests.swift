@@ -30,7 +30,7 @@ final class Proto3SpecTests: XCTestCase {
 
   // MARK: - Scalar defaults
 
-  func test_scalarDefaults_allTypesZeroValue() throws {
+  func test_scalarDefaults_allTypesZeroValue() async throws {
     let desc = makeScalarDescriptor()
     let msg = MessageFactory().createMessage(from: desc)
 
@@ -47,7 +47,7 @@ final class Proto3SpecTests: XCTestCase {
 
   // MARK: - No required fields in proto3
 
-  func test_noRequiredFields_proto3() {
+  func test_noRequiredFields_proto3() async throws {
     let factory = MessageFactory()
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "x", number: 1, type: .int32, isRequired: true))
@@ -57,7 +57,7 @@ final class Proto3SpecTests: XCTestCase {
     XCTAssertTrue(result.isValid, "Proto3 must not enforce required fields")
   }
 
-  func test_requiredField_proto2_enforced() {
+  func test_requiredField_proto2_enforced() async throws {
     let factory = MessageFactory()
     var desc = MessageDescriptor(name: "M", fullName: "test.M", syntax: "proto2")
     desc.addField(FieldDescriptor(name: "x", number: 1, type: .int32, isRequired: true))
@@ -69,7 +69,7 @@ final class Proto3SpecTests: XCTestCase {
 
   // MARK: - Enum first value zero
 
-  func test_enumFirstValueZero() {
+  func test_enumFirstValueZero() async throws {
     var e = EnumDescriptor(name: "Status", fullName: "test.Status")
     e.addValue(.init(name: "UNKNOWN", number: 0))
     e.addValue(.init(name: "ACTIVE", number: 1))
@@ -77,7 +77,7 @@ final class Proto3SpecTests: XCTestCase {
     XCTAssertTrue(errors.isEmpty)
   }
 
-  func test_enumNoZeroValue_validationFails() {
+  func test_enumNoZeroValue_validationFails() async throws {
     var e = EnumDescriptor(name: "Status", fullName: "test.Status")
     e.addValue(.init(name: "ACTIVE", number: 1))
     let errors = e.validateProto3()
@@ -86,7 +86,7 @@ final class Proto3SpecTests: XCTestCase {
 
   // MARK: - Unknown fields preserved
 
-  func test_unknownFields_preserved() throws {
+  func test_unknownFields_preserved() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
@@ -100,14 +100,14 @@ final class Proto3SpecTests: XCTestCase {
     let data = try serializer.serialize(msg)
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let decoded = try deserializer.deserialize(data, using: desc)
+    let decoded = try await deserializer.deserialize(data, using: desc)
 
     XCTAssertEqual(decoded.unknownFields, unknownData)
   }
 
   // MARK: - JSON canonical encoding
 
-  func test_jsonCanonicalEncoding_int64AsString() throws {
+  func test_jsonCanonicalEncoding_int64AsString() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "val", number: 1, type: .int64))
 
@@ -116,11 +116,11 @@ final class Proto3SpecTests: XCTestCase {
     try msg.set(Int64(9_007_199_254_740_993), forField: "val")
 
     let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-    let json = try serializer.serializeToJSONObject(msg)
+    let json = try await serializer.serializeToJSONObject(msg)
     XCTAssertTrue(json["val"] is String, "int64 must be serialized as string in JSON")
   }
 
-  func test_jsonCanonicalEncoding_bytesAsBase64() throws {
+  func test_jsonCanonicalEncoding_bytesAsBase64() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(FieldDescriptor(name: "data", number: 1, type: .bytes))
 
@@ -129,11 +129,11 @@ final class Proto3SpecTests: XCTestCase {
     try msg.set("Hello".data(using: .utf8)!, forField: "data")
 
     let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-    let json = try serializer.serializeToJSONObject(msg)
+    let json = try await serializer.serializeToJSONObject(msg)
     XCTAssertEqual(json["data"] as? String, "SGVsbG8=")
   }
 
-  func test_jsonCanonicalEncoding_enumAsName() throws {
+  func test_jsonCanonicalEncoding_enumAsName() async throws {
     var statusEnum = EnumDescriptor(name: "Status", fullName: "test.Status")
     statusEnum.addValue(.init(name: "UNKNOWN", number: 0))
     statusEnum.addValue(.init(name: "ACTIVE", number: 1))
@@ -149,13 +149,13 @@ final class Proto3SpecTests: XCTestCase {
     try msg.set(Int32(1), forField: "status")
 
     let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-    let json = try serializer.serializeToJSONObject(msg)
+    let json = try await serializer.serializeToJSONObject(msg)
     XCTAssertEqual(json["status"] as? String, "ACTIVE")
   }
 
   // MARK: - Proto3 optional presence tracking
 
-  func test_proto3Optional_presenceTracking() throws {
+  func test_proto3Optional_presenceTracking() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "test.M")
     desc.addField(
       FieldDescriptor(name: "opt_val", number: 1, type: .int32, proto3Optional: true)
@@ -176,12 +176,12 @@ final class Proto3SpecTests: XCTestCase {
 
   // MARK: - FileDescriptor syntax
 
-  func test_fileDescriptorSyntax_defaultProto3() {
+  func test_fileDescriptorSyntax_defaultProto3() async throws {
     let fd = FileDescriptor(name: "test.proto", package: "test")
     XCTAssertEqual(fd.syntax, "proto3")
   }
 
-  func test_fileDescriptorSyntax_emptyIsProto2() {
+  func test_fileDescriptorSyntax_emptyIsProto2() async throws {
     let fd = FileDescriptor(name: "test.proto", package: "test", syntax: "")
     XCTAssertEqual(fd.syntax, "proto2")
   }

@@ -22,12 +22,12 @@ import SwiftProtoReflect
 
 @main
 struct NestedMessagesExample {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("Nested Message Handling")
 
-    try demonstrateSimpleNesting()
-    try demonstrateDeepNesting()
-    try demonstrateJsonNesting()
+    try await demonstrateSimpleNesting()
+    try await demonstrateDeepNesting()
+    try await demonstrateJsonNesting()
 
     ExampleUtils.printSuccess(
       "Nested messages demo completed!"
@@ -42,7 +42,7 @@ struct NestedMessagesExample {
 
   // MARK: - Simple Nesting
 
-  private static func demonstrateSimpleNesting() throws {
+  private static func demonstrateSimpleNesting() async throws {
     ExampleUtils.printStep(1, "Simple Nested Message")
 
     var outerDesc = MessageDescriptor(name: "Person", fullName: "example.Person")
@@ -73,7 +73,7 @@ struct NestedMessagesExample {
     let data = try BinarySerializer().serialize(person)
     print("  Serialized size: \(data.count) bytes")
 
-    let decoded = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+    let decoded = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
       data,
       using: outerDesc
     )
@@ -93,7 +93,7 @@ struct NestedMessagesExample {
 
   // MARK: - Deep Nesting
 
-  private static func demonstrateDeepNesting() throws {
+  private static func demonstrateDeepNesting() async throws {
     ExampleUtils.printStep(2, "Multi-Level Nesting")
 
     var rootDesc = MessageDescriptor(name: "Root", fullName: "example.Root")
@@ -129,7 +129,7 @@ struct NestedMessagesExample {
     let data = try BinarySerializer().serialize(root)
     print("  3-level message size: \(data.count) bytes")
 
-    let decoded = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+    let decoded = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
       data,
       using: rootDesc
     )
@@ -151,7 +151,7 @@ struct NestedMessagesExample {
 
   // MARK: - JSON Nesting
 
-  private static func demonstrateJsonNesting() throws {
+  private static func demonstrateJsonNesting() async throws {
     ExampleUtils.printStep(3, "Nested Messages in JSON")
 
     var outerDesc = MessageDescriptor(name: "Place", fullName: "example.Place")
@@ -179,7 +179,7 @@ struct NestedMessagesExample {
     try place.set("San Francisco", forField: "name")
     try place.set(coord, forField: 2)
 
-    let jsonData = try JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serialize(place)
+    let jsonData = try await JSONSerializer(options: .init(typeRegistry: TypeRegistry())).serialize(place)
     let jsonString = String(data: jsonData, encoding: .utf8) ?? ""
     print("  JSON: \(jsonString)")
 

@@ -15,19 +15,19 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
   private var registry: TypeRegistry!
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Nullable oneof + NullValue pattern
 
-  func test_realworld_nullableUint32_null_bidirectional() throws {
+  func test_realworld_nullableUint32_null_bidirectional() async throws {
     var proto = Testcompat_NullableUint32()
     proto.nullVal = .nullValue
 
@@ -36,15 +36,18 @@ final class JSONCompatRealWorldTests: XCTestCase {
     // Direction A: protoc → us (NullValue deserialized from JSON null literal)
     let jsonStr = try proto.jsonString()
     guard let jsonData = jsonStr.data(using: .utf8) else { throw CompatError.jsonEncodingFailed }
-    let deserialized = try CompatHelpers.makeDeserializer(registry: registry).deserialize(jsonData, using: desc)
+    let deserialized = try await CompatHelpers.makeDeserializer(registry: registry).deserialize(jsonData, using: desc)
     XCTAssertEqual(try deserialized.get(forField: 1) as? Int32, 0, "null_val should be 0 (NULL_VALUE)")
     XCTAssertNil(try deserialized.get(forField: 2) as? UInt32, "value field should not be set")
 
     // Direction B: our serializer → protoc (works - we can round-trip via protoc)
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(0), forField: 1)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_NullableUint32.self)
-    { decoded in
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_NullableUint32.self
+    ) { decoded in
       if case .nullVal = decoded.kind {
       }
       else {
@@ -53,20 +56,23 @@ final class JSONCompatRealWorldTests: XCTestCase {
     }
   }
 
-  func test_realworld_nullableUint32_value_bidirectional() throws {
+  func test_realworld_nullableUint32_value_bidirectional() async throws {
     var proto = Testcompat_NullableUint32()
     proto.value = 42
 
     let desc = CompatDescriptors.nullableUint32()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 2) as? UInt32, 42)
       XCTAssertNil(try msg.get(forField: 1) as? Int32)
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(UInt32(42), forField: 2)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_NullableUint32.self)
-    { decoded in
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_NullableUint32.self
+    ) { decoded in
       if case .value(let v) = decoded.kind {
         XCTAssertEqual(v, 42)
       }
@@ -76,7 +82,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
     }
   }
 
-  func test_realworld_nullableDouble_null_bidirectional() throws {
+  func test_realworld_nullableDouble_null_bidirectional() async throws {
     var proto = Testcompat_NullableDouble()
     proto.nullVal = .nullValue
 
@@ -85,14 +91,17 @@ final class JSONCompatRealWorldTests: XCTestCase {
     // Direction A: protoc → us (NullValue deserialized from JSON null literal)
     let jsonStr2 = try proto.jsonString()
     guard let jsonData2 = jsonStr2.data(using: .utf8) else { throw CompatError.jsonEncodingFailed }
-    let deserialized2 = try CompatHelpers.makeDeserializer(registry: registry).deserialize(jsonData2, using: desc)
+    let deserialized2 = try await CompatHelpers.makeDeserializer(registry: registry).deserialize(jsonData2, using: desc)
     XCTAssertEqual(try deserialized2.get(forField: 1) as? Int32, 0, "null_val should be 0 (NULL_VALUE)")
     XCTAssertNil(try deserialized2.get(forField: 2) as? Double, "value field should not be set")
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(0), forField: 1)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_NullableDouble.self)
-    { decoded in
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_NullableDouble.self
+    ) { decoded in
       if case .nullVal = decoded.kind {
       }
       else {
@@ -101,19 +110,22 @@ final class JSONCompatRealWorldTests: XCTestCase {
     }
   }
 
-  func test_realworld_nullableDouble_value_bidirectional() throws {
+  func test_realworld_nullableDouble_value_bidirectional() async throws {
     var proto = Testcompat_NullableDouble()
     proto.value = 3.14
 
     let desc = CompatDescriptors.nullableDouble()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 2) as? Double, 3.14)
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Double(3.14), forField: 2)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_NullableDouble.self)
-    { decoded in
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_NullableDouble.self
+    ) { decoded in
       if case .value(let v) = decoded.kind {
         XCTAssertEqual(v, 3.14)
       }
@@ -125,7 +137,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
   // MARK: - WithNullables: multiple nullable fields
 
-  func test_realworld_withNullables_mixed_bidirectional() throws {
+  func test_realworld_withNullables_mixed_bidirectional() async throws {
     var proto = Testcompat_WithNullables()
     proto.count.value = 10
     proto.active.nullVal = .nullValue
@@ -137,7 +149,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
     // Direction A: protoc → us (WithNullables containing NullableBool.nullVal = JSON null)
     let jsonStrW = try proto.jsonString()
     guard let jsonDataW = jsonStrW.data(using: .utf8) else { throw CompatError.jsonEncodingFailed }
-    let deserializedW = try CompatHelpers.makeDeserializer(registry: registry).deserialize(jsonDataW, using: desc)
+    let deserializedW = try await CompatHelpers.makeDeserializer(registry: registry).deserialize(jsonDataW, using: desc)
     let countMsg = try XCTUnwrap(try deserializedW.get(forField: 1) as? DynamicMessage, "count must be set")
     XCTAssertEqual(try countMsg.get(forField: 2) as? UInt32, 10, "count.value should be 10")
     let activeMsg = try XCTUnwrap(try deserializedW.get(forField: 3) as? DynamicMessage, "active must be set")
@@ -163,7 +175,11 @@ final class JSONCompatRealWorldTests: XCTestCase {
     try dynamic.set(activeDyn, forField: 3)
     try dynamic.set(labelDyn, forField: 4)
     try dynamic.set("outer", forField: 10)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WithNullables.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_WithNullables.self
+    ) {
       decoded in
       if case .value(let v) = decoded.count.kind {
         XCTAssertEqual(v, 10)
@@ -188,7 +204,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
   // MARK: - Non-sequential / large field numbers
 
-  func test_realworld_nonSequentialFields_bidirectional() throws {
+  func test_realworld_nonSequentialFields_bidirectional() async throws {
     var proto = Testcompat_NonSequentialFields()
     proto.name = "test"
     proto.code = 42
@@ -199,7 +215,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
     proto.updatedAt.seconds = 1_234_567_891
 
     let desc = CompatDescriptors.nonSequentialFields()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? String, "test")
       XCTAssertEqual(try msg.get(forField: 2) as? Int32, 42)
       XCTAssertEqual(try msg.get(forField: 10) as? String, "desc")
@@ -223,7 +239,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
     try dynamic.set(true, forField: 100)
     try dynamic.set(ts1, forField: 71)
     try dynamic.set(ts2, forField: 72)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_NonSequentialFields.self
@@ -240,7 +256,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
   // MARK: - Reserved fields: normal active fields work
 
-  func test_realworld_withReserved_activeFields_bidirectional() throws {
+  func test_realworld_withReserved_activeFields_bidirectional() async throws {
     var proto = Testcompat_WithReserved()
     proto.name = "reserved_test"
     proto.version = 3
@@ -248,7 +264,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
     proto.priority = 10
 
     let desc = CompatDescriptors.withReserved()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? String, "reserved_test")
       XCTAssertEqual(try msg.get(forField: 5) as? Int32, 3)
       XCTAssertEqual(try msg.get(forField: 9) as? String, "active")
@@ -260,7 +276,11 @@ final class JSONCompatRealWorldTests: XCTestCase {
     try dynamic.set(Int32(3), forField: 5)
     try dynamic.set("active", forField: 9)
     try dynamic.set(Int32(10), forField: 10)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WithReserved.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_WithReserved.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.name, "reserved_test")
       XCTAssertEqual(decoded.version, 3)
@@ -271,7 +291,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
   // MARK: - ReportResponse: deeply nested real-world type
 
-  func test_realworld_reportResponse_basic_bidirectional() throws {
+  func test_realworld_reportResponse_basic_bidirectional() async throws {
     var proto = Testcompat_ReportResponse()
     proto.total = 100
     proto.limit = 10
@@ -283,7 +303,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
     proto.keywords = [keyword]
 
     let desc = CompatDescriptors.reportResponse()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? UInt32, 100)
       XCTAssertEqual(try msg.get(forField: 2) as? UInt32, 10)
       let keywords = try XCTUnwrap(try msg.get(forField: 4) as? [DynamicMessage])
@@ -305,8 +325,11 @@ final class JSONCompatRealWorldTests: XCTestCase {
     try dynamic.set(UInt32(10), forField: 2)
     try dynamic.set(UInt32(0), forField: 3)
     try dynamic.set([kwDyn] as [DynamicMessage], forField: 4)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_ReportResponse.self)
-    { decoded in
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_ReportResponse.self
+    ) { decoded in
       XCTAssertEqual(decoded.total, 100)
       XCTAssertEqual(decoded.limit, 10)
       XCTAssertEqual(decoded.offset, 0)
@@ -318,14 +341,14 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
   // MARK: - DateValue: simple struct-like message
 
-  func test_realworld_dateValue_bidirectional() throws {
+  func test_realworld_dateValue_bidirectional() async throws {
     var proto = Testcompat_DateValue()
     proto.year = 2024
     proto.month = 3
     proto.day = 15
 
     let desc = CompatDescriptors.dateValue()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? Int32, 2024)
       XCTAssertEqual(try msg.get(forField: 2) as? Int32, 3)
       XCTAssertEqual(try msg.get(forField: 3) as? Int32, 15)
@@ -335,7 +358,8 @@ final class JSONCompatRealWorldTests: XCTestCase {
     try dynamic.set(Int32(2024), forField: 1)
     try dynamic.set(Int32(3), forField: 2)
     try dynamic.set(Int32(15), forField: 3)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_DateValue.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_DateValue.self)
+    {
       decoded in
       XCTAssertEqual(decoded.year, 2024)
       XCTAssertEqual(decoded.month, 3)
@@ -345,18 +369,22 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
   // MARK: - NullableBool: explicit false value
 
-  func test_realworld_nullableBool_false_bidirectional() throws {
+  func test_realworld_nullableBool_false_bidirectional() async throws {
     var proto = Testcompat_NullableBool()
     proto.value = false
 
     let desc = CompatDescriptors.nullableBool()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 2) as? Bool, false)
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(false, forField: 2)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_NullableBool.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_NullableBool.self
+    ) {
       decoded in
       if case .value(let v) = decoded.kind {
         XCTAssertFalse(v)
@@ -369,19 +397,22 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
   // MARK: - NullableString: value set
 
-  func test_realworld_nullableString_value_bidirectional() throws {
+  func test_realworld_nullableString_value_bidirectional() async throws {
     var proto = Testcompat_NullableString()
     proto.value = "hello_null"
 
     let desc = CompatDescriptors.nullableString()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 2) as? String, "hello_null")
     }
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("hello_null", forField: 2)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_NullableString.self)
-    {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_NullableString.self
+    ) {
       decoded in
       if case .value(let v) = decoded.kind {
         XCTAssertEqual(v, "hello_null")
@@ -394,7 +425,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
   // MARK: - NullableMessage: message value set
 
-  func test_realworld_nullableMessage_value_bidirectional() throws {
+  func test_realworld_nullableMessage_value_bidirectional() async throws {
     var inner = Testcompat_SimpleMessage()
     inner.id = 77
     inner.name = "nullable_inner"
@@ -403,7 +434,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
     proto.value = inner
 
     let desc = CompatDescriptors.nullableMessage()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let innerDyn = try XCTUnwrap(try msg.get(forField: 2) as? DynamicMessage)
       XCTAssertEqual(try innerDyn.get(forField: 1) as? Int32, 77)
       XCTAssertEqual(try innerDyn.get(forField: 2) as? String, "nullable_inner")
@@ -416,8 +447,11 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(innerDyn, forField: 2)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_NullableMessage.self)
-    {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_NullableMessage.self
+    ) {
       decoded in
       if case .value(let m) = decoded.kind {
         XCTAssertEqual(m.id, 77)
@@ -431,21 +465,21 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
   // MARK: - Nullable: unset → empty JSON
 
-  func test_realworld_nullable_unset_emptyJSON() throws {
+  func test_realworld_nullable_unset_emptyJSON() async throws {
     let proto = Testcompat_NullableUint32()
     let jsonStr = try proto.jsonString()
     XCTAssertEqual(jsonStr, "{}")
 
     let desc = CompatDescriptors.nullableUint32()
     let dynamic = DynamicMessage(descriptor: desc)
-    let jsonData = try CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
+    let jsonData = try await CompatHelpers.makeSerializer(registry: registry).serialize(dynamic)
     let ourJson = try XCTUnwrap(String(data: jsonData, encoding: .utf8))
     XCTAssertEqual(ourJson, "{}")
   }
 
   // MARK: - Proto3Optional: optional message field set vs unset
 
-  func test_realworld_proto3Optional_messageField_setVsUnset_bidirectional() throws {
+  func test_realworld_proto3Optional_messageField_setVsUnset_bidirectional() async throws {
     // Unset
     var protoUnset = Testcompat_Proto3OptionalMessages()
     protoUnset.label = "unset"
@@ -458,7 +492,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
     protoSet.label = "set"
 
     let desc = CompatDescriptors.proto3OptionalMessages()
-    try CompatHelpers.assertProtocToUs(proto: protoSet, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: protoSet, descriptor: desc, registry: registry) { msg in
       let sub = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       XCTAssertEqual(try sub.get(forField: 1) as? Int32, 55)
       XCTAssertEqual(try msg.get(forField: 10) as? String, "set")
@@ -471,7 +505,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(subDyn, forField: 1)
     try dynamic.set("set", forField: 10)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_Proto3OptionalMessages.self
@@ -482,7 +516,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
   // MARK: - Proto3Optional: optional WKT field set vs unset
 
-  func test_realworld_proto3Optional_wktField_setVsUnset_bidirectional() throws {
+  func test_realworld_proto3Optional_wktField_setVsUnset_bidirectional() async throws {
     // Unset
     let protoUnset = Testcompat_Proto3OptionalMessages()
     let jsonUnset = try protoUnset.jsonString()
@@ -493,7 +527,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
     protoSet.optTs.seconds = 42
 
     let desc = CompatDescriptors.proto3OptionalMessages()
-    try CompatHelpers.assertProtocToUs(proto: protoSet, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: protoSet, descriptor: desc, registry: registry) { msg in
       let tsDyn = try XCTUnwrap(try msg.get(forField: 3) as? DynamicMessage)
       XCTAssertEqual(try tsDyn.get(forField: 1) as? Int64, 42)
     }
@@ -504,7 +538,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(tsDyn, forField: 3)
-    try CompatHelpers.assertUsToProtoc(
+    try await CompatHelpers.assertUsToProtoc(
       dynamic: dynamic,
       registry: registry,
       protoType: Testcompat_Proto3OptionalMessages.self
@@ -515,7 +549,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
   // MARK: - IntentFlag: all gap values bidirectional
 
-  func test_realworld_intentHolder_allIntentFlags_bidirectional() throws {
+  func test_realworld_intentHolder_allIntentFlags_bidirectional() async throws {
     var proto = Testcompat_IntentHolder()
     proto.intent = .intentCommercial
     proto.allIntents = [
@@ -524,7 +558,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
     proto.byName = ["c": .intentCommercial, "t": .intentTransactional]
 
     let desc = CompatDescriptors.intentHolder()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? Int32, 8)
       let vals = try XCTUnwrap(try msg.get(forField: 2) as? [Int32])
       XCTAssertEqual(vals, [0, 1, 2, 4, 8])
@@ -537,7 +571,11 @@ final class JSONCompatRealWorldTests: XCTestCase {
     try dynamic.set([Int32(0), Int32(1), Int32(2), Int32(4), Int32(8)] as [Int32], forField: 2)
     try dynamic.setMapEntry(Int32(8), forKey: "c", inField: 3)
     try dynamic.setMapEntry(Int32(4), forKey: "t", inField: 3)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_IntentHolder.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_IntentHolder.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.intent, .intentCommercial)
       XCTAssertEqual(decoded.allIntents.count, 5)
@@ -549,7 +587,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
   // MARK: - WithNullables: all nullable fields set to non-null values
 
-  func test_withNullables_allSet_bidirectional() throws {
+  func test_withNullables_allSet_bidirectional() async throws {
     var proto = Testcompat_WithNullables()
     proto.count.value = 42
     proto.rate.value = 2.71
@@ -560,7 +598,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
     proto.name = "all_set_outer"
 
     let desc = CompatDescriptors.withNullables()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let countDyn = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       XCTAssertEqual(try countDyn.get(forField: 2) as? UInt32, 42)
       XCTAssertEqual(try msg.get(forField: 10) as? String, "all_set_outer")
@@ -598,7 +636,11 @@ final class JSONCompatRealWorldTests: XCTestCase {
     try dynamic.set(labelDyn, forField: 4)
     try dynamic.set(detailDyn, forField: 5)
     try dynamic.set("all_set_outer", forField: 10)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_WithNullables.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_WithNullables.self
+    ) {
       decoded in
       if case .value(let v) = decoded.count.kind {
         XCTAssertEqual(v, 42)
@@ -637,7 +679,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
 
   // MARK: - ReportResponse: deep sibling definitions chain
 
-  func test_reportResponse_deepSiblingDefs_bidirectional() throws {
+  func test_reportResponse_deepSiblingDefs_bidirectional() async throws {
     var proto = Testcompat_ReportResponse()
     proto.total = 5
     proto.limit = 2
@@ -678,7 +720,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
     proto.keywords = [keyword]
 
     let desc = CompatDescriptors.reportResponse()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 1) as? UInt32, 5)
       XCTAssertEqual(try msg.get(forField: 2) as? UInt32, 2)
       let keywords = try XCTUnwrap(try msg.get(forField: 4) as? [DynamicMessage])
@@ -712,8 +754,11 @@ final class JSONCompatRealWorldTests: XCTestCase {
     try dynamic.set(UInt32(2), forField: 2)
     try dynamic.set(UInt32(0), forField: 3)
     try dynamic.set([kwDyn] as [DynamicMessage], forField: 4)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_ReportResponse.self)
-    {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_ReportResponse.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.total, 5)
       XCTAssertEqual(decoded.keywords.count, 1)
@@ -728,7 +773,7 @@ final class JSONCompatRealWorldTests: XCTestCase {
     }
   }
 
-  func test_realworld_nullableBool_false_vs_null() throws {
+  func test_realworld_nullableBool_false_vs_null() async throws {
     var protoFalse = Testcompat_NullableBool()
     protoFalse.value = false
 

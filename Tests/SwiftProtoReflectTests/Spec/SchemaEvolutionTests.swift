@@ -20,7 +20,7 @@ final class SchemaEvolutionTests: XCTestCase {
 
   // MARK: - Add new field
 
-  func test_addNewField_oldDataStillDeserializes() throws {
+  func test_addNewField_oldDataStillDeserializes() async throws {
     var oldDesc = MessageDescriptor(name: "M", fullName: "test.M")
     oldDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
@@ -32,14 +32,14 @@ final class SchemaEvolutionTests: XCTestCase {
     newDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
     newDesc.addField(FieldDescriptor(name: "name", number: 2, type: .string))
 
-    let newMsg = try deserializer.deserialize(data, using: newDesc)
+    let newMsg = try await deserializer.deserialize(data, using: newDesc)
     XCTAssertEqual(try newMsg.get(forField: "id") as? Int32, 42)
     XCTAssertNil(try newMsg.get(forField: "name"))
   }
 
   // MARK: - Remove field
 
-  func test_removeField_newDataIgnoresOldField() throws {
+  func test_removeField_newDataIgnoresOldField() async throws {
     var oldDesc = MessageDescriptor(name: "M", fullName: "test.M")
     oldDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
     oldDesc.addField(FieldDescriptor(name: "name", number: 2, type: .string))
@@ -52,14 +52,14 @@ final class SchemaEvolutionTests: XCTestCase {
     var newDesc = MessageDescriptor(name: "M", fullName: "test.M")
     newDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
-    let newMsg = try deserializer.deserialize(data, using: newDesc)
+    let newMsg = try await deserializer.deserialize(data, using: newDesc)
     XCTAssertEqual(try newMsg.get(forField: "id") as? Int32, 1)
     XCTAssertFalse(newMsg.unknownFields.isEmpty, "Removed field should be preserved as unknown")
   }
 
   // MARK: - Rename field
 
-  func test_renameField_binaryUnaffected() throws {
+  func test_renameField_binaryUnaffected() async throws {
     var oldDesc = MessageDescriptor(name: "M", fullName: "test.M")
     oldDesc.addField(FieldDescriptor(name: "user_name", number: 1, type: .string))
 
@@ -70,7 +70,7 @@ final class SchemaEvolutionTests: XCTestCase {
     var newDesc = MessageDescriptor(name: "M", fullName: "test.M")
     newDesc.addField(FieldDescriptor(name: "display_name", number: 1, type: .string))
 
-    let newMsg = try deserializer.deserialize(data, using: newDesc)
+    let newMsg = try await deserializer.deserialize(data, using: newDesc)
     XCTAssertEqual(
       try newMsg.get(forField: "display_name") as? String,
       "Alice",
@@ -80,7 +80,7 @@ final class SchemaEvolutionTests: XCTestCase {
 
   // MARK: - Add enum value
 
-  func test_addEnumValue_oldClientPreservesUnknown() throws {
+  func test_addEnumValue_oldClientPreservesUnknown() async throws {
     var statusEnum = EnumDescriptor(name: "Status", fullName: "test.Status")
     statusEnum.addValue(.init(name: "UNKNOWN", number: 0))
     statusEnum.addValue(.init(name: "ACTIVE", number: 1))
@@ -106,14 +106,14 @@ final class SchemaEvolutionTests: XCTestCase {
     )
     readerDesc.addNestedEnum(oldStatusEnum)
 
-    let decoded = try deserializer.deserialize(data, using: readerDesc)
+    let decoded = try await deserializer.deserialize(data, using: readerDesc)
     let val = try decoded.get(forField: "status") as? Int32
     XCTAssertEqual(val, 2, "Unknown enum number should be preserved as-is")
   }
 
   // MARK: - Add map field
 
-  func test_addMapField_backwardCompatible() throws {
+  func test_addMapField_backwardCompatible() async throws {
     var oldDesc = MessageDescriptor(name: "M", fullName: "test.M")
     oldDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
@@ -137,13 +137,13 @@ final class SchemaEvolutionTests: XCTestCase {
       )
     )
 
-    let newMsg = try deserializer.deserialize(data, using: newDesc)
+    let newMsg = try await deserializer.deserialize(data, using: newDesc)
     XCTAssertEqual(try newMsg.get(forField: "id") as? Int32, 5)
   }
 
   // MARK: - Unknown fields survive re-serialization
 
-  func test_unknownFields_survivesRoundtrip() throws {
+  func test_unknownFields_survivesRoundtrip() async throws {
     var oldDesc = MessageDescriptor(name: "M", fullName: "test.M")
     oldDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
     oldDesc.addField(FieldDescriptor(name: "name", number: 2, type: .string))
@@ -156,10 +156,10 @@ final class SchemaEvolutionTests: XCTestCase {
     var newDesc = MessageDescriptor(name: "M", fullName: "test.M")
     newDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
-    let intermediate = try deserializer.deserialize(data, using: newDesc)
+    let intermediate = try await deserializer.deserialize(data, using: newDesc)
     let reserializedData = try serializer.serialize(intermediate)
 
-    let restored = try deserializer.deserialize(reserializedData, using: oldDesc)
+    let restored = try await deserializer.deserialize(reserializedData, using: oldDesc)
     XCTAssertEqual(try restored.get(forField: "id") as? Int32, 1)
     XCTAssertEqual(try restored.get(forField: "name") as? String, "Alice")
   }

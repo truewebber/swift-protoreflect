@@ -9,6 +9,7 @@ Swift Protocol Buffers Reflection Library is a library that provides the ability
 - Ability to dynamically create proto objects based on protodescriptors obtained at runtime
 - Support for getting protodescriptors from gRPC server or from manually assembled descriptor objects
 - Ability to perform proto marshal and unmarshal operations with dynamically created objects
+- Full proto2 and proto3 support
 
 ### Usage Without Pre-compilation
 - Working with proto messages without the need for pre-compilation of .proto files
@@ -17,7 +18,6 @@ Swift Protocol Buffers Reflection Library is a library that provides the ability
 ## Requirements and Limitations
 
 ### Technical Limitations
-- Support only for proto3 protocol, without proto2 support
 - Strict compliance with the behavior of the official C++ protoc implementation (https://github.com/protocolbuffers/protobuf)
 - Adherence to Protocol Buffers specification with strict enforcement of official documentation requirements
 

@@ -54,7 +54,7 @@ final class Proto2DynamicMessageTests: XCTestCase {
 
   // MARK: - Group field storage
 
-  func test_set_groupField_storedInNestedMessages() throws {
+  func test_set_groupField_storedInNestedMessages() async throws {
     let desc = makeMessageWithGroup()
     var msg = DynamicMessage(descriptor: desc)
     let group = DynamicMessage(descriptor: makeGroupDescriptor())
@@ -66,7 +66,7 @@ final class Proto2DynamicMessageTests: XCTestCase {
     XCTAssertTrue(result is DynamicMessage)
   }
 
-  func test_get_groupField_returnsFromNestedMessages() throws {
+  func test_get_groupField_returnsFromNestedMessages() async throws {
     let desc = makeMessageWithGroup()
     var msg = DynamicMessage(descriptor: desc)
 
@@ -80,7 +80,7 @@ final class Proto2DynamicMessageTests: XCTestCase {
     XCTAssertEqual(innerVal, "hello")
   }
 
-  func test_hasValue_groupField_true_whenSet() throws {
+  func test_hasValue_groupField_true_whenSet() async throws {
     let desc = makeMessageWithGroup()
     var msg = DynamicMessage(descriptor: desc)
     let group = DynamicMessage(descriptor: makeGroupDescriptor())
@@ -89,14 +89,14 @@ final class Proto2DynamicMessageTests: XCTestCase {
     XCTAssertTrue(try msg.hasValue(forField: "my_group"))
   }
 
-  func test_hasValue_groupField_false_whenNotSet() throws {
+  func test_hasValue_groupField_false_whenNotSet() async throws {
     let desc = makeMessageWithGroup()
     let msg = DynamicMessage(descriptor: desc)
 
     XCTAssertFalse(try msg.hasValue(forField: "my_group"))
   }
 
-  func test_clearField_groupField_removesFromNestedMessages() throws {
+  func test_clearField_groupField_removesFromNestedMessages() async throws {
     let desc = makeMessageWithGroup()
     var msg = DynamicMessage(descriptor: desc)
     let group = DynamicMessage(descriptor: makeGroupDescriptor())
@@ -108,14 +108,14 @@ final class Proto2DynamicMessageTests: XCTestCase {
     XCTAssertFalse(try msg.hasValue(forField: "my_group"))
   }
 
-  func test_set_groupField_nonDynamicMessage_throws() {
+  func test_set_groupField_nonDynamicMessage_throws() async throws {
     let desc = makeMessageWithGroup()
     var msg = DynamicMessage(descriptor: desc)
 
     XCTAssertThrowsError(try msg.set("not a message", forField: "my_group"))
   }
 
-  func test_equality_withGroupFields_equal() throws {
+  func test_equality_withGroupFields_equal() async throws {
     let desc = makeMessageWithGroup()
     var msg1 = DynamicMessage(descriptor: desc)
     var msg2 = DynamicMessage(descriptor: desc)
@@ -131,7 +131,7 @@ final class Proto2DynamicMessageTests: XCTestCase {
     XCTAssertEqual(msg1, msg2)
   }
 
-  func test_equality_withGroupFields_notEqual() throws {
+  func test_equality_withGroupFields_notEqual() async throws {
     let desc = makeMessageWithGroup()
     var msg1 = DynamicMessage(descriptor: desc)
     var msg2 = DynamicMessage(descriptor: desc)
@@ -149,7 +149,7 @@ final class Proto2DynamicMessageTests: XCTestCase {
 
   // MARK: - Extension fields (unified storage)
 
-  func test_setExtension_validNumber_stored() throws {
+  func test_setExtension_validNumber_stored() async throws {
     let desc = makeMessageWithExtensions()
     var msg = DynamicMessage(descriptor: desc)
 
@@ -158,7 +158,7 @@ final class Proto2DynamicMessageTests: XCTestCase {
     XCTAssertEqual(result as? String, "extended")
   }
 
-  func test_getExtension_notSet_returnsNil() throws {
+  func test_getExtension_notSet_returnsNil() async throws {
     let desc = makeMessageWithExtensions()
     let msg = DynamicMessage(descriptor: desc)
 
@@ -166,7 +166,7 @@ final class Proto2DynamicMessageTests: XCTestCase {
     XCTAssertNil(result)
   }
 
-  func test_hasExtension_true_whenSet() throws {
+  func test_hasExtension_true_whenSet() async throws {
     let desc = makeMessageWithExtensions()
     var msg = DynamicMessage(descriptor: desc)
 
@@ -174,14 +174,14 @@ final class Proto2DynamicMessageTests: XCTestCase {
     XCTAssertTrue(try msg.hasValue(forField: 100))
   }
 
-  func test_hasExtension_false_whenNotSet() throws {
+  func test_hasExtension_false_whenNotSet() async throws {
     let desc = makeMessageWithExtensions()
     let msg = DynamicMessage(descriptor: desc)
 
     XCTAssertFalse(try msg.hasValue(forField: 100))
   }
 
-  func test_clearExtension_removes() throws {
+  func test_clearExtension_removes() async throws {
     let desc = makeMessageWithExtensions()
     var msg = DynamicMessage(descriptor: desc)
 
@@ -192,7 +192,7 @@ final class Proto2DynamicMessageTests: XCTestCase {
     XCTAssertFalse(try msg.hasValue(forField: 100))
   }
 
-  func test_setExtension_messageType_stored() throws {
+  func test_setExtension_messageType_stored() async throws {
     let desc = makeMessageWithExtensions()
     var msg = DynamicMessage(descriptor: desc)
 
@@ -206,7 +206,7 @@ final class Proto2DynamicMessageTests: XCTestCase {
     XCTAssertEqual(val, 42)
   }
 
-  func test_extensionAndRegularFields_coexist() throws {
+  func test_extensionAndRegularFields_coexist() async throws {
     let desc = makeMessageWithExtensions()
     var msg = DynamicMessage(descriptor: desc)
 
@@ -217,7 +217,7 @@ final class Proto2DynamicMessageTests: XCTestCase {
     XCTAssertEqual(try msg.get(forField: 100) as? String, "ext_value")
   }
 
-  func test_unknownFieldNumber_throws() {
+  func test_unknownFieldNumber_throws() async throws {
     let desc = makeMessageWithExtensions()
     var msg = DynamicMessage(descriptor: desc)
 
@@ -226,7 +226,7 @@ final class Proto2DynamicMessageTests: XCTestCase {
 
   // MARK: - MessageFactory syntax from descriptor
 
-  func test_validate_readsSyntaxFromDescriptor_proto2() throws {
+  func test_validate_readsSyntaxFromDescriptor_proto2() async throws {
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg", syntax: "proto2")
     desc.addField(FieldDescriptor(name: "req", number: 1, type: .string, isRequired: true))
 
@@ -237,7 +237,7 @@ final class Proto2DynamicMessageTests: XCTestCase {
     XCTAssertFalse(result.isValid, "Proto2 message missing required field should be invalid")
   }
 
-  func test_validate_readsSyntaxFromDescriptor_proto3() throws {
+  func test_validate_readsSyntaxFromDescriptor_proto3() async throws {
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg", syntax: "proto3")
     desc.addField(FieldDescriptor(name: "req", number: 1, type: .string, isRequired: true))
 
@@ -248,7 +248,7 @@ final class Proto2DynamicMessageTests: XCTestCase {
     XCTAssertTrue(result.isValid, "Proto3 should ignore required fields")
   }
 
-  func test_validate_proto2_allRequiredSet_valid() throws {
+  func test_validate_proto2_allRequiredSet_valid() async throws {
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg", syntax: "proto2")
     desc.addField(FieldDescriptor(name: "req", number: 1, type: .string, isRequired: true))
 
@@ -260,17 +260,4 @@ final class Proto2DynamicMessageTests: XCTestCase {
     XCTAssertTrue(result.isValid)
   }
 
-  // swiftlint:disable:next deprecated_usage
-  @available(*, deprecated)
-  func test_validate_deprecatedSyntaxParam_stillWorks() throws {
-    var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg", syntax: "proto3")
-    desc.addField(FieldDescriptor(name: "req", number: 1, type: .string, isRequired: true))
-
-    let msg = DynamicMessage(descriptor: desc)
-    let factory = MessageFactory()
-
-    // swiftlint:disable:next deprecated_usage
-    let result = factory.validate(msg, syntax: "proto2")
-    XCTAssertFalse(result.isValid, "Explicit syntax parameter should override descriptor.syntax")
-  }
 }

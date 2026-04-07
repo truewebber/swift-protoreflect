@@ -15,19 +15,19 @@ final class JSONCompatCrossFileTests: XCTestCase {
 
   private var registry: TypeRegistry!
 
-  override func setUp() {
-    super.setUp()
-    registry = try? CompatDescriptors.fullRegistry()
+  override func setUp() async throws {
+    try await super.setUp()
+    registry = try? await CompatDescriptors.fullRegistry()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     registry = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - CrossFileAll: all message types from different files
 
-  func test_crossFile_all_basicFields_bidirectional() throws {
+  func test_crossFile_all_basicFields_bidirectional() async throws {
     var proto = Testcompat_CrossFileAll()
     proto.simple.id = 1
     proto.simple.name = "cross"
@@ -35,7 +35,7 @@ final class JSONCompatCrossFileTests: XCTestCase {
     proto.priority = .low
 
     let desc = CompatDescriptors.crossFileAll()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let simpleDyn = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       XCTAssertEqual(try simpleDyn.get(forField: 1) as? Int32, 1)
       XCTAssertEqual(try simpleDyn.get(forField: 2) as? String, "cross")
@@ -52,7 +52,11 @@ final class JSONCompatCrossFileTests: XCTestCase {
     try dynamic.set(simpleDyn, forField: 1)
     try dynamic.set(Int32(1), forField: 7)
     try dynamic.set(Int32(1), forField: 8)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_CrossFileAll.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_CrossFileAll.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.simple.id, 1)
       XCTAssertEqual(decoded.simple.name, "cross")
@@ -63,14 +67,14 @@ final class JSONCompatCrossFileTests: XCTestCase {
 
   // MARK: - CrossFileAll: scalar field nested from scalar_types.proto
 
-  func test_crossFile_all_scalarMessage_bidirectional() throws {
+  func test_crossFile_all_scalarMessage_bidirectional() async throws {
     var proto = Testcompat_CrossFileAll()
     proto.scalar.int32Field = 42
     proto.scalar.stringField = "nested"
     proto.scalar.boolField = true
 
     let desc = CompatDescriptors.crossFileAll()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let scalarDyn = try XCTUnwrap(try msg.get(forField: 2) as? DynamicMessage)
       XCTAssertEqual(try scalarDyn.get(forField: 3) as? Int32, 42)
       XCTAssertEqual(try scalarDyn.get(forField: 14) as? String, "nested")
@@ -85,7 +89,11 @@ final class JSONCompatCrossFileTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(scalarDyn, forField: 2)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_CrossFileAll.self) {
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_CrossFileAll.self
+    ) {
       decoded in
       XCTAssertEqual(decoded.scalar.int32Field, 42)
       XCTAssertEqual(decoded.scalar.stringField, "nested")
@@ -95,7 +103,7 @@ final class JSONCompatCrossFileTests: XCTestCase {
 
   // MARK: - CrossFileMixed: repeated + map + oneof from different files
 
-  func test_crossFile_mixed_repeatedAndMap_bidirectional() throws {
+  func test_crossFile_mixed_repeatedAndMap_bidirectional() async throws {
     var proto = Testcompat_CrossFileMixed()
     var s1 = Testcompat_SimpleMessage()
     s1.id = 10
@@ -104,7 +112,7 @@ final class JSONCompatCrossFileTests: XCTestCase {
     proto.statuses = [.active, .inactive]
 
     let desc = CompatDescriptors.crossFileMixed()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let items = try XCTUnwrap(try msg.get(forField: 1) as? [DynamicMessage])
       XCTAssertEqual(items.count, 1)
       XCTAssertEqual(try items[0].get(forField: 1) as? Int32, 10)
@@ -120,8 +128,11 @@ final class JSONCompatCrossFileTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set([dItem] as [DynamicMessage], forField: 1)
     try dynamic.set([Int32(1), Int32(2)] as [Int32], forField: 6)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_CrossFileMixed.self)
-    { decoded in
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_CrossFileMixed.self
+    ) { decoded in
       XCTAssertEqual(decoded.items.count, 1)
       XCTAssertEqual(decoded.items[0].id, 10)
       XCTAssertEqual(decoded.statuses, [.active, .inactive])
@@ -130,13 +141,13 @@ final class JSONCompatCrossFileTests: XCTestCase {
 
   // MARK: - CrossFileMixed: oneof referencing types from different files
 
-  func test_crossFile_mixed_oneof_simplePick_bidirectional() throws {
+  func test_crossFile_mixed_oneof_simplePick_bidirectional() async throws {
     var proto = Testcompat_CrossFileMixed()
     proto.simplePick.id = 5
     proto.simplePick.name = "pick"
 
     let desc = CompatDescriptors.crossFileMixed()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let picked = try XCTUnwrap(try msg.get(forField: 3) as? DynamicMessage)
       XCTAssertEqual(try picked.get(forField: 1) as? Int32, 5)
       XCTAssertEqual(try picked.get(forField: 2) as? String, "pick")
@@ -149,8 +160,11 @@ final class JSONCompatCrossFileTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(pickedDyn, forField: 3)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_CrossFileMixed.self)
-    { decoded in
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_CrossFileMixed.self
+    ) { decoded in
       if case .simplePick(let m) = decoded.pick {
         XCTAssertEqual(m.id, 5)
         XCTAssertEqual(m.name, "pick")
@@ -163,7 +177,7 @@ final class JSONCompatCrossFileTests: XCTestCase {
 
   // MARK: - CrossPackageRef: mixing proto2 types with proto3
 
-  func test_crossFile_crossPackageRef_bidirectional() throws {
+  func test_crossFile_crossPackageRef_bidirectional() async throws {
     var proto = Testcompat_CrossPackageRef()
     proto.p2Basic.requiredString = "p2str"
     proto.p2Basic.requiredInt32 = 7
@@ -171,7 +185,7 @@ final class JSONCompatCrossFileTests: XCTestCase {
     proto.created.seconds = 12345
 
     let desc = CompatDescriptors.crossPackageRef()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let p2Dyn = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       XCTAssertEqual(try p2Dyn.get(forField: 1) as? String, "p2str")
       XCTAssertEqual(try p2Dyn.get(forField: 2) as? Int32, 7)
@@ -193,8 +207,11 @@ final class JSONCompatCrossFileTests: XCTestCase {
     try dynamic.set(p2Dyn, forField: 1)
     try dynamic.set("cross_pkg", forField: 10)
     try dynamic.set(tsDyn, forField: 11)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_CrossPackageRef.self)
-    { decoded in
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_CrossPackageRef.self
+    ) { decoded in
       XCTAssertEqual(decoded.p2Basic.requiredString, "p2str")
       XCTAssertEqual(decoded.p2Basic.requiredInt32, 7)
       XCTAssertEqual(decoded.label, "cross_pkg")
@@ -204,7 +221,7 @@ final class JSONCompatCrossFileTests: XCTestCase {
 
   // MARK: - CrossFileMixed: map<string, ScalarMessage>
 
-  func test_crossFile_mixed_mapCrossType_bidirectional() throws {
+  func test_crossFile_mixed_mapCrossType_bidirectional() async throws {
     var scalar = Testcompat_ScalarMessage()
     scalar.int32Field = 99
     scalar.stringField = "v"
@@ -213,7 +230,7 @@ final class JSONCompatCrossFileTests: XCTestCase {
     proto.details = ["key": scalar]
 
     let desc = CompatDescriptors.crossFileMixed()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let map = try XCTUnwrap(try msg.get(forField: 2) as? [AnyHashable: Any])
       let dyn = try XCTUnwrap(map["key"] as? DynamicMessage)
       XCTAssertEqual(try dyn.get(forField: 3) as? Int32, 99)
@@ -227,20 +244,23 @@ final class JSONCompatCrossFileTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.setMapEntry(scalarDyn, forKey: "key", inField: 2)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_CrossFileMixed.self)
-    { decoded in
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_CrossFileMixed.self
+    ) { decoded in
       XCTAssertEqual(decoded.details["key"]?.int32Field, 99)
     }
   }
 
   // MARK: - CrossFileMixed: oneof nested_pick (Nested1 from nesting_types)
 
-  func test_crossFile_mixed_oneof_nestedPick_bidirectional() throws {
+  func test_crossFile_mixed_oneof_nestedPick_bidirectional() async throws {
     var proto = Testcompat_CrossFileMixed()
     proto.nestedPick.name = "nested_in_oneof"
 
     let desc = CompatDescriptors.crossFileMixed()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let picked = try XCTUnwrap(try msg.get(forField: 5) as? DynamicMessage)
       XCTAssertEqual(try picked.get(forField: 2) as? String, "nested_in_oneof")
     }
@@ -251,8 +271,11 @@ final class JSONCompatCrossFileTests: XCTestCase {
 
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(nestedDyn, forField: 5)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_CrossFileMixed.self)
-    { decoded in
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_CrossFileMixed.self
+    ) { decoded in
       if case .nestedPick(let n) = decoded.pick {
         XCTAssertEqual(n.name, "nested_in_oneof")
       }
@@ -264,7 +287,7 @@ final class JSONCompatCrossFileTests: XCTestCase {
 
   // MARK: - MegaMixed: deeply nested cross-file types
 
-  func test_megaMixed_deepNested_bidirectional() throws {
+  func test_megaMixed_deepNested_bidirectional() async throws {
     var proto = Testcompat_MegaMixed()
     proto.name = "mega"
     proto.child.inner.simple.id = 1
@@ -272,7 +295,7 @@ final class JSONCompatCrossFileTests: XCTestCase {
     proto.child.text = "leaf_text"
 
     let desc = CompatDescriptors.megaMixed()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 2) as? String, "mega")
       let child = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
       let inner = try XCTUnwrap(try child.get(forField: 1) as? DynamicMessage)
@@ -301,7 +324,8 @@ final class JSONCompatCrossFileTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("mega", forField: 2)
     try dynamic.set(layer2Dyn, forField: 1)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_MegaMixed.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_MegaMixed.self)
+    {
       decoded in
       XCTAssertEqual(decoded.name, "mega")
       XCTAssertEqual(decoded.child.inner.simple.id, 1)
@@ -311,7 +335,7 @@ final class JSONCompatCrossFileTests: XCTestCase {
 
   // MARK: - MegaMixed: map<string, Layer2>
 
-  func test_megaMixed_mapOfLayers_bidirectional() throws {
+  func test_megaMixed_mapOfLayers_bidirectional() async throws {
     var proto = Testcompat_MegaMixed()
     proto.name = "map_test"
     var l2a = Testcompat_MegaMixed.Layer2()
@@ -321,7 +345,7 @@ final class JSONCompatCrossFileTests: XCTestCase {
     proto.branches = ["a": l2a, "b": l2b]
 
     let desc = CompatDescriptors.megaMixed()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let branches = try XCTUnwrap(try msg.get(forField: 3) as? [AnyHashable: Any])
       XCTAssertEqual(branches.count, 2)
       let dA = try XCTUnwrap(branches["a"] as? DynamicMessage)
@@ -339,7 +363,8 @@ final class JSONCompatCrossFileTests: XCTestCase {
     try dynamic.set("map_test", forField: 2)
     try dynamic.setMapEntry(dynA, forKey: "a", inField: 3)
     try dynamic.setMapEntry(dynB, forKey: "b", inField: 3)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_MegaMixed.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_MegaMixed.self)
+    {
       decoded in
       XCTAssertEqual(decoded.branches["a"]?.text, "text_a")
       XCTAssertEqual(decoded.branches["b"]?.text, "text_b")
@@ -348,7 +373,7 @@ final class JSONCompatCrossFileTests: XCTestCase {
 
   // MARK: - MegaMixed: fully populated (ts, nested, repeated oneofs)
 
-  func test_megaMixed_fullyPopulated_bidirectional() throws {
+  func test_megaMixed_fullyPopulated_bidirectional() async throws {
     var proto = Testcompat_MegaMixed()
     proto.name = "full"
     proto.ts.seconds = 9999
@@ -359,7 +384,7 @@ final class JSONCompatCrossFileTests: XCTestCase {
     proto.child.text = "child_text"
 
     let desc = CompatDescriptors.megaMixed()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 2) as? String, "full")
       let tsDyn = try XCTUnwrap(try msg.get(forField: 5) as? DynamicMessage)
       XCTAssertEqual(try tsDyn.get(forField: 1) as? Int64, 9999)
@@ -390,7 +415,8 @@ final class JSONCompatCrossFileTests: XCTestCase {
     try dynamic.set(nestedDyn, forField: 6)
     try dynamic.set([ocDyn] as [DynamicMessage], forField: 4)
     try dynamic.set(l2Dyn, forField: 1)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_MegaMixed.self) {
+    try await CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_MegaMixed.self)
+    {
       decoded in
       XCTAssertEqual(decoded.name, "full")
       XCTAssertEqual(decoded.ts.seconds, 9999)
@@ -401,14 +427,14 @@ final class JSONCompatCrossFileTests: XCTestCase {
 
   // MARK: - CrossPackageRef: Int64Value wrapper from WKT
 
-  func test_crossFile_crossPackageRef_int64Value_bidirectional() throws {
+  func test_crossFile_crossPackageRef_int64Value_bidirectional() async throws {
     var proto = Testcompat_CrossPackageRef()
     proto.p2Basic.requiredString = "r"
     proto.p2Basic.requiredInt32 = 0
     proto.count.value = Int64.max
 
     let desc = CompatDescriptors.crossPackageRef()
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       let cntDyn = try XCTUnwrap(try msg.get(forField: 12) as? DynamicMessage)
       XCTAssertEqual(try cntDyn.get(forField: 1) as? Int64, Int64.max)
     }
@@ -425,15 +451,18 @@ final class JSONCompatCrossFileTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(p2Dyn, forField: 1)
     try dynamic.set(cntDyn, forField: 12)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_CrossPackageRef.self)
-    { decoded in
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_CrossPackageRef.self
+    ) { decoded in
       XCTAssertEqual(decoded.count.value, Int64.max)
     }
   }
 
   // MARK: - Cross-package: proto2 defaults inside proto3 wrapper
 
-  func test_crossPackage_proto2DefaultsInProto3_bidirectional() throws {
+  func test_crossPackage_proto2DefaultsInProto3_bidirectional() async throws {
     // CrossPackageRef.p2Defaults: proto2 message with declared defaults.
     // When p2Defaults fields are left unset, they should be absent from JSON
     // (proto2 optional unset = no field presence).
@@ -453,7 +482,7 @@ final class JSONCompatCrossFileTests: XCTestCase {
       "Unset proto2 optional active should be absent: \(jsonStr)"
     )
 
-    try CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
+    try await CompatHelpers.assertProtocToUs(proto: proto, descriptor: desc, registry: registry) { msg in
       XCTAssertEqual(try msg.get(forField: 10) as? String, "defaults_test")
       // p2Defaults sub-message absent → nil
       XCTAssertNil(try msg.get(forField: 2) as? DynamicMessage)
@@ -473,8 +502,11 @@ final class JSONCompatCrossFileTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(p2Dyn, forField: 2)
     try dynamic.set("explicit", forField: 10)
-    try CompatHelpers.assertUsToProtoc(dynamic: dynamic, registry: registry, protoType: Testcompat_CrossPackageRef.self)
-    { decoded in
+    try await CompatHelpers.assertUsToProtoc(
+      dynamic: dynamic,
+      registry: registry,
+      protoType: Testcompat_CrossPackageRef.self
+    ) { decoded in
       XCTAssertEqual(decoded.label, "explicit")
       XCTAssertEqual(decoded.p2Defaults.count, 100)
       XCTAssertEqual(decoded.p2Defaults.label, "overridden")

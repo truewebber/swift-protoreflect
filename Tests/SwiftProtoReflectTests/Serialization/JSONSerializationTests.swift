@@ -18,24 +18,24 @@ final class JSONSerializationTests: XCTestCase {
   var messageFactory: MessageFactory!
   var serializer: JSONSerializer!
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     fileDescriptor = FileDescriptor(name: "test_json_serialization.proto", package: "test.json")
     messageFactory = MessageFactory()
     serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     fileDescriptor = nil
     messageFactory = nil
     serializer = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Scalar Types Tests (Test-JSON-001)
 
-  func testSerializeAllScalarTypes() throws {
+  func testSerializeAllScalarTypes() async throws {
     // Create message with all scalar types
     var scalarMessage = MessageDescriptor(name: "ScalarMessage", parent: fileDescriptor)
 
@@ -67,7 +67,7 @@ final class JSONSerializationTests: XCTestCase {
     let message = try messageFactory.createMessage(from: scalarMessage, with: values)
 
     // Serialize to JSON
-    let jsonData = try serializer.serialize(message)
+    let jsonData = try await serializer.serialize(message)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     // Verify types and values
@@ -82,7 +82,7 @@ final class JSONSerializationTests: XCTestCase {
     XCTAssertEqual(jsonObject["bytes_field"] as! String, "AQID/w==")  // base64 encoded
   }
 
-  func testSerializeDoubleSpecialValues() throws {
+  func testSerializeDoubleSpecialValues() async throws {
     var message = MessageDescriptor(name: "DoubleSpecialMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "infinity", number: 1, type: .double))
     message.addField(FieldDescriptor(name: "negative_infinity", number: 2, type: .double))
@@ -98,7 +98,7 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     // Verify special values
@@ -107,7 +107,7 @@ final class JSONSerializationTests: XCTestCase {
     XCTAssertEqual(jsonObject["nan"] as! String, "NaN")
   }
 
-  func testSerializeFloatSpecialValues() throws {
+  func testSerializeFloatSpecialValues() async throws {
     var message = MessageDescriptor(name: "FloatSpecialMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "infinity", number: 1, type: .float))
     message.addField(FieldDescriptor(name: "negative_infinity", number: 2, type: .float))
@@ -123,7 +123,7 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     // Verify special float values
@@ -134,7 +134,7 @@ final class JSONSerializationTests: XCTestCase {
 
   // MARK: - String and Bytes Tests
 
-  func testSerializeStringValues() throws {
+  func testSerializeStringValues() async throws {
     var message = MessageDescriptor(name: "StringMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "simple", number: 1, type: .string))
     message.addField(FieldDescriptor(name: "unicode", number: 2, type: .string))
@@ -150,7 +150,7 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     XCTAssertEqual(jsonObject["simple"] as! String, "Hello")
@@ -159,7 +159,7 @@ final class JSONSerializationTests: XCTestCase {
     XCTAssertNil(jsonObject["empty"], "Empty string field must be omitted per proto3 JSON spec")
   }
 
-  func testSerializeBytesValues() throws {
+  func testSerializeBytesValues() async throws {
     var message = MessageDescriptor(name: "BytesMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "data", number: 1, type: .bytes))
     message.addField(FieldDescriptor(name: "empty_data", number: 2, type: .bytes))
@@ -176,7 +176,7 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     XCTAssertEqual(jsonObject["data"] as! String, "SGVsbG8=")  // base64 encoded "Hello"
@@ -186,7 +186,7 @@ final class JSONSerializationTests: XCTestCase {
 
   // MARK: - Nested Messages Tests
 
-  func testSerializeNestedMessage() throws {
+  func testSerializeNestedMessage() async throws {
     // Create nested message
     var nestedMessage = MessageDescriptor(name: "NestedMessage", parent: fileDescriptor)
     nestedMessage.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
@@ -221,7 +221,7 @@ final class JSONSerializationTests: XCTestCase {
     try parent.set("active", forField: "status")
 
     // Serialize
-    let jsonData = try serializer.serialize(parent)
+    let jsonData = try await serializer.serialize(parent)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     // Verify structure
@@ -234,7 +234,7 @@ final class JSONSerializationTests: XCTestCase {
 
   // MARK: - Repeated Fields Tests
 
-  func testSerializeRepeatedFields() throws {
+  func testSerializeRepeatedFields() async throws {
     var message = MessageDescriptor(name: "RepeatedMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "numbers", number: 1, type: .int32, isRepeated: true))
     message.addField(FieldDescriptor(name: "words", number: 2, type: .string, isRepeated: true))
@@ -250,7 +250,7 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     let numbers = jsonObject["numbers"] as! [Int]
@@ -263,7 +263,7 @@ final class JSONSerializationTests: XCTestCase {
     XCTAssertEqual(flags, [true, false, true])
   }
 
-  func testSerializeEmptyRepeatedField() throws {
+  func testSerializeEmptyRepeatedField() async throws {
     var message = MessageDescriptor(name: "EmptyRepeatedMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "values", number: 1, type: .int32, isRepeated: true))
     fileDescriptor.addMessage(message)
@@ -271,7 +271,7 @@ final class JSONSerializationTests: XCTestCase {
     // Create message without setting repeated field
     let dynamicMessage = messageFactory.createMessage(from: message)
 
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     // Field without values should not appear in JSON
@@ -280,7 +280,7 @@ final class JSONSerializationTests: XCTestCase {
 
   // MARK: - Map Fields Tests
 
-  func testSerializeMapFields() throws {
+  func testSerializeMapFields() async throws {
     // Create map field: map<string, int32>
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .string)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .int32)
@@ -312,7 +312,7 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     let mapObject = jsonObject["string_to_int"] as! [String: Int]
@@ -321,7 +321,7 @@ final class JSONSerializationTests: XCTestCase {
     XCTAssertEqual(mapObject["third"], 3)
   }
 
-  func testSerializeMapWithIntegerKeys() throws {
+  func testSerializeMapWithIntegerKeys() async throws {
     // Create map field: map<int32, string>
     let keyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .int32)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
@@ -353,7 +353,7 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     // In JSON, all keys must be strings
@@ -365,7 +365,7 @@ final class JSONSerializationTests: XCTestCase {
 
   // MARK: - Enum Tests
 
-  func testSerializeEnumField() throws {
+  func testSerializeEnumField() async throws {
     // Create enum
     var enumDescriptor = EnumDescriptor(name: "Status", parent: fileDescriptor)
     enumDescriptor.addValue(EnumDescriptor.EnumValue(name: "UNKNOWN", number: 0))
@@ -391,7 +391,7 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     // Currently enum is returned as number, can be extended to support names
@@ -400,7 +400,7 @@ final class JSONSerializationTests: XCTestCase {
 
   // MARK: - JSON Serialization Options Tests
 
-  func testJSONSerializationOptions() throws {
+  func testJSONSerializationOptions() async throws {
     var message = MessageDescriptor(name: "OptionsMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "test_field", number: 1, type: .string, jsonName: "testField"))
     fileDescriptor.addMessage(message)
@@ -414,7 +414,7 @@ final class JSONSerializationTests: XCTestCase {
 
     // Test with camelCase names (default)
     let defaultSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-    let defaultJsonData = try defaultSerializer.serialize(dynamicMessage)
+    let defaultJsonData = try await defaultSerializer.serialize(dynamicMessage)
     let defaultJsonObject = try JSONSerialization.jsonObject(with: defaultJsonData) as! [String: Any]
     XCTAssertEqual(defaultJsonObject["testField"] as! String, "test_value")
 
@@ -422,7 +422,7 @@ final class JSONSerializationTests: XCTestCase {
     let originalNamesSerializer = JSONSerializer(
       options: JSONSerializationOptions(useOriginalFieldNames: true, typeRegistry: TypeRegistry())
     )
-    let originalJsonData = try originalNamesSerializer.serialize(dynamicMessage)
+    let originalJsonData = try await originalNamesSerializer.serialize(dynamicMessage)
     let originalJsonObject = try JSONSerialization.jsonObject(with: originalJsonData) as! [String: Any]
     XCTAssertEqual(originalJsonObject["test_field"] as! String, "test_value")
 
@@ -430,14 +430,14 @@ final class JSONSerializationTests: XCTestCase {
     let prettySerializer = JSONSerializer(
       options: JSONSerializationOptions(prettyPrinted: true, typeRegistry: TypeRegistry())
     )
-    let prettyJsonData = try prettySerializer.serialize(dynamicMessage)
+    let prettyJsonData = try await prettySerializer.serialize(dynamicMessage)
     let prettyJsonString = String(data: prettyJsonData, encoding: .utf8)!
     XCTAssertTrue(prettyJsonString.contains("\n"))  // Should have line breaks
   }
 
   // MARK: - Error Handling Tests
 
-  func testSerializationErrors_groupField_succeeds() throws {
+  func testSerializationErrors_groupField_succeeds() async throws {
     var groupDescriptor = MessageDescriptor(name: "MyGroup", parent: fileDescriptor)
     groupDescriptor.addField(FieldDescriptor(name: "value", number: 1, type: .int32))
     fileDescriptor.addMessage(groupDescriptor)
@@ -453,14 +453,14 @@ final class JSONSerializationTests: XCTestCase {
     var dynamicMessage = messageFactory.createMessage(from: message)
     try dynamicMessage.set(groupMsg, forField: 2)
 
-    let data = try serializer.serialize(dynamicMessage)
+    let data = try await serializer.serialize(dynamicMessage)
     XCTAssertFalse(data.isEmpty)
 
     let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
     XCTAssertNotNil(json?["group_field"] as? [String: Any])
   }
 
-  func testJSONSerializationErrorDescriptions() {
+  func testJSONSerializationErrorDescriptions() async throws {
     let error1 = JSONSerializationError.invalidFieldType(fieldName: "test", expectedType: "String", actualType: "Int")
     XCTAssertEqual(error1.description, "Invalid field type for field 'test': expected String, got Int")
 
@@ -480,7 +480,7 @@ final class JSONSerializationTests: XCTestCase {
     XCTAssertEqual(error6.description, "Invalid map key type: FieldType.float")
   }
 
-  func testJSONSerializationErrorEquality() {
+  func testJSONSerializationErrorEquality() async throws {
     let error1 = JSONSerializationError.invalidFieldType(fieldName: "test", expectedType: "String", actualType: "Int")
     let error2 = JSONSerializationError.invalidFieldType(fieldName: "test", expectedType: "String", actualType: "Int")
     let error3 = JSONSerializationError.invalidFieldType(fieldName: "other", expectedType: "String", actualType: "Int")
@@ -496,7 +496,7 @@ final class JSONSerializationTests: XCTestCase {
 
   // MARK: - Performance Tests
 
-  func testJSONSerializationPerformance() throws {
+  func testJSONSerializationPerformance() async throws {
     // Create complex message for performance testing
     var message = MessageDescriptor(name: "PerformanceMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "numbers", number: 1, type: .int32, isRepeated: true))
@@ -514,19 +514,17 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    measure {
-      do {
-        _ = try serializer.serialize(dynamicMessage)
-      }
-      catch {
-        XCTFail("Serialization failed: \(error)")
-      }
+    do {
+      _ = try await serializer.serialize(dynamicMessage)
+    }
+    catch {
+      XCTFail("Serialization failed: \(error)")
     }
   }
 
   // MARK: - Additional Type Coverage Tests
 
-  func testSerializeSignedAndFixedIntegerTypes() throws {
+  func testSerializeSignedAndFixedIntegerTypes() async throws {
     var message = MessageDescriptor(name: "SignedFixedMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "sint32_field", number: 1, type: .sint32))
     message.addField(FieldDescriptor(name: "sint64_field", number: 2, type: .sint64))
@@ -548,7 +546,7 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     XCTAssertEqual(jsonObject["sint32_field"] as! Int, -2_147_483_648)
@@ -559,7 +557,7 @@ final class JSONSerializationTests: XCTestCase {
     XCTAssertEqual(jsonObject["fixed64_field"] as! String, "18446744073709551615")
   }
 
-  func testSerializeMapWithAllKeyTypes() throws {
+  func testSerializeMapWithAllKeyTypes() async throws {
     // Test map with UInt32 keys
     let uint32KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .uint32)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
@@ -590,7 +588,7 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     let mapObject = jsonObject["uint32_to_string"] as! [String: String]
@@ -598,7 +596,7 @@ final class JSONSerializationTests: XCTestCase {
     XCTAssertEqual(mapObject["4294967295"], "max_uint32")
   }
 
-  func testSerializeMapWithUInt64Keys() throws {
+  func testSerializeMapWithUInt64Keys() async throws {
     let uint64KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .uint64)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     let uint64MapEntryInfo = MapEntryInfo(keyFieldInfo: uint64KeyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -627,14 +625,14 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     let mapObject = jsonObject["uint64_to_string"] as! [String: String]
     XCTAssertEqual(mapObject["18446744073709551615"], "max_uint64")
   }
 
-  func testSerializeMapWithInt64Keys() throws {
+  func testSerializeMapWithInt64Keys() async throws {
     let int64KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .int64)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     let int64MapEntryInfo = MapEntryInfo(keyFieldInfo: int64KeyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -664,7 +662,7 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     let mapObject = jsonObject["int64_to_string"] as! [String: String]
@@ -672,7 +670,7 @@ final class JSONSerializationTests: XCTestCase {
     XCTAssertEqual(mapObject["9223372036854775807"], "max_int64")
   }
 
-  func testSerializeMapWithBoolKeys() throws {
+  func testSerializeMapWithBoolKeys() async throws {
     let boolKeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .bool)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
     let boolMapEntryInfo = MapEntryInfo(keyFieldInfo: boolKeyFieldInfo, valueFieldInfo: valueFieldInfo)
@@ -702,7 +700,7 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     let mapObject = jsonObject["bool_to_string"] as! [String: String]
@@ -710,7 +708,7 @@ final class JSONSerializationTests: XCTestCase {
     XCTAssertEqual(mapObject["false"], "no")
   }
 
-  func testSerializeMapWithSignedIntKeys() throws {
+  func testSerializeMapWithSignedIntKeys() async throws {
     // Test with sint32
     let sint32KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .sint32)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
@@ -742,7 +740,7 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     let mapObject = jsonObject["sint32_to_string"] as! [String: String]
@@ -751,7 +749,7 @@ final class JSONSerializationTests: XCTestCase {
     XCTAssertEqual(mapObject["1"], "positive_one")
   }
 
-  func testSerializeMapWithFixedIntKeys() throws {
+  func testSerializeMapWithFixedIntKeys() async throws {
     // Test with fixed32
     let fixed32KeyFieldInfo = KeyFieldInfo(name: "key", number: 1, type: .fixed32)
     let valueFieldInfo = ValueFieldInfo(name: "value", number: 2, type: .string)
@@ -782,7 +780,7 @@ final class JSONSerializationTests: XCTestCase {
       ]
     )
 
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as! [String: Any]
 
     let mapObject = jsonObject["fixed32_to_string"] as! [String: String]
@@ -792,7 +790,7 @@ final class JSONSerializationTests: XCTestCase {
 
   // MARK: - Additional Options Tests
 
-  func testSerializeWithIncludeDefaultValuesOption() throws {
+  func testSerializeWithIncludeDefaultValuesOption() async throws {
     var message = MessageDescriptor(name: "DefaultValuesMessage", parent: fileDescriptor)
     message.addField(FieldDescriptor(name: "string_field", number: 1, type: .string))
     message.addField(FieldDescriptor(name: "int_field", number: 2, type: .int32))
@@ -808,7 +806,7 @@ final class JSONSerializationTests: XCTestCase {
 
     // Default options - don't include default values
     let defaultSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
-    let defaultJsonData = try defaultSerializer.serialize(dynamicMessage)
+    let defaultJsonData = try await defaultSerializer.serialize(dynamicMessage)
     let defaultJsonObject = try JSONSerialization.jsonObject(with: defaultJsonData) as! [String: Any]
 
     // Only set field should be present
@@ -817,7 +815,7 @@ final class JSONSerializationTests: XCTestCase {
     XCTAssertNil(defaultJsonObject["int_field"])
   }
 
-  func testJSONWriteErrorHandling() throws {
+  func testJSONWriteErrorHandling() async throws {
     // This test simulates a scenario where JSONSerialization.data() might fail
     // We can't easily trigger this in practice, so we test the error path indirectly
     var message = MessageDescriptor(name: "SimpleMessage", parent: fileDescriptor)
@@ -832,13 +830,13 @@ final class JSONSerializationTests: XCTestCase {
     )
 
     // This should work normally
-    let jsonData = try serializer.serialize(dynamicMessage)
+    let jsonData = try await serializer.serialize(dynamicMessage)
     XCTAssertFalse(jsonData.isEmpty)
   }
 
   // MARK: - Error Coverage Tests
 
-  func testJSONSerializationErrorCoverage() throws {
+  func testJSONSerializationErrorCoverage() async throws {
     // Test all uncovered error descriptions
 
     let error1 = JSONSerializationError.invalidFieldType(fieldName: "test", expectedType: "String", actualType: "Int")
@@ -865,7 +863,7 @@ final class JSONSerializationTests: XCTestCase {
     XCTAssertTrue(error7.description.contains("Test error"))
   }
 
-  func testCompleteErrorEquality() throws {
+  func testCompleteErrorEquality() async throws {
     // Test missingMapEntryInfo equality
     let error1 = JSONSerializationError.missingMapEntryInfo(fieldName: "map1")
     let error2 = JSONSerializationError.missingMapEntryInfo(fieldName: "map1")

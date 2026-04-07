@@ -24,7 +24,7 @@ final class JSONDeserializerWKTDispatchTests: XCTestCase {
 
   // MARK: - Non-WKT messages use standard decoding
 
-  func test_deserialize_nonWKTMessage_usesStandardDecoding() throws {
+  func test_deserialize_nonWKTMessage_usesStandardDecoding() async throws {
     var desc = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     desc.addField(FieldDescriptor(name: "name", number: 1, type: .string, jsonName: "name"))
 
@@ -32,13 +32,13 @@ final class JSONDeserializerWKTDispatchTests: XCTestCase {
     let deserializer = JSONDeserializer(
       options: JSONDeserializationOptions(typeRegistry: TypeRegistry())
     )
-    let msg = try deserializer.deserialize(json, using: desc)
+    let msg = try await deserializer.deserialize(json, using: desc)
     XCTAssertEqual(try msg.get(forField: 1) as? String, "hello")
   }
 
   // MARK: - WKT messages route to WKT decoder — Timestamp decodes RFC 3339 string
 
-  func test_deserialize_wktMessage_routesToWKTDecoder() throws {
+  func test_deserialize_wktMessage_routesToWKTDecoder() async throws {
     let tsFile = makeTimestampFileDescriptor()
     let tsDesc = tsFile.messages["Timestamp"]!
 
@@ -47,7 +47,7 @@ final class JSONDeserializerWKTDispatchTests: XCTestCase {
     let deserializer = JSONDeserializer(
       options: JSONDeserializationOptions(typeRegistry: TypeRegistry())
     )
-    let msg = try deserializer.deserialize(json, using: tsDesc)
+    let msg = try await deserializer.deserialize(json, using: tsDesc)
     let seconds = try XCTUnwrap(try msg.get(forField: 1) as? Int64)
     // 2024-01-01T00:00:00Z = 1704067200
     XCTAssertEqual(seconds, 1_704_067_200)
@@ -55,9 +55,9 @@ final class JSONDeserializerWKTDispatchTests: XCTestCase {
 
   // MARK: - Nested WKT fields within regular messages route to WKT decoder
 
-  func test_deserialize_nestedWKTField_routesToWKTDecoder() throws {
+  func test_deserialize_nestedWKTField_routesToWKTDecoder() async throws {
     let tsFile = makeTimestampFileDescriptor()
-    let registry = try TypeRegistry(fileDescriptors: [tsFile])
+    let registry = try await TypeRegistry(fileDescriptors: [tsFile])
 
     var outerFile = FileDescriptor(name: "test.proto", package: "test")
     var eventDesc = MessageDescriptor(name: "Event", parent: outerFile)
@@ -78,7 +78,7 @@ final class JSONDeserializerWKTDispatchTests: XCTestCase {
     let deserializer = JSONDeserializer(
       options: JSONDeserializationOptions(typeRegistry: registry)
     )
-    let msg = try deserializer.deserialize(json, using: outerDesc)
+    let msg = try await deserializer.deserialize(json, using: outerDesc)
     let tsMsg = try XCTUnwrap(try msg.get(forField: 1) as? DynamicMessage)
     let seconds = try XCTUnwrap(try tsMsg.get(forField: 1) as? Int64)
     XCTAssertEqual(seconds, 1_704_067_200)

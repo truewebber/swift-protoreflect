@@ -22,19 +22,19 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
 
   // MARK: - Setup and Teardown
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     bridge = DescriptorBridge()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     bridge = nil
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Integration Tests
 
-  func testDynamicMessageWithDetectedStringToStringMap() throws {
+  func testDynamicMessageWithDetectedStringToStringMap() async throws {
     // Create message with map field
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "metadata",
@@ -63,7 +63,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
     XCTAssertTrue(try dynamicMsg.hasValue(forField: "metadata"))
   }
 
-  func testDynamicMessageWithDetectedStringToInt32Map() throws {
+  func testDynamicMessageWithDetectedStringToInt32Map() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "counters",
       fieldNumber: 1,
@@ -84,7 +84,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
     XCTAssertEqual(counters?["errors"], 100)
   }
 
-  func testDynamicMessageWithDetectedInt32ToStringMap() throws {
+  func testDynamicMessageWithDetectedInt32ToStringMap() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "names",
       fieldNumber: 1,
@@ -105,7 +105,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
     XCTAssertEqual(names?[Int32(2)] as? String, "Bob")
   }
 
-  func testDynamicMessageWithDetectedInt64ToInt64Map() throws {
+  func testDynamicMessageWithDetectedInt64ToInt64Map() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "big_counters",
       fieldNumber: 1,
@@ -126,7 +126,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
     XCTAssertEqual(counters?[Int64(2)], 2_000_000_000)
   }
 
-  func testDynamicMessageWithDetectedBoolToStringMap() throws {
+  func testDynamicMessageWithDetectedBoolToStringMap() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "bool_map",
       fieldNumber: 1,
@@ -147,7 +147,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
     XCTAssertEqual(boolMap?[false], "no")
   }
 
-  func testSetEntireMapOnDetectedField() throws {
+  func testSetEntireMapOnDetectedField() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "attributes",
       fieldNumber: 1,
@@ -170,7 +170,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
     XCTAssertEqual(result?["level"], "Senior")
   }
 
-  func testClearDetectedMapField() throws {
+  func testClearDetectedMapField() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "data",
       fieldNumber: 1,
@@ -196,7 +196,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
     XCTAssertNil(try dynamicMsg.get(forField: "data"))
   }
 
-  func testMultipleMapFieldsInDynamicMessage() throws {
+  func testMultipleMapFieldsInDynamicMessage() async throws {
     // Create message with multiple map fields
     var messageProto = Google_Protobuf_DescriptorProto()
     messageProto.name = "MultiMapMessage"
@@ -264,7 +264,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
     XCTAssertEqual(flags?[true], 1)
   }
 
-  func testUpdateMapEntryOnDetectedField() throws {
+  func testUpdateMapEntryOnDetectedField() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "config",
       fieldNumber: 1,
@@ -290,7 +290,7 @@ final class DescriptorBridgeDynamicMessageIntegrationTests: XCTestCase {
     XCTAssertEqual(config?["key1"], "value2")
   }
 
-  func testFieldAccessorWithDetectedMap() throws {
+  func testFieldAccessorWithDetectedMap() async throws {
     let (messageProto, _) = createMapFieldDescriptor(
       fieldName: "settings",
       fieldNumber: 1,

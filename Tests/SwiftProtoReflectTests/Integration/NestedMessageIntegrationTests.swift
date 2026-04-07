@@ -14,7 +14,7 @@ final class NestedMessageIntegrationTests: XCTestCase {
 
   // MARK: - End-to-End: Registry + JSON Serialization Round-trip
 
-  func test_endToEnd_registerFileAndRoundTripNestedMessages() throws {
+  func test_endToEnd_registerFileAndRoundTripNestedMessages() async throws {
     var file = FileDescriptor(name: "integration.proto", package: "integration")
 
     var address = MessageDescriptor(name: "Address", parent: file)
@@ -44,7 +44,7 @@ final class NestedMessageIntegrationTests: XCTestCase {
     file.addMessage(team)
 
     let registry = TypeRegistry()
-    try registry.registerFile(file)
+    try await registry.registerFile(file)
 
     let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let deserializer = JSONDeserializer(
@@ -75,15 +75,15 @@ final class NestedMessageIntegrationTests: XCTestCase {
     try originalTeam.set("Engineering", forField: "team_name")
     try originalTeam.set([alice, bob] as [Any], forField: "members")
 
-    let jsonData = try serializer.serialize(originalTeam)
-    let deserialized = try deserializer.deserialize(jsonData, using: file.messages["Team"]!)
+    let jsonData = try await serializer.serialize(originalTeam)
+    let deserialized = try await deserializer.deserialize(jsonData, using: file.messages["Team"]!)
 
     XCTAssertEqual(originalTeam, deserialized)
   }
 
   // MARK: - DescriptorPool + JSONDeserializer
 
-  func test_descriptorPoolWithJSONDeserializer_resolvesNestedTypes() throws {
+  func test_descriptorPoolWithJSONDeserializer_resolvesNestedTypes() async throws {
     let pool = DescriptorPool(includeBuiltinDescriptors: false)
 
     var file = FileDescriptor(name: "pool_test.proto", package: "pool")
@@ -96,10 +96,10 @@ final class NestedMessageIntegrationTests: XCTestCase {
     outerMsg.addField(FieldDescriptor(name: "inner", number: 1, type: .message, typeName: "pool.Inner"))
     file.addMessage(outerMsg)
 
-    try pool.addFileDescriptor(file)
+    try await pool.addFileDescriptor(file)
 
     let registry = TypeRegistry()
-    try registry.registerFile(file)
+    try await registry.registerFile(file)
 
     let deserializer = JSONDeserializer(
       options: JSONDeserializationOptions(typeRegistry: registry)
@@ -109,8 +109,8 @@ final class NestedMessageIntegrationTests: XCTestCase {
       {"inner": {"data": "from pool"}}
       """.data(using: .utf8)!
 
-    let outerDescriptor = pool.findMessageDescriptor(named: "pool.Outer")!
-    let result = try deserializer.deserialize(data, using: outerDescriptor)
+    let outerDescriptor = await pool.findMessageDescriptor(named: "pool.Outer")!
+    let result = try await deserializer.deserialize(data, using: outerDescriptor)
 
     let inner = try result.get(forField: "inner") as? DynamicMessage
     XCTAssertNotNil(inner)
@@ -119,7 +119,7 @@ final class NestedMessageIntegrationTests: XCTestCase {
 
   // MARK: - Map<String, Message> Round-trip Through Registry
 
-  func test_mapWithMessageValues_roundTripThroughRegistry() throws {
+  func test_mapWithMessageValues_roundTripThroughRegistry() async throws {
     var file = FileDescriptor(name: "map_test.proto", package: "maptest")
 
     var metric = MessageDescriptor(name: "Metric", parent: file)
@@ -145,7 +145,7 @@ final class NestedMessageIntegrationTests: XCTestCase {
     file.addMessage(dashboard)
 
     let registry = TypeRegistry()
-    try registry.registerFile(file)
+    try await registry.registerFile(file)
 
     let serializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     let deserializer = JSONDeserializer(
@@ -164,8 +164,8 @@ final class NestedMessageIntegrationTests: XCTestCase {
     try original.setMapEntry(cpuMetric, forKey: "cpu" as AnyHashable, inField: "metrics")
     try original.setMapEntry(memMetric, forKey: "memory" as AnyHashable, inField: "metrics")
 
-    let jsonData = try serializer.serialize(original)
-    let deserialized = try deserializer.deserialize(jsonData, using: file.messages["Dashboard"]!)
+    let jsonData = try await serializer.serialize(original)
+    let deserialized = try await deserializer.deserialize(jsonData, using: file.messages["Dashboard"]!)
 
     XCTAssertEqual(original, deserialized)
   }

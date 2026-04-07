@@ -22,13 +22,13 @@ import SwiftProtoReflect
 
 @main
 struct SchemaEvolutionExample {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("Proto3 Schema Evolution")
 
-    try demonstrateAddField()
-    try demonstrateRemoveField()
-    try demonstrateRenameField()
-    try demonstrateNewEnumValue()
+    try await demonstrateAddField()
+    try await demonstrateRemoveField()
+    try await demonstrateRenameField()
+    try await demonstrateNewEnumValue()
 
     ExampleUtils.printSuccess(
       "Schema evolution demo completed!"
@@ -43,7 +43,7 @@ struct SchemaEvolutionExample {
 
   // MARK: - Add Field
 
-  private static func demonstrateAddField() throws {
+  private static func demonstrateAddField() async throws {
     ExampleUtils.printStep(1, "Adding a New Field (Backward Compatible)")
 
     var v1 = MessageDescriptor(name: "User", fullName: "example.User")
@@ -61,7 +61,8 @@ struct SchemaEvolutionExample {
     v2.addField(FieldDescriptor(name: "name", number: 2, type: .string))
     v2.addField(FieldDescriptor(name: "email", number: 3, type: .string))
 
-    let decoded = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(data, using: v2)
+    let decoded = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
+      .deserialize(data, using: v2)
     print("  v2 reads:  id=\(try decoded.get(forField: "id") as? Int32 ?? 0)")
     print("             name=\"\(try decoded.get(forField: "name") as? String ?? "")\"")
     print("             email=\(try decoded.get(forField: "email").map { "\"\($0)\"" } ?? "nil (absent)")")
@@ -71,7 +72,7 @@ struct SchemaEvolutionExample {
 
   // MARK: - Remove Field
 
-  private static func demonstrateRemoveField() throws {
+  private static func demonstrateRemoveField() async throws {
     ExampleUtils.printStep(2, "Removing a Field (Unknown Field Preservation)")
 
     var old = MessageDescriptor(name: "Config", fullName: "example.Config")
@@ -90,14 +91,15 @@ struct SchemaEvolutionExample {
     newer.addField(FieldDescriptor(name: "retries", number: 3, type: .int32))
 
     let registry = TypeRegistry()
-    let decoded = try BinaryDeserializer(options: .init(typeRegistry: registry)).deserialize(data, using: newer)
+    let decoded = try await BinaryDeserializer(options: .init(typeRegistry: registry)).deserialize(data, using: newer)
     print(
       "  Known:   timeout=\(try decoded.get(forField: "timeout") as? Int32 ?? 0), retries=\(try decoded.get(forField: "retries") as? Int32 ?? 0)"
     )
     print("  Unknown: \(decoded.unknownFields.count) bytes preserved (was debug_mode)")
 
     let reencoded = try BinarySerializer().serialize(decoded)
-    let restored = try BinaryDeserializer(options: .init(typeRegistry: registry)).deserialize(reencoded, using: old)
+    let restored = try await BinaryDeserializer(options: .init(typeRegistry: registry))
+      .deserialize(reencoded, using: old)
     print("  Restored debug_mode: \(try restored.get(forField: "debug_mode") as? Bool ?? false)")
 
     ExampleUtils.printInfo("Removed fields survive as unknown fields through intermediaries")
@@ -105,7 +107,7 @@ struct SchemaEvolutionExample {
 
   // MARK: - Rename Field
 
-  private static func demonstrateRenameField() throws {
+  private static func demonstrateRenameField() async throws {
     ExampleUtils.printStep(3, "Renaming a Field (Binary Unaffected)")
 
     var writer = MessageDescriptor(name: "Item", fullName: "example.Item")
@@ -118,7 +120,8 @@ struct SchemaEvolutionExample {
     var reader = MessageDescriptor(name: "Item", fullName: "example.Item")
     reader.addField(FieldDescriptor(name: "display_name", number: 1, type: .string))
 
-    let decoded = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(data, using: reader)
+    let decoded = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
+      .deserialize(data, using: reader)
     let value = try decoded.get(forField: "display_name") as? String ?? ""
     print("  Writer field: \"user_name\" = \"Alice\"")
     print("  Reader field: \"display_name\" = \"\(value)\"")
@@ -131,7 +134,7 @@ struct SchemaEvolutionExample {
 
   // MARK: - New Enum Value
 
-  private static func demonstrateNewEnumValue() throws {
+  private static func demonstrateNewEnumValue() async throws {
     ExampleUtils.printStep(4, "Adding New Enum Values")
 
     var newEnum = EnumDescriptor(name: "Status", fullName: "example.Status")
@@ -157,7 +160,7 @@ struct SchemaEvolutionExample {
       FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "example.Status")
     )
 
-    let decoded = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+    let decoded = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
       data,
       using: readerDesc
     )

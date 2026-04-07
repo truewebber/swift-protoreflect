@@ -5,7 +5,7 @@ A Swift library for dynamic Protocol Buffers message manipulation without pre-co
 [![Platform](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ftruewebber%2Fswift-protoreflect%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/truewebber/swift-protoreflect)
 [![Swift Package Index](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ftruewebber%2Fswift-protoreflect%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/truewebber/swift-protoreflect)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat)](LICENSE)
-[![Coverage](https://img.shields.io/badge/line%20coverage-93.5%25-green.svg?style=flat)](#quality-metrics)
+[![Coverage](https://img.shields.io/badge/line%20coverage-95.6%25-brightgreen.svg?style=flat)](#quality-metrics)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/truewebber/swift-protoreflect)
 
 ## Overview
@@ -18,7 +18,7 @@ Add to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/truewebber/swift-protoreflect.git", from: "5.0.0")
+    .package(url: "https://github.com/truewebber/swift-protoreflect.git", from: "6.0.0")
 ]
 ```
 
@@ -32,23 +32,22 @@ dependencies: [
 import SwiftProtoReflect
 
 // Define a message schema at runtime
-let personSchema = try MessageDescriptor.builder("Person")
-    .addField("name", number: 1, type: .string)
-    .addField("age", number: 2, type: .int32)
-    .addField("emails", number: 3, type: .string, label: .repeated)
-    .build()
+var personSchema = MessageDescriptor(name: "Person", fullName: "Person")
+personSchema.addField(FieldDescriptor(name: "name", number: 1, type: .string))
+personSchema.addField(FieldDescriptor(name: "age", number: 2, type: .int32))
+personSchema.addField(FieldDescriptor(name: "emails", number: 3, type: .string, isRepeated: true))
 
 // Create and populate a message
-let message = try MessageFactory().createMessage(from: personSchema)
-try message.set("name", value: "Alice")
-try message.set("age", value: 25)
-try message.set("emails", value: ["alice@example.com"])
+var message = MessageFactory().createMessage(from: personSchema)
+try message.set("Alice", forField: "name")
+try message.set(Int32(25), forField: "age")
+try message.set(["alice@example.com"], forField: "emails")
 
 // Serialize to binary or JSON
-// TypeRegistry is required for serializers; an empty registry is fine for scalar-only messages.
+// TypeRegistry is required for JSONSerializer and deserializers; empty registry is fine for scalar-only messages.
 let registry = TypeRegistry()
-let binaryData = try BinarySerializer().serialize(message: message)
-let jsonData = try JSONSerializer(options: .init(typeRegistry: registry)).serialize(message)
+let binaryData = try BinarySerializer().serialize(message)
+let jsonData = try await JSONSerializer(options: .init(typeRegistry: registry)).serialize(message)
 ```
 
 ### Working with Well-Known Types
@@ -64,7 +63,7 @@ let structMessage = try DynamicMessage.structMessage(from: data)
 
 // Type erasure
 let anyMessage = try message.packIntoAny()
-let unpackedMessage = try anyMessage.unpackFromAny(to: personSchema)
+let unpackedMessage = try await anyMessage.unpackFromAny(to: personSchema)
 ```
 
 ## Features
@@ -121,7 +120,7 @@ Examples are organized by topic:
 
 - Swift 5.9+
 - macOS 12.0+ / iOS 15.0+
-- **Recommended:** SwiftProtoReflect 5.0.0+
+- **Recommended:** SwiftProtoReflect 6.0.0+
 
 ## Dependencies
 
@@ -150,7 +149,7 @@ let staticMessage = Person.with { /* ... */ }
 let dynamicMessage = try staticMessage.toDynamicMessage()
 
 // Convert dynamic to static
-let staticMessage: Person = try dynamicMessage.toStaticMessage()
+let backToStatic: Person = try dynamicMessage.toStaticMessage(as: Person.self)
 ```
 
 ## Testing
@@ -163,9 +162,9 @@ Code coverage is measured with LLVM (`make coverage` after `make test`) over `So
 
 | Metric | Coverage |
 |--------|----------|
-| Lines | **93.48%** |
-| Regions | **95.86%** |
-| Functions | **95.63%** |
+| Lines | **95.60%** |
+| Functions | **95.79%** |
+| Regions | **93.95%** |
 
 Figures reflect the current test suite; re-run `make test` and `make coverage` locally for up-to-date numbers.
 
