@@ -135,7 +135,7 @@ final class JSONEnumSerializationTests: XCTestCase {
     let jsonData = try JSONSerialization.data(withJSONObject: ["status": "NONEXISTENT"])
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
     do {
-      try await deserializer.deserialize(jsonData, using: desc)
+      _ = try await deserializer.deserialize(jsonData, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {

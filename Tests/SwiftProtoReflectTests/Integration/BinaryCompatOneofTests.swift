@@ -214,7 +214,7 @@ final class BinaryCompatOneofTests: XCTestCase {
 
     // Direction B: empty DynamicMessage → our serializer → should produce empty bytes
     let emptyDynamic = DynamicMessage(descriptor: desc)
-    let ourData = try await BinaryCompatHelpers.makeSerializer().serialize(emptyDynamic)
+    let ourData = try BinaryCompatHelpers.makeSerializer().serialize(emptyDynamic)
     XCTAssertEqual(ourData, Data(), "unset oneof DynamicMessage should produce no wire bytes")
   }
 
@@ -709,7 +709,7 @@ final class BinaryCompatOneofTests: XCTestCase {
     //   Zigzag(-1) would be 1 (1 byte), yielding only 2 total bytes.
     var d = DynamicMessage(descriptor: desc)
     try d.set(Int32(-1), forField: 3)
-    let bytes = try await BinaryCompatHelpers.makeSerializer().serialize(d)
+    let bytes = try BinaryCompatHelpers.makeSerializer().serialize(d)
     XCTAssertEqual(
       bytes.count,
       11,
@@ -759,7 +759,7 @@ final class BinaryCompatOneofTests: XCTestCase {
     // Verify wire encoding: field 1 tag (0x09, 1 byte) + 8-byte double = 9 total bytes.
     var d = DynamicMessage(descriptor: desc)
     try d.set(val, forField: 1)
-    let bytes = try await BinaryCompatHelpers.makeSerializer().serialize(d)
+    let bytes = try BinaryCompatHelpers.makeSerializer().serialize(d)
     XCTAssertEqual(
       bytes.count,
       9,

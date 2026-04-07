@@ -82,7 +82,7 @@ final class BinaryDeserializationTests: XCTestCase {
 
     // Round-trip test
     let originalMessage = try messageFactory.createMessage(from: scalarMessage, with: originalValues)
-    let serializedData = try await serializer.serialize(originalMessage)
+    let serializedData = try serializer.serialize(originalMessage)
     let deserializedMessage = try await deserializer.deserialize(serializedData, using: scalarMessage)
 
     // Verify all fields
@@ -109,7 +109,7 @@ final class BinaryDeserializationTests: XCTestCase {
     fileDescriptor.addMessage(message)
 
     let original = try messageFactory.createMessage(from: message, with: ["value": 3.14159])
-    let data = try await serializer.serialize(original)
+    let data = try serializer.serialize(original)
     let deserialized = try await deserializer.deserialize(data, using: message)
 
     XCTAssertEqual(try deserialized.get(forField: "value") as? Double, 3.14159)
@@ -122,14 +122,14 @@ final class BinaryDeserializationTests: XCTestCase {
 
     // Test true
     let trueMessage = try messageFactory.createMessage(from: message, with: ["value": true])
-    let trueData = try await serializer.serialize(trueMessage)
+    let trueData = try serializer.serialize(trueMessage)
     let deserializedTrue = try await deserializer.deserialize(trueData, using: message)
     XCTAssertEqual(try deserializedTrue.get(forField: "value") as? Bool, true)
 
     // Test false: proto3 implicit-presence — false is the default and is omitted from wire,
     // so after round-trip the field is absent (hasValue returns false).
     let falseMessage = try messageFactory.createMessage(from: message, with: ["value": false])
-    let falseData = try await serializer.serialize(falseMessage)
+    let falseData = try serializer.serialize(falseMessage)
     XCTAssertEqual(falseData.count, 0)
     let deserializedFalse = try await deserializer.deserialize(falseData, using: message)
     XCTAssertFalse(try deserializedFalse.hasValue(forField: "value"))
@@ -152,7 +152,7 @@ final class BinaryDeserializationTests: XCTestCase {
 
     for testString in testStrings {
       let original = try messageFactory.createMessage(from: message, with: ["value": testString])
-      let data = try await serializer.serialize(original)
+      let data = try serializer.serialize(original)
       let deserialized = try await deserializer.deserialize(data, using: message)
       XCTAssertEqual(try deserialized.get(forField: "value") as? String, testString)
     }
@@ -172,7 +172,7 @@ final class BinaryDeserializationTests: XCTestCase {
 
     for bytes in testBytes {
       let original = try messageFactory.createMessage(from: message, with: ["value": bytes])
-      let data = try await serializer.serialize(original)
+      let data = try serializer.serialize(original)
       let deserialized = try await deserializer.deserialize(data, using: message)
       XCTAssertEqual(try deserialized.get(forField: "value") as? Data, bytes)
     }
@@ -210,7 +210,7 @@ final class BinaryDeserializationTests: XCTestCase {
     ]
 
     let original = try messageFactory.createMessage(from: message, with: values)
-    let data = try await serializer.serialize(original)
+    let data = try serializer.serialize(original)
     let deserialized = try await deserializer.deserialize(data, using: message)
 
     XCTAssertEqual(try deserialized.get(forField: "sint32_field") as? Int32, Int32(-1))
@@ -231,7 +231,7 @@ final class BinaryDeserializationTests: XCTestCase {
     ]
 
     let original = try messageFactory.createMessage(from: message, with: values)
-    let data = try await serializer.serialize(original)
+    let data = try serializer.serialize(original)
     let deserialized = try await deserializer.deserialize(data, using: message)
 
     XCTAssertEqual(try deserialized.get(forField: "strings") as? [String], ["hello", "world", "test"])
@@ -254,7 +254,7 @@ final class BinaryDeserializationTests: XCTestCase {
     let packedSerializer = BinarySerializer(options: SerializationOptions(usePackedRepeated: true))
 
     let original = try messageFactory.createMessage(from: message, with: values)
-    let data = try await packedSerializer.serialize(original)
+    let data = try packedSerializer.serialize(original)
     let deserialized = try await deserializer.deserialize(data, using: message)
 
     XCTAssertEqual(
@@ -290,7 +290,7 @@ final class BinaryDeserializationTests: XCTestCase {
     ]
 
     let original = try messageFactory.createMessage(from: message, with: ["string_to_int": mapData])
-    let data = try await serializer.serialize(original)
+    let data = try serializer.serialize(original)
     let deserialized = try await deserializer.deserialize(data, using: message)
 
     let deserializedMap = try deserialized.get(forField: "string_to_int") as? [String: Int32]
@@ -322,7 +322,7 @@ final class BinaryDeserializationTests: XCTestCase {
     fileDescriptor.addMessage(message)
 
     let original = try messageFactory.createMessage(from: message, with: ["status": Int32(1)])
-    let data = try await serializer.serialize(original)
+    let data = try serializer.serialize(original)
     let deserialized = try await deserializer.deserialize(data, using: message)
 
     XCTAssertEqual(try deserialized.get(forField: "status") as? Int32, Int32(1))
@@ -350,7 +350,7 @@ final class BinaryDeserializationTests: XCTestCase {
         "unknown_field": Int32(42),
       ]
     )
-    let data = try await serializer.serialize(fullMessage)
+    let data = try serializer.serialize(fullMessage)
 
     // Deserialize with truncated descriptor (unknown field should be skipped)
     let partialMessage = try await deserializer.deserialize(data, using: newMessage)
@@ -368,12 +368,12 @@ final class BinaryDeserializationTests: XCTestCase {
     emptyMessage.addField(FieldDescriptor(name: "field", number: 1, type: .int32))
 
     let emptyData = Data()
-    try await deserializer.deserialize(emptyData, using: emptyMessage)
+    _ = try await deserializer.deserialize(emptyData, using: emptyMessage)
 
     // Test with truncated data (tag for field 1, wire type varint, but no value)
     let truncatedData = Data([0x08])  // Tag for field 1, wire type 0 (varint), but no varint data
     do {
-      try await deserializer.deserialize(truncatedData, using: emptyMessage)
+      _ = try await deserializer.deserialize(truncatedData, using: emptyMessage)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -400,7 +400,7 @@ final class BinaryDeserializationTests: XCTestCase {
     invalidData.append(0xFE)  // Invalid UTF-8 byte
 
     do {
-      try await deserializer.deserialize(invalidData, using: message)
+      _ = try await deserializer.deserialize(invalidData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -490,11 +490,11 @@ final class BinaryDeserializationTests: XCTestCase {
     }
 
     let originalMessage = try messageFactory.createMessage(from: message, with: fieldValues)
-    let data = try await serializer.serialize(originalMessage)
+    let data = try serializer.serialize(originalMessage)
 
     // Test deserialization performance
     for _ in 0..<1000 {
-      _ = await try? deserializer.deserialize(data, using: message)
+      _ = try? await deserializer.deserialize(data, using: message)
     }
   }
 
@@ -508,7 +508,7 @@ final class BinaryDeserializationTests: XCTestCase {
     // Tag = (fieldNumber=1 << 3) | wireType=6 = 8 | 6 = 14 = 0x0E
     let invalidData = Data([0x0E])
     do {
-      try await deserializer.deserialize(invalidData, using: message)
+      _ = try await deserializer.deserialize(invalidData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -529,7 +529,7 @@ final class BinaryDeserializationTests: XCTestCase {
     // Tag = (1 << 3) | 5 = 13 = 0x0D, then 4 bytes of fixed32 data
     let mismatchData = Data([0x0D, 0x01, 0x00, 0x00, 0x00])
     do {
-      try await deserializer.deserialize(mismatchData, using: message)
+      _ = try await deserializer.deserialize(mismatchData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -550,7 +550,7 @@ final class BinaryDeserializationTests: XCTestCase {
     // Length = 2, content = 2 bytes of data
     let data = Data([0x0A, 0x02, 0x08, 0x01])
     do {
-      try await deserializer.deserialize(data, using: message)
+      _ = try await deserializer.deserialize(data, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -583,7 +583,7 @@ final class BinaryDeserializationTests: XCTestCase {
     // startGroup without endGroup → truncated
     let groupData = Data([0x13])
     do {
-      try await deserializer.deserialize(groupData, using: message)
+      _ = try await deserializer.deserialize(groupData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -665,7 +665,7 @@ final class BinaryDeserializationTests: XCTestCase {
     let data = Data([mapTag, entryLength, keyTag, keyLen] + keyData)
 
     do {
-      try await deserializer.deserialize(data, using: message)
+      _ = try await deserializer.deserialize(data, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -747,7 +747,7 @@ final class BinaryDeserializationTests: XCTestCase {
     // But only provide 2 bytes instead of 4
     let truncatedData = Data([0x0D, 0x01, 0x02])
     do {
-      try await deserializer.deserialize(truncatedData, using: message)
+      _ = try await deserializer.deserialize(truncatedData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -768,7 +768,7 @@ final class BinaryDeserializationTests: XCTestCase {
     // But only provide 4 bytes instead of 8
     let truncatedData = Data([0x09, 0x01, 0x02, 0x03, 0x04])
     do {
-      try await deserializer.deserialize(truncatedData, using: message)
+      _ = try await deserializer.deserialize(truncatedData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -789,7 +789,7 @@ final class BinaryDeserializationTests: XCTestCase {
     fileDescriptor.addMessage(message)
 
     let emptyMessage = messageFactory.createMessage(from: message)
-    let data = try await serializer.serialize(emptyMessage)
+    let data = try serializer.serialize(emptyMessage)
     let deserialized = try await deserializer.deserialize(data, using: message)
 
     XCTAssertFalse(try deserialized.hasValue(forField: "optional_field"))
@@ -822,7 +822,7 @@ final class BinaryDeserializationTests: XCTestCase {
     fileDescriptor.addMessage(message)
 
     let original = try messageFactory.createMessage(from: message, with: ["field_large": Int32(42)])
-    let data = try await serializer.serialize(original)
+    let data = try serializer.serialize(original)
     let deserialized = try await deserializer.deserialize(data, using: message)
 
     XCTAssertEqual(try deserialized.get(forField: "field_large") as? Int32, Int32(42))

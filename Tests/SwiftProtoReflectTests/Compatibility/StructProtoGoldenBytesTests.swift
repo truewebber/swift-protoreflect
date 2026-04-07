@@ -56,7 +56,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
     )
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.nullValue)
-    let _asyncResult1 = try await serializer.serialize(dynMsg)
+    let _asyncResult1 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
       _asyncResult1,
       golden,
@@ -88,7 +88,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
     )
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.numberValue(1.0))
-    let _asyncResult2 = try await serializer.serialize(dynMsg)
+    let _asyncResult2 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
       _asyncResult2,
       golden,
@@ -120,7 +120,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
     )
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.stringValue("hi"))
-    let _asyncResult3 = try await serializer.serialize(dynMsg)
+    let _asyncResult3 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
       _asyncResult3,
       golden,
@@ -151,7 +151,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
     )
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.boolValue(true))
-    let _asyncResult4 = try await serializer.serialize(dynMsg)
+    let _asyncResult4 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
       _asyncResult4,
       golden,
@@ -185,7 +185,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
     )
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.boolValue(false))
-    let _asyncResult5 = try await serializer.serialize(dynMsg)
+    let _asyncResult5 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
       _asyncResult5,
       golden,
@@ -221,7 +221,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
     )
 
     let dynMsg = try ListValueHandler.createDynamic(from: [StructHandler.ValueValue.stringValue("hi")])
-    let _asyncResult6 = try await serializer.serialize(dynMsg)
+    let _asyncResult6 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
       _asyncResult6,
       golden,
@@ -264,7 +264,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
 
     let sv = StructHandler.StructValue(fields: ["k": .stringValue("v")])
     let dynMsg = try StructHandler.createDynamic(from: sv)
-    let _asyncResult7 = try await serializer.serialize(dynMsg)
+    let _asyncResult7 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
       _asyncResult7,
       golden,
@@ -306,7 +306,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
 
     let libSv = StructHandler.StructValue(fields: ["k": .stringValue("v")])
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.structValue(libSv))
-    let _asyncResult8 = try await serializer.serialize(dynMsg)
+    let _asyncResult8 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
       _asyncResult8,
       golden,
@@ -347,7 +347,7 @@ final class StructProtoGoldenBytesTests: XCTestCase {
     )
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.listValue([.stringValue("hi")]))
-    let _asyncResult9 = try await serializer.serialize(dynMsg)
+    let _asyncResult9 = try serializer.serialize(dynMsg)
     XCTAssertEqual(
       _asyncResult9,
       golden,

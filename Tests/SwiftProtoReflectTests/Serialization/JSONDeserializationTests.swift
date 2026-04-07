@@ -530,7 +530,7 @@ final class JSONDeserializationTests: XCTestCase {
     )
 
     do {
-      try await strictDeserializer.deserialize(jsonData, using: message)
+      _ = try await strictDeserializer.deserialize(jsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -559,7 +559,7 @@ final class JSONDeserializationTests: XCTestCase {
     let invalidJsonData = "{ invalid json }".data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(invalidJsonData, using: message)
+      _ = try await deserializer.deserialize(invalidJsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -583,7 +583,7 @@ final class JSONDeserializationTests: XCTestCase {
     let arrayJsonData = "[1, 2, 3]".data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(arrayJsonData, using: message)
+      _ = try await deserializer.deserialize(arrayJsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -617,7 +617,7 @@ final class JSONDeserializationTests: XCTestCase {
       """.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(doubleErrorJson, using: message)
+      _ = try await deserializer.deserialize(doubleErrorJson, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -641,7 +641,7 @@ final class JSONDeserializationTests: XCTestCase {
       """.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(int32ErrorJson, using: message)
+      _ = try await deserializer.deserialize(int32ErrorJson, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -665,7 +665,7 @@ final class JSONDeserializationTests: XCTestCase {
       """.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(int64ErrorJson, using: message)
+      _ = try await deserializer.deserialize(int64ErrorJson, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -689,7 +689,7 @@ final class JSONDeserializationTests: XCTestCase {
       """.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(uint32ErrorJson, using: message)
+      _ = try await deserializer.deserialize(uint32ErrorJson, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -713,7 +713,7 @@ final class JSONDeserializationTests: XCTestCase {
       """.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(uint64ErrorJson, using: message)
+      _ = try await deserializer.deserialize(uint64ErrorJson, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -737,7 +737,7 @@ final class JSONDeserializationTests: XCTestCase {
       """.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(boolErrorJson, using: message)
+      _ = try await deserializer.deserialize(boolErrorJson, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -772,7 +772,7 @@ final class JSONDeserializationTests: XCTestCase {
       """.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(int32ErrorJson, using: message)
+      _ = try await deserializer.deserialize(int32ErrorJson, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -795,7 +795,7 @@ final class JSONDeserializationTests: XCTestCase {
       """.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(int64ErrorJson, using: message)
+      _ = try await deserializer.deserialize(int64ErrorJson, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -818,7 +818,7 @@ final class JSONDeserializationTests: XCTestCase {
       """.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(uint32ErrorJson, using: message)
+      _ = try await deserializer.deserialize(uint32ErrorJson, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -841,7 +841,7 @@ final class JSONDeserializationTests: XCTestCase {
       """.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(uint64ErrorJson, using: message)
+      _ = try await deserializer.deserialize(uint64ErrorJson, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -864,7 +864,7 @@ final class JSONDeserializationTests: XCTestCase {
       """.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(doubleErrorJson, using: message)
+      _ = try await deserializer.deserialize(doubleErrorJson, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -887,7 +887,7 @@ final class JSONDeserializationTests: XCTestCase {
       """.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(floatErrorJson, using: message)
+      _ = try await deserializer.deserialize(floatErrorJson, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -1238,7 +1238,7 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(jsonData, using: message)
+      _ = try await deserializer.deserialize(jsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -1293,7 +1293,7 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(jsonData, using: message)
+      _ = try await deserializer.deserialize(jsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -1326,7 +1326,7 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(jsonData, using: message)
+      _ = try await deserializer.deserialize(jsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -1490,7 +1490,7 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(jsonData, using: message)
+      _ = try await deserializer.deserialize(jsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -1539,7 +1539,7 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(jsonData, using: message)
+      _ = try await deserializer.deserialize(jsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -1588,7 +1588,7 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(jsonData, using: message)
+      _ = try await deserializer.deserialize(jsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -1658,7 +1658,7 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(jsonData, using: message)
+      _ = try await deserializer.deserialize(jsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -1691,7 +1691,7 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(jsonData, using: message)
+      _ = try await deserializer.deserialize(jsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -1723,7 +1723,7 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(jsonData, using: message)
+      _ = try await deserializer.deserialize(jsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -1756,7 +1756,7 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(jsonData, using: message)
+      _ = try await deserializer.deserialize(jsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -1786,7 +1786,7 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(jsonData, using: message)
+      _ = try await deserializer.deserialize(jsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -1833,7 +1833,7 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(jsonData, using: message)
+      _ = try await deserializer.deserialize(jsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -1867,7 +1867,7 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(jsonData, using: message)
+      _ = try await deserializer.deserialize(jsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -1915,7 +1915,7 @@ final class JSONDeserializationTests: XCTestCase {
     let jsonData = jsonString.data(using: .utf8)!
 
     do {
-      try await deserializer.deserialize(jsonData, using: message)
+      _ = try await deserializer.deserialize(jsonData, using: message)
       XCTFail("Expected error to be thrown")
     }
     catch {

@@ -183,7 +183,7 @@ final class UnknownFieldsTests: XCTestCase {
     msg.setUnknownFields(rawUnknown)
 
     let serializer = BinarySerializer()
-    let output = try await serializer.serialize(msg)
+    let output = try serializer.serialize(msg)
     XCTAssertTrue(output.count >= rawUnknown.count, "Output should contain the unknown field bytes")
     XCTAssertTrue(output.hasSuffix(rawUnknown), "Unknown fields should be appended at the end")
   }
@@ -196,7 +196,7 @@ final class UnknownFieldsTests: XCTestCase {
     let msg = try await deserializer.deserialize(unknownData, using: desc)
 
     let serializer = BinarySerializer()
-    let reencoded = try await serializer.serialize(msg)
+    let reencoded = try serializer.serialize(msg)
 
     let msg2 = try await deserializer.deserialize(reencoded, using: desc)
     XCTAssertEqual(msg.unknownFields, msg2.unknownFields)
@@ -210,7 +210,7 @@ final class UnknownFieldsTests: XCTestCase {
     let msg = try await deserializer.deserialize(unknownData, using: desc)
 
     let serializer = BinarySerializer()
-    let reencoded = try await serializer.serialize(msg)
+    let reencoded = try serializer.serialize(msg)
 
     let msg2 = try await deserializer.deserialize(reencoded, using: desc)
     XCTAssertEqual(msg.unknownFields, msg2.unknownFields)
@@ -224,7 +224,7 @@ final class UnknownFieldsTests: XCTestCase {
     let msg = try await deserializer.deserialize(unknownData, using: desc)
 
     let serializer = BinarySerializer()
-    let reencoded = try await serializer.serialize(msg)
+    let reencoded = try serializer.serialize(msg)
 
     let msg2 = try await deserializer.deserialize(reencoded, using: desc)
     XCTAssertEqual(msg.unknownFields, msg2.unknownFields)
@@ -240,7 +240,7 @@ final class UnknownFieldsTests: XCTestCase {
     let msg = try await deserializer.deserialize(binary, using: desc)
 
     let serializer = BinarySerializer()
-    let reencoded = try await serializer.serialize(msg)
+    let reencoded = try serializer.serialize(msg)
 
     let msg2 = try await deserializer.deserialize(reencoded, using: desc)
     let value = try msg2.get(forField: 1) as? Int32

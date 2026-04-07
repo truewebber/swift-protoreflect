@@ -244,7 +244,7 @@ final class WireFormatTests: XCTestCase {
     try msg.set(Int64(-9999), forField: "f_sfixed64")
 
     let serializer = BinarySerializer()
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let decoded = try await deserializer.deserialize(data, using: desc)

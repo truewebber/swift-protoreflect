@@ -77,7 +77,7 @@ final class BinarySerializationTests: XCTestCase {
     let message = try messageFactory.createMessage(from: scalarMessage, with: values)
 
     // Serialize
-    let data = try await serializer.serialize(message)
+    let data = try serializer.serialize(message)
 
     // Verify that data is not empty
     XCTAssertFalse(data.isEmpty)
@@ -108,7 +108,7 @@ final class BinarySerializationTests: XCTestCase {
     fileDescriptor.addMessage(message)
 
     let dynamicMessage = try messageFactory.createMessage(from: message, with: ["value": 3.14159])
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
 
     // Verify wire format: tag (field 1, wire type 1) + 8 bytes double
     XCTAssertEqual(data.count, 9)  // 1 byte tag + 8 bytes double
@@ -121,7 +121,7 @@ final class BinarySerializationTests: XCTestCase {
     fileDescriptor.addMessage(message)
 
     let dynamicMessage = try messageFactory.createMessage(from: message, with: ["value": Float(2.718)])
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
 
     // Verify wire format: tag (field 1, wire type 5) + 4 bytes float
     XCTAssertEqual(data.count, 5)  // 1 byte tag + 4 bytes float
@@ -135,7 +135,7 @@ final class BinarySerializationTests: XCTestCase {
 
     // Test true
     let trueMessage = try messageFactory.createMessage(from: message, with: ["value": true])
-    let trueData = try await serializer.serialize(trueMessage)
+    let trueData = try serializer.serialize(trueMessage)
 
     XCTAssertEqual(trueData.count, 2)  // 1 byte tag + 1 byte value
     XCTAssertEqual(trueData[0], 8)  // Tag: (1 << 3) | 0 = 8
@@ -143,7 +143,7 @@ final class BinarySerializationTests: XCTestCase {
 
     // Test false: proto3 implicit-presence — default value is omitted from wire
     let falseMessage = try messageFactory.createMessage(from: message, with: ["value": false])
-    let falseData = try await serializer.serialize(falseMessage)
+    let falseData = try serializer.serialize(falseMessage)
     XCTAssertEqual(falseData.count, 0)
   }
 
@@ -156,7 +156,7 @@ final class BinarySerializationTests: XCTestCase {
 
     let testString = "Hello, 世界!"
     let dynamicMessage = try messageFactory.createMessage(from: message, with: ["value": testString])
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
 
     // Verify wire format: tag + length + UTF-8 bytes
     XCTAssertGreaterThanOrEqual(data.count, testString.utf8.count + 2)  // at least tag + length + content
@@ -178,7 +178,7 @@ final class BinarySerializationTests: XCTestCase {
 
     let testBytes = Data([0x01, 0x02, 0x03, 0xFF, 0xAB])
     let dynamicMessage = try messageFactory.createMessage(from: message, with: ["value": testBytes])
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
 
     // Verify wire format
     XCTAssertEqual(data.count, testBytes.count + 2)  // tag + length + content
@@ -196,7 +196,7 @@ final class BinarySerializationTests: XCTestCase {
     fileDescriptor.addMessage(message)
 
     let dynamicMessage = try messageFactory.createMessage(from: message, with: ["value": ""])
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
 
     // proto3 implicit-presence: empty string (default) is omitted from wire
     XCTAssertEqual(data.count, 0)
@@ -237,7 +237,7 @@ final class BinarySerializationTests: XCTestCase {
     try parent.set(nested, forField: "nested")
 
     // Serialize
-    let data = try await serializer.serialize(parent)
+    let data = try serializer.serialize(parent)
 
     // Verify structure: tag + length + nested_content
     XCTAssertGreaterThan(data.count, 5)  // at least several bytes
@@ -269,7 +269,7 @@ final class BinarySerializationTests: XCTestCase {
 
     // Use non-packed serialization for strings
     let serializer = BinarySerializer(options: SerializationOptions(usePackedRepeated: false))
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
 
     // Verify that each element has its own tag
     let dataArray = Array(data)
@@ -290,7 +290,7 @@ final class BinarySerializationTests: XCTestCase {
     )
 
     // Use packed serialization
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
 
     // Verify that only one tag with length-delimited wire type is used
     let dataArray = Array(data)
@@ -306,7 +306,7 @@ final class BinarySerializationTests: XCTestCase {
     // Create message without setting empty array
     let dynamicMessage = messageFactory.createMessage(from: message)
 
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
 
     // Field without values should not generate data in proto3
     XCTAssertEqual(data.count, 0)
@@ -346,7 +346,7 @@ final class BinarySerializationTests: XCTestCase {
       ]
     )
 
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
 
     // Verify that data is not empty for map with 3 elements
     XCTAssertGreaterThan(data.count, 0)
@@ -382,7 +382,7 @@ final class BinarySerializationTests: XCTestCase {
     // Create message without setting map field
     let dynamicMessage = messageFactory.createMessage(from: message)
 
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
 
     // Map field without values should not generate data
     XCTAssertEqual(data.count, 0)
@@ -416,7 +416,7 @@ final class BinarySerializationTests: XCTestCase {
       ]
     )
 
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
 
     XCTAssertEqual(data.count, 2)  // tag + value
     XCTAssertEqual(data[0], 8)  // Tag: (1 << 3) | 0 = 8
@@ -447,7 +447,7 @@ final class BinarySerializationTests: XCTestCase {
     fileDescriptor.addMessage(message)
 
     let dynamicMessage = try messageFactory.createMessage(from: message, with: ["value": Int32(-1)])
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
 
     XCTAssertEqual(data.count, 2)  // tag + zigzag encoded value
     XCTAssertEqual(data[0], 8)  // Tag: (1 << 3) | 0 = 8
@@ -465,7 +465,7 @@ final class BinarySerializationTests: XCTestCase {
     let emptyMessage = messageFactory.createMessage(from: message)
 
     // Empty message serialization should work (proto3 semantics)
-    let data = try await serializer.serialize(emptyMessage)
+    let data = try serializer.serialize(emptyMessage)
     XCTAssertEqual(data.count, 0)  // Empty fields are not serialized in proto3
   }
 
@@ -485,7 +485,7 @@ final class BinarySerializationTests: XCTestCase {
     try group.set(Int32(7), forField: "val")
     try dynamicMessage.set(group, forField: "group_field")
 
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
     XCTAssertFalse(data.isEmpty)
 
     let decoded = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
@@ -549,7 +549,7 @@ final class BinarySerializationTests: XCTestCase {
     fileDescriptor.addMessage(message)
 
     let dynamicMessage = messageFactory.createMessage(from: message)
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
 
     // Message without fields should give empty data
     XCTAssertEqual(data.count, 0)
@@ -567,7 +567,7 @@ final class BinarySerializationTests: XCTestCase {
       ]
     )
 
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
 
     // Should serialize without errors
     XCTAssertGreaterThan(data.count, 0)
@@ -585,7 +585,7 @@ final class BinarySerializationTests: XCTestCase {
       ]
     )
 
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
 
     // Maximum UInt64 value should encode in 10 byte varint + 1 byte tag
     XCTAssertGreaterThanOrEqual(data.count, 11)
@@ -607,7 +607,7 @@ final class BinarySerializationTests: XCTestCase {
     try msg.set("ACTIVE", forField: "status")  // DynamicMessage accepts String for enum
 
     do {
-      try await serializer.serialize(msg)
+      _ = try serializer.serialize(msg)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -634,7 +634,7 @@ final class BinarySerializationTests: XCTestCase {
       from: message,
       with: ["flags": [true, false, true]]
     )
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
 
     // Packed encoding: only one tag
     let dataArray = Array(data)
@@ -659,7 +659,7 @@ final class BinarySerializationTests: XCTestCase {
       from: message,
       with: ["values": [UInt32(100), UInt32(200), UInt32(300)]]
     )
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
     let deserialized = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
@@ -679,7 +679,7 @@ final class BinarySerializationTests: XCTestCase {
       from: message,
       with: ["values": [Int32(-1), Int32(-2), Int32(3)]]
     )
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
     let deserialized = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
@@ -699,7 +699,7 @@ final class BinarySerializationTests: XCTestCase {
       from: message,
       with: ["values": [UInt32(10), UInt32(20), UInt32(30)]]
     )
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
     let deserialized = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
@@ -719,7 +719,7 @@ final class BinarySerializationTests: XCTestCase {
       from: message,
       with: ["values": [UInt64(1_000_000), UInt64(2_000_000)]]
     )
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
     let deserialized = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
@@ -739,7 +739,7 @@ final class BinarySerializationTests: XCTestCase {
       from: message,
       with: ["values": [Int32(-100), Int32(0), Int32(100)]]
     )
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
     let deserialized = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
@@ -759,7 +759,7 @@ final class BinarySerializationTests: XCTestCase {
       from: message,
       with: ["values": [Int64(-1_000_000), Int64(1_000_000)]]
     )
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
     let deserialized = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
@@ -779,7 +779,7 @@ final class BinarySerializationTests: XCTestCase {
       from: message,
       with: ["values": [UInt64(1), UInt64(2), UInt64(3)]]
     )
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
   }
 
@@ -792,7 +792,7 @@ final class BinarySerializationTests: XCTestCase {
       from: message,
       with: ["values": [Int64(-100), Int64(100)]]
     )
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
   }
 
@@ -805,7 +805,7 @@ final class BinarySerializationTests: XCTestCase {
       from: message,
       with: ["values": [1.1, 2.2, 3.3]]
     )
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
   }
 
@@ -818,7 +818,7 @@ final class BinarySerializationTests: XCTestCase {
       from: message,
       with: ["values": [Float(1.1), Float(2.2)]]
     )
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
   }
 
@@ -833,7 +833,7 @@ final class BinarySerializationTests: XCTestCase {
       from: message,
       with: ["statuses": [Int32(0), Int32(1), Int32(2)]]
     )
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
   }
 
@@ -852,7 +852,7 @@ final class BinarySerializationTests: XCTestCase {
     )
 
     // bytes is non-packable, so each element gets its own tag
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
 
     // Deserialize and verify
@@ -892,7 +892,7 @@ final class BinarySerializationTests: XCTestCase {
       with: ["int_to_str": mapData]
     )
 
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
   }
 
@@ -922,7 +922,7 @@ final class BinarySerializationTests: XCTestCase {
       var msg = DynamicMessage(descriptor: desc)
       try msg.set(defaultValue, forField: 1)
 
-      let data = try await serializer.serialize(msg)
+      let data = try serializer.serialize(msg)
       XCTAssertEqual(data, Data(), "proto3 \(fieldType) explicitly set to default must produce empty wire bytes")
     }
   }
@@ -951,7 +951,7 @@ final class BinarySerializationTests: XCTestCase {
       with: ["bool_to_str": mapData]
     )
 
-    let data = try await serializer.serialize(dynamicMessage)
+    let data = try serializer.serialize(dynamicMessage)
     XCTAssertGreaterThan(data.count, 0)
   }
 
@@ -975,7 +975,7 @@ final class BinarySerializationTests: XCTestCase {
     let dynamicMessage = try messageFactory.createMessage(from: message, with: values)
 
     do {
-      _ = try await serializer.serialize(dynamicMessage)
+      _ = try serializer.serialize(dynamicMessage)
     }
     catch {
       XCTFail("Serialization failed: \(error)")

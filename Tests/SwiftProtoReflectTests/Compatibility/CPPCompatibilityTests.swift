@@ -30,7 +30,7 @@ final class CPPCompatibilityTests: XCTestCase {
     var original = factory.createMessage(from: fullDesc)
     try original.set(Int32(42), forField: "id")
     try original.set("hidden", forField: "extra")
-    let data = try await serializer.serialize(original)
+    let data = try serializer.serialize(original)
 
     var reducedDesc = MessageDescriptor(name: "M", fullName: "test.M")
     reducedDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
@@ -39,7 +39,7 @@ final class CPPCompatibilityTests: XCTestCase {
     XCTAssertEqual(try partial.get(forField: "id") as? Int32, 42)
     XCTAssertFalse(partial.unknownFields.isEmpty)
 
-    let reencoded = try await serializer.serialize(partial)
+    let reencoded = try serializer.serialize(partial)
     let restored = try await deserializer.deserialize(reencoded, using: fullDesc)
     XCTAssertEqual(try restored.get(forField: "id") as? Int32, 42)
     XCTAssertEqual(try restored.get(forField: "extra") as? String, "hidden")
@@ -53,7 +53,7 @@ final class CPPCompatibilityTests: XCTestCase {
 
     var msg = factory.createMessage(from: writerDesc)
     try msg.set(Int32(99), forField: "old_name")
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
 
     var readerDesc = MessageDescriptor(name: "M", fullName: "test.M")
     readerDesc.addField(FieldDescriptor(name: "new_name", number: 1, type: .int32))
@@ -76,7 +76,7 @@ final class CPPCompatibilityTests: XCTestCase {
 
       var msg = factory.createMessage(from: desc)
       try msg.set(value, forField: "v")
-      let data = try await serializer.serialize(msg)
+      let data = try serializer.serialize(msg)
       let decoded = try await deserializer.deserialize(data, using: desc)
       XCTAssertEqual(try decoded.get(forField: "v") as? Int32, value, "Round-trip failed for \(value)")
     }
@@ -90,7 +90,7 @@ final class CPPCompatibilityTests: XCTestCase {
 
       var msg = factory.createMessage(from: desc)
       try msg.set(value, forField: "v")
-      let data = try await serializer.serialize(msg)
+      let data = try serializer.serialize(msg)
       let decoded = try await deserializer.deserialize(data, using: desc)
       XCTAssertEqual(try decoded.get(forField: "v") as? Int64, value, "Round-trip failed for \(value)")
     }
@@ -104,7 +104,7 @@ final class CPPCompatibilityTests: XCTestCase {
 
       var msg = factory.createMessage(from: desc)
       try msg.set(value, forField: "v")
-      let data = try await serializer.serialize(msg)
+      let data = try serializer.serialize(msg)
       let decoded = try await deserializer.deserialize(data, using: desc)
       XCTAssertEqual(try decoded.get(forField: "v") as? UInt32, value, "Round-trip failed for \(value)")
     }
@@ -118,7 +118,7 @@ final class CPPCompatibilityTests: XCTestCase {
 
       var msg = factory.createMessage(from: desc)
       try msg.set(value, forField: "v")
-      let data = try await serializer.serialize(msg)
+      let data = try serializer.serialize(msg)
       let decoded = try await deserializer.deserialize(data, using: desc)
       XCTAssertEqual(try decoded.get(forField: "v") as? UInt64, value, "Round-trip failed for \(value)")
     }
@@ -134,7 +134,7 @@ final class CPPCompatibilityTests: XCTestCase {
 
       var msg = factory.createMessage(from: desc)
       try msg.set(value, forField: "v")
-      let data = try await serializer.serialize(msg)
+      let data = try serializer.serialize(msg)
       let decoded = try await deserializer.deserialize(data, using: desc)
       XCTAssertEqual(try decoded.get(forField: "v") as? Float, value, "Round-trip failed for \(value)")
     }
@@ -146,7 +146,7 @@ final class CPPCompatibilityTests: XCTestCase {
 
     var msg = factory.createMessage(from: desc)
     try msg.set(Float.nan, forField: "v")
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
     let decoded = try await deserializer.deserialize(data, using: desc)
     let result = try decoded.get(forField: "v") as? Float
     XCTAssertNotNil(result)
@@ -161,7 +161,7 @@ final class CPPCompatibilityTests: XCTestCase {
 
       var msg = factory.createMessage(from: desc)
       try msg.set(value, forField: "v")
-      let data = try await serializer.serialize(msg)
+      let data = try serializer.serialize(msg)
       let decoded = try await deserializer.deserialize(data, using: desc)
       XCTAssertEqual(try decoded.get(forField: "v") as? Double, value, "Round-trip failed for \(value)")
     }
@@ -173,7 +173,7 @@ final class CPPCompatibilityTests: XCTestCase {
 
     var msg = factory.createMessage(from: desc)
     try msg.set(Double.nan, forField: "v")
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
     let decoded = try await deserializer.deserialize(data, using: desc)
     let result = try decoded.get(forField: "v") as? Double
     XCTAssertNotNil(result)
@@ -191,7 +191,7 @@ final class CPPCompatibilityTests: XCTestCase {
     var msg = factory.createMessage(from: desc)
     try msg.set([Int32(1), Int32(2), Int32(3)] as [Any], forField: "values")
 
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
     let decoded = try await deserializer.deserialize(data, using: desc)
 
     let values = try decoded.get(forField: "values")
@@ -228,7 +228,7 @@ final class CPPCompatibilityTests: XCTestCase {
     try msgA.set("hi", forField: "value")
     var msgB = factory.createMessage(from: descB)
     try msgB.set(msgA, forField: "a")
-    let producedData = try await serializer.serialize(msgB)
+    let producedData = try serializer.serialize(msgB)
 
     XCTAssertEqual([UInt8](producedData), expectedBytes, "Wire format must match C++ output")
 
@@ -274,7 +274,7 @@ final class CPPCompatibilityTests: XCTestCase {
     try middleMsg.set(innerMsg, forField: "inner")
     var outerMsg = factory.createMessage(from: outerDesc)
     try outerMsg.set(middleMsg, forField: "middle")
-    let producedData = try await serializer.serialize(outerMsg)
+    let producedData = try serializer.serialize(outerMsg)
 
     XCTAssertEqual([UInt8](producedData), expectedBytes, "Wire format must match C++ output")
 

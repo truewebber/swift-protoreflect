@@ -351,7 +351,7 @@ final class SerializationBenchmarks: XCTestCase {
       queue.async {
         Task {
           do {
-            let _ = try await serializer.serialize(message)
+            let _ = try serializer.serialize(message)
             expectation.fulfill()
           }
           catch {
@@ -361,7 +361,7 @@ final class SerializationBenchmarks: XCTestCase {
       }
     }
 
-    wait(for: [expectation], timeout: 10.0)
+    await fulfillment(of: [expectation], timeout: 10.0)
   }
 
   // MARK: - Helper Methods for Test Message Creation

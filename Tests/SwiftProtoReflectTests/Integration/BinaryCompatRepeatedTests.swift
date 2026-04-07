@@ -420,7 +420,7 @@ final class BinaryCompatRepeatedTests: XCTestCase {
     // Direction B: our serializer with no repeated fields set → Data()
     let desc = CompatDescriptors.repeatedAllTypes()
     let dynamic = DynamicMessage(descriptor: desc)
-    let ourData = try await serializer.serialize(dynamic)
+    let ourData = try serializer.serialize(dynamic)
     XCTAssertEqual(ourData, Data(), "BinarySerializer must produce empty bytes when no repeated fields are set")
   }
 
@@ -477,7 +477,7 @@ final class BinaryCompatRepeatedTests: XCTestCase {
     let desc = CompatDescriptors.repeatedAllTypes()
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set([Int32(1), Int32(2), Int32(3)] as [Int32], forField: 3)
-    let _asyncResult19 = try await serializer.serialize(dynamic)
+    let _asyncResult19 = try serializer.serialize(dynamic)
     XCTAssertEqual(
       _asyncResult19,
       expected,

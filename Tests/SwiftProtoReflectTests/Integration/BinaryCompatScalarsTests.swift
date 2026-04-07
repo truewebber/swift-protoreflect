@@ -130,7 +130,7 @@ final class BinaryCompatScalarsTests: XCTestCase {
 
     let desc = CompatDescriptors.scalarMessage()
     let dynamic = DynamicMessage(descriptor: desc)
-    let ourData = try await serializer.serialize(dynamic)
+    let ourData = try serializer.serialize(dynamic)
     XCTAssertEqual(ourData, Data(), "BinarySerializer must produce empty bytes for all-zero proto3 message")
   }
 
@@ -147,7 +147,7 @@ final class BinaryCompatScalarsTests: XCTestCase {
     let desc = CompatDescriptors.scalarMessage()
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(150), forField: 3)
-    let _asyncResult21 = try await serializer.serialize(dynamic)
+    let _asyncResult21 = try serializer.serialize(dynamic)
     XCTAssertEqual(_asyncResult21, expected)
   }
 
@@ -226,7 +226,7 @@ final class BinaryCompatScalarsTests: XCTestCase {
     let desc = CompatDescriptors.scalarMessage()
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(-1), forField: 7)
-    let _asyncResult22 = try await serializer.serialize(dynamic)
+    let _asyncResult22 = try serializer.serialize(dynamic)
     XCTAssertEqual(
       _asyncResult22,
       expected,
@@ -266,7 +266,7 @@ final class BinaryCompatScalarsTests: XCTestCase {
     let desc = CompatDescriptors.scalarMessage()
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(UInt32(1), forField: 9)
-    let _asyncResult23 = try await serializer.serialize(dynamic)
+    let _asyncResult23 = try serializer.serialize(dynamic)
     XCTAssertEqual(_asyncResult23, expected)
   }
 
@@ -281,7 +281,7 @@ final class BinaryCompatScalarsTests: XCTestCase {
     let desc = CompatDescriptors.scalarMessage()
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(UInt64(1), forField: 10)
-    let _asyncResult24 = try await serializer.serialize(dynamic)
+    let _asyncResult24 = try serializer.serialize(dynamic)
     XCTAssertEqual(_asyncResult24, expected)
   }
 
@@ -317,7 +317,7 @@ final class BinaryCompatScalarsTests: XCTestCase {
 
     let desc = CompatDescriptors.scalarMessage()
     let dynamic = DynamicMessage(descriptor: desc)
-    let _asyncResult25 = try await serializer.serialize(dynamic)
+    let _asyncResult25 = try serializer.serialize(dynamic)
     XCTAssertEqual(_asyncResult25, Data())
   }
 
@@ -358,7 +358,7 @@ final class BinaryCompatScalarsTests: XCTestCase {
     for (label, fieldNumber, value) in cases {
       var dynamic = DynamicMessage(descriptor: desc)
       try dynamic.set(value, forField: fieldNumber)
-      let data = try await serializer.serialize(dynamic)
+      let data = try serializer.serialize(dynamic)
       XCTAssertEqual(
         data,
         Data(),

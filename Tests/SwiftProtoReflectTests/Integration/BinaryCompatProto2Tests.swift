@@ -83,7 +83,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set("r", forField: 1)
     try d.set(Int32(0), forField: 2)
 
-    let data = try await serializer.serialize(d)
+    let data = try serializer.serialize(d)
     let bytes = [UInt8](data)
 
     XCTAssertTrue(bytes.contains(0x10), "required_int32=0 must produce tag 0x10 in wire output")
@@ -102,7 +102,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set("", forField: 1)
     try d.set(Int32(1), forField: 2)
 
-    let data = try await serializer.serialize(d)
+    let data = try serializer.serialize(d)
     let bytes = [UInt8](data)
 
     XCTAssertTrue(bytes.contains(0x0A), "required_string=\"\" must produce tag 0x0A in wire output")
@@ -121,7 +121,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set("x", forField: 1)
     try d.set(Int32(1), forField: 2)
 
-    let data = try await serializer.serialize(d)
+    let data = try serializer.serialize(d)
     let bytes = [UInt8](data)
 
     XCTAssertTrue(
@@ -182,7 +182,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set(Int32(1), forField: 2)
     try d.set(Int32(0), forField: 4)
 
-    let data = try await serializer.serialize(d)
+    let data = try serializer.serialize(d)
     let bytes = [UInt8](data)
 
     XCTAssertTrue(bytes.contains(0x20), "Explicitly set opt_int32=0 must produce tag 0x20 in wire output")
@@ -220,7 +220,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set("r", forField: 1)
     try d.set(Int32(1), forField: 2)
 
-    let data = try await serializer.serialize(d)
+    let data = try serializer.serialize(d)
     let bytes = [UInt8](data)
 
     // Tag for field 3 LEN: (3 << 3) | 2 = 0x1A; tag for field 4 varint: (4 << 3) | 0 = 0x20
@@ -236,7 +236,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try unsetD.set("r", forField: 1)
     try unsetD.set(Int32(1), forField: 2)
 
-    let unsetBytes = [UInt8](try await serializer.serialize(unsetD))
+    let unsetBytes = [UInt8](try serializer.serialize(unsetD))
     // Tag for field 3, wire type 2 (LEN): (3 << 3) | 2 = 0x1A
     XCTAssertFalse(unsetBytes.contains(0x1A), "Unset opt_string produces no tag 0x1A")
 
@@ -246,7 +246,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try emptyD.set(Int32(1), forField: 2)
     try emptyD.set("", forField: 3)
 
-    let emptyData = try await serializer.serialize(emptyD)
+    let emptyData = try serializer.serialize(emptyD)
     let emptyBytes = [UInt8](emptyData)
     XCTAssertTrue(emptyBytes.contains(0x1A), "opt_string=\"\" must produce tag 0x1A")
 
@@ -266,7 +266,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set(Int32(0), forField: 2)
     // field 4 (opt_int32) intentionally NOT set
 
-    let data = try await serializer.serialize(d)
+    let data = try serializer.serialize(d)
     let bytes = [UInt8](data)
 
     XCTAssertTrue(bytes.contains(0x10), "required_int32=0 must produce tag 0x10 (field 2 varint)")
@@ -312,7 +312,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     var d = DynamicMessage(descriptor: desc)
     try d.set(Int32(42), forField: 1)
 
-    let data = try await serializer.serialize(d)
+    let data = try serializer.serialize(d)
     let bytes = [UInt8](data)
 
     XCTAssertTrue(
@@ -379,7 +379,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
 
     // Unset → no bytes for field 3; tag for field 3, wire type 0: (3 << 3) | 0 = 24 = 0x18
     let emptyD = DynamicMessage(descriptor: desc)
-    let emptyBytes = [UInt8](try await serializer.serialize(emptyD))
+    let emptyBytes = [UInt8](try serializer.serialize(emptyD))
     XCTAssertFalse(emptyBytes.contains(0x18), "Unset active must produce no tag 0x18")
   }
 
@@ -586,7 +586,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set(Int32(99), forField: 101)
     try d.set(true, forField: 102)
 
-    let ourData = try await serializer.serialize(d)
+    let ourData = try serializer.serialize(d)
     let decoded = try Testcompat2_Proto2Extendable(
       serializedBytes: ourData,
       extensions: Testcompat2_Proto2Types_Extensions
@@ -631,7 +631,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set("base2", forField: 1)
     try d.set(innerDyn, forField: 104)
 
-    let ourData = try await serializer.serialize(d)
+    let ourData = try serializer.serialize(d)
     let decoded = try Testcompat2_Proto2Extendable(
       serializedBytes: ourData,
       extensions: Testcompat2_Proto2Types_Extensions
@@ -674,7 +674,7 @@ final class BinaryCompatProto2Tests: XCTestCase {
     try d.set(["tag1", "tag2", "tag3"] as [String], forField: 105)
     try d.set([Int32(1), Int32(2), Int32(3)] as [Int32], forField: 106)
 
-    let ourData = try await serializer.serialize(d)
+    let ourData = try serializer.serialize(d)
     let decoded = try Testcompat2_Proto2Extendable(
       serializedBytes: ourData,
       extensions: Testcompat2_Proto2Types_Extensions

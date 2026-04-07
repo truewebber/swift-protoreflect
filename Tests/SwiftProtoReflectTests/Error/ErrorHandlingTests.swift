@@ -49,7 +49,7 @@ final class ErrorHandlingTests: XCTestCase {
 
     let truncated = Data([0x08, 0x80])
     do {
-      try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(truncated, using: desc)
+      _ = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(truncated, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -63,7 +63,7 @@ final class ErrorHandlingTests: XCTestCase {
 
     let truncated = Data([0x0D, 0x01, 0x02])
     do {
-      try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(truncated, using: desc)
+      _ = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(truncated, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -77,7 +77,7 @@ final class ErrorHandlingTests: XCTestCase {
 
     let truncated = Data([0x0A, 0x05, 0x41])
     do {
-      try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(truncated, using: desc)
+      _ = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(truncated, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -93,7 +93,7 @@ final class ErrorHandlingTests: XCTestCase {
 
     let badJSON = Data("not json".utf8)
     do {
-      try await JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(badJSON, using: desc)
+      _ = try await JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(badJSON, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -107,7 +107,7 @@ final class ErrorHandlingTests: XCTestCase {
 
     let json = Data("{\"id\": \"not_a_number\"}".utf8)
     do {
-      try await JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(json, using: desc)
+      _ = try await JSONDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(json, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -142,7 +142,10 @@ final class ErrorHandlingTests: XCTestCase {
 
     let badWireType = Data([0x0F])
     do {
-      try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(badWireType, using: desc)
+      _ = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+        badWireType,
+        using: desc
+      )
       XCTFail("Expected error to be thrown")
     }
     catch {

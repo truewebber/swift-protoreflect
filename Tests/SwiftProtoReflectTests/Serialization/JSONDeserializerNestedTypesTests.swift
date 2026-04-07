@@ -31,7 +31,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["search_filters": ["title": "test"], "limit": 10]
-    try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
+    _ = try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
   }
 
   func test_deserialize_nestedMessageField_nestedFieldValuesCorrect() async throws {
@@ -94,7 +94,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     try await customRegistry.registerFile(customFd)
     let customDeserializer = makeDeserializer(registry: customRegistry)
     let json: [String: Any] = ["b": [:]]
-    try await customDeserializer.deserializeFromJSONObject(json, using: customFd.messages["A"]!)
+    _ = try await customDeserializer.deserializeFromJSONObject(json, using: customFd.messages["A"]!)
   }
 
   func test_deserialize_repeatedNestedMessageField_succeeds() async throws {
@@ -131,7 +131,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
       options: JSONDeserializationOptions(ignoreUnknownFields: true, typeRegistry: registry)
     )
     let json: [String: Any] = ["limit": 5]
-    try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
+    _ = try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
   }
 
   func test_deserialize_missingNestedField_noError() async throws {
@@ -140,7 +140,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["limit": 10]
-    try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
+    _ = try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
   }
 
   // MARK: - Group 7.1b — Leading dot in field.typeName
@@ -151,7 +151,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["search_filters": ["title": "test"]]
-    try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
+    _ = try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
   }
 
   func test_deserialize_fieldTypeNameWithoutLeadingDot_lookupSucceeds() async throws {
@@ -176,7 +176,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["search_filters": ["title": "hello"]]
-    try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
+    _ = try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
   }
 
   func test_deserialize_fieldTypeNameEmpty_throwsMissingTypeName() async throws {
@@ -192,7 +192,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["nested": ["key": "val"]]
     do {
-      try await deserializer.deserializeFromJSONObject(json, using: msgDesc)
+      _ = try await deserializer.deserializeFromJSONObject(json, using: msgDesc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -216,7 +216,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["nested": ["key": "val"]]
     do {
-      try await deserializer.deserializeFromJSONObject(json, using: msgDesc)
+      _ = try await deserializer.deserializeFromJSONObject(json, using: msgDesc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -237,7 +237,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let deserializer = makeDeserializer(registry: emptyRegistry)
     let json: [String: Any] = ["search_filters": ["title": "test"]]
     do {
-      try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
+      _ = try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -267,7 +267,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["search_filters": ["title": "test"]]
     do {
-      try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
+      _ = try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -284,7 +284,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let requestDesc = fd.messages["GetGroupedAdsRequest"]!
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["search_filters": ["title": "test"]]
-    try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
+    _ = try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
   }
 
   // MARK: - Group 7.3 — Nested enums in JSON
@@ -322,7 +322,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
     // For proto3 unknown string enum values should be treated as errors
     do {
-      try await deserializer.deserializeFromJSONObject(["status": "UNKNOWN_VALUE"], using: parentDesc)
+      _ = try await deserializer.deserializeFromJSONObject(["status": "UNKNOWN_VALUE"], using: parentDesc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -341,7 +341,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
       "search_filters": ["title": "test"],
       "limit": 10,
     ]
-    try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
+    _ = try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
   }
 
   func test_deserialize_issueMd_failure2_searchFiltersTitle_correct() async throws {
@@ -377,7 +377,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let json: [String: Any] = ["search_filters": ["title": "test"]]
     do {
-      try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
+      _ = try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -438,7 +438,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let fd = try bridge.fromProtobufFileDescriptor(fileProto)
     let msgDesc = fd.messages["Empty"]!
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    try await deserializer.deserializeFromJSONObject([:], using: msgDesc)
+    _ = try await deserializer.deserializeFromJSONObject([:], using: msgDesc)
   }
 
   func test_deserialize_nestedMessageWithAllScalarTypes_allFieldsCorrect() async throws {
@@ -496,7 +496,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let fd = try bridge.fromProtobufFileDescriptor(fileProto)
     let outerDesc = fd.messages["Outer"]!
     let deserializer = makeDeserializer(registry: registry)
-    try await deserializer.deserializeFromJSONObject(["inner": ["val": "x"]], using: outerDesc)
+    _ = try await deserializer.deserializeFromJSONObject(["inner": ["val": "x"]], using: outerDesc)
   }
 
   func test_deserialize_mixedNestedAndScalarFields_allDeserialized() async throws {
@@ -522,7 +522,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
     let deserializer = makeDeserializer(registry: emptyRegistry)
     let json: [String: Any] = ["search_filters": ["title": "test"]]
     do {
-      try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
+      _ = try await deserializer.deserializeFromJSONObject(json, using: requestDesc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -576,7 +576,7 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
 
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["msg": ["val": "hello"]]
-    try await deserializer.deserializeFromJSONObject(json, using: wrapperDesc)
+    _ = try await deserializer.deserializeFromJSONObject(json, using: wrapperDesc)
   }
 
   // MARK: - Group 7.7 addendum — regression tests for map and enum fields
@@ -649,6 +649,6 @@ final class JSONDeserializerNestedTypesTests: XCTestCase {
 
     let deserializer = makeDeserializer(registry: registry)
     let json: [String: Any] = ["items": ["k1": ["val": "hello"]]]
-    try await deserializer.deserializeFromJSONObject(json, using: outerWithMap)
+    _ = try await deserializer.deserializeFromJSONObject(json, using: outerWithMap)
   }
 }

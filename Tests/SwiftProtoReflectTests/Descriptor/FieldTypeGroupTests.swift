@@ -27,7 +27,7 @@ final class FieldTypeGroupTests: XCTestCase {
     try msg.set(group, forField: 1)
 
     let serializer = BinarySerializer()
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
     XCTAssertFalse(data.isEmpty)
 
     let decoded = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
@@ -79,7 +79,7 @@ final class FieldTypeGroupTests: XCTestCase {
     let data = Data([0x0B])
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     do {
-      try await deserializer.deserialize(data, using: desc)
+      _ = try await deserializer.deserialize(data, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {

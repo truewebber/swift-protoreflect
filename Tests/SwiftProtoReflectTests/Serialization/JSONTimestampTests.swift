@@ -114,7 +114,7 @@ final class JSONTimestampTests: XCTestCase {
     let json = #"{"seconds":1234567890,"nanos":0}"#.data(using: .utf8)!
     let desc = makeTimestampDescriptor()
     do {
-      try await deserializer().deserialize(json, using: desc)
+      _ = try await deserializer().deserialize(json, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {

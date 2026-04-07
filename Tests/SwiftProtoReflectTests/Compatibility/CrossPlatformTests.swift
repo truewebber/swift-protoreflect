@@ -32,7 +32,7 @@ final class CrossPlatformTests: XCTestCase {
     try msg.set(Int32(20), forField: "m")
     try msg.set(Int32(30), forField: "z")
 
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
     let decoded = try await deserializer.deserialize(data, using: desc)
     XCTAssertEqual(try decoded.get(forField: "a") as? Int32, 10)
     XCTAssertEqual(try decoded.get(forField: "m") as? Int32, 20)
@@ -84,7 +84,7 @@ final class CrossPlatformTests: XCTestCase {
   func test_emptyMessage_emptyWire() async throws {
     let desc = MessageDescriptor(name: "M", fullName: "test.M")
     let msg = MessageFactory().createMessage(from: desc)
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
     XCTAssertTrue(data.isEmpty, "All implementations encode empty message as zero bytes")
   }
 

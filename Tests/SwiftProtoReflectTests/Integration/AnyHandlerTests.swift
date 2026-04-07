@@ -140,7 +140,7 @@ final class AnyHandlerTests: XCTestCase {
     let wrongDescriptor = try createWrongMessageDescriptor()
 
     do {
-      try await anyValue.unpack(to: wrongDescriptor)
+      _ = try await anyValue.unpack(to: wrongDescriptor)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -284,7 +284,7 @@ final class AnyHandlerTests: XCTestCase {
     let wrongMessage = try createTestMessage()
 
     do {
-      try await wrongMessage.unpackFromAny(to: wrongMessage.descriptor)
+      _ = try await wrongMessage.unpackFromAny(to: wrongMessage.descriptor)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -351,7 +351,7 @@ final class AnyHandlerTests: XCTestCase {
     )
 
     do {
-      try await anyValue.unpack(using: registry)
+      _ = try await anyValue.unpack(using: registry)
       XCTFail("Expected error to be thrown")
     }
     catch {

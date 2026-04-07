@@ -111,7 +111,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
     // Direction B: DynamicMessage with bytes_field not set → empty wire output
     let unsetDynamic = DynamicMessage(descriptor: desc)
-    let _asyncResult26 = try await serializer.serialize(unsetDynamic)
+    let _asyncResult26 = try serializer.serialize(unsetDynamic)
     XCTAssertEqual(
       _asyncResult26,
       Data(),
@@ -128,7 +128,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
     var dynamicWithNull = DynamicMessage(descriptor: desc)
     try dynamicWithNull.set(Data([0x00]), forField: 15)
-    let _asyncResult27 = try await serializer.serialize(dynamicWithNull).isEmpty
+    let _asyncResult27 = try serializer.serialize(dynamicWithNull).isEmpty
     XCTAssertFalse(_asyncResult27, "BinarySerializer must serialize Data([0x00]) for bytes_field")
   }
 
@@ -240,7 +240,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
     // Direction B: DynamicMessage without int64_field set → empty wire output
     let unsetDynamic = DynamicMessage(descriptor: desc)
-    let _asyncResult28 = try await serializer.serialize(unsetDynamic)
+    let _asyncResult28 = try serializer.serialize(unsetDynamic)
     XCTAssertEqual(
       _asyncResult28,
       Data(),
@@ -408,7 +408,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
 
     // Direction B: DynamicMessage with EmptyCustom descriptor → empty wire output
     let dynamic = DynamicMessage(descriptor: desc)
-    let _asyncResult29 = try await serializer.serialize(dynamic)
+    let _asyncResult29 = try serializer.serialize(dynamic)
     XCTAssertEqual(
       _asyncResult29,
       Data(),
@@ -544,7 +544,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     // Direction B: our serializer → oracle
     var d = DynamicMessage(descriptor: desc)
     try d.setMapEntry("one", forKey: "only", inField: 1)
-    let ourData = try await serializer.serialize(d)
+    let ourData = try serializer.serialize(d)
     let decoded = try Testcompat_MapAllKeyTypes(serializedBytes: ourData)
     XCTAssertEqual(decoded.mapStringString, ["only": "one"])
   }
@@ -571,7 +571,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     )
 
     // Re-serialize — known field must survive; round-trip via oracle confirms correctness
-    let reserializedData = try await serializer.serialize(dynamic)
+    let reserializedData = try serializer.serialize(dynamic)
     let reparsed = try Testcompat_ScalarMessage(serializedBytes: reserializedData)
     XCTAssertEqual(
       reparsed.int32Field,
@@ -729,7 +729,7 @@ final class BinaryCompatEdgeCasesTests: XCTestCase {
     let desc = CompatDescriptors.scalarMessage()
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32.max, forField: 3)
-    let _asyncResult30 = try await serializer.serialize(dynamic)
+    let _asyncResult30 = try serializer.serialize(dynamic)
     XCTAssertEqual(
       _asyncResult30,
       expectedBytes,

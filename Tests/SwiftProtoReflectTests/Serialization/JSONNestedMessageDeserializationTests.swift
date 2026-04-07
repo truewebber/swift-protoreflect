@@ -218,7 +218,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     )
 
     do {
-      try await deserializer.deserialize(data, using: file.messages["Node"]!)
+      _ = try await deserializer.deserialize(data, using: file.messages["Node"]!)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -500,7 +500,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     )
 
     do {
-      try await deserializer.deserialize(data, using: file.messages["Outer"]!)
+      _ = try await deserializer.deserialize(data, using: file.messages["Outer"]!)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -537,7 +537,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     )
 
     do {
-      try await deserializer.deserialize(data, using: file.messages["Outer"]!)
+      _ = try await deserializer.deserialize(data, using: file.messages["Outer"]!)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -576,7 +576,7 @@ final class JSONNestedMessageDeserializationTests: XCTestCase {
     )
 
     do {
-      try await deserializer.deserialize(data, using: file.messages["Outer"]!)
+      _ = try await deserializer.deserialize(data, using: file.messages["Outer"]!)
       XCTFail("Expected error to be thrown")
     }
     catch {

@@ -21,7 +21,7 @@ final class SerializationErrorPathTests: XCTestCase {
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     do {
-      try await deserializer.deserialize(json, using: desc)
+      _ = try await deserializer.deserialize(json, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -48,7 +48,7 @@ final class SerializationErrorPathTests: XCTestCase {
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     do {
-      try await deserializer.deserialize(json, using: desc)
+      _ = try await deserializer.deserialize(json, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -63,7 +63,7 @@ final class SerializationErrorPathTests: XCTestCase {
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     do {
-      try await deserializer.deserialize(json, using: desc)
+      _ = try await deserializer.deserialize(json, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -78,7 +78,7 @@ final class SerializationErrorPathTests: XCTestCase {
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     do {
-      try await deserializer.deserialize(json, using: desc)
+      _ = try await deserializer.deserialize(json, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -93,7 +93,7 @@ final class SerializationErrorPathTests: XCTestCase {
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     do {
-      try await deserializer.deserialize(json, using: desc)
+      _ = try await deserializer.deserialize(json, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -108,7 +108,7 @@ final class SerializationErrorPathTests: XCTestCase {
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     do {
-      try await deserializer.deserialize(json, using: desc)
+      _ = try await deserializer.deserialize(json, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -123,7 +123,7 @@ final class SerializationErrorPathTests: XCTestCase {
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     do {
-      try await deserializer.deserialize(json, using: desc)
+      _ = try await deserializer.deserialize(json, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -150,7 +150,7 @@ final class SerializationErrorPathTests: XCTestCase {
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     do {
-      try await deserializer.deserialize(json, using: desc)
+      _ = try await deserializer.deserialize(json, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -177,7 +177,7 @@ final class SerializationErrorPathTests: XCTestCase {
     let deserializer = JSONDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     do {
-      try await deserializer.deserialize(json, using: desc)
+      _ = try await deserializer.deserialize(json, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -194,7 +194,7 @@ final class SerializationErrorPathTests: XCTestCase {
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     do {
-      try await deserializer.deserialize(truncatedData, using: desc)
+      _ = try await deserializer.deserialize(truncatedData, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -216,7 +216,7 @@ final class SerializationErrorPathTests: XCTestCase {
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
 
     do {
-      try await deserializer.deserialize(data, using: desc)
+      _ = try await deserializer.deserialize(data, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {

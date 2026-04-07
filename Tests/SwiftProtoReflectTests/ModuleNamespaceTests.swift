@@ -236,7 +236,7 @@ final class ModuleNamespaceTests: XCTestCase {
     try message.set("Alice", forField: "name")
 
     let serializer: SwiftProtoReflect.BinarySerializer = BinarySerializer()
-    let data = try await serializer.serialize(message)
+    let data = try serializer.serialize(message)
 
     XCTAssertFalse(data.isEmpty)
 

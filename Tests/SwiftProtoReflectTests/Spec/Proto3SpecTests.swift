@@ -97,7 +97,7 @@ final class Proto3SpecTests: XCTestCase {
     msg.setUnknownFields(unknownData)
 
     let serializer = BinarySerializer()
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let decoded = try await deserializer.deserialize(data, using: desc)

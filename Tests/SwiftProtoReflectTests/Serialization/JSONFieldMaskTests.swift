@@ -103,7 +103,7 @@ final class JSONFieldMaskTests: XCTestCase {
     let json = #"{"paths":["foo_bar"]}"#.data(using: .utf8)!
     let desc = makeFieldMaskDescriptor()
     do {
-      try await deserializer().deserialize(json, using: desc)
+      _ = try await deserializer().deserialize(json, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {

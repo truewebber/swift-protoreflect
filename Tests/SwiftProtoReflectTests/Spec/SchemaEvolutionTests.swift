@@ -26,7 +26,7 @@ final class SchemaEvolutionTests: XCTestCase {
 
     var oldMsg = factory.createMessage(from: oldDesc)
     try oldMsg.set(Int32(42), forField: "id")
-    let data = try await serializer.serialize(oldMsg)
+    let data = try serializer.serialize(oldMsg)
 
     var newDesc = MessageDescriptor(name: "M", fullName: "test.M")
     newDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
@@ -47,7 +47,7 @@ final class SchemaEvolutionTests: XCTestCase {
     var oldMsg = factory.createMessage(from: oldDesc)
     try oldMsg.set(Int32(1), forField: "id")
     try oldMsg.set("Alice", forField: "name")
-    let data = try await serializer.serialize(oldMsg)
+    let data = try serializer.serialize(oldMsg)
 
     var newDesc = MessageDescriptor(name: "M", fullName: "test.M")
     newDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
@@ -65,7 +65,7 @@ final class SchemaEvolutionTests: XCTestCase {
 
     var oldMsg = factory.createMessage(from: oldDesc)
     try oldMsg.set("Alice", forField: "user_name")
-    let data = try await serializer.serialize(oldMsg)
+    let data = try serializer.serialize(oldMsg)
 
     var newDesc = MessageDescriptor(name: "M", fullName: "test.M")
     newDesc.addField(FieldDescriptor(name: "display_name", number: 1, type: .string))
@@ -94,7 +94,7 @@ final class SchemaEvolutionTests: XCTestCase {
 
     var msg = factory.createMessage(from: writerDesc)
     try msg.set(Int32(2), forField: "status")
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
 
     var oldStatusEnum = EnumDescriptor(name: "Status", fullName: "test.Status")
     oldStatusEnum.addValue(.init(name: "UNKNOWN", number: 0))
@@ -119,7 +119,7 @@ final class SchemaEvolutionTests: XCTestCase {
 
     var oldMsg = factory.createMessage(from: oldDesc)
     try oldMsg.set(Int32(5), forField: "id")
-    let data = try await serializer.serialize(oldMsg)
+    let data = try serializer.serialize(oldMsg)
 
     var newDesc = MessageDescriptor(name: "M", fullName: "test.M")
     newDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
@@ -151,13 +151,13 @@ final class SchemaEvolutionTests: XCTestCase {
     var oldMsg = factory.createMessage(from: oldDesc)
     try oldMsg.set(Int32(1), forField: "id")
     try oldMsg.set("Alice", forField: "name")
-    let data = try await serializer.serialize(oldMsg)
+    let data = try serializer.serialize(oldMsg)
 
     var newDesc = MessageDescriptor(name: "M", fullName: "test.M")
     newDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
     let intermediate = try await deserializer.deserialize(data, using: newDesc)
-    let reserializedData = try await serializer.serialize(intermediate)
+    let reserializedData = try serializer.serialize(intermediate)
 
     let restored = try await deserializer.deserialize(reserializedData, using: oldDesc)
     XCTAssertEqual(try restored.get(forField: "id") as? Int32, 1)

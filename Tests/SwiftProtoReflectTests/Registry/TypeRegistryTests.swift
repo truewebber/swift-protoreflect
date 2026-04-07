@@ -319,7 +319,7 @@ final class TypeRegistryTests: XCTestCase {
 
   func testResolveDependenciesForNonExistentType() async throws {
     do {
-      try await typeRegistry.resolveDependencies(for: "nonexistent.Type")
+      _ = try await typeRegistry.resolveDependencies(for: "nonexistent.Type")
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -470,7 +470,7 @@ final class TypeRegistryTests: XCTestCase {
       }
     }
 
-    wait(for: [expectation], timeout: 10.0)
+    await fulfillment(of: [expectation], timeout: 10.0)
   }
 
   // MARK: - Error Tests
@@ -622,7 +622,7 @@ final class TypeRegistryTests: XCTestCase {
     let file2 = FileDescriptor(name: "dup.proto", package: "pkg2")
 
     do {
-      try await TypeRegistry(fileDescriptors: [file1, file2])
+      _ = try await TypeRegistry(fileDescriptors: [file1, file2])
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -640,7 +640,7 @@ final class TypeRegistryTests: XCTestCase {
     file2.addMessage(msg2)
 
     do {
-      try await TypeRegistry(fileDescriptors: [file1, file2])
+      _ = try await TypeRegistry(fileDescriptors: [file1, file2])
       XCTFail("Expected error to be thrown")
     }
     catch {

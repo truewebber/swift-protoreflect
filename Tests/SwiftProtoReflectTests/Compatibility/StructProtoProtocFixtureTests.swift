@@ -62,7 +62,7 @@ final class StructProtoProtocFixtureTests: XCTestCase {
     XCTAssertEqual(try swiftpb.serializedData(), protoc, "SwiftProtobuf mismatch vs protoc fixture")
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.nullValue)
-    let _asyncResult10 = try await serializer.serialize(dynMsg)
+    let _asyncResult10 = try serializer.serialize(dynMsg)
     XCTAssertEqual(_asyncResult10, protoc, "Our serializer mismatch vs protoc fixture")
 
     let decoded = try await deserializer.deserialize(protoc, using: StructProtoDescriptors.valueDescriptor)
@@ -81,7 +81,7 @@ final class StructProtoProtocFixtureTests: XCTestCase {
     XCTAssertEqual(try swiftpb.serializedData(), protoc, "SwiftProtobuf mismatch vs protoc fixture")
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.numberValue(1.0))
-    let _asyncResult11 = try await serializer.serialize(dynMsg)
+    let _asyncResult11 = try serializer.serialize(dynMsg)
     XCTAssertEqual(_asyncResult11, protoc, "Our serializer mismatch vs protoc fixture")
 
     let decoded = try await deserializer.deserialize(protoc, using: StructProtoDescriptors.valueDescriptor)
@@ -100,7 +100,7 @@ final class StructProtoProtocFixtureTests: XCTestCase {
     XCTAssertEqual(try swiftpb.serializedData(), protoc, "SwiftProtobuf mismatch vs protoc fixture")
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.stringValue("hi"))
-    let _asyncResult12 = try await serializer.serialize(dynMsg)
+    let _asyncResult12 = try serializer.serialize(dynMsg)
     XCTAssertEqual(_asyncResult12, protoc, "Our serializer mismatch vs protoc fixture")
 
     let decoded = try await deserializer.deserialize(protoc, using: StructProtoDescriptors.valueDescriptor)
@@ -119,7 +119,7 @@ final class StructProtoProtocFixtureTests: XCTestCase {
     XCTAssertEqual(try swiftpb.serializedData(), protoc, "SwiftProtobuf mismatch vs protoc fixture")
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.boolValue(true))
-    let _asyncResult13 = try await serializer.serialize(dynMsg)
+    let _asyncResult13 = try serializer.serialize(dynMsg)
     XCTAssertEqual(_asyncResult13, protoc, "Our serializer mismatch vs protoc fixture")
 
     let decoded = try await deserializer.deserialize(protoc, using: StructProtoDescriptors.valueDescriptor)
@@ -139,7 +139,7 @@ final class StructProtoProtocFixtureTests: XCTestCase {
     XCTAssertEqual(try swiftpb.serializedData(), protoc, "SwiftProtobuf mismatch vs protoc fixture")
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.boolValue(false))
-    let _asyncResult14 = try await serializer.serialize(dynMsg)
+    let _asyncResult14 = try serializer.serialize(dynMsg)
     XCTAssertEqual(_asyncResult14, protoc, "Our serializer mismatch vs protoc fixture")
 
     let decoded = try await deserializer.deserialize(protoc, using: StructProtoDescriptors.valueDescriptor)
@@ -158,7 +158,7 @@ final class StructProtoProtocFixtureTests: XCTestCase {
     XCTAssertEqual(try swiftpb.serializedData(), protoc, "SwiftProtobuf mismatch vs protoc fixture")
 
     let dynMsg = try ListValueHandler.createDynamic(from: [StructHandler.ValueValue.stringValue("hi")])
-    let _asyncResult15 = try await serializer.serialize(dynMsg)
+    let _asyncResult15 = try serializer.serialize(dynMsg)
     XCTAssertEqual(_asyncResult15, protoc, "Our serializer mismatch vs protoc fixture")
 
     let decoded = try await deserializer.deserialize(protoc, using: StructProtoDescriptors.listValueDescriptor)
@@ -180,7 +180,7 @@ final class StructProtoProtocFixtureTests: XCTestCase {
 
     let sv = StructHandler.StructValue(fields: ["k": .stringValue("v")])
     let dynMsg = try StructHandler.createDynamic(from: sv)
-    let _asyncResult16 = try await serializer.serialize(dynMsg)
+    let _asyncResult16 = try serializer.serialize(dynMsg)
     XCTAssertEqual(_asyncResult16, protoc, "Our serializer mismatch vs protoc fixture")
 
     let decoded = try await deserializer.deserialize(protoc, using: StructProtoDescriptors.structDescriptor)
@@ -203,7 +203,7 @@ final class StructProtoProtocFixtureTests: XCTestCase {
 
     let libSv = StructHandler.StructValue(fields: ["k": .stringValue("v")])
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.structValue(libSv))
-    let _asyncResult17 = try await serializer.serialize(dynMsg)
+    let _asyncResult17 = try serializer.serialize(dynMsg)
     XCTAssertEqual(_asyncResult17, protoc, "Our serializer mismatch vs protoc fixture")
 
     let decoded = try await deserializer.deserialize(protoc, using: StructProtoDescriptors.valueDescriptor)
@@ -229,7 +229,7 @@ final class StructProtoProtocFixtureTests: XCTestCase {
     XCTAssertEqual(try swiftpb.serializedData(), protoc, "SwiftProtobuf mismatch vs protoc fixture")
 
     let dynMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.listValue([.stringValue("hi")]))
-    let _asyncResult18 = try await serializer.serialize(dynMsg)
+    let _asyncResult18 = try serializer.serialize(dynMsg)
     XCTAssertEqual(_asyncResult18, protoc, "Our serializer mismatch vs protoc fixture")
 
     let decoded = try await deserializer.deserialize(protoc, using: StructProtoDescriptors.valueDescriptor)
@@ -288,7 +288,7 @@ final class StructProtoProtocFixtureTests: XCTestCase {
       "items": .listValue([.structValue(alice), .structValue(bob)])
     ])
     let dynMsg = try StructHandler.createDynamic(from: libSv)
-    let ourBytes = try await serializer.serialize(dynMsg)
+    let ourBytes = try serializer.serialize(dynMsg)
     let roundTripped = try Google_Protobuf_Struct(serializedBytes: ourBytes)
     guard case .listValue(let spbList) = roundTripped.fields["items"]?.kind else {
       XCTFail("SwiftProtobuf round-trip: expected items to be a listValue")

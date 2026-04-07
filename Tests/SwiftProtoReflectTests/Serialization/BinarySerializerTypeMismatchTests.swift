@@ -729,7 +729,7 @@ final class BinarySerializerTypeMismatchTests: XCTestCase {
 
     // Empty message should serialize without errors (proto3 semantics)
     // This test verifies that missing fields don't cause errors
-    let data = try await serializer.serialize(message)
+    let data = try serializer.serialize(message)
     XCTAssertEqual(data.count, 0)  // Empty fields are not serialized
   }
 

@@ -224,7 +224,7 @@ final class BinaryCompatEnumTests: XCTestCase {
     // Direction B: our serializer with no field set → empty bytes
     let desc = CompatDescriptors.intentHolder()
     let dynamic = DynamicMessage(descriptor: desc)
-    let ourData = try await serializer.serialize(dynamic)
+    let ourData = try serializer.serialize(dynamic)
     XCTAssertEqual(ourData, Data(), "BinarySerializer must produce empty bytes when enum field not set")
   }
 
@@ -352,7 +352,7 @@ final class BinaryCompatEnumTests: XCTestCase {
     let allValues: [Int32] = [0, 1, -1, -2, 2]
     var dynRt = DynamicMessage(descriptor: desc)
     try dynRt.set(allValues, forField: 2)
-    let roundTripData = try await serializer.serialize(dynRt)
+    let roundTripData = try serializer.serialize(dynRt)
     let restored = try await BinaryCompatHelpers.makeDeserializer(registry: registry)
       .deserialize(roundTripData, using: desc)
     let restoredVals = try XCTUnwrap(try restored.get(forField: 2) as? [Int32])
@@ -412,7 +412,7 @@ final class BinaryCompatEnumTests: XCTestCase {
     let desc = CompatDescriptors.directionHolder()
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(Int32(-1), forField: 1)
-    let _asyncResult20 = try await serializer.serialize(dynamic)
+    let _asyncResult20 = try serializer.serialize(dynamic)
     XCTAssertEqual(
       _asyncResult20,
       expected,

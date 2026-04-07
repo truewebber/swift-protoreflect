@@ -1066,7 +1066,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     // Direction B: our serializer also produces empty bytes
     let desc = CompatDescriptors.wktHolder()
     let dynamic = DynamicMessage(descriptor: desc)
-    let ourData = try await serializer.serialize(dynamic)
+    let ourData = try serializer.serialize(dynamic)
     XCTAssertEqual(ourData, Data(), "BinarySerializer must produce empty bytes for all-absent WKTHolder")
   }
 
@@ -1098,7 +1098,7 @@ final class BinaryCompatWKTTests: XCTestCase {
     try tsDyn.set(Int64(54321), forField: 1)
 
     // Verify wire bytes of Timestamp directly: must not contain field 2 tag (0x10 = field 2, wire type 0)
-    let tsBytes = try await serializer.serialize(tsDyn)
+    let tsBytes = try serializer.serialize(tsDyn)
     XCTAssertFalse(
       tsBytes.contains(0x10),
       "nanos=0 (proto3 default, unset) must not produce field 2 tag 0x10 in Timestamp wire bytes"

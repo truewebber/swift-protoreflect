@@ -548,7 +548,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     // Direction B: our serializer with no fields set → Data()
     let desc = CompatDescriptors.nullableUint32()
     let dynamic = DynamicMessage(descriptor: desc)
-    let ourData = try await serializer.serialize(dynamic)
+    let ourData = try serializer.serialize(dynamic)
     XCTAssertEqual(ourData, Data(), "BinarySerializer must produce empty bytes when no oneof variant is set")
   }
 
@@ -595,7 +595,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     )
 
     let dynamicUnset = DynamicMessage(descriptor: desc)
-    let ourUnsetData = try await serializer.serialize(dynamicUnset)
+    let ourUnsetData = try serializer.serialize(dynamicUnset)
     XCTAssertFalse(
       ourUnsetData.contains(0x0A),
       "BinarySerializer must produce no tag for unset optional message field"
@@ -645,7 +645,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     )
 
     let dynamicUnset = DynamicMessage(descriptor: desc)
-    let ourUnsetData = try await serializer.serialize(dynamicUnset)
+    let ourUnsetData = try serializer.serialize(dynamicUnset)
     XCTAssertFalse(
       ourUnsetData.contains(0x1A),
       "BinarySerializer must produce no tag for unset optional Timestamp field"
@@ -911,12 +911,12 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     // false: oneof field 2 (bool), tag = (2 << 3) | 0 = 0x10
     var falseMsg = DynamicMessage(descriptor: desc)
     try falseMsg.set(false, forField: 2)
-    let falseData = try await serializer.serialize(falseMsg)
+    let falseData = try serializer.serialize(falseMsg)
 
     // null: oneof field 1 (enum NullValue=0), tag = (1 << 3) | 0 = 0x08
     var nullMsg = DynamicMessage(descriptor: desc)
     try nullMsg.set(Int32(0), forField: 1)
-    let nullData = try await serializer.serialize(nullMsg)
+    let nullData = try serializer.serialize(nullMsg)
 
     XCTAssertNotEqual(falseData, nullData, "false and null variants must produce different wire bytes")
 
@@ -953,7 +953,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     // Direction B only: build DynamicMessage with only flag=true set
     var d = DynamicMessage(descriptor: desc)
     try d.set(true, forField: 100)
-    let data = try await serializer.serialize(d)
+    let data = try serializer.serialize(d)
 
     // flag at field 100, wire type 0 (varint): tag = (100 << 3) | 0 = 800
     // Varint(800): 800 = 0x320; low 7 bits = 0x20 with continuation = 0xA0; next 7 bits = 0x06
@@ -982,7 +982,7 @@ final class BinaryCompatRealWorldTests: XCTestCase {
     // Direction B: our serializer with no fields set → Data()
     let desc = CompatDescriptors.withNullables()
     let dynamic = DynamicMessage(descriptor: desc)
-    let ourData = try await serializer.serialize(dynamic)
+    let ourData = try serializer.serialize(dynamic)
     XCTAssertEqual(ourData, Data(), "BinarySerializer must produce empty bytes for all-unset WithNullables")
   }
 }

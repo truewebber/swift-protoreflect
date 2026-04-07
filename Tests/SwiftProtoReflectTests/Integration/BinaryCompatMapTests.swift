@@ -533,7 +533,7 @@ final class BinaryCompatMapTests: XCTestCase {
     // Direction B: our serializer with no entries set → Data()
     let desc = CompatDescriptors.mapAllKeyTypes()
     let dynamic = DynamicMessage(descriptor: desc)
-    let ourData = try await serializer.serialize(dynamic)
+    let ourData = try serializer.serialize(dynamic)
     XCTAssertEqual(ourData, Data(), "BinarySerializer must produce empty bytes when no map entries are set")
   }
 

@@ -138,7 +138,7 @@ final class JSONDurationTests: XCTestCase {
     // Non-string JSON value
     let json1 = #"300"#.data(using: .utf8)!
     do {
-      try await deserializer().deserialize(json1, using: desc)
+      _ = try await deserializer().deserialize(json1, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -151,7 +151,7 @@ final class JSONDurationTests: XCTestCase {
     // String without 's' suffix
     let json2 = #""300""#.data(using: .utf8)!
     do {
-      try await deserializer().deserialize(json2, using: desc)
+      _ = try await deserializer().deserialize(json2, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -164,7 +164,7 @@ final class JSONDurationTests: XCTestCase {
     // Non-numeric content
     let json3 = #""abcs""#.data(using: .utf8)!
     do {
-      try await deserializer().deserialize(json3, using: desc)
+      _ = try await deserializer().deserialize(json3, using: desc)
       XCTFail("Expected error to be thrown")
     }
     catch {

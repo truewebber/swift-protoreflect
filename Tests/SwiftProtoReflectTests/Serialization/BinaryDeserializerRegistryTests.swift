@@ -53,7 +53,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     var outerMsg = factory.createMessage(from: outerDesc)
     try outerMsg.set(innerMsg, forField: "a")
 
-    return try await serializer.serialize(outerMsg)
+    return try serializer.serialize(outerMsg)
   }
 
   // MARK: - B. Positive: sibling message resolution via registry
@@ -93,7 +93,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     try msgB.set(msgC, forField: "c")
     var msgA = factory.createMessage(from: serDescA)
     try msgA.set(msgB, forField: "b")
-    let data = try await serializer.serialize(msgA)
+    let data = try serializer.serialize(msgA)
 
     // Deserialise with registry (no nesting lies).
     let registry = try await makeRegistry(descA, descB, descC)
@@ -126,7 +126,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     try level1.set("root", forField: "label")
     try level1.set(level2, forField: "child")
 
-    let data = try await serializer.serialize(level1)
+    let data = try serializer.serialize(level1)
 
     // Deserialise with registry.
     let registry = try await makeRegistry(nodeDesc)
@@ -167,7 +167,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
 
     var listMsg = factory.createMessage(from: serListValueDesc)
     try listMsg.set([v1, v2] as [Any], forField: "values")
-    let data = try await serializer.serialize(listMsg)
+    let data = try serializer.serialize(listMsg)
 
     // Deserialise with registry (no lie).
     let registry = try await makeRegistry(valueDesc, listValueDesc)
@@ -210,7 +210,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
 
     var containerMsg = factory.createMessage(from: serContainerDesc)
     try containerMsg.set(["key1": itemMsg] as [AnyHashable: Any], forField: "items")
-    let data = try await serializer.serialize(containerMsg)
+    let data = try serializer.serialize(containerMsg)
 
     // Deserialise with registry.
     let registry = try await makeRegistry(itemDesc, containerDesc)
@@ -246,7 +246,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     try payloadMsg.set("secret", forField: "data")
     var wrapperMsg = factory.createMessage(from: serWrapperDesc)
     try wrapperMsg.set(payloadMsg, forField: "payload")
-    let data = try await serializer.serialize(wrapperMsg)
+    let data = try serializer.serialize(wrapperMsg)
 
     // Deserialise with registry.
     let registry = try await makeRegistry(payloadDesc, wrapperDesc)
@@ -273,7 +273,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
 
     var docMsg = factory.createMessage(from: docDesc)
     try docMsg.set(Int32(1), forField: "status")
-    let data = try await serializer.serialize(docMsg)
+    let data = try serializer.serialize(docMsg)
 
     let opts = DeserializationOptions(typeRegistry: registry)
     let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: docDesc)
@@ -323,7 +323,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     try innerMsg.set(Int32(99), forField: "id")
     var outerMsg = factory.createMessage(from: descB)
     try outerMsg.set(innerMsg, forField: "a")
-    let data = try await serializer.serialize(outerMsg)
+    let data = try serializer.serialize(outerMsg)
 
     let opts = DeserializationOptions(typeRegistry: registry)
     let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: descB)
@@ -353,7 +353,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     try innerMsg.set(Int32(7), forField: "x")
     var outerMsg = factory.createMessage(from: outerDesc)
     try outerMsg.set(innerMsg, forField: "inner")
-    let data = try await serializer.serialize(outerMsg)
+    let data = try serializer.serialize(outerMsg)
 
     let opts = DeserializationOptions(typeRegistry: registry)
     let decoded = try await BinaryDeserializer(options: opts).deserialize(data, using: outerDesc)
@@ -378,7 +378,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     var msg = factory.createMessage(from: msgDesc)
     try msg.set(Int32(1), forField: "id")
     try msg.set(groupMsg, forField: "my_group")
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
 
     let registry = try await makeRegistry(groupDesc)
     let opts = DeserializationOptions(typeRegistry: registry)
@@ -397,7 +397,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     let data = try await serialiseBContainingA(descA: descA, aValue: "test")
 
     do {
-      try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(data, using: descB)
+      _ = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(data, using: descB)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -421,7 +421,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
 
     let opts = DeserializationOptions(typeRegistry: registry)
     do {
-      try await BinaryDeserializer(options: opts).deserialize(data, using: descB)
+      _ = try await BinaryDeserializer(options: opts).deserialize(data, using: descB)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -437,7 +437,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     let registry = TypeRegistry()  // empty
     let opts = DeserializationOptions(typeRegistry: registry)
     do {
-      try await BinaryDeserializer(options: opts).deserialize(data, using: descB)
+      _ = try await BinaryDeserializer(options: opts).deserialize(data, using: descB)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -452,7 +452,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
 
     let opts = DeserializationOptions(typeRegistry: TypeRegistry())
     do {
-      try await BinaryDeserializer(options: opts).deserialize(data, using: descB)
+      _ = try await BinaryDeserializer(options: opts).deserialize(data, using: descB)
       XCTFail("Expected error to be thrown")
     }
     catch {
@@ -499,7 +499,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     try msgD.set(msgC, forField: "c")
     var msgE = factory.createMessage(from: sE)
     try msgE.set(msgD, forField: "d")
-    let data = try await serializer.serialize(msgE)
+    let data = try serializer.serialize(msgE)
 
     // Deserialise with clean registry.
     let registry = try await makeRegistry(descA, descB, descC, descD, descE)
@@ -528,7 +528,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     try widgetMsg.set("blue", forField: "label")
     var boxMsg = factory.createMessage(from: boxDesc)
     try boxMsg.set(widgetMsg, forField: "widget")
-    let data = try await serializer.serialize(boxMsg)
+    let data = try serializer.serialize(boxMsg)
 
     let registry = try await makeRegistry(widgetDesc)
     let opts = DeserializationOptions(typeRegistry: registry)
@@ -566,7 +566,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     var containerMsg = factory.createMessage(from: serDesc)
     try containerMsg.set(msgX, forField: "x")
     try containerMsg.set(msgY, forField: "y")
-    let data = try await serializer.serialize(containerMsg)
+    let data = try serializer.serialize(containerMsg)
 
     // Deserialise with clean registry.
     let registry = try await makeRegistry(typeX, typeY, containerDesc)
@@ -587,7 +587,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     let emptyInner = factory.createMessage(from: descA)  // all fields default/nil
     var outerMsg = factory.createMessage(from: descB)
     try outerMsg.set(emptyInner, forField: "a")
-    let data = try await serializer.serialize(outerMsg)
+    let data = try serializer.serialize(outerMsg)
 
     let registry = try await makeRegistry(descA)
     let opts = DeserializationOptions(typeRegistry: registry)
@@ -627,7 +627,7 @@ final class BinaryDeserializerRegistryTests: XCTestCase {
     let registry = try await makeRegistry(descA)
     let opts = DeserializationOptions(typeRegistry: registry)
     do {
-      try await BinaryDeserializer(options: opts).deserialize(Data(truncated), using: descB)
+      _ = try await BinaryDeserializer(options: opts).deserialize(Data(truncated), using: descB)
       XCTFail("Expected error to be thrown")
     }
     catch {

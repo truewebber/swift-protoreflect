@@ -63,7 +63,7 @@ enum BinaryCompatHelpers {
     line: UInt = #line,
     validate: (P) throws -> Void
   ) async throws -> P {
-    let ourData = try await makeSerializer().serialize(dynamic)
+    let ourData = try makeSerializer().serialize(dynamic)
     let decoded = try P(serializedBytes: ourData)
     try validate(decoded)
     return decoded

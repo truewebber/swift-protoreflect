@@ -58,7 +58,7 @@ final class Proto2BinarySerializationTests: XCTestCase {
     try msg.set(group, forField: "my_group")
 
     let serializer = BinarySerializer()
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
 
     var found = false
     var pos = 0
@@ -85,7 +85,7 @@ final class Proto2BinarySerializationTests: XCTestCase {
     try msg.set([Int32(1), Int32(2), Int32(3)] as [Any], forField: "values")
 
     let serializer = BinarySerializer()
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let decoded = try await deserializer.deserialize(data, using: desc)
@@ -99,7 +99,7 @@ final class Proto2BinarySerializationTests: XCTestCase {
     try msg.set([Int32(1), Int32(2)] as [Any], forField: "values")
 
     let serializer = BinarySerializer()
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let decoded = try await deserializer.deserialize(data, using: desc)
@@ -113,7 +113,7 @@ final class Proto2BinarySerializationTests: XCTestCase {
     try msg.set([Int32(10), Int32(20)] as [Any], forField: "values")
 
     let serializer = BinarySerializer()
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let decoded = try await deserializer.deserialize(data, using: desc)
@@ -127,7 +127,7 @@ final class Proto2BinarySerializationTests: XCTestCase {
     try msg.set([Int32(5), Int32(6)] as [Any], forField: "values")
 
     let serializer = BinarySerializer()
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let decoded = try await deserializer.deserialize(data, using: desc)
@@ -144,7 +144,7 @@ final class Proto2BinarySerializationTests: XCTestCase {
     try msg.set("extended", forField: 100)
 
     let serializer = BinarySerializer()
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let decoded = try await deserializer.deserialize(data, using: desc)
@@ -167,7 +167,7 @@ final class Proto2BinarySerializationTests: XCTestCase {
     try msg.set(["a", "b", "c"] as [Any], forField: 101)
 
     let serializer = BinarySerializer()
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
 
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
     let decoded = try await deserializer.deserialize(data, using: desc)
@@ -196,7 +196,7 @@ final class Proto2BinarySerializationTests: XCTestCase {
     try msg.set([item1, item2] as [Any], forField: "items")
 
     let serializer = BinarySerializer()
-    let data = try await serializer.serialize(msg)
+    let data = try serializer.serialize(msg)
     let bytes = [UInt8](data)
 
     // Field 2 SGROUP tag = (2 << 3) | 3 = 0x13; EGROUP tag = (2 << 3) | 4 = 0x14
@@ -244,7 +244,7 @@ final class Proto2BinarySerializationTests: XCTestCase {
     try msg.set([Int32(1), Int32(2)] as [Any], forField: "values")
 
     let serializer = BinarySerializer()
-    let packedData = try await serializer.serialize(msg)
+    let packedData = try serializer.serialize(msg)
 
     let unpackedDesc = makeMessageWithPackedField(syntax: "proto2")
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))

@@ -667,7 +667,7 @@ final class BinaryCompatNestedTests: XCTestCase {
     try ourMsg.set("parent", forField: 2)
     try ourMsg.set(emptyChild, forField: 1)
 
-    let ourData = try await serializer.serialize(ourMsg)
+    let ourData = try serializer.serialize(ourMsg)
     XCTAssertTrue(
       ourData.contains(0x0A),
       "BinarySerializer must include child tag 0x0A for explicitly-set empty child"
@@ -696,7 +696,7 @@ final class BinaryCompatNestedTests: XCTestCase {
     // Ours: only name field, no child set.
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set("only_name", forField: 2)
-    let ourData = try await serializer.serialize(dynamic)
+    let ourData = try serializer.serialize(dynamic)
     XCTAssertFalse(
       ourData.contains(0x0A),
       "BinarySerializer must omit field 1 (child) tag when child is absent"
@@ -800,7 +800,7 @@ final class BinaryCompatNestedTests: XCTestCase {
     var dynamic = DynamicMessage(descriptor: desc)
     try dynamic.set(n2, forField: 1)
 
-    let data = try await serializer.serialize(dynamic)
+    let data = try serializer.serialize(dynamic)
     XCTAssertFalse(data.isEmpty, "serialized data must not be empty when child is set")
     XCTAssertEqual(
       data.first,
@@ -822,11 +822,11 @@ final class BinaryCompatNestedTests: XCTestCase {
     let emptyChild = DynamicMessage(descriptor: n2desc)
     var withEmpty = DynamicMessage(descriptor: desc)
     try withEmpty.set(emptyChild, forField: 1)
-    let emptyChildData = try await serializer.serialize(withEmpty)
+    let emptyChildData = try serializer.serialize(withEmpty)
 
     // Absent child (nothing set).
     let absent = DynamicMessage(descriptor: desc)
-    let absentData = try await serializer.serialize(absent)
+    let absentData = try serializer.serialize(absent)
 
     XCTAssertEqual(absentData, Data(), "absent child must produce empty wire output")
     XCTAssertNotEqual(emptyChildData, absentData, "empty explicitly-set child must differ from absent child")

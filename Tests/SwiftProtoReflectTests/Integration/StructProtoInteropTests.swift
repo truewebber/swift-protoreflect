@@ -61,7 +61,7 @@ final class StructProtoInteropTests: XCTestCase {
       "population": .numberValue(8_900_000),
     ])
     let dynamicMsg = try StructHandler.createDynamic(from: sv)
-    let data = try await serializer.serialize(dynamicMsg)
+    let data = try serializer.serialize(dynamicMsg)
 
     let decoded = try Google_Protobuf_Struct(serializedBytes: data)
 
@@ -90,7 +90,7 @@ final class StructProtoInteropTests: XCTestCase {
     // Our library explicitly sets field 1 = Int32(0), so BinarySerializer emits [0x08, 0x00].
     // SwiftProtobuf must decode this as kind == .nullValue(.nullValue), not nil.
     let dynamicMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.nullValue)
-    let dataBwd = try await serializer.serialize(dynamicMsg)
+    let dataBwd = try serializer.serialize(dynamicMsg)
     XCTAssertFalse(dataBwd.isEmpty, "null_value must be emitted as [0x08, 0x00], not empty bytes")
     let decodedBwd = try Google_Protobuf_Value(serializedBytes: dataBwd)
     XCTAssertEqual(
@@ -116,7 +116,7 @@ final class StructProtoInteropTests: XCTestCase {
 
     // Library → SwiftProtobuf
     let dynamicMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.numberValue(number))
-    let dataBwd = try await serializer.serialize(dynamicMsg)
+    let dataBwd = try serializer.serialize(dynamicMsg)
     let decodedBwd = try Google_Protobuf_Value(serializedBytes: dataBwd)
     XCTAssertEqual(decodedBwd.numberValue, number, accuracy: 1e-10)
   }
@@ -137,7 +137,7 @@ final class StructProtoInteropTests: XCTestCase {
 
     // Library → SwiftProtobuf
     let dynamicMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.stringValue(str))
-    let dataBwd = try await serializer.serialize(dynamicMsg)
+    let dataBwd = try serializer.serialize(dynamicMsg)
     let decodedBwd = try Google_Protobuf_Value(serializedBytes: dataBwd)
     XCTAssertEqual(decodedBwd.stringValue, str)
   }
@@ -163,7 +163,7 @@ final class StructProtoInteropTests: XCTestCase {
     // Library → SwiftProtobuf
     let libSv = StructHandler.StructValue(fields: ["y": .stringValue("world")])
     let dynamicMsg = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.structValue(libSv))
-    let dataBwd = try await serializer.serialize(dynamicMsg)
+    let dataBwd = try serializer.serialize(dynamicMsg)
     let decodedBwd = try Google_Protobuf_Value(serializedBytes: dataBwd)
     XCTAssertEqual(decodedBwd.structValue.fields["y"]?.stringValue, "world")
   }
@@ -197,14 +197,14 @@ final class StructProtoInteropTests: XCTestCase {
 
     // Library → SwiftProtobuf (boolValue: false must be emitted as field 4 = 0, not omitted)
     let dynamicFalse = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.boolValue(false))
-    let dataBwdFalse = try await serializer.serialize(dynamicFalse)
+    let dataBwdFalse = try serializer.serialize(dynamicFalse)
     XCTAssertFalse(dataBwdFalse.isEmpty, "bool_value=false must be emitted (oneof field)")
     let decodedBwdFalse = try Google_Protobuf_Value(serializedBytes: dataBwdFalse)
     XCTAssertEqual(decodedBwdFalse.kind, .boolValue(false))
 
     // Library → SwiftProtobuf (boolValue: true)
     let dynamicTrue = try ValueHandler.createDynamic(from: ValueHandler.ValueValue.boolValue(true))
-    let dataBwdTrue = try await serializer.serialize(dynamicTrue)
+    let dataBwdTrue = try serializer.serialize(dynamicTrue)
     let decodedBwdTrue = try Google_Protobuf_Value(serializedBytes: dataBwdTrue)
     XCTAssertEqual(decodedBwdTrue.kind, .boolValue(true))
   }
@@ -235,7 +235,7 @@ final class StructProtoInteropTests: XCTestCase {
     // Library → SwiftProtobuf
     let libValue = ValueHandler.ValueValue.listValue([.boolValue(true), .nullValue])
     let dynamicMsg = try ValueHandler.createDynamic(from: libValue)
-    let dataBwd = try await serializer.serialize(dynamicMsg)
+    let dataBwd = try serializer.serialize(dynamicMsg)
     let decodedBwd = try Google_Protobuf_Value(serializedBytes: dataBwd)
     guard case .listValue(let rtList) = decodedBwd.kind else {
       XCTFail("Expected listValue kind, got \(String(describing: decodedBwd.kind))")
@@ -274,7 +274,7 @@ final class StructProtoInteropTests: XCTestCase {
       .stringValue("abc"),
     ]
     let dynamicMsg = try ListValueHandler.createDynamic(from: values)
-    let data = try await serializer.serialize(dynamicMsg)
+    let data = try serializer.serialize(dynamicMsg)
 
     let decoded = try Google_Protobuf_ListValue(serializedBytes: data)
 
@@ -340,7 +340,7 @@ final class StructProtoInteropTests: XCTestCase {
 
     // Library → binary → SwiftProtobuf (round-trip the other way)
     let libMsg = try StructHandler.createDynamic(from: sv)
-    let rtData = try await serializer.serialize(libMsg)
+    let rtData = try serializer.serialize(libMsg)
     let rtDecoded = try Google_Protobuf_Struct(serializedBytes: rtData)
 
     let rtItems = rtDecoded.fields["items"]?.listValue.values ?? []
