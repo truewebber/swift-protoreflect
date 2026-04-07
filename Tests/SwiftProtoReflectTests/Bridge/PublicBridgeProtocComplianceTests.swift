@@ -178,7 +178,7 @@ final class PublicBridgeProtocComplianceTests: XCTestCase {
   // Oracle: toDynamicMessage(using:) converts static message to DynamicMessage with correct fields
   func test_swiftProtobufMessage_toDynamicMessageUsingDescriptor() throws {
     let staticMsg = Google_Protobuf_Empty()
-    var desc = MessageDescriptor(name: "google.protobuf.Empty", fullName: "google.protobuf.Empty")
+    let desc = MessageDescriptor(name: "google.protobuf.Empty", fullName: "google.protobuf.Empty")
 
     let result = try staticMsg.toDynamicMessage(using: desc)
     XCTAssertNotNil(result)

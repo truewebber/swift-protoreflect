@@ -176,7 +176,7 @@ final class BinarySerializerProtocComplianceTests: XCTestCase {
   // [PUBLIC-MIRROR] BinaryCompatScalarsTests — group with empty body
   // Oracle: group with no fields → only startGroup + endGroup tags
   func test_groupType_emptyBody_onlyBracketTags() async throws {
-    var groupBodyDesc = MessageDescriptor(name: "G", fullName: "M.G", syntax: "proto2")
+    let groupBodyDesc = MessageDescriptor(name: "G", fullName: "M.G", syntax: "proto2")
 
     var outerDesc = MessageDescriptor(name: "M", fullName: "M", syntax: "proto2")
     outerDesc.addField(
