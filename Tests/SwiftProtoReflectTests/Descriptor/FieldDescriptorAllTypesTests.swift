@@ -137,10 +137,20 @@ final class FieldDescriptorAllTypesTests: XCTestCase {
       valueFieldInfo: _ValueFieldInfo(name: "value", number: 2, type: .int32)
     )
     let fd1 = _FieldDescriptor(
-      name: "m", number: 1, type: .message, typeName: "Foo", isMap: true, mapEntryInfo: mei1
+      name: "m",
+      number: 1,
+      type: .message,
+      typeName: "Foo",
+      isMap: true,
+      mapEntryInfo: mei1
     )
     let fd2 = _FieldDescriptor(
-      name: "m", number: 1, type: .message, typeName: "Foo", isMap: true, mapEntryInfo: mei2
+      name: "m",
+      number: 1,
+      type: .message,
+      typeName: "Foo",
+      isMap: true,
+      mapEntryInfo: mei2
     )
     XCTAssertNotEqual(fd1, fd2)
   }

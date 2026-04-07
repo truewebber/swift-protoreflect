@@ -161,7 +161,9 @@ final class JSONSerializerEdgeCasesTests: XCTestCase {
   // [PROTOC-BASH] Oracle: enum default without registry → numeric 0.
   func test_proto3DefaultJSON_enumField_withoutRegistry_emitsZeroNumber() async throws {
     var desc = MessageDescriptor(name: "M", fullName: "M")
-    desc.addField(FieldDescriptor(name: "kind", number: 1, type: .enum, typeName: "testcompat.Status", jsonName: "kind"))
+    desc.addField(
+      FieldDescriptor(name: "kind", number: 1, type: .enum, typeName: "testcompat.Status", jsonName: "kind")
+    )
 
     let msg = DynamicMessage(descriptor: desc)
     let serializer = makeSerializer(includeDefaults: true)
