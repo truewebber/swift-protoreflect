@@ -22,12 +22,12 @@ import SwiftProtoReflect
 
 @main
 struct UnknownFieldsExample {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("Unknown Fields Preservation")
 
-    try demonstrateBasicPreservation()
-    try demonstrateSchemaEvolution()
-    try demonstrateRoundTrip()
+    try await demonstrateBasicPreservation()
+    try await demonstrateSchemaEvolution()
+    try await demonstrateRoundTrip()
 
     ExampleUtils.printSuccess(
       "Unknown fields demo completed!"
@@ -42,7 +42,7 @@ struct UnknownFieldsExample {
 
   // MARK: - Basic Preservation
 
-  private static func demonstrateBasicPreservation() throws {
+  private static func demonstrateBasicPreservation() async throws {
     ExampleUtils.printStep(1, "Basic Unknown Field Preservation")
 
     var fullDesc = MessageDescriptor(name: "User", fullName: "example.User")
@@ -61,7 +61,7 @@ struct UnknownFieldsExample {
     var reducedDesc = MessageDescriptor(name: "User", fullName: "example.User")
     reducedDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
-    let partial = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+    let partial = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
       data,
       using: reducedDesc
     )
@@ -76,7 +76,7 @@ struct UnknownFieldsExample {
 
   // MARK: - Schema Evolution
 
-  private static func demonstrateSchemaEvolution() throws {
+  private static func demonstrateSchemaEvolution() async throws {
     ExampleUtils.printStep(2, "Schema Evolution Safety")
 
     var v1Desc = MessageDescriptor(name: "Config", fullName: "example.Config")
@@ -94,7 +94,7 @@ struct UnknownFieldsExample {
     v2Desc.addField(FieldDescriptor(name: "retries", number: 2, type: .int32))
     v2Desc.addField(FieldDescriptor(name: "max_connections", number: 3, type: .int32))
 
-    let v2Read = try BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
+    let v2Read = try await BinaryDeserializer(options: .init(typeRegistry: TypeRegistry())).deserialize(
       v1Data,
       using: v2Desc
     )
@@ -112,7 +112,7 @@ struct UnknownFieldsExample {
 
   // MARK: - Round Trip
 
-  private static func demonstrateRoundTrip() throws {
+  private static func demonstrateRoundTrip() async throws {
     ExampleUtils.printStep(3, "Full Round-Trip Through Reduced Schema")
 
     var fullDesc = MessageDescriptor(name: "Event", fullName: "example.Event")
@@ -130,13 +130,13 @@ struct UnknownFieldsExample {
     proxyDesc.addField(FieldDescriptor(name: "id", number: 1, type: .int32))
 
     let roundTripRegistry = TypeRegistry()
-    let proxy = try BinaryDeserializer(options: .init(typeRegistry: roundTripRegistry)).deserialize(
+    let proxy = try await BinaryDeserializer(options: .init(typeRegistry: roundTripRegistry)).deserialize(
       originalData,
       using: proxyDesc
     )
     let proxyData = try BinarySerializer().serialize(proxy)
 
-    let restored = try BinaryDeserializer(options: .init(typeRegistry: roundTripRegistry)).deserialize(
+    let restored = try await BinaryDeserializer(options: .init(typeRegistry: roundTripRegistry)).deserialize(
       proxyData,
       using: fullDesc
     )

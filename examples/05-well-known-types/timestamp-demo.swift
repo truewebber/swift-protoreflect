@@ -195,7 +195,7 @@ struct TimestampDemo {
       do {
         let timestampValue = TimestampHandler.TimestampValue(from: date)
         let message = try TimestampHandler.createDynamic(from: timestampValue)
-        let extracted = try TimestampHandler.createSpecialized(from: message) as! TimestampHandler.TimestampValue
+        _ = try TimestampHandler.createSpecialized(from: message) as! TimestampHandler.TimestampValue
 
         // Validation checks
         let isValid = timestampValue.seconds >= -62_135_596_800 && timestampValue.seconds <= 253_402_300_799

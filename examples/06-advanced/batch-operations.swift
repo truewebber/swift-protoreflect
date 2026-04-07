@@ -13,15 +13,15 @@ import SwiftProtoReflect
 
 @main
 struct BatchOperationsExample {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("📦 Batch Operations - Mass Message Processing")
 
-    try demonstrateBatchCreation()
-    try demonstrateBatchSerialization()
-    try demonstrateBatchValidation()
-    try demonstrateBatchTransformation()
-    try demonstrateParallelProcessing()
-    try demonstrateMemoryOptimization()
+    try await demonstrateBatchCreation()
+    try await demonstrateBatchSerialization()
+    try await demonstrateBatchValidation()
+    try await demonstrateBatchTransformation()
+    try await demonstrateParallelProcessing()
+    try await demonstrateMemoryOptimization()
 
     ExampleUtils.printSuccess("Batch operations demonstration completed!")
     ExampleUtils.printNext([
@@ -32,7 +32,7 @@ struct BatchOperationsExample {
 
   // MARK: - Batch Creation
 
-  private static func demonstrateBatchCreation() throws {
+  private static func demonstrateBatchCreation() async throws {
     ExampleUtils.printStep(1, "Batch Message Creation")
 
     print("  🏗  Creating message schema...")
@@ -88,7 +88,7 @@ struct BatchOperationsExample {
 
   // MARK: - Batch Serialization
 
-  private static func demonstrateBatchSerialization() throws {
+  private static func demonstrateBatchSerialization() async throws {
     ExampleUtils.printStep(2, "Batch Serialization Operations")
 
     print("  📦 Preparing messages for serialization...")
@@ -137,8 +137,12 @@ struct BatchOperationsExample {
     let jsonSerializer = JSONSerializer(options: .init(typeRegistry: TypeRegistry()))
     var jsonData: [Data] = []
 
-    let jsonTime = try ExampleUtils.measureTime {
-      jsonData = try records.map { try jsonSerializer.serialize($0) }
+    let jsonTime = try await ExampleUtils.measureTime {
+      var result: [Data] = []
+      for record in records {
+        result.append(try await jsonSerializer.serialize(record))
+      }
+      jsonData = result
     }
 
     ExampleUtils.printTiming("JSON serialization (\(recordCount) records)", time: jsonTime.time)
@@ -172,7 +176,7 @@ struct BatchOperationsExample {
 
   // MARK: - Batch Validation
 
-  private static func demonstrateBatchValidation() throws {
+  private static func demonstrateBatchValidation() async throws {
     ExampleUtils.printStep(3, "Batch Validation and Quality Control")
 
     print("  🔍 Creating dataset with validation scenarios...")
@@ -278,7 +282,7 @@ struct BatchOperationsExample {
 
   // MARK: - Batch Transformation
 
-  private static func demonstrateBatchTransformation() throws {
+  private static func demonstrateBatchTransformation() async throws {
     ExampleUtils.printStep(4, "Batch Data Transformation")
 
     print("  🔄 Preparing data transformation pipeline...")
@@ -375,7 +379,7 @@ struct BatchOperationsExample {
 
   // MARK: - Parallel Processing
 
-  private static func demonstrateParallelProcessing() throws {
+  private static func demonstrateParallelProcessing() async throws {
     ExampleUtils.printStep(5, "Parallel Batch Processing")
 
     print("  🔀 Demonstrating parallel processing capabilities...")
@@ -468,7 +472,7 @@ struct BatchOperationsExample {
 
   // MARK: - Memory Optimization
 
-  private static func demonstrateMemoryOptimization() throws {
+  private static func demonstrateMemoryOptimization() async throws {
     ExampleUtils.printStep(6, "Memory-Optimized Batch Operations")
 
     print("  🧠 Demonstrating memory optimization techniques...")

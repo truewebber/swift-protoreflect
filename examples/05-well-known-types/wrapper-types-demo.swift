@@ -23,13 +23,13 @@ import SwiftProtoReflect
 
 @main
 struct WrapperTypesDemo {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("Protobuf Wrapper Types")
 
-    try demonstrateStringValue()
-    try demonstrateNumericWrappers()
-    try demonstrateBoolAndBytesWrappers()
-    try demonstrateNullablePattern()
+    try await demonstrateStringValue()
+    try await demonstrateNumericWrappers()
+    try await demonstrateBoolAndBytesWrappers()
+    try await demonstrateNullablePattern()
 
     ExampleUtils.printSuccess(
       "Wrapper types demo completed! All 9 types demonstrated."
@@ -44,7 +44,7 @@ struct WrapperTypesDemo {
 
   // MARK: - StringValue
 
-  private static func demonstrateStringValue() throws {
+  private static func demonstrateStringValue() async throws {
     ExampleUtils.printStep(1, "google.protobuf.StringValue")
 
     let dynamic = try StringValueHandler.createDynamic(from: "Hello, Wrappers!")
@@ -63,7 +63,7 @@ struct WrapperTypesDemo {
 
   // MARK: - Numeric Wrappers
 
-  private static func demonstrateNumericWrappers() throws {
+  private static func demonstrateNumericWrappers() async throws {
     ExampleUtils.printStep(2, "Numeric Wrapper Types")
 
     let types: [(String, Any, any WellKnownTypeHandler.Type)] = [
@@ -89,7 +89,7 @@ struct WrapperTypesDemo {
 
   // MARK: - Bool and Bytes
 
-  private static func demonstrateBoolAndBytesWrappers() throws {
+  private static func demonstrateBoolAndBytesWrappers() async throws {
     ExampleUtils.printStep(3, "BoolValue & BytesValue")
 
     let boolDynamic = try BoolValueHandler.createDynamic(from: true)
@@ -115,7 +115,7 @@ struct WrapperTypesDemo {
 
   // MARK: - Nullable Pattern
 
-  private static func demonstrateNullablePattern() throws {
+  private static func demonstrateNullablePattern() async throws {
     ExampleUtils.printStep(4, "Nullable Primitives Pattern")
 
     print("  Proto3 problem: all scalars have implicit defaults (0, \"\", false)")
@@ -141,7 +141,7 @@ struct WrapperTypesDemo {
 
     print("  Registered wrapper types:")
     for name in wrapperNames {
-      let registered = registry.getHandler(for: name) != nil
+      let registered = await registry.getHandler(for: name) != nil
       print("    \(name): \(registered ? "registered" : "NOT registered")")
     }
 

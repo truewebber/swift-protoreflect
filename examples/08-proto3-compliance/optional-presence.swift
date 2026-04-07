@@ -22,12 +22,12 @@ import SwiftProtoReflect
 
 @main
 struct OptionalPresenceExample {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("Proto3 Optional Field Presence")
 
-    try demonstrateRegularVsOptional()
-    try demonstratePresenceTracking()
-    try demonstrateJsonBehavior()
+    try await demonstrateRegularVsOptional()
+    try await demonstratePresenceTracking()
+    try await demonstrateJsonBehavior()
 
     ExampleUtils.printSuccess(
       "Proto3 optional presence demo completed!"
@@ -42,7 +42,7 @@ struct OptionalPresenceExample {
 
   // MARK: - Regular vs Optional
 
-  private static func demonstrateRegularVsOptional() throws {
+  private static func demonstrateRegularVsOptional() async throws {
     ExampleUtils.printStep(1, "Regular Field vs Optional Field")
 
     var desc = MessageDescriptor(name: "Config", fullName: "example.Config")
@@ -66,7 +66,7 @@ struct OptionalPresenceExample {
 
   // MARK: - Presence Tracking
 
-  private static func demonstratePresenceTracking() throws {
+  private static func demonstratePresenceTracking() async throws {
     ExampleUtils.printStep(2, "Distinguishing Unset from Zero")
 
     var desc = MessageDescriptor(name: "Settings", fullName: "example.Settings")
@@ -107,7 +107,7 @@ struct OptionalPresenceExample {
 
   // MARK: - JSON Behavior
 
-  private static func demonstrateJsonBehavior() throws {
+  private static func demonstrateJsonBehavior() async throws {
     ExampleUtils.printStep(3, "JSON Serialization with Optional Fields")
 
     var desc = MessageDescriptor(name: "Msg", fullName: "example.Msg")
@@ -118,13 +118,13 @@ struct OptionalPresenceExample {
 
     let factory = MessageFactory()
     let serializer = JSONSerializer(
-      options: JSONSerializationOptions(includeDefaultValues: true)
+      options: JSONSerializationOptions(includeDefaultValues: true, typeRegistry: TypeRegistry())
     )
 
     var msg = factory.createMessage(from: desc)
     try msg.set(Int32(0), forField: "regular")
 
-    let json = try serializer.serializeToJSONObject(msg)
+    let json = try await serializer.serializeToJSONObject(msg)
     print("  JSON with includeDefaultValues=true:")
     print("    regular (set to 0):       \(json["regular"] ?? "absent")")
     print("    optional_val (not set):    \(json["optional_val"] ?? "absent")")

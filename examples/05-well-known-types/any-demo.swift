@@ -25,16 +25,16 @@ import SwiftProtoReflect
 
 @main
 struct AnyDemo {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("Google Protobuf Any Integration")
 
-    try demonstrateBasicAnyOperations()
-    try demonstrateTypeUrlManagement()
-    try demonstrateTypeErasurePatterns()
-    try demonstrateTypeRegistryIntegration()
-    try demonstrateConvenienceExtensions()
-    try demonstrateErrorHandlingAndValidation()
-    try demonstrateRealWorldScenarios()
+    try await demonstrateBasicAnyOperations()
+    try await demonstrateTypeUrlManagement()
+    try await demonstrateTypeErasurePatterns()
+    try await demonstrateTypeRegistryIntegration()
+    try await demonstrateConvenienceExtensions()
+    try await demonstrateErrorHandlingAndValidation()
+    try await demonstrateRealWorldScenarios()
 
     ExampleUtils.printSuccess("Any demo completed! You've learned all aspects of working with google.protobuf.Any.")
 
@@ -47,7 +47,7 @@ struct AnyDemo {
 
   // MARK: - Implementation Steps
 
-  private static func demonstrateBasicAnyOperations() throws {
+  private static func demonstrateBasicAnyOperations() async throws {
     ExampleUtils.printStep(1, "Basic Any Operations - Pack and Unpack")
 
     print("  📦 Creating test messages for packing:")
@@ -67,7 +67,7 @@ struct AnyDemo {
         let dataSize = anyValue.value.count
 
         // Unpack back to verify
-        let unpackedMessage = try anyValue.unpack(to: message.descriptor)
+        let unpackedMessage = try await anyValue.unpack(to: message.descriptor)
         let isValid = try validateMessages(original: message, unpacked: unpackedMessage)
 
         packingResults.append([
@@ -113,7 +113,7 @@ struct AnyDemo {
     }
   }
 
-  private static func demonstrateTypeUrlManagement() throws {
+  private static func demonstrateTypeUrlManagement() async throws {
     ExampleUtils.printStep(2, "Type URL Management and Validation")
 
     print("  🌐 Type URL utilities demonstration:")
@@ -174,7 +174,7 @@ struct AnyDemo {
     }
   }
 
-  private static func demonstrateTypeErasurePatterns() throws {
+  private static func demonstrateTypeErasurePatterns() async throws {
     ExampleUtils.printStep(3, "Type Erasure Patterns and Dynamic Handling")
 
     print("  🎭 Type erasure demonstration:")
@@ -228,7 +228,7 @@ struct AnyDemo {
     processingResults.forEach { print("      \($0)") }
   }
 
-  private static func demonstrateTypeRegistryIntegration() throws {
+  private static func demonstrateTypeRegistryIntegration() async throws {
     ExampleUtils.printStep(4, "TypeRegistry Integration for Dynamic Resolution")
 
     print("  📚 TypeRegistry setup and integration:")
@@ -241,7 +241,7 @@ struct AnyDemo {
 
     for fileDescriptor in fileDescriptors {
       do {
-        try registry.registerFile(fileDescriptor)
+        try await registry.registerFile(fileDescriptor)
         let messageCount = fileDescriptor.messages.count
 
         registrationResults.append([
@@ -275,7 +275,7 @@ struct AnyDemo {
         let anyValue = try AnyHandler.AnyValue.pack(message)
 
         // Unpack using registry (dynamic type resolution)
-        let unpackedMessage = try anyValue.unpack(using: registry)
+        let unpackedMessage = try await anyValue.unpack(using: registry)
 
         let fieldsMatch = try validateMessages(original: message, unpacked: unpackedMessage)
 
@@ -311,7 +311,7 @@ struct AnyDemo {
     }
   }
 
-  private static func demonstrateConvenienceExtensions() throws {
+  private static func demonstrateConvenienceExtensions() async throws {
     ExampleUtils.printStep(5, "Convenience Extensions and Easy APIs")
 
     print("  🛠 DynamicMessage convenience extensions:")
@@ -335,7 +335,7 @@ struct AnyDemo {
         let extractedTypeName = try anyMessage.getAnyTypeName()
 
         // Test unpackFromAny() extension
-        let unpackedMessage = try anyMessage.unpackFromAny(to: originalMessage.descriptor)
+        let unpackedMessage = try await anyMessage.unpackFromAny(to: originalMessage.descriptor)
         let fieldsValid = try validateMessages(original: originalMessage, unpacked: unpackedMessage)
 
         extensionResults.append([
@@ -377,7 +377,7 @@ struct AnyDemo {
     }
   }
 
-  private static func demonstrateErrorHandlingAndValidation() throws {
+  private static func demonstrateErrorHandlingAndValidation() async throws {
     ExampleUtils.printStep(6, "Error Handling and Type Safety Validation")
 
     print("  ⚠️ Error scenarios and validation:")
@@ -409,7 +409,7 @@ struct AnyDemo {
     // Try to unpack to wrong type
     let wrongDescriptor = try createWrongTypeDescriptor()
     do {
-      let _ = try anyValue.unpack(to: wrongDescriptor)
+      let _ = try await anyValue.unpack(to: wrongDescriptor)
       print("      ⚠️ Type mismatch: UNEXPECTEDLY SUCCEEDED")
     }
     catch {
@@ -437,7 +437,7 @@ struct AnyDemo {
     )
 
     do {
-      let _ = try anyValueWithUnknownType.unpack(using: emptyRegistry)
+      let _ = try await anyValueWithUnknownType.unpack(using: emptyRegistry)
       print("      ⚠️ Unknown type: UNEXPECTEDLY SUCCEEDED")
     }
     catch {
@@ -445,20 +445,20 @@ struct AnyDemo {
     }
   }
 
-  private static func demonstrateRealWorldScenarios() throws {
+  private static func demonstrateRealWorldScenarios() async throws {
     ExampleUtils.printStep(7, "Real-World Scenarios and Performance Analysis")
 
     // Microservices communication scenario
     print("  🌐 Microservices communication scenario:")
-    try demonstrateMicroservicesScenario()
+    try await demonstrateMicroservicesScenario()
 
     // Event sourcing scenario
     print("  📝 Event sourcing scenario:")
-    try demonstrateEventSourcingScenario()
+    try await demonstrateEventSourcingScenario()
 
     // Performance benchmarking
     print("  🚀 Performance benchmarking:")
-    try demonstratePerformanceBenchmarking()
+    try await demonstratePerformanceBenchmarking()
 
     print("  💡 Real-world insights:")
     print("    • google.protobuf.Any is ideal for type erasure in distributed systems")
@@ -471,7 +471,7 @@ struct AnyDemo {
 
   // MARK: - Real-World Scenarios
 
-  private static func demonstrateMicroservicesScenario() throws {
+  private static func demonstrateMicroservicesScenario() async throws {
     print("    📦 API Gateway message routing:")
 
     // Simulate different service message types
@@ -495,7 +495,7 @@ struct AnyDemo {
     ExampleUtils.printDataTable(routingResults, title: "API Gateway Routing")
   }
 
-  private static func demonstrateEventSourcingScenario() throws {
+  private static func demonstrateEventSourcingScenario() async throws {
     print("    📚 Event sourcing with heterogeneous events:")
 
     // Create different event types
@@ -519,7 +519,7 @@ struct AnyDemo {
     ExampleUtils.printDataTable(eventResults, title: "Event Processing")
   }
 
-  private static func demonstratePerformanceBenchmarking() throws {
+  private static func demonstratePerformanceBenchmarking() async throws {
     let testMessage = try createTestMessages().first!.1
     var packTimes: [TimeInterval] = []
     var unpackTimes: [TimeInterval] = []
@@ -541,9 +541,9 @@ struct AnyDemo {
     // Benchmark unpacking
     let anyValue = try AnyHandler.AnyValue.pack(testMessage)
     for _ in 0..<iterations {
-      let (_, time) = ExampleUtils.measureTime {
+      let (_, time) = await ExampleUtils.measureTime {
         do {
-          let _ = try anyValue.unpack(to: testMessage.descriptor)
+          let _ = try await anyValue.unpack(to: testMessage.descriptor)
         }
         catch {
           // Ignore errors for performance testing

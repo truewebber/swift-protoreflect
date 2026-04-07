@@ -964,7 +964,7 @@ struct CustomExtensionsExample {
 
     print("  ✅ Product message created with conditional fields:")
     print("    🏷  Total fields: \(productMessage.fields.count)")
-    print("    ❓ Optional fields included: \(includeOptionalFields ? "Yes" : "No")")
+    print("    ❓ Optional fields included: Yes")
 
     // DSL statistics
     print("\n  📊 DSL Benefits Analysis:")

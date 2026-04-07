@@ -13,14 +13,14 @@ import SwiftProtoReflect
 
 @main
 struct MessageTransformExample {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("Message Transformation Between Schema Versions")
 
-    try step1UcreateVersionedSchemas()
-    try step2UbasicTransformations()
-    try step3UcomplexFieldMapping()
-    try step4UbulkMigration()
-    try step5UcompatibilityTesting()
+    try await step1UcreateVersionedSchemas()
+    try await step2UbasicTransformations()
+    try await step3UcomplexFieldMapping()
+    try await step4UbulkMigration()
+    try await step5UcompatibilityTesting()
 
     ExampleUtils.printSuccess("Message transformation system ready for production!")
     ExampleUtils.printNext([
@@ -29,16 +29,16 @@ struct MessageTransformExample {
     ])
   }
 
-  private static func step1UcreateVersionedSchemas() throws {
+  private static func step1UcreateVersionedSchemas() async throws {
     ExampleUtils.printStep(1, "Creating Versioned Schema Definitions")
 
     let transformer = MessageTransformer()
     let context = TransformContext.shared
 
     // Create V1 schema (legacy)
-    let v1Schema = try createUserSchemaV1()
-    let v2Schema = try createUserSchemaV2()
-    let v3Schema = try createUserSchemaV3()
+    let v1Schema = try await createUserSchemaV1()
+    let v2Schema = try await createUserSchemaV2()
+    let v3Schema = try await createUserSchemaV3()
 
     context.registerSchema("User", version: "v1", schema: v1Schema)
     context.registerSchema("User", version: "v2", schema: v2Schema)
@@ -104,7 +104,7 @@ struct MessageTransformExample {
     ExampleUtils.printSuccess("Versioned schemas and transformation rules configured")
   }
 
-  private static func step2UbasicTransformations() throws {
+  private static func step2UbasicTransformations() async throws {
     ExampleUtils.printStep(2, "Basic Version-to-Version Transformations")
 
     let context = TransformContext.shared
@@ -140,7 +140,7 @@ struct MessageTransformExample {
     ExampleUtils.printSuccess("Basic transformations completed")
   }
 
-  private static func step3UcomplexFieldMapping() throws {
+  private static func step3UcomplexFieldMapping() async throws {
     ExampleUtils.printStep(3, "Complex Field Mapping and Data Migration")
 
     let _ = TransformContext.shared.transformer!
@@ -166,7 +166,7 @@ struct MessageTransformExample {
     ExampleUtils.printSuccess("Complex field mapping demonstrated")
   }
 
-  private static func step4UbulkMigration() throws {
+  private static func step4UbulkMigration() async throws {
     ExampleUtils.printStep(4, "Bulk Data Migration Performance")
 
     let transformer = TransformContext.shared.transformer!
@@ -198,7 +198,7 @@ struct MessageTransformExample {
     ExampleUtils.printSuccess("Bulk migration completed")
   }
 
-  private static func step5UcompatibilityTesting() throws {
+  private static func step5UcompatibilityTesting() async throws {
     ExampleUtils.printStep(5, "Schema Compatibility and Validation")
 
     let compatibility = CompatibilityTester()
@@ -392,7 +392,7 @@ enum TransformError: Error, LocalizedError {
 
 // MARK: - Helper Functions
 
-private func createUserSchemaV1() throws -> MessageDescriptor {
+private func createUserSchemaV1() async throws -> MessageDescriptor {
   var fileDescriptor = FileDescriptor(name: "user_v1.proto", package: "user.v1")
   var userMessage = MessageDescriptor(name: "User", parent: fileDescriptor)
 
@@ -405,12 +405,12 @@ private func createUserSchemaV1() throws -> MessageDescriptor {
 
   // Register in TypeRegistry for proper field resolution
   let registry = TypeRegistry()
-  try registry.registerFile(fileDescriptor)
+  try await registry.registerFile(fileDescriptor)
 
   return userMessage
 }
 
-private func createUserSchemaV2() throws -> MessageDescriptor {
+private func createUserSchemaV2() async throws -> MessageDescriptor {
   var fileDescriptor = FileDescriptor(name: "user_v2.proto", package: "user.v2")
   var userMessage = MessageDescriptor(name: "User", parent: fileDescriptor)
 
@@ -423,12 +423,12 @@ private func createUserSchemaV2() throws -> MessageDescriptor {
 
   // Register in TypeRegistry for proper field resolution
   let registry = TypeRegistry()
-  try registry.registerFile(fileDescriptor)
+  try await registry.registerFile(fileDescriptor)
 
   return userMessage
 }
 
-private func createUserSchemaV3() throws -> MessageDescriptor {
+private func createUserSchemaV3() async throws -> MessageDescriptor {
   var fileDescriptor = FileDescriptor(name: "user_v3.proto", package: "user.v3")
   var userMessage = MessageDescriptor(name: "User", parent: fileDescriptor)
 
@@ -440,7 +440,7 @@ private func createUserSchemaV3() throws -> MessageDescriptor {
 
   // Register in TypeRegistry for proper field resolution
   let registry = TypeRegistry()
-  try registry.registerFile(fileDescriptor)
+  try await registry.registerFile(fileDescriptor)
 
   return userMessage
 }

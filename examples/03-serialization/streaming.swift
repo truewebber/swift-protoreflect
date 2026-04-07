@@ -28,11 +28,11 @@ import Foundation
 
 @main
 struct StreamingExample {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("Streaming Protocol Buffers Processing")
 
     try step1MemoryEfficientSerialization()
-    try step2BatchProcessing()
+    try await step2BatchProcessing()
     try step3LargeDatasetStreaming()
     try step4ProducerConsumerPattern()
     try step5MemoryOptimizationTechniques()
@@ -139,7 +139,7 @@ struct StreamingExample {
     _ = ExampleUtils.writeToTempFile("Streaming file path: \(streamingFile)", filename: "streaming_output_info.txt")
   }
 
-  private static func step2BatchProcessing() throws {
+  private static func step2BatchProcessing() async throws {
     ExampleUtils.printStep(2, "Batch processing and deserialization")
 
     // Read back the streaming file we created
@@ -169,7 +169,7 @@ struct StreamingExample {
 
     print("  📖 Reading and processing streaming data...")
 
-    let (_, processingTime) = try ExampleUtils.measureTime {
+    let (_, processingTime) = try await ExampleUtils.measureTime {
       var currentBatch: [DynamicMessage] = []
 
       while inputStream.hasBytesAvailable {
@@ -189,7 +189,7 @@ struct StreamingExample {
 
         // Deserialize record
         let recordData = Data(recordBytes)
-        let record = try deserializer.deserialize(recordData, using: recordDescriptor)
+        let record = try await deserializer.deserialize(recordData, using: recordDescriptor)
 
         currentBatch.append(record)
         recordsProcessed += 1

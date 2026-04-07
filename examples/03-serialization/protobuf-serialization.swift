@@ -24,14 +24,14 @@ import SwiftProtoReflect
 
 @main
 struct ProtobufSerializationExample {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("Protocol Buffers Binary Serialization")
 
-    try step1UbasicSerialization()
-    try step2UcomplexMessageSerialization()
-    try step3UroundTripCompatibility()
-    try step4UperformanceAnalysis()
-    try step5UwireFormatAnalysis()
+    try await step1UbasicSerialization()
+    try await step2UcomplexMessageSerialization()
+    try await step3UroundTripCompatibility()
+    try await step4UperformanceAnalysis()
+    try await step5UwireFormatAnalysis()
 
     ExampleUtils.printSuccess("Protocol Buffers serialization successfully learned!")
 
@@ -44,7 +44,7 @@ struct ProtobufSerializationExample {
 
   // MARK: - Implementation Steps
 
-  private static func step1UbasicSerialization() throws {
+  private static func step1UbasicSerialization() async throws {
     ExampleUtils.printStep(1, "Basic binary serialization")
 
     // Create simple message
@@ -71,9 +71,9 @@ struct ProtobufSerializationExample {
     print("  🔢 Hex preview: \(ExampleUtils.formatDataPreview(binaryData))")
 
     // Deserialize back
-    let (deserializedPerson, deserializeTime) = try ExampleUtils.measureTime {
+    let (deserializedPerson, deserializeTime) = try await ExampleUtils.measureTime {
       let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-      return try deserializer.deserialize(binaryData, using: person.descriptor)
+      return try await deserializer.deserialize(binaryData, using: person.descriptor)
     }
 
     ExampleUtils.printTiming("Binary deserialization", time: deserializeTime)
@@ -85,7 +85,7 @@ struct ProtobufSerializationExample {
     try verifyMessagesEqual(original: person, deserialized: deserializedPerson)
   }
 
-  private static func step2UcomplexMessageSerialization() throws {
+  private static func step2UcomplexMessageSerialization() async throws {
     ExampleUtils.printStep(2, "Complex message serialization")
 
     // Create complex message with different field types
@@ -113,9 +113,9 @@ struct ProtobufSerializationExample {
     print("  🔢 Hex preview: \(ExampleUtils.formatDataPreview(complexBinaryData, maxBytes: 30))")
 
     // Deserialization
-    let (deserializedCompany, complexDeserializeTime) = try ExampleUtils.measureTime {
+    let (deserializedCompany, complexDeserializeTime) = try await ExampleUtils.measureTime {
       let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-      return try deserializer.deserialize(complexBinaryData, using: company.descriptor)
+      return try await deserializer.deserialize(complexBinaryData, using: company.descriptor)
     }
 
     ExampleUtils.printTiming("Complex message deserialization", time: complexDeserializeTime)
@@ -127,7 +127,7 @@ struct ProtobufSerializationExample {
     try verifyRepeatedFields(original: company, deserialized: deserializedCompany)
   }
 
-  private static func step3UroundTripCompatibility() throws {
+  private static func step3UroundTripCompatibility() async throws {
     ExampleUtils.printStep(3, "Round-trip compatibility")
 
     print("  🔄 Testing multiple round-trips...")
@@ -150,9 +150,9 @@ struct ProtobufSerializationExample {
       totalSerializeTime += serializeTime
 
       // Deserialization
-      let (newMessage, deserializeTime) = try ExampleUtils.measureTime {
+      let (newMessage, deserializeTime) = try await ExampleUtils.measureTime {
         let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-        return try deserializer.deserialize(binaryData, using: currentMessage.descriptor)
+        return try await deserializer.deserialize(binaryData, using: currentMessage.descriptor)
       }
       totalDeserializeTime += deserializeTime
 
@@ -184,7 +184,7 @@ struct ProtobufSerializationExample {
     }
   }
 
-  private static func step4UperformanceAnalysis() throws {
+  private static func step4UperformanceAnalysis() async throws {
     ExampleUtils.printStep(4, "Performance analysis")
 
     print("  📊 Performance benchmarking...")
@@ -199,7 +199,7 @@ struct ProtobufSerializationExample {
     var results: [String: (size: Int, serializeTime: TimeInterval, deserializeTime: TimeInterval)] = [:]
 
     for (label, count) in testCases {
-      let (_, binaryData, serializeTime, deserializeTime) = try benchmarkSerialization(messageCount: count)
+      let (_, binaryData, serializeTime, deserializeTime) = try await benchmarkSerialization(messageCount: count)
 
       results[label] = (
         size: binaryData.count,
@@ -227,7 +227,7 @@ struct ProtobufSerializationExample {
     )
   }
 
-  private static func step5UwireFormatAnalysis() throws {
+  private static func step5UwireFormatAnalysis() async throws {
     ExampleUtils.printStep(5, "Wire Format analysis")
 
     // Create message with different field types for wire format analysis
@@ -254,7 +254,7 @@ struct ProtobufSerializationExample {
 
     // Check deserialization
     let deserializer = BinaryDeserializer(options: .init(typeRegistry: TypeRegistry()))
-    let reconstructed = try deserializer.deserialize(binaryData, using: message.descriptor)
+    let reconstructed = try await deserializer.deserialize(binaryData, using: message.descriptor)
 
     print("  📋 Reconstructed message:")
     reconstructed.prettyPrint()
@@ -361,7 +361,7 @@ struct ProtobufSerializationExample {
     }
   }
 
-  private static func benchmarkSerialization(messageCount: Int) throws -> (
+  private static func benchmarkSerialization(messageCount: Int) async throws -> (
     [DynamicMessage], Data, TimeInterval, TimeInterval
   ) {
     let serializer = BinarySerializer()
@@ -390,8 +390,8 @@ struct ProtobufSerializationExample {
     // Benchmark deserialization (simplified - deserialize first message)
     if let firstMessage = messages.first {
       let firstMessageData = try serializer.serialize(firstMessage)
-      let (_, deserializeTime) = try ExampleUtils.measureTime {
-        let _ = try deserializer.deserialize(firstMessageData, using: firstMessage.descriptor)
+      let (_, deserializeTime) = try await ExampleUtils.measureTime {
+        let _ = try await deserializer.deserialize(firstMessageData, using: firstMessage.descriptor)
       }
 
       return (messages, allBinaryData, serializeTime, deserializeTime * TimeInterval(messageCount))

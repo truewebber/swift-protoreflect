@@ -24,15 +24,15 @@ import SwiftProtoReflect
 
 @main
 struct WellKnownRegistryExample {
-  static func main() throws {
+  static func main() async throws {
     ExampleUtils.printHeader("Well-Known Types Registry Integration")
 
-    try demonstrateRegistryBasics()
-    try demonstrateHandlerIntegration()
-    try demonstrateCrossTypeOperations()
-    try demonstrateBatchProcessing()
-    try demonstrateAdvancedPatterns()
-    try demonstratePerformanceOptimization()
+    try await demonstrateRegistryBasics()
+    try await demonstrateHandlerIntegration()
+    try await demonstrateCrossTypeOperations()
+    try await demonstrateBatchProcessing()
+    try await demonstrateAdvancedPatterns()
+    try await demonstratePerformanceOptimization()
 
     ExampleUtils.printSuccess("Well-Known Types Registry example completed!")
     ExampleUtils.printNext([
@@ -43,7 +43,7 @@ struct WellKnownRegistryExample {
 
   // MARK: - Registry Basics
 
-  private static func demonstrateRegistryBasics() throws {
+  private static func demonstrateRegistryBasics() async throws {
     ExampleUtils.printStep(1, "Registry Basics - Central Management")
 
     let registry = WellKnownTypesRegistry.shared
@@ -60,7 +60,7 @@ struct WellKnownRegistryExample {
     ]
 
     print("  📋 Supported Well-Known Types:")
-    let registeredTypes = registry.getRegisteredTypes()
+    let registeredTypes = await registry.getRegisteredTypes()
     for typeName in supportedTypes {
       let isRegistered = registeredTypes.contains(typeName)
       let status = isRegistered ? "✅" : "❌"
@@ -74,7 +74,7 @@ struct WellKnownRegistryExample {
 
   // MARK: - Handler Integration
 
-  private static func demonstrateHandlerIntegration() throws {
+  private static func demonstrateHandlerIntegration() async throws {
     ExampleUtils.printStep(2, "Handler Integration - Type-specific Operations")
 
     let registry = WellKnownTypesRegistry.shared
@@ -84,7 +84,7 @@ struct WellKnownRegistryExample {
     let timestampValue = TimestampHandler.TimestampValue(from: now)
     let timestampMessage = try TimestampHandler.createDynamic(from: timestampValue)
 
-    let specializedTimestamp = try registry.createSpecialized(
+    let specializedTimestamp = try await registry.createSpecialized(
       from: timestampMessage,
       typeName: WellKnownTypeNames.timestamp
     )
@@ -99,7 +99,7 @@ struct WellKnownRegistryExample {
     let durationValue = DurationHandler.DurationValue(from: timeInterval)
     let durationMessage = try DurationHandler.createDynamic(from: durationValue)
 
-    let specializedDuration = try registry.createSpecialized(
+    let specializedDuration = try await registry.createSpecialized(
       from: durationMessage,
       typeName: WellKnownTypeNames.duration
     )
@@ -114,7 +114,7 @@ struct WellKnownRegistryExample {
     let fieldMaskValue = try FieldMaskHandler.FieldMaskValue(paths: paths)
     let fieldMaskMessage = try FieldMaskHandler.createDynamic(from: fieldMaskValue)
 
-    let specializedFieldMask = try registry.createSpecialized(
+    let specializedFieldMask = try await registry.createSpecialized(
       from: fieldMaskMessage,
       typeName: WellKnownTypeNames.fieldMask
     )
@@ -127,7 +127,7 @@ struct WellKnownRegistryExample {
 
   // MARK: - Cross-Type Operations
 
-  private static func demonstrateCrossTypeOperations() throws {
+  private static func demonstrateCrossTypeOperations() async throws {
     ExampleUtils.printStep(3, "Cross-Type Operations - Type Interoperability")
 
     let registry = WellKnownTypesRegistry.shared
@@ -150,7 +150,7 @@ struct WellKnownRegistryExample {
     let structMessage = try StructHandler.createDynamic(from: structValue)
 
     let specializedStruct =
-      try registry.createSpecialized(
+      try await registry.createSpecialized(
         from: structMessage,
         typeName: WellKnownTypeNames.structType
       ) as! StructHandler.StructValue
@@ -180,7 +180,7 @@ struct WellKnownRegistryExample {
 
   // MARK: - Batch Processing
 
-  private static func demonstrateBatchProcessing() throws {
+  private static func demonstrateBatchProcessing() async throws {
     ExampleUtils.printStep(4, "Batch Processing - Mass Operations")
 
     let registry = WellKnownTypesRegistry.shared
@@ -236,7 +236,7 @@ struct WellKnownRegistryExample {
 
     // Batch validation
     print("\n  🔍 Batch Validation:")
-    let registeredTypes = registry.getRegisteredTypes()
+    let registeredTypes = await registry.getRegisteredTypes()
     for (typeName, _) in processedItems {
       let isValid = registeredTypes.contains(typeName)
       let status = isValid ? "✅" : "❌"
@@ -246,7 +246,7 @@ struct WellKnownRegistryExample {
 
   // MARK: - Advanced Patterns
 
-  private static func demonstrateAdvancedPatterns() throws {
+  private static func demonstrateAdvancedPatterns() async throws {
     ExampleUtils.printStep(5, "Advanced Patterns - Complex Scenarios")
 
     let registry = WellKnownTypesRegistry.shared
@@ -259,7 +259,7 @@ struct WellKnownRegistryExample {
       let typeName = detectWellKnownType(message: message)
 
       if let detectedType = typeName {
-        let specialized = try registry.createSpecialized(from: message, typeName: detectedType)
+        let specialized = try await registry.createSpecialized(from: message, typeName: detectedType)
         print("    Message \(index + 1): \(detectedType) -> \(type(of: specialized))")
       }
       else {
@@ -274,17 +274,17 @@ struct WellKnownRegistryExample {
         switch typeName {
         case WellKnownTypeNames.timestamp:
           let specialized =
-            try registry.createSpecialized(from: message, typeName: typeName) as! TimestampHandler.TimestampValue
+            try await registry.createSpecialized(from: message, typeName: typeName) as! TimestampHandler.TimestampValue
           print("    Timestamp \(index + 1): \(specialized.toDate().timeIntervalSince1970)")
 
         case WellKnownTypeNames.duration:
           let specialized =
-            try registry.createSpecialized(from: message, typeName: typeName) as! DurationHandler.DurationValue
+            try await registry.createSpecialized(from: message, typeName: typeName) as! DurationHandler.DurationValue
           print("    Duration \(index + 1): \(specialized.toTimeInterval())s")
 
         case WellKnownTypeNames.structType:
           let specialized =
-            try registry.createSpecialized(from: message, typeName: typeName) as! StructHandler.StructValue
+            try await registry.createSpecialized(from: message, typeName: typeName) as! StructHandler.StructValue
           print("    Struct \(index + 1): \(specialized.fields.count) fields")
 
         default:
@@ -319,7 +319,7 @@ struct WellKnownRegistryExample {
 
   // MARK: - Performance Optimization
 
-  private static func demonstratePerformanceOptimization() throws {
+  private static func demonstratePerformanceOptimization() async throws {
     ExampleUtils.printStep(6, "Performance Optimization - Registry Efficiency")
 
     let registry = WellKnownTypesRegistry.shared
@@ -333,10 +333,10 @@ struct WellKnownRegistryExample {
       WellKnownTypeNames.value,
     ]
 
-    let (_, lookupTime) = ExampleUtils.measureTime {
+    let (_, lookupTime) = await ExampleUtils.measureTime {
       for _ in 0..<lookupIterations {
         for typeName in typesToLookup {
-          _ = registry.getHandler(for: typeName)
+          _ = await registry.getHandler(for: typeName)
         }
       }
     }
@@ -349,9 +349,9 @@ struct WellKnownRegistryExample {
     let testMessage = try TimestampHandler.createDynamic(from: TimestampHandler.TimestampValue(from: Date()))
     let specializationIterations = 1000
 
-    let (_, specializationTime) = ExampleUtils.measureTime {
+    let (_, specializationTime) = await ExampleUtils.measureTime {
       for _ in 0..<specializationIterations {
-        _ = try? registry.createSpecialized(from: testMessage, typeName: WellKnownTypeNames.timestamp)
+        _ = try? await registry.createSpecialized(from: testMessage, typeName: WellKnownTypeNames.timestamp)
       }
     }
 
@@ -366,16 +366,19 @@ struct WellKnownRegistryExample {
     }
 
     // Individual processing
-    let (_, individualTime) = ExampleUtils.measureTime {
+    let (_, individualTime) = await ExampleUtils.measureTime {
       for message in testItems {
-        _ = try? registry.createSpecialized(from: message, typeName: WellKnownTypeNames.timestamp)
+        _ = try? await registry.createSpecialized(from: message, typeName: WellKnownTypeNames.timestamp)
       }
     }
 
     // Simulated batch processing (same operations but measured together)
-    let (_, batchTime) = ExampleUtils.measureTime {
-      let results = testItems.compactMap { message in
-        try? registry.createSpecialized(from: message, typeName: WellKnownTypeNames.timestamp)
+    let (_, batchTime) = await ExampleUtils.measureTime {
+      var results: [Any] = []
+      for message in testItems {
+        if let r = try? await registry.createSpecialized(from: message, typeName: WellKnownTypeNames.timestamp) {
+          results.append(r)
+        }
       }
       _ = results.count
     }
