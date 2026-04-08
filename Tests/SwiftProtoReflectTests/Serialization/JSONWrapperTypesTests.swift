@@ -181,6 +181,116 @@ final class JSONWrapperTypesTests: XCTestCase {
     XCTAssertEqual(value, bytes)
   }
 
+  // MARK: - Decoder: alternate accepted formats per proto3 JSON spec
+
+  func test_deserialize_doubleValue_fromInfinityString() async throws {
+    let json = #""Infinity""#.data(using: .utf8)!
+    let desc = makeWrapperDescriptor(name: "DoubleValue", fullName: WellKnownTypeNames.doubleValue, fieldType: .double)
+    let msg = try await deserializer().deserialize(json, using: desc)
+    let value = try XCTUnwrap(try msg.get(forField: 1) as? Double)
+    XCTAssertTrue(value.isInfinite && value > 0)
+  }
+
+  func test_deserialize_doubleValue_fromNegativeInfinityString() async throws {
+    let json = #""-Infinity""#.data(using: .utf8)!
+    let desc = makeWrapperDescriptor(name: "DoubleValue", fullName: WellKnownTypeNames.doubleValue, fieldType: .double)
+    let msg = try await deserializer().deserialize(json, using: desc)
+    let value = try XCTUnwrap(try msg.get(forField: 1) as? Double)
+    XCTAssertTrue(value.isInfinite && value < 0)
+  }
+
+  func test_deserialize_doubleValue_fromNaNString() async throws {
+    let json = #""NaN""#.data(using: .utf8)!
+    let desc = makeWrapperDescriptor(name: "DoubleValue", fullName: WellKnownTypeNames.doubleValue, fieldType: .double)
+    let msg = try await deserializer().deserialize(json, using: desc)
+    let value = try XCTUnwrap(try msg.get(forField: 1) as? Double)
+    XCTAssertTrue(value.isNaN)
+  }
+
+  func test_deserialize_floatValue_fromInfinityString() async throws {
+    let json = #""Infinity""#.data(using: .utf8)!
+    let desc = makeWrapperDescriptor(name: "FloatValue", fullName: WellKnownTypeNames.floatValue, fieldType: .float)
+    let msg = try await deserializer().deserialize(json, using: desc)
+    let value = try XCTUnwrap(try msg.get(forField: 1) as? Float)
+    XCTAssertTrue(value.isInfinite && value > 0)
+  }
+
+  func test_deserialize_floatValue_fromNegativeInfinityString() async throws {
+    let json = #""-Infinity""#.data(using: .utf8)!
+    let desc = makeWrapperDescriptor(name: "FloatValue", fullName: WellKnownTypeNames.floatValue, fieldType: .float)
+    let msg = try await deserializer().deserialize(json, using: desc)
+    let value = try XCTUnwrap(try msg.get(forField: 1) as? Float)
+    XCTAssertTrue(value.isInfinite && value < 0)
+  }
+
+  func test_deserialize_floatValue_fromNaNString() async throws {
+    let json = #""NaN""#.data(using: .utf8)!
+    let desc = makeWrapperDescriptor(name: "FloatValue", fullName: WellKnownTypeNames.floatValue, fieldType: .float)
+    let msg = try await deserializer().deserialize(json, using: desc)
+    let value = try XCTUnwrap(try msg.get(forField: 1) as? Float)
+    XCTAssertTrue(value.isNaN)
+  }
+
+  func test_deserialize_int32Value_fromString() async throws {
+    let json = #""42""#.data(using: .utf8)!
+    let desc = makeWrapperDescriptor(name: "Int32Value", fullName: WellKnownTypeNames.int32Value, fieldType: .int32)
+    let msg = try await deserializer().deserialize(json, using: desc)
+    let value = try XCTUnwrap(try msg.get(forField: 1) as? Int32)
+    XCTAssertEqual(value, 42)
+  }
+
+  func test_deserialize_int32Value_negativeFromString() async throws {
+    let json = #""-100""#.data(using: .utf8)!
+    let desc = makeWrapperDescriptor(name: "Int32Value", fullName: WellKnownTypeNames.int32Value, fieldType: .int32)
+    let msg = try await deserializer().deserialize(json, using: desc)
+    let value = try XCTUnwrap(try msg.get(forField: 1) as? Int32)
+    XCTAssertEqual(value, -100)
+  }
+
+  func test_deserialize_uint32Value_fromString() async throws {
+    let json = #""4294967295""#.data(using: .utf8)!
+    let desc = makeWrapperDescriptor(
+      name: "UInt32Value",
+      fullName: WellKnownTypeNames.uint32Value,
+      fieldType: .uint32
+    )
+    let msg = try await deserializer().deserialize(json, using: desc)
+    let value = try XCTUnwrap(try msg.get(forField: 1) as? UInt32)
+    XCTAssertEqual(value, 4_294_967_295)
+  }
+
+  func test_deserialize_int64Value_fromNumber() async throws {
+    let json = "42".data(using: .utf8)!
+    let desc = makeWrapperDescriptor(name: "Int64Value", fullName: WellKnownTypeNames.int64Value, fieldType: .int64)
+    let msg = try await deserializer().deserialize(json, using: desc)
+    let value = try XCTUnwrap(try msg.get(forField: 1) as? Int64)
+    XCTAssertEqual(value, 42)
+  }
+
+  func test_deserialize_uint64Value_fromNumber() async throws {
+    let json = "42".data(using: .utf8)!
+    let desc = makeWrapperDescriptor(
+      name: "UInt64Value",
+      fullName: WellKnownTypeNames.uint64Value,
+      fieldType: .uint64
+    )
+    let msg = try await deserializer().deserialize(json, using: desc)
+    let value = try XCTUnwrap(try msg.get(forField: 1) as? UInt64)
+    XCTAssertEqual(value, 42)
+  }
+
+  func test_deserialize_uint64Value_fromString() async throws {
+    let json = #""18446744073709551615""#.data(using: .utf8)!
+    let desc = makeWrapperDescriptor(
+      name: "UInt64Value",
+      fullName: WellKnownTypeNames.uint64Value,
+      fieldType: .uint64
+    )
+    let msg = try await deserializer().deserialize(json, using: desc)
+    let value = try XCTUnwrap(try msg.get(forField: 1) as? UInt64)
+    XCTAssertEqual(value, 18_446_744_073_709_551_615)
+  }
+
   // MARK: - Round-trip tests
 
   func test_roundTrip_allWrapperTypes_preserveValues() async throws {

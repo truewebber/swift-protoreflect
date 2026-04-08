@@ -151,58 +151,22 @@ internal struct _JSONDeserializer {
 
     switch fullName {
     case WellKnownTypeNames.doubleValue:
-      guard let number = jsonValue as? NSNumber, !isJSONBool(number) else {
-        throw _JSONDeserializationError.invalidJSONStructure(
-          expected: "Number",
-          actual: String(describing: type(of: jsonValue))
-        )
-      }
-      try msg.set(number.doubleValue, forField: 1)
+      try msg.set(try convertJSONToDouble(jsonValue, fieldName: "value"), forField: 1)
 
     case WellKnownTypeNames.floatValue:
-      guard let number = jsonValue as? NSNumber, !isJSONBool(number) else {
-        throw _JSONDeserializationError.invalidJSONStructure(
-          expected: "Number",
-          actual: String(describing: type(of: jsonValue))
-        )
-      }
-      try msg.set(Float(number.doubleValue), forField: 1)
+      try msg.set(try convertJSONToFloat(jsonValue, fieldName: "value"), forField: 1)
 
     case WellKnownTypeNames.int32Value:
-      guard let number = jsonValue as? NSNumber, !isJSONBool(number) else {
-        throw _JSONDeserializationError.invalidJSONStructure(
-          expected: "Number",
-          actual: String(describing: type(of: jsonValue))
-        )
-      }
-      try msg.set(Int32(truncatingIfNeeded: number.int64Value), forField: 1)
+      try msg.set(try convertJSONToInt32(jsonValue, fieldName: "value"), forField: 1)
 
     case WellKnownTypeNames.uint32Value:
-      guard let number = jsonValue as? NSNumber, !isJSONBool(number) else {
-        throw _JSONDeserializationError.invalidJSONStructure(
-          expected: "Number",
-          actual: String(describing: type(of: jsonValue))
-        )
-      }
-      try msg.set(UInt32(truncatingIfNeeded: number.uint64Value), forField: 1)
+      try msg.set(try convertJSONToUInt32(jsonValue, fieldName: "value"), forField: 1)
 
     case WellKnownTypeNames.int64Value:
-      guard let str = jsonValue as? String, let value = Int64(str) else {
-        throw _JSONDeserializationError.invalidJSONStructure(
-          expected: "String (Int64)",
-          actual: String(describing: type(of: jsonValue))
-        )
-      }
-      try msg.set(value, forField: 1)
+      try msg.set(try convertJSONToInt64(jsonValue, fieldName: "value"), forField: 1)
 
     case WellKnownTypeNames.uint64Value:
-      guard let str = jsonValue as? String, let value = UInt64(str) else {
-        throw _JSONDeserializationError.invalidJSONStructure(
-          expected: "String (UInt64)",
-          actual: String(describing: type(of: jsonValue))
-        )
-      }
-      try msg.set(value, forField: 1)
+      try msg.set(try convertJSONToUInt64(jsonValue, fieldName: "value"), forField: 1)
 
     case WellKnownTypeNames.boolValue:
       guard let number = jsonValue as? NSNumber, isJSONBool(number) else {
@@ -214,22 +178,10 @@ internal struct _JSONDeserializer {
       try msg.set(number.boolValue, forField: 1)
 
     case WellKnownTypeNames.stringValue:
-      guard let str = jsonValue as? String else {
-        throw _JSONDeserializationError.invalidJSONStructure(
-          expected: "String",
-          actual: String(describing: type(of: jsonValue))
-        )
-      }
-      try msg.set(str, forField: 1)
+      try msg.set(try convertJSONToString(jsonValue, fieldName: "value"), forField: 1)
 
     case WellKnownTypeNames.bytesValue:
-      guard let str = jsonValue as? String, let data = Data(base64Encoded: str) else {
-        throw _JSONDeserializationError.invalidJSONStructure(
-          expected: "String (base64)",
-          actual: String(describing: type(of: jsonValue))
-        )
-      }
-      try msg.set(data, forField: 1)
+      try msg.set(try convertJSONToBytes(jsonValue, fieldName: "value"), forField: 1)
 
     default:
       throw _JSONDeserializationError.unsupportedWellKnownTypeDecoding(typeName: fullName)
