@@ -33,7 +33,7 @@ final class JSONEnumEdgeCasesTests: XCTestCase {
   private func makeMsgAndRegistry() async throws -> (MessageDescriptor, TypeRegistry) {
     var d = MessageDescriptor(name: "Msg", fullName: "test.Msg")
     d.addField(FieldDescriptor(name: "status", number: 1, type: .enum, typeName: "test.Status", jsonName: "status"))
-    var registry = TypeRegistry()
+    let registry = TypeRegistry()
     try await registry.registerEnum(makeEnum())
     return (d, registry)
   }
@@ -152,7 +152,7 @@ final class JSONEnumEdgeCasesTests: XCTestCase {
         isRepeated: true
       )
     )
-    var registry = TypeRegistry()
+    let registry = TypeRegistry()
     try await registry.registerEnum(makeEnum())
 
     let data = #"{"statuses":["ACTIVE","INACTIVE",0,999]}"#.data(using: .utf8)!
@@ -185,19 +185,25 @@ final class JSONEnumEdgeCasesTests: XCTestCase {
     msgDesc.addField(FieldDescriptor(name: "competitor_id", number: 1, type: .int64, jsonName: "competitorId"))
     msgDesc.addField(
       FieldDescriptor(
-        name: "group_by_interval", number: 2, type: .enum,
-        typeName: "app.IntervalGroupType", jsonName: "groupByInterval"
+        name: "group_by_interval",
+        number: 2,
+        type: .enum,
+        typeName: "app.IntervalGroupType",
+        jsonName: "groupByInterval"
       )
     )
     msgDesc.addField(
       FieldDescriptor(
-        name: "countries", number: 3, type: .enum,
-        typeName: "app.Country", jsonName: "countries",
+        name: "countries",
+        number: 3,
+        type: .enum,
+        typeName: "app.Country",
+        jsonName: "countries",
         isRepeated: true
       )
     )
 
-    var registry = TypeRegistry()
+    let registry = TypeRegistry()
     try await registry.registerEnum(intervalEnum)
     try await registry.registerEnum(countryEnum)
 
@@ -240,19 +246,25 @@ final class JSONEnumEdgeCasesTests: XCTestCase {
     msgDesc.addField(FieldDescriptor(name: "competitor_id", number: 1, type: .int64, jsonName: "competitorId"))
     msgDesc.addField(
       FieldDescriptor(
-        name: "group_by_interval", number: 2, type: .enum,
-        typeName: "app.IntervalGroupType", jsonName: "groupByInterval"
+        name: "group_by_interval",
+        number: 2,
+        type: .enum,
+        typeName: "app.IntervalGroupType",
+        jsonName: "groupByInterval"
       )
     )
     msgDesc.addField(
       FieldDescriptor(
-        name: "countries", number: 3, type: .enum,
-        typeName: "app.Country", jsonName: "countries",
+        name: "countries",
+        number: 3,
+        type: .enum,
+        typeName: "app.Country",
+        jsonName: "countries",
         isRepeated: true
       )
     )
 
-    var registry = TypeRegistry()
+    let registry = TypeRegistry()
     try await registry.registerEnum(intervalEnum)
     try await registry.registerEnum(countryEnum)
 
