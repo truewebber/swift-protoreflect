@@ -172,6 +172,8 @@ final class JSONSerializerProtocComplianceTests: XCTestCase {
       prettyPrinted: true,
       includeDefaultValues: true,
       useCanonicalWellKnownTypeEncoding: false,
+      escapeSlashesInStrings: false,
+      sortJSONObjectKeys: true,
       typeRegistry: registry
     )
 
@@ -179,6 +181,8 @@ final class JSONSerializerProtocComplianceTests: XCTestCase {
     XCTAssertTrue(opts.prettyPrinted)
     XCTAssertTrue(opts.includeDefaultValues)
     XCTAssertFalse(opts.useCanonicalWellKnownTypeEncoding)
+    XCTAssertFalse(opts.escapeSlashesInStrings)
+    XCTAssertTrue(opts.sortJSONObjectKeys)
   }
 
   // MARK: - JSONSerializationError.description
