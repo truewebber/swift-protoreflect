@@ -338,6 +338,20 @@ public struct JSONSerializationOptions: Sendable {
   /// generic field-by-field encoding. Defaults to `true`.
   public let useCanonicalWellKnownTypeEncoding: Bool
 
+  /// Escape `/` as `\/` in JSON string values.
+  ///
+  /// Default `true`. Set to `false` to disable slash escaping (Foundation `.withoutEscapingSlashes`),
+  /// which reduces output size for payloads with many URLs. Both forms are valid JSON
+  /// and parse identically. Only affects `serialize(_:) -> Data`.
+  public let escapeSlashesInStrings: Bool
+
+  /// Sort JSON object keys lexicographically.
+  ///
+  /// Default `false`. Enables Foundation `.sortedKeys` on the JSON write pass. Useful for stable
+  /// diffs, caches, and golden tests. Does not reorder array elements.
+  /// Only affects `serialize(_:) -> Data`.
+  public let sortJSONObjectKeys: Bool
+
   /// Registry for resolving message types by fully-qualified name.
   ///
   /// Pass a populated `TypeRegistry` to enable cross-file type resolution during serialization.
@@ -351,18 +365,24 @@ public struct JSONSerializationOptions: Sendable {
   ///   - prettyPrinted: Whether to format JSON with indentation. Defaults to `false`.
   ///   - includeDefaultValues: Whether to include fields with default values. Defaults to `false`.
   ///   - useCanonicalWellKnownTypeEncoding: Whether to use canonical protobuf JSON for well-known types. Defaults to `true`.
+  ///   - escapeSlashesInStrings: Whether to escape `/` as `\/` in JSON strings. Defaults to `true`.
+  ///   - sortJSONObjectKeys: Whether to sort JSON object keys lexicographically. Defaults to `false`.
   ///   - typeRegistry: Registry for resolving message types by fully-qualified name.
   public init(
     useOriginalFieldNames: Bool = false,
     prettyPrinted: Bool = false,
     includeDefaultValues: Bool = false,
     useCanonicalWellKnownTypeEncoding: Bool = true,
+    escapeSlashesInStrings: Bool = true,
+    sortJSONObjectKeys: Bool = false,
     typeRegistry: TypeRegistry
   ) {
     self.useOriginalFieldNames = useOriginalFieldNames
     self.prettyPrinted = prettyPrinted
     self.includeDefaultValues = includeDefaultValues
     self.useCanonicalWellKnownTypeEncoding = useCanonicalWellKnownTypeEncoding
+    self.escapeSlashesInStrings = escapeSlashesInStrings
+    self.sortJSONObjectKeys = sortJSONObjectKeys
     self.typeRegistry = typeRegistry
   }
 
@@ -526,6 +546,8 @@ public struct JSONSerializer: Sendable {
       prettyPrinted: options.prettyPrinted,
       includeDefaultValues: options.includeDefaultValues,
       useCanonicalWellKnownTypeEncoding: options.useCanonicalWellKnownTypeEncoding,
+      escapeSlashesInStrings: options.escapeSlashesInStrings,
+      sortJSONObjectKeys: options.sortJSONObjectKeys,
       typeRegistry: registrySnapshot
     )
   }

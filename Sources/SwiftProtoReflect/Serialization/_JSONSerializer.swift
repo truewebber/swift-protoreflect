@@ -22,6 +22,12 @@ internal struct _JSONSerializer {
     if self.options.prettyPrinted {
       writingOptions.insert(.prettyPrinted)
     }
+    if !self.options.escapeSlashesInStrings {
+      writingOptions.insert(.withoutEscapingSlashes)
+    }
+    if self.options.sortJSONObjectKeys {
+      writingOptions.insert(.sortedKeys)
+    }
 
     do {
       return try JSONSerialization.data(withJSONObject: jsonValue, options: writingOptions)
@@ -721,6 +727,8 @@ internal struct _JSONSerializationOptions {
   let prettyPrinted: Bool
   let includeDefaultValues: Bool
   let useCanonicalWellKnownTypeEncoding: Bool
+  let escapeSlashesInStrings: Bool
+  let sortJSONObjectKeys: Bool
   let typeRegistry: _TypeRegistry
 
   init(
@@ -728,12 +736,16 @@ internal struct _JSONSerializationOptions {
     prettyPrinted: Bool = false,
     includeDefaultValues: Bool = false,
     useCanonicalWellKnownTypeEncoding: Bool = true,
+    escapeSlashesInStrings: Bool = true,
+    sortJSONObjectKeys: Bool = false,
     typeRegistry: _TypeRegistry
   ) {
     self.useOriginalFieldNames = useOriginalFieldNames
     self.prettyPrinted = prettyPrinted
     self.includeDefaultValues = includeDefaultValues
     self.useCanonicalWellKnownTypeEncoding = useCanonicalWellKnownTypeEncoding
+    self.escapeSlashesInStrings = escapeSlashesInStrings
+    self.sortJSONObjectKeys = sortJSONObjectKeys
     self.typeRegistry = typeRegistry
   }
 }
